@@ -19,6 +19,7 @@ export interface CurrentNormalSkinMaster {
 }
 
 export interface CurrentSpecialSkinMaster {
+  readonly resourceServer: "jp" | "cn";
   readonly kind: "collabo" | "limited";
   readonly selectionId: number;
   readonly selectable: boolean;
@@ -83,7 +84,9 @@ export const CURRENT_NORMAL_DIRECTIONAL_SKINS: readonly CurrentNormalSkinMaster[
   { setting: 4, masterId: 5, bundleName: "skin04" },
 ]);
 
-const SPECIAL_ROW_DATA = [
+const SPECIAL_ROW_DATA: readonly (readonly ["collabo" | "limited", number, boolean,
+  string | null, string | null, string | null, string | null, string | null,
+  string | null, string | null, number, ("jp" | "cn")?])[] = [
   ["collabo",17,true,"skin_persona","skin_persona","skin_persona","skin_persona","skin_persona",null,null,0],
   ["collabo",21,true,"skin_miku","skin_miku","skin_miku","skin_miku","skin_miku",null,null,0],
   ["collabo",36,false,"skinapril2019","skinapril2019","skinapril2019","skinapril2019","skinapril2019","skinapril2019",null,0],
@@ -114,15 +117,20 @@ const SPECIAL_ROW_DATA = [
   ["collabo",286,true,"skin_collabo24_autumn_i",null,"skin_collabo24_autumn_i","skin_collabo24_autumn_i",null,null,null,0],
   ["collabo",291,true,"skin_stage","skin_stage","skin_stage","skin_stage","skin_stage",null,null,0],
   ["collabo",293,true,"skin_collabo25_autumn_s",null,"skin_collabo25_autumn_s","skin_collabo25_autumn_s",null,null,null,0],
+  ["collabo",100001,true,"skin10001",null,"skin10001","skin10001","skin10001",null,"skin10001",0,"cn"],
   ["limited",1,true,null,null,null,"skin_april2018","skin_april2018",null,null,0],
   ["limited",2,true,"skin_april2019","skin_april2019","skin_april2019","skin_april2019","skin_april2019","skin_april2019",null,0],
   ["limited",3,true,"skin_april2021",null,"skin_april2021","skin_april2021","skinapril2021","skinapril2021",null,0],
   ["limited",4,true,"skin_april_2024",null,"skin_april_2024","skin_april_2024",null,null,null,0],
+  // CN MasterLimitedSkin 10001/10002; original margin is binary32 zero.
+  ["limited",10001,true,"skin_bilicat","skin_bilicat","skin_bilicat","skin_bilicat",null,"skin_bilicat","skin_bilicat",0,"cn"],
+  ["limited",10002,true,"skin_bilicat01","skin_bilicat01","skin_bilicat01","skin_bilicat01",null,"skin_bilicat01","skin_bilicat01",0,"cn"],
 ] as const;
 
 export const CURRENT_SPECIAL_SKINS: readonly CurrentSpecialSkinMaster[] = Object.freeze(
   SPECIAL_ROW_DATA.map((row) => Object.freeze({
     kind: row[0],
+    resourceServer: row[11] ?? "jp",
     selectionId: row[1],
     selectable: row[2],
     backgroundBundleName: row[3],

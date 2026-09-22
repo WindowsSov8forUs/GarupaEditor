@@ -3,7 +3,8 @@ import guideProfile from "../data/originalSettingsGuides.json";
 import type { OriginalSettingsGuideKey } from "./OriginalSettingsGuide";
 import { ORIGINAL_SUDDEN_DEFAULT, ORIGINAL_SUDDEN_MIN, ORIGINAL_SUDDEN_MAX,
   ORIGINAL_SUDDEN_STEP, ORIGINAL_SUDDEN_SMALL_STEP } from "../simulator/public/settings";
-import { LONG_NOTE_LINE_BRIGHTNESS_MIN, LONG_NOTE_LINE_BRIGHTNESS_MAX, LONG_NOTE_LINE_BRIGHTNESS_DEFAULT } from "../simulator/public/settings";
+import { LONG_NOTE_LINE_BRIGHTNESS_MIN, LONG_NOTE_LINE_BRIGHTNESS_MAX, LONG_NOTE_LINE_BRIGHTNESS_DEFAULT,
+  resolveOriginalPreviewSkin } from "../simulator/public/settings";
 import type { EditorOptionSettings } from "../chartCore";
 import skinSelection from "../data/originalSkinSelection.json";
 import fieldSkinLogos from "../data/originalFieldSkinLogos.json";
@@ -142,7 +143,9 @@ export function buildOriginalSettingsPage(page: number, draft: OriginalSettingsD
     volume(825, draft.options.simulatorSettings.musicVolumePercent, value => native("musicVolumePercent", value), 0.01);
     volume(684, draft.options.noteSeVolumePercent, value => option("noteSeVolumePercent", value));
   } else if (page === 2) {
-    // No special-skin selector is implemented. Keep the ordinary prefab's row origin.
+    // LiveSkinSettings.initSpecialSkinRow: insert the authored row and move the
+    // ordinary choices to the source next-row position (-615).
+    place("Contents/ScrollView/Contents/MovableContents", -615);
     nodes[source.nodeAt("Contents/ScrollView/Contents/MovableContents/ROW3/IsFixecBG").id] = { active: false };
     const settings = draft.options.simulatorSettings.skin;
     const skin = (key: keyof typeof settings, value: number | boolean) => update(old => ({ ...old,
@@ -190,6 +193,20 @@ export function buildOriginalSettingsPage(page: number, draft: OriginalSettingsD
     const logoLoader = source.components.get(originalRef(fieldSkin.data.bandLogoLoader))!;
     nodes[logoLoader.node] = { active: hasBandLogo };
     nodes[source.components.get(originalRef(fieldSkin.data.valueLabel))!.node] = { active: !hasBandLogo };
+    const recipe = resolveOriginalPreviewSkin(settings);
+    // Applied special components own their output. Ordinary values remain stored
+    // and become editable again when that component is switched off.
+    for (const [controllerId, route] of [[288, recipe.note.route], [302, recipe.directional.route],
+      [278, recipe.field.route], [232, recipe.tapEffect.route], [292, recipe.tapSE.route]] as const) {
+      if (route !== "special") continue;
+      const controller = source.components.get(controllerId)!;
+      const manager = originalRef(controller.data.radioButtonManager);
+      if (manager && radios[manager]) radios[manager] = { ...radios[manager]!, disabled: true };
+      for (const button of source.components.values()) {
+        if (button.kind === "StarUIButton" && source.isWithin(button.node, controller.node) && buttons[button.id])
+          buttons[button.id] = { ...buttons[button.id], disabled: true };
+      }
+    }
   }
   if (page === 3) {
     hideChildren("Contents/ScrollView/Contents", ["Row_System", "Row_Download", "UnderMultiPlayMVDownloadCaution"]);

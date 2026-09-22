@@ -16,6 +16,8 @@ export interface SimulatorMenuSettings {
   readonly systemSeVolumePercent: number;
   readonly systemBgmVolumePercent: number;
   readonly skin: SimulatorOriginalSkinSettings;
+  readonly rememberedCollaboSkin?: Extract<SimulatorOriginalSkinSettings["special"], { kind: "collabo" }>;
+  readonly rememberedLimitedSkin?: Extract<SimulatorOriginalSkinSettings["special"], { kind: "limited" }>;
 }
 export const DEFAULT_SIMULATOR_MENU_SETTINGS: SimulatorMenuSettings = Object.freeze({
   hideFastSlow: false, displayStageEffect: true,
@@ -64,8 +66,20 @@ export function normalizeSimulatorMenuSettings(value: unknown): SimulatorMenuSet
     throw new Error("Invalid original Sudden settings.");
   const skin = validateAndFreezeOriginalSkinSettings(item.skin);
   if (skin.status !== "ok") throw new Error("Simulator 皮肤设置不符合原作索引范围。");
+  const remembered = (kind: "collabo" | "limited", value: unknown) => {
+    const legacy = item.rememberedSpecialSkin as { kind?: string } | undefined;
+    const candidate = value ?? (skin.value.special.kind === kind ? skin.value.special
+      : legacy?.kind === kind ? legacy : undefined);
+    if (candidate === undefined) return undefined;
+    const checked = validateAndFreezeOriginalSkinSettings({ ...skin.value, special: candidate });
+    if (checked.status !== "ok" || checked.value.special.kind !== kind) throw new Error("保存的限定皮肤设置无效。");
+    return checked.value.special;
+  };
+  const rememberedCollaboSkin = remembered("collabo", item.rememberedCollaboSkin) as SimulatorMenuSettings["rememberedCollaboSkin"];
+  const rememberedLimitedSkin = remembered("limited", item.rememberedLimitedSkin) as SimulatorMenuSettings["rememberedLimitedSkin"];
   return Object.freeze({ hideFastSlow, displayStageEffect, hideCombo, displayComboPosition: displayComboPosition as number, lastTab: item.lastTab as number, judgementAdjustValue: item.judgementAdjustValue as number,
     judgementAdjustValueB: item.judgementAdjustValueB as number,
     musicVolumePercent: item.musicVolumePercent as number, masterVolumePercent: item.masterVolumePercent as number,
-    systemSeVolumePercent, systemBgmVolumePercent, suddenRate: suddenRate as number, suddenLane, skin: skin.value });
+    systemSeVolumePercent, systemBgmVolumePercent, suddenRate: suddenRate as number, suddenLane, skin: skin.value,
+    rememberedCollaboSkin, rememberedLimitedSkin });
 }

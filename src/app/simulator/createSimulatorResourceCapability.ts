@@ -1,6 +1,7 @@
+import { originalSkinResourceRef } from "../../resources/originalSkinResourceRef";
 import type { ApplicationResourceManager } from "../../resources/applicationResourceManager";
 import { simulatorBuiltinResourceRef } from "../../resources/builtin/simulatorBuiltinResourceCatalog";
-import { createResourceRef, type ResourceRef } from "../../resources/contracts";
+import { type ResourceRef } from "../../resources/contracts";
 import {
   simulatorResourceRejected,
   type SimulatorResourceCapability,
@@ -32,7 +33,7 @@ export function createSimulatorResourceCapability(
             `Main-program resource policy has no explicit source binding for ${requirement.logicalResource}.`,
           );
         }
-        const network = createResourceRef(`bestdori/${server}/${requirement.logicalResource}`);
+        const network = originalSkinResourceRef(requirement.logicalResource, server);
         if (network.status === "rejected") {
           return simulatorResourceRejected<SimulatorResourceLease>(network.failure.code, network.failure.capability, network.failure.boundary);
         }

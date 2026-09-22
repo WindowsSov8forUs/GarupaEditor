@@ -1,12 +1,14 @@
+import { originalSkinResourceRef } from "../resources/originalSkinResourceRef";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useApplicationResourceManager } from "../resources/applicationResourceContext";
-import { createResourceRef, type ResourceConsumerLease } from "../resources/contracts";
+import { type ResourceConsumerLease } from "../resources/contracts";
 import { CURRENT_NORMAL_SOUND_SKINS } from "../simulator/public/settings";
 
-type Sounds = { setting: number; tap: string; flick: string };
+type Sounds = { resource: string; tap: string; flick: string };
 export function useOriginalSkinSound(setting: number, gain: number, onError?: (message: string) => void,
-  mode: "preview" | "one-shot" = "preview") {
+  mode: "preview" | "one-shot" = "preview", selectedResource?: string) {
   const manager = useApplicationResourceManager(), report = useRef(onError); report.current = onError;
+  const resource = selectedResource ?? `sound/tapseskin/${CURRENT_NORMAL_SOUND_SKINS.find(row => row.setting === setting)?.bundleName}`;
   const [sounds, setSounds] = useState<Sounds | null>(null);
   const player = useRef<HTMLAudioElement | null>(null);
   const oneShots = useRef(new Set<HTMLAudioElement>());
@@ -23,12 +25,10 @@ export function useOriginalSkinSound(setting: number, gain: number, onError?: (m
     };
     setSounds(null);
     void (async () => {
-      const master = CURRENT_NORMAL_SOUND_SKINS.find(row => row.setting === setting);
-      if (!master) throw new Error(`Unknown original judge SE ${setting}.`);
       const catalog = await manager.prepareCatalog("bestdori");
       if (catalog.status === "rejected") throw new Error(catalog.failure.boundary);
       if (!active) return;
-      const ref = createResourceRef(`bestdori/jp/sound/tapseskin/${master.bundleName}`);
+      const ref = originalSkinResourceRef(resource);
       if (ref.status === "rejected") throw new Error(ref.failure.boundary);
       const snapshot = await manager.createSnapshotFromRefs({ "preview.sound": ref.value });
       if (snapshot.status === "rejected") throw new Error(snapshot.failure.boundary);
@@ -45,7 +45,7 @@ export function useOriginalSkinSound(setting: number, gain: number, onError?: (m
         return owner.openObjectUrl("preview.sound", files[0]!.logicalPath);
       };
       const tap = await resolve("perfect"), flick = await resolve("flick");
-      if (active) setSounds({ setting, tap, flick });
+      if (active) setSounds({ resource, tap, flick });
     })().catch(error => {
       release(); if (active) report.current?.(String(error));
     }).finally(() => { finished = true; if (!active) release(); });
@@ -54,9 +54,9 @@ export function useOriginalSkinSound(setting: number, gain: number, onError?: (m
       stop();
       if (finished) release();
     };
-  }, [manager, setting, stop]);
+  }, [manager, resource, stop]);
   const play = useCallback((type: "tap" | "flick") => {
-    if (!sounds || sounds.setting !== setting) return;
+    if (!sounds || sounds.resource !== resource) return;
     if (!Number.isFinite(gain) || gain < 0 || gain > 1) {
       report.current?.("Skin sound volume is outside [0,1]."); return;
     }
@@ -69,6 +69,6 @@ export function useOriginalSkinSound(setting: number, gain: number, onError?: (m
     }
     audio.volume = gain;
     void audio.play().catch(error => { oneShots.current.delete(audio); report.current?.(String(error)); });
-  }, [sounds, setting, gain, mode]);
-  return { ready: sounds?.setting === setting, play, stop };
+  }, [sounds, resource, gain, mode]);
+  return { ready: sounds?.resource === resource, play, stop };
 }

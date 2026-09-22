@@ -1,6 +1,7 @@
+import { originalSkinResourceRef } from "../resources/originalSkinResourceRef";
 import { useEffect, useRef, useState } from "react";
 import { useApplicationResourceManager } from "../resources/applicationResourceContext";
-import { createResourceRef, type ResourceRef } from "../resources/contracts";
+import { type ResourceRef } from "../resources/contracts";
 import { simulatorBuiltinResourceRef } from "../resources/builtin/simulatorBuiltinResourceCatalog";
 import { ApplicationSimulatorResourceCapability } from "../app/simulator/ApplicationSimulatorResourceCapability";
 import type { SimulatorOriginalSkinSettings } from "../simulator/public/contracts";
@@ -28,7 +29,7 @@ export function useOriginalPreviewParticleResources(settings: SimulatorOriginalS
       for (const item of requirements) {
         const ref = item.logicalResource.startsWith("portable/")
           ? simulatorBuiltinResourceRef(item.logicalResource)
-          : createResourceRef(`bestdori/jp/${item.logicalResource}`);
+          : originalSkinResourceRef(item.logicalResource);
         if (ref.status !== "accepted") throw new Error(ref.failure.boundary);
         refs[item.logicalResource] = ref.value;
       }

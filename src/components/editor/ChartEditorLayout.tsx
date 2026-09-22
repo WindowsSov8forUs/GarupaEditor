@@ -1232,7 +1232,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       <CommandBar
         onOpenStaticRender={openStaticRenderWindow}
         onOpenSimulator={openSimulatorWindow}
-        onOpenSkinSettings={openSkinSettings}
         onOpenAppSettings={openAppSettings}
         menuOpen={isAppSettingsOpen}
         userNickname={bestdoriNicknameDisplay}

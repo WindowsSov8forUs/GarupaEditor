@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { OriginalPrefabModel, ORIGINAL_PREFABS, originalRef } from "./originalPrefabModel";
 import { OriginalPrefabView, type OriginalViewBindings } from "./OriginalPrefabView";
 import { OriginalPageViewport, type OriginalPageScrollState } from "./OriginalPageViewport";
@@ -33,13 +33,14 @@ function SampleRow({ directional, images }: { directional: boolean; images?: rea
   </div>;
 }
 
-export function OriginalSkinSettingsPage({ model, bindings, draft, resources, animated, effects, sound, onError, scrollState, visible = true }: {
+export function OriginalSkinSettingsPage({ model, bindings, draft, resources, animated, effects, sound, onError, scrollState, specialRow, visible = true }: {
   model: OriginalPrefabModel; bindings: OriginalViewBindings; draft: OriginalSettingsDraft;
   resources: OriginalSkinPreviewResources; animated: OriginalAnimatedSkinResources | null;
   effects: OriginalPreviewParticlePack | null; sound: ReturnType<typeof useOriginalSkinSound>;
   onError?: (message: string) => void;
   scrollState?: OriginalPageScrollState;
   visible?: boolean;
+  specialRow?: ReactNode;
 }) {
   const [aspect, setAspect] = useState(() => Math.min(2, window.innerWidth / window.innerHeight));
   useEffect(() => {
@@ -81,5 +82,8 @@ export function OriginalSkinSettingsPage({ model, bindings, draft, resources, an
         noteSize={draft.options.rhythmNoteSizePercent} lineBrightness={draft.options.longLineBrightnessPercent} visible={visible} onError={onError} />,
     },
   }), [bindings, resources, animated, effects, fieldLogo, fieldLogoTexture, draft.options.rhythmNoteSpeed, draft.options.rhythmNoteSizePercent, draft.options.longLineBrightnessPercent, visible, onError, sound.ready, sound.play]);
-  return <OriginalPageViewport model={previewModel} bindings={views} scrollState={scrollState} />;
+  const specialOrigin = model.transform(model.nodeAt("Contents/ScrollView/Contents/startRowPosision").id);
+  return <OriginalPageViewport model={previewModel} bindings={views} scrollState={scrollState}>
+    <div className="original-prefab-origin" style={{ left: specialOrigin.x, top: -specialOrigin.y }}>{specialRow}</div>
+  </OriginalPageViewport>;
 }

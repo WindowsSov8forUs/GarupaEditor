@@ -5,7 +5,6 @@ import { useApplicationResourceUrl } from "../resources/applicationResourceConte
 type CommandBarProps = {
   onOpenStaticRender: () => void;
   onOpenSimulator: () => void;
-  onOpenSkinSettings: () => void;
   onOpenAppSettings: () => void;
   menuOpen?: boolean;
   userNickname?: string | null;
@@ -16,14 +15,12 @@ type CommandBarProps = {
 export const CommandBar = memo(function CommandBar({
   onOpenStaticRender,
   onOpenSimulator,
-  onOpenSkinSettings,
   onOpenAppSettings,
   menuOpen = false,
   userNickname,
   userUsername,
   onUserBarClick,
 }: CommandBarProps) {
-  const skinIcon = useApplicationResourceUrl("ui.icon.skin");
   const previewIcon = useApplicationResourceUrl("ui.icon.preview");
   const simulatorIcon = useApplicationResourceUrl("ui.icon.display");
   const nickname = typeof userNickname === "string" ? userNickname.trim() : "";
@@ -46,16 +43,6 @@ export const CommandBar = memo(function CommandBar({
   return (
     <div className="command-bar">
       <div className="command-group">
-        <button
-          type="button"
-          className="command-icon-button"
-          onClick={onOpenSkinSettings}
-          title="皮肤"
-          aria-label="皮肤"
-        >
-          <img className="command-text-icon" src={skinIcon} alt="" aria-hidden="true" />
-          <span className="sr-only">皮肤</span>
-        </button>
         <button
           type="button"
           className="command-icon-button"

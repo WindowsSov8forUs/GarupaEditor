@@ -13,6 +13,11 @@ import { OriginalRhythmAdjustDialog } from "./OriginalRhythmAdjustDialog";
 import { OriginalPrefabModel, ORIGINAL_PREFABS, originalRef, type OriginalData } from "./originalPrefabModel";
 import { buildOriginalSettingsPage, type OriginalSettingsDraft } from "./originalSettingsPage";
 import { OriginalPageVisible, type OriginalButtonBinding } from "./OriginalPrefabView";
+import { resolveOriginalPreviewSkin } from "../simulator/public/settings";
+import { OriginalSpecialSkinRow } from "./OriginalSpecialSkinRow";
+import { OriginalSpecialSkinSelectDialog, OriginalSpecialSkinDetailDialog } from "./OriginalSpecialSkinDialogs";
+import { useOriginalSpecialSkinPreparation } from "./useOriginalSpecialSkinPreparation";
+import { hasAppliedSpecialComponent, selectSpecialSkin, selectableSpecialSkins, specialSkinMaster, type SelectedSpecialSkin } from "./originalSpecialSkinSelection";
 
 type Props = EditorSettingsModalProps & { onSettingsError?: (message: string) => void };
 const shell = new OriginalPrefabModel(ORIGINAL_PREFABS.rhythmgamesettingdialog!);
@@ -26,6 +31,13 @@ export function OriginalGameSettingsModal(props: Props) {
   const [saving, setSaving] = useState(false);
   const [guide, setGuide] = useState<OriginalSettingsGuideKey | null>(null);
   const [rhythmAdjust, setRhythmAdjust] = useState(false);
+  const [specialDialog, setSpecialDialog] = useState<"limited" | "collabo" | "detail" | null>(null);
+  const [specialDetail, setSpecialDetail] = useState<SelectedSpecialSkin | null>(null);
+  const [specialDialogClosing, setSpecialDialogClosing] = useState(false);
+  const [preparingSkin, setPreparingSkin] = useState(false);
+  const prepareSkin = useOriginalSpecialSkinPreparation();
+  const skinRequest = useRef(0), preparingRef = useRef(false);
+  useEffect(() => () => { skinRequest.current++; }, []);
   // OptionTabPageController hides its pages; LiveSkinSettings retains the preview.
   const scrollStates = useRef(Array.from({ length: 4 }, () => ({ value: 0 })));
   const visitedPages = useRef(new Set<number>());
@@ -40,24 +52,68 @@ export function OriginalGameSettingsModal(props: Props) {
   // across dialog lifetimes. Only the visible page owns a renderer and playback.
   const previewOptions = props.open && ready ? draft.options : props.optionSettings;
   const skin = previewOptions.simulatorSettings.skin;
-  const previewResources = useOriginalSkinPreviewResources(skin.fieldSkin, props.onSettingsError);
-  const previewAnimated = useOriginalAnimatedSkinResources(skin.noteSkin, skin.directionalFlick, props.onSettingsError);
+  const recipe = useMemo(() => resolveOriginalPreviewSkin(skin), [skin]);
+  const previewResources = useOriginalSkinPreviewResources(recipe, props.onSettingsError);
+  const previewAnimated = useOriginalAnimatedSkinResources(recipe, props.onSettingsError);
   const previewEffects = useOriginalPreviewParticleResources(skin, props.onSettingsError);
   const previewSound = useOriginalSkinSound(skin.judgeSE,
-    previewOptions.noteSeVolumePercent * previewOptions.simulatorSettings.masterVolumePercent / 10000, props.onSettingsError);
+    previewOptions.noteSeVolumePercent * previewOptions.simulatorSettings.masterVolumePercent / 10000, props.onSettingsError, "preview", recipe.tapSE.logicalResource!);
   useEffect(() => {
     if (props.open) {
       scrollStates.current.forEach(state => { state.value = 0; });
       setDraft(fromProps(current.current)); setReady(true);
     }
-    else { setReady(false); setGuide(null); setRhythmAdjust(false); visitedPages.current.clear(); }
+    else { skinRequest.current++; preparingRef.current = false; setPreparingSkin(false); setSpecialDialog(null); setSpecialDialogClosing(false);
+      setReady(false); setGuide(null); setRhythmAdjust(false); visitedPages.current.clear(); }
   }, [props.open]);
   const tab = draft.options.simulatorSettings.lastTab;
   if (props.open && ready) visitedPages.current.add(tab);
   const pages = useMemo(() => Array.from({ length: 4 }, (_, index) =>
     buildOriginalSettingsPage(index, draft, setDraft, setGuide, () => setRhythmAdjust(true))), [draft]);
+  const commitSpecial = (special: SelectedSpecialSkin) => {
+    setDraft(old => ({ ...old, options: { ...old.options, simulatorSettings: { ...old.options.simulatorSettings,
+      skin: { ...old.options.simulatorSettings.skin, special: hasAppliedSpecialComponent(special) ? special : { kind: "none" } },
+      ...(special.kind === "collabo" ? { rememberedCollaboSkin: special } : { rememberedLimitedSkin: special }) } } }));
+  };
+  const applySpecial = async (special: SelectedSpecialSkin) => {
+    if (preparingRef.current) return;
+    // Original radio/detail changes notify the preview immediately. Only the
+    // past Limited selection dialog waits for its asset download before closing.
+    if (specialDialog !== "limited") {
+      commitSpecial(special); setSpecialDialogClosing(true); return;
+    }
+    const request = ++skinRequest.current;
+    preparingRef.current = true; setPreparingSkin(true);
+    let lease: Awaited<ReturnType<typeof prepareSkin>> | undefined;
+    try {
+      lease = await prepareSkin({ ...draft.options.simulatorSettings.skin, special });
+      if (skinRequest.current !== request) return;
+      commitSpecial(special); setSpecialDialogClosing(true);
+    } catch (cause) {
+      if (skinRequest.current === request) props.onSettingsError?.(cause instanceof Error ? cause.message : String(cause));
+    } finally {
+      if (lease) void lease.release().catch(console.error);
+      if (skinRequest.current === request) { preparingRef.current = false; setPreparingSkin(false); }
+    }
+  };
+  const enabledSpecial = draft.options.simulatorSettings.skin.special;
+  const closeSpecial = () => { if (!preparingRef.current) setSpecialDialogClosing(true); };
+  const specialClosed = () => { setSpecialDetail(null); setSpecialDialog(null); setSpecialDialogClosing(false); };
+  const rememberedCollabo = enabledSpecial.kind === "collabo" ? enabledSpecial : draft.options.simulatorSettings.rememberedCollaboSkin
+    ?? selectSpecialSkin(selectableSpecialSkins.find(row => row.kind === "collabo")!);
+  const rememberedLimited = enabledSpecial.kind === "limited" ? enabledSpecial : draft.options.simulatorSettings.rememberedLimitedSkin
+    ?? selectSpecialSkin(selectableSpecialSkins.find(row => row.kind === "limited")!);
+  const setSpecialKind = (kind: "collabo" | "limited" | "none") => {
+    if (kind === enabledSpecial.kind || preparingRef.current) return;
+    if (kind === "none") setDraft(old => ({ ...old, options: { ...old.options, simulatorSettings: { ...old.options.simulatorSettings,
+      skin: { ...old.options.simulatorSettings.skin, special: { kind: "none" } } } } }));
+    else {
+      const remembered = kind === "collabo" ? rememberedCollabo : rememberedLimited;
+      if (remembered) commitSpecial(selectSpecialSkin(specialSkinMaster(remembered)));
+    }
+  };
   const save = async () => {
-    if (savingRef.current) return;
+    if (savingRef.current || preparingRef.current) return;
     savingRef.current = true; setSaving(true);
     try {
       const accepted = await props.onApplyOptionSettings(draft.options);
@@ -97,17 +153,28 @@ export function OriginalGameSettingsModal(props: Props) {
   } });
   const pageOrigin = shell.transform(shell.nodeAt("Pages/PageRoot").id);
   return <><OriginalAuthoredDialog open={props.open && ready} model={model} bindings={{ buttons }}
-    motion="slide-left" busy={saving} onClose={() => void save()}>
+    motion="slide-left" busy={saving || preparingSkin} onClose={() => void save()}>
     {props.open && ready && <div className="original-prefab-origin" style={{ left: pageOrigin.x, top: -pageOrigin.y }}>
       {[...visitedPages.current].map(index => <OriginalPageVisible.Provider key={index} value={index === tab}>
         <div style={{ display: index === tab ? "contents" : "none" }}>
         {index === 2 ? <OriginalSkinSettingsPage model={pages[index]!.model} bindings={pages[index]!.bindings}
           resources={previewResources} animated={previewAnimated} effects={previewEffects} sound={previewSound}
+          specialRow={<OriginalSpecialSkinRow selected={enabledSpecial} busy={preparingSkin}
+            onKind={setSpecialKind} onSelect={() => { if (enabledSpecial.kind !== "none") setSpecialDialog(enabledSpecial.kind); }}
+            onDetail={() => { if (enabledSpecial.kind !== "none") { setSpecialDetail(enabledSpecial); setSpecialDialog("detail"); } }} />}
           draft={draft} visible={index === tab} onError={props.onSettingsError} scrollState={scrollStates.current[index]} />
           : <OriginalPageViewport model={pages[index]!.model} bindings={pages[index]!.bindings} scrollState={scrollStates.current[index]} />}
       </div></OriginalPageVisible.Provider>)}
     </div>}
   </OriginalAuthoredDialog>
+    {props.open && (specialDialog === "limited" || specialDialog === "collabo") && <OriginalSpecialSkinSelectDialog kind={specialDialog}
+      initial={specialDialog === "limited" ? rememberedLimited : rememberedCollabo ?? { kind: "none" }}
+      open={!specialDialogClosing} onClosed={specialClosed}
+      equipped={enabledSpecial} busy={preparingSkin} onApply={value => void applySpecial(value)}
+      onClose={closeSpecial} onError={props.onSettingsError} />}
+    {props.open && specialDialog === "detail" && specialDetail &&
+      <OriginalSpecialSkinDetailDialog initial={specialDetail} open={!specialDialogClosing} onClosed={specialClosed}
+        busy={preparingSkin} onApply={value => void applySpecial(value)} onClose={closeSpecial} />}
     <OriginalSettingsGuide route={props.open ? guide : null} onClose={() => setGuide(null)}
       onError={message => props.onSettingsError?.(message)} />
     {props.open && rhythmAdjust && <OriginalRhythmAdjustDialog draft={draft} onClose={() => setRhythmAdjust(false)}
