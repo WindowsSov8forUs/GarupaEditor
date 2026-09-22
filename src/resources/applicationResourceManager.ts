@@ -84,6 +84,7 @@ export class ApplicationResourceManager {
   writeSkinThumbnail(key: string, bytes: Uint8Array) { return this.backend.writeSkinThumbnail(key, bytes); }
   private readonly builtins = new Map<string, RegisteredBuiltinResource>();
   private readonly builtinInstalls = new Map<string, Promise<ResourceResult<ResourceDescriptor>>>();
+  private readonly networkInstalls = new Map<string, Promise<ResourceResult<ResourceDescriptor>>>();
   private readonly installed = new Map<string, StoredResourceRecord>();
   private readonly providers = new Map<string, ResourceCatalogProvider>();
   private readonly activeCatalogs = new Map<string, ResourceCatalogSnapshot>();
@@ -341,6 +342,19 @@ export class ApplicationResourceManager {
   async ensureAvailable(
     ref: ResourceRef,
     options: { readonly refresh?: boolean } = {},
+  ): Promise<ResourceResult<ResourceDescriptor>> {
+    const key = `${ref.id}:${options.refresh === true ? "refresh" : "cached"}`;
+    const pending = this.networkInstalls.get(key);
+    if (pending) return pending;
+    const operation = this.ensureResourceAvailable(ref, options);
+    this.networkInstalls.set(key, operation);
+    try { return await operation; }
+    finally { if (this.networkInstalls.get(key) === operation) this.networkInstalls.delete(key); }
+  }
+
+  private async ensureResourceAvailable(
+    ref: ResourceRef,
+    options: { readonly refresh?: boolean },
   ): Promise<ResourceResult<ResourceDescriptor>> {
     const builtin = this.builtins.get(ref.id);
     if (builtin !== undefined) return this.ensureBuiltinAvailable(builtin);

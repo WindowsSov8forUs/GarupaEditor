@@ -4,6 +4,7 @@ import App from "./App";
 import "./App.css";
 import { ApplicationResourceProvider } from "./resources/applicationResourceContext";
 import { bootstrapApplicationResources } from "./resources/applicationResources";
+import { preloadSkinResources } from "./resources/preloadSkinResources";
 import { SimulatorLoadingBoundary } from "./app/simulator/SimulatorLoadingBoundary";
 import { isTauri } from "@tauri-apps/api/core";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
@@ -107,6 +108,8 @@ void bootstrapApplicationResources(simulatorWindow ? async (manager) => {
     </AppErrorBoundary>,
   );
   if (resources.status === "rejected") await showSimulatorWindow();
+  else if (!simulatorWindow) void preloadSkinResources(resources.value).catch(error =>
+    console.warn("皮肤预下载暂不可用", error));
 }).catch(async (error: unknown) => {
   root.render(<main style={{ padding: 20 }}>资源系统初始化失败：{error instanceof Error ? error.message : String(error)}</main>);
   await showSimulatorWindow();
