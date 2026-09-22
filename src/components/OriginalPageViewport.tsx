@@ -4,11 +4,12 @@ import { OriginalPrefabModel, originalRef } from "./originalPrefabModel";
 
 export interface OriginalPageScrollState { value: number }
 
-export function OriginalPageViewport({ model, bindings, children, scrollState }: {
+export function OriginalPageViewport({ model, bindings, children, scrollState, layout }: {
   model: OriginalPrefabModel; bindings: OriginalViewBindings; children?: ReactNode;
   scrollState?: OriginalPageScrollState;
+  layout?: { scroll: string; content: string; bar: string; contentHeight?: number };
 }) {
-  const scroll = model.nodeAt("Contents/ScrollView"), content = model.nodeAt("Contents/ScrollView/Contents");
+  const scroll = model.nodeAt(layout?.scroll ?? "Contents/ScrollView"), content = model.nodeAt(layout?.content ?? "Contents/ScrollView/Contents");
   const panel = model.componentAt(scroll.id, "UIPanel")!;
   const clip = panel.data.mClipRange, offset = panel.data.mClipOffset, transform = model.transform(scroll.id);
   const x = transform.x + clip.x + offset.x - clip.z / 2;
@@ -31,8 +32,8 @@ export function OriginalPageViewport({ model, bindings, children, scrollState }:
         const height = bindings.radios?.[item.id]?.labelHeight ?? 100;
         return [-start.y + (lastRow * item.data.heightMargin + height / 2) * Math.abs(start.scaleY) - y];
       });
-    return Math.max(clip.w, ...bottoms);
-  }, [model, bindings.omit, bindings.radios, content.id, clip.w, y]);
+    return Math.max(clip.w, layout?.contentHeight ?? 0, ...bottoms);
+  }, [model, bindings.omit, bindings.radios, content.id, clip.w, y, layout?.contentHeight]);
   const maximum = Math.max(0, contentHeight - clip.w);
   useLayoutEffect(() => {
     if (viewport.current && scrollState) viewport.current.scrollTop = scrollState.value;
@@ -43,9 +44,10 @@ export function OriginalPageViewport({ model, bindings, children, scrollState }:
       if (scrollState) scrollState.value = viewport.current.scrollTop;
     }
   }, [maximum, scrollState]);
-  const bar = model.nodeAt("Contents/ScrollBar"), thumb = model.nodeAt("Contents/ScrollBar/Thumb");
+  const barPath = layout?.bar ?? "Contents/ScrollBar";
+  const bar = model.nodeAt(barPath), thumb = model.nodeAt(`${barPath}/Thumb`);
   const thumbSprite = model.componentAt(thumb.id, "UISprite")!;
-  const background = model.componentAt(model.nodeAt("Contents/ScrollBar/Background").id, "UISprite")!;
+  const background = model.componentAt(model.nodeAt(`${barPath}/Background`).id, "UISprite")!;
   const track = model.rect(background), barHeight = background.data.mHeight;
   const size = Math.min(1, clip.w / contentHeight);
   const fraction = maximum === 0 ? 0 : Math.min(1, Math.max(0, scrollTop / maximum));
