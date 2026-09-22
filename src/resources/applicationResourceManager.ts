@@ -1,3 +1,4 @@
+import { detectUserMediaType, hasCompatibleUserMediaMagic, normalizeMediaType } from "./userMediaFormat";
 import { appLog, startOperation } from "../logging/applicationLogger";
 import type {
   ApplicationResourceBackend,
@@ -843,52 +844,27 @@ function validateChartMediaImport(
     mediaType === null || !mediaType.startsWith(expectedMediaPrefix) ||
     !(input.bytes instanceof Uint8Array) || input.bytes.byteLength <= 0 ||
     !hasCompatibleUserMediaMagic(input.purpose, mediaType, input.bytes)
-  ) return invalid("resources.manager.invalid-user-media-bytes");
+  ) {
+    const context = {
+      purpose: input.purpose,
+      declaredMediaType: mediaType,
+      detectedMediaType: input.bytes instanceof Uint8Array ? detectUserMediaType(input.bytes) : null,
+      byteLength: input.bytes instanceof Uint8Array ? input.bytes.byteLength : null,
+      hasFileName: typeof input.fileName === "string" && input.fileName.trim().length > 0,
+    };
+    appLog("warn", "resources.media.validation-failed", context);
+    return resourceRejected(
+      "invalid-resource-request",
+      "resources.manager.invalid-user-media-bytes",
+      `Media validation failed: purpose=${context.purpose}, declared=${context.declaredMediaType ?? "unknown"}, detected=${context.detectedMediaType ?? "unknown"}, bytes=${context.byteLength ?? "invalid"}, hasFileName=${context.hasFileName}.`,
+    );
+  }
   return resourceAccepted(Object.freeze({
     purpose: input.purpose,
     fileName: input.fileName.trim(),
     mediaType,
     bytes: Uint8Array.from(input.bytes),
   }));
-}
-
-function normalizeMediaType(value: unknown): string | null {
-  if (typeof value !== "string") return null;
-  const normalized = value.split(";", 1)[0]!.trim().toLowerCase();
-  return /^[a-z0-9!#$&^_.+-]+\/[a-z0-9!#$&^_.+-]+$/.test(normalized) ? normalized : null;
-}
-
-function hasCompatibleUserMediaMagic(
-  purpose: UserMediaPurpose,
-  mediaType: string,
-  bytes: Uint8Array,
-): boolean {
-  const type = normalizeMediaType(mediaType);
-  if (type === null) return false;
-  if (purpose === "cover" || purpose === "stage-backdrop") {
-    if (type === "image/png") return bytes.length >= 8 && [137, 80, 78, 71, 13, 10, 26, 10].every((value, index) => bytes[index] === value);
-    if (type === "image/jpeg" || type === "image/jpg") return bytes[0] === 0xff && bytes[1] === 0xd8;
-    if (type === "image/webp") return ascii(bytes, 0, "RIFF") && ascii(bytes, 8, "WEBP");
-    if (type === "image/gif") return ascii(bytes, 0, "GIF8");
-    return false;
-  }
-  if (purpose === "bgm") {
-    if (type === "audio/mpeg" || type === "audio/mp3") return ascii(bytes, 0, "ID3") || (bytes[0] === 0xff && (bytes[1]! & 0xe0) === 0xe0);
-    if (type === "audio/wav" || type === "audio/x-wav") return ascii(bytes, 0, "RIFF") && ascii(bytes, 8, "WAVE");
-    if (type === "audio/ogg") return ascii(bytes, 0, "OggS");
-    return false;
-  }
-  if (type === "video/mp4") return bytes.length >= 12 && ascii(bytes, 4, "ftyp");
-  if (type === "video/webm") return bytes[0] === 0x1a && bytes[1] === 0x45 && bytes[2] === 0xdf && bytes[3] === 0xa3;
-  return false;
-}
-
-function ascii(bytes: Uint8Array, offset: number, value: string): boolean {
-  if (bytes.length < offset + value.length) return false;
-  for (let index = 0; index < value.length; index += 1) {
-    if (bytes[offset + index] !== value.charCodeAt(index)) return false;
-  }
-  return true;
 }
 
 function freezeCatalog(snapshot: ResourceCatalogSnapshot): ResourceCatalogSnapshot {
