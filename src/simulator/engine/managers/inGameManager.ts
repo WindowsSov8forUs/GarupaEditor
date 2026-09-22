@@ -197,7 +197,7 @@ export class InGameManager {
   }
 
   publishGameClearState(finished: boolean): void {
-    if (!finished) this.startupDirection?.beginGameClearPresentation(this.musicScoreController.currentBpm);
+    if (!finished) this.startupDirection?.beginGameClearPresentation(this.musicScoreController.stageTiming.bpm);
     this.currentGameStateValue = finished ? GameState.GameClearAnimEnd : GameState.GameClearAnimStart;
   }
 
@@ -289,9 +289,10 @@ export class InGameManager {
       const committed = laneFrame.value.commit();
       if (committed.status !== "ok") return this.latchFault(committed);
     }
-    this.startupDirection?.reflectStageCommands(this.musicScoreController.musicPosition, this.musicScoreController.currentBpm);
+    const stageTiming = this.musicScoreController.stageTiming;
+    this.startupDirection?.reflectStageCommands(stageTiming.position, stageTiming.bpm);
     this.startupDirection?.reflectStageMusicProgress(
-      this.musicScoreController.currentBeatProgress, this.musicScoreController.currentBpm,
+      stageTiming.beatProgress, stageTiming.bpm,
     );
     const productUpdate = this.garupaProduct?.update(deltaTimeSeconds) ?? ok(undefined);
     if (productUpdate.status !== "ok") return this.latchFault(productUpdate);

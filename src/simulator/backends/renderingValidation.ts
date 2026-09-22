@@ -235,6 +235,12 @@ export function validateAndFreezeRenderProfile(
 }
 
 const renderFloat32View = new DataView(new ArrayBuffer(4));
+const commonRenderFloats = [
+  Object.freeze({ value: 0, bits: "00000000" }),
+  Object.freeze({ value: -0, bits: "80000000" }),
+  Object.freeze({ value: 1, bits: "3F800000" }),
+  Object.freeze({ value: -1, bits: "BF800000" }),
+] as const;
 
 export function createRenderFloat32(value: number): SimulatorResult<RenderFloat32> {
   const rounded = Math.fround(value);
@@ -244,6 +250,9 @@ export function createRenderFloat32(value: number): SimulatorResult<RenderFloat3
       "Renderer values must be finite and representable by the output Float32 encoding.",
     );
   }
+  if (rounded === 0) return ok(commonRenderFloats[Object.is(rounded, -0) ? 1 : 0]);
+  if (rounded === 1) return ok(commonRenderFloats[2]);
+  if (rounded === -1) return ok(commonRenderFloats[3]);
   const view = renderFloat32View;
   view.setFloat32(0, rounded, false);
   return ok(Object.freeze({

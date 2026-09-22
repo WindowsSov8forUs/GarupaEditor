@@ -43,7 +43,7 @@ interface RecordingRenderObject {
 interface PendingRenderBatch {
   readonly capability: RenderCommandBatch;
   readonly commands: readonly RenderCommand[];
-  readonly objects: ReadonlyMap<string, RecordingRenderObject>;
+  readonly objects: ReadonlyMap<string, RecordingRenderObject | null>;
 }
 
 const RENDER_OBJECT_ROLES = new Set([
@@ -166,7 +166,15 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
         "Exactly one non-empty command batch may be preflighted for the current renderer state.",
       );
     }
-    const simulatedObjects = new Map(this.objects);
+    // Stage only touched identities; reads fall through to the committed table.
+    const changes = new Map<string, RecordingRenderObject | null>();
+    const get = (id: string) => changes.has(id) ? changes.get(id) ?? undefined : this.objects.get(id);
+    const simulatedObjects = {
+      get,
+      has: (id: string) => get(id) !== undefined,
+      set: (id: string, value: RecordingRenderObject) => { changes.set(id, value); },
+      delete: (id: string) => { changes.set(id, null); },
+    };
     const frozenCommands: RenderCommand[] = [];
     for (let index = 0; index < commands.length; index += 1) {
       const command = commands[index];
@@ -197,7 +205,7 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
     this.pendingBatch = Object.freeze({
       capability,
       commands: Object.freeze(frozenCommands),
-      objects: simulatedObjects,
+      objects: changes,
     });
     return ok(capability);
   }
@@ -216,9 +224,9 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
         "Only the exact one-use batch capability issued for the current session and sequence may commit.",
       );
     }
-    this.objects.clear();
     for (const [objectId, object] of pending.objects) {
-      this.objects.set(objectId, object);
+      if (object === null) this.objects.delete(objectId);
+      else this.objects.set(objectId, object);
     }
     if (this.recordCommands) this.commands.push(...pending.commands);
     this.nextSequence += pending.commands.length;
@@ -297,7 +305,7 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
 
   private validateCommand(
     command: RenderCommand,
-    objects: Map<string, RecordingRenderObject>,
+    objects: { get(id: string): RecordingRenderObject | undefined; has(id: string): boolean; set(id: string, value: RecordingRenderObject): void; delete(id: string): void },
   ): SimulatorResult<void> {
     switch (command.kind) {
       case "create-object":
@@ -520,7 +528,7 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
   }
 
   private requireObject(
-    objects: ReadonlyMap<string, RecordingRenderObject>,
+    objects: { has(id: string): boolean },
     renderObjectId: string,
   ): SimulatorResult<void> {
     return objects.has(renderObjectId)

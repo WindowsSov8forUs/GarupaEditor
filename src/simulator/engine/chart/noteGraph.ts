@@ -26,6 +26,8 @@ export interface DirectionalGraphSource<B extends number = number> {
   readonly directionalMemberRootIndex?: number;
   readonly directionalMemberOffset?: number;
   readonly laneSpan?: { readonly start: number; readonly end: number };
+  readonly storedAbsolutePos?: number;
+  readonly authoredAfterAbsolutePos?: number;
   readonly absolutePos: number;
   readonly afterNoteAbsolutePos: number;
   readonly buttonType: B;
@@ -33,12 +35,19 @@ export interface DirectionalGraphSource<B extends number = number> {
   readonly gameNoteType: number;
   readonly afterNoteType: number;
   readonly isInvisible: boolean;
-  readonly slideNoteList: readonly { readonly absolutePos: number; readonly buttonType: B; readonly laneSpan?: { readonly start: number; readonly end: number } }[];
+  readonly slideNoteList: readonly { readonly storedAbsolutePos?: number; readonly absolutePos: number; readonly buttonType: B; readonly laneSpan?: { readonly start: number; readonly end: number } }[];
 }
 
 export function directionalEndpointPosition(note: DirectionalGraphSource): number {
   const terminal = note.slideNoteList[note.slideNoteList.length - 1];
   return terminal?.absolutePos ?? note.afterNoteAbsolutePos;
+}
+
+/** Sync identity is authored Beat, not a possibly folded runtime timestamp. */
+export function authoredEndpointPosition(note: DirectionalGraphSource, after: boolean | number = false): number {
+  if (!after) return note.storedAbsolutePos ?? note.absolutePos;
+  const child = typeof after === "number" ? note.slideNoteList[after - 1] : note.slideNoteList[note.slideNoteList.length - 1];
+  return child === undefined ? note.authoredAfterAbsolutePos ?? note.afterNoteAbsolutePos : child.storedAbsolutePos ?? child.absolutePos;
 }
 
 export function directionalEndpointButton<B extends number>(note: DirectionalGraphSource<B>): B {
@@ -163,6 +172,8 @@ export function isSameDirectionalGroup(
     return a !== undefined && b !== undefined && a.rootIndex === b.rootIndex &&
       a.connectionIndex === b.connectionIndex && Math.abs(a.memberOffset - b.memberOffset) === 1;
   }
+  if ((source.authoredAfterAbsolutePos !== undefined || target.authoredAfterAbsolutePos !== undefined) &&
+    authoredEndpointPosition(source, true) !== authoredEndpointPosition(target, true)) return false;
   const kind = directionalGroupKind(source);
   if (kind === null || !matchesDirectionalKind(target, kind)) {
     return false;

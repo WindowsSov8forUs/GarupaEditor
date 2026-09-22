@@ -40,6 +40,8 @@ export interface NoteStateSnapshot {
 }
 
 export interface ManualNoteRuntime {
+  readonly usesFoldedTime?: boolean;
+  readonly isStartupExpired?: (position: number) => boolean;
   readonly getExecuteFrame: () => number;
   readonly getSlideChildPhase: (index: number) => SimulatorResult<"wait" | "move" | "stop">;
   readonly stopSlideHeadAtJudgeLine: () => SimulatorResult<boolean>;

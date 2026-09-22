@@ -2178,6 +2178,7 @@ export class RenderCommandProducer {
         this.creationSequenceByObjectId.get(renderObjectId)!, moved.unclipped);
     }
     this.appendOrdinarySlideHides(commands, poolObjectId, childStates, nextChildStates, hideRequests);
+    const materialRole = slideLineMaterialRole(stopControl.rootSource.slideNoteList.some(child => child.isInvisible));
     for (let index = 0; index < advanced.value.childStates.length; index += 1) {
       const state = nextChildStates[index]!;
       const segment = advanced.value.segments[index]!;
@@ -2204,7 +2205,7 @@ export class RenderCommandProducer {
       }
       appendCurveMesh(commands, base, meshObjectId, segment.geometry, scene,
         this.creationSequenceByObjectId.get(meshObjectId)!, false,
-        slideLineMaterialRole(stopControl.rootSource.slideNoteList.some(child => child.isInvisible)), state.meshVisible);
+        materialRole, state.meshVisible);
     }
     const transaction = this.preflight(commands);
     return transaction.status === "ok"

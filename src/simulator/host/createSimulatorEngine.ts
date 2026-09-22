@@ -725,7 +725,9 @@ class SimulatorEngineHost implements SimulatorEngine {
     if (ended.status !== "ok") return ended;
     // Original transitionGameEndState chooses clear before Life-zero, after
     // all judgement/Record/HUD reflection for the current gameplay update.
-    if (!ended.value) {
+    const awaitingFoldedNotes = this.inGameManager.musicScoreController.signedTempo?.folded === true &&
+      this.inGameManager.noteManager.hasPendingNotes;
+    if (!ended.value || awaitingFoldedNotes) {
       return manager.singleGameOver &&
         this.inGameManager.noteManager.inGameCalculatedData.mode.sessionMode === "live"
         ? this.commitGameOver()

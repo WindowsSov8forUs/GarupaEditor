@@ -1,3 +1,4 @@
+import { authoredEndpointPosition } from "../chart/noteGraph";
 import { findBatchBpmCommand, isBpmCommand } from "../chart/noteGraph";
 import { connectDirectionalMemberBatch, connectionDirection, directionalConnectionEndpoints, directionalConnectionPresentation, reconnectDirectionalSyncConnections, slideDirectionalAnchorEndpoint } from "../rendering/directionalConnectionRules";
 import { noteMotionY, noteSpatialY, noteUnclippedSyncTarget } from "../rendering/ordinaryNoteGeometry";
@@ -21,7 +22,6 @@ import {
   directionalEndpointButton,
   directionalEndpointLane,
   frontEndpointLane,
-  directionalEndpointPosition,
   isSameDirectionalGroup,
 } from "../chart/noteGraph";
 import type { NoteFamily } from "../data/noteData";
@@ -214,6 +214,7 @@ export class NoteManager {
     0, 0, 0, 0,
   ];
   private nextBatchIndexValue = 0;
+  private catchingStartup = false;
   private bpmPoolCursorValue = 0;
   private outerFrameIndexValue = 0;
   private setupComplete = false;
@@ -520,6 +521,8 @@ export class NoteManager {
           submitJudgement: this.submitAutoLiveJudgement,
         });
         note.registerManualRuntime({
+          usesFoldedTime: this.musicScoreController.signedTempo?.folded === true,
+          isStartupExpired: position => this.musicScoreController.signedTempo?.folded === true && position < this.musicScoreController.signedTempo.positionAtSeconds(0),
           getExecuteFrame: () => this.musicScoreController.executeFrame,
           getSlideChildPhase: (index) => {
             if (note.noteInformation?.laneSpan !== undefined && this.projectedGeometry !== null)
@@ -570,6 +573,10 @@ export class NoteManager {
             return snapped.status === "ok" ? ok(true) : snapped;
           },
           judgeSlide: (source) => {
+            const tempo = this.musicScoreController.signedTempo;
+            if (tempo?.folded && !source.isInvisible && !this.inGameCalculatedData.isAutoPlay && !this.isMoveTime() &&
+              source.absolutePos < tempo.positionAtSeconds(0))
+              return ok({ result: -1 as const, correction: 0, hasReachedPerfectLine: false });
             if (note.noteInformation?.laneSpan !== undefined && this.projectedGeometry !== null) {
               const y = this.projectedGeometry.judgeY(source);
               return y.status === "ok" ? this.slideNoteManager.judge(source, y.value) : y;
@@ -680,11 +687,19 @@ export class NoteManager {
     this.clock.setExecuteFrame(substepExecuteFrame);
     const renderFrame = this.renderProducer?.beginOuterFrame(this.outerFrameIndexValue);
     if (renderFrame?.status === "integrity-failure") return renderFrame;
+    const firstFrame = this.outerFrameIndexValue === 0;
     this.outerFrameIndexValue += 1;
 
     for (let substepIndex = 0; substepIndex < substepCount; substepIndex += 1) {
       const renderSubstep = this.renderProducer?.beginSubstep(substepIndex);
       if (renderSubstep?.status === "integrity-failure") return renderSubstep;
+      if (firstFrame && substepIndex === 0) {
+        this.catchingStartup = true;
+        try {
+          const caughtUp = this.catchUpStartup(substepIndex);
+          if (caughtUp.status !== "ok") return caughtUp;
+        } finally { this.catchingStartup = false; }
+      }
       const advanceResult = this.clock.advance(substepDelta);
       if (advanceResult.status !== "ok") {
         return advanceResult;
@@ -704,6 +719,19 @@ export class NoteManager {
           bpmIndex += 1;
         }
       }
+      const activeUpdate = this.updateActiveNotes(substepDelta);
+      if (activeUpdate.status !== "ok") return activeUpdate;
+
+      const activationResult = this.activateDueBatches(substepIndex);
+      if (activationResult.status !== "ok") {
+        return activationResult;
+      }
+    }
+
+    return ok(undefined);
+  }
+
+  private updateActiveNotes(deltaTimeSeconds: number, selected?: ReadonlySet<NoteBase>): SimulatorResult<void> {
       let activeIndex = this.activeNotesValue.length - 1;
       while (activeIndex >= 0) {
         const note = this.activeNotesValue[activeIndex];
@@ -713,13 +741,14 @@ export class NoteManager {
             "No recovered Update caller removes a different lower-index active Note in this stage.",
           );
         }
+        if (selected !== undefined && !selected.has(note)) { activeIndex -= 1; continue; }
         if (this.renderProducer !== null && note instanceof NoteSlide && note.pendingBeganPlacement) {
           const placed = this.advanceOrdinaryRenderMotion(note, Math.fround(0), "preserve", true);
           if (placed.status !== "ok") return placed;
           note.commitBeganPlacement();
         }
         const stateBefore = note.state;
-        const updateResult = note.executeUpdate(substepDelta);
+        const updateResult = note.executeUpdate(deltaTimeSeconds);
         if (updateResult.status !== "ok") {
           return updateResult;
         }
@@ -731,10 +760,10 @@ export class NoteManager {
         }
         if (note.state !== NoteState.Deactive) {
           if (note instanceof NoteSlide && note.noteInformation?.laneSpan !== undefined) {
-            const projected = this.advanceProjectedChildren(note, substepDelta);
+            const projected = this.advanceProjectedChildren(note, deltaTimeSeconds);
             if (projected?.status === "integrity-failure") return projected;
           }
-          const children = this.updateOrdinarySlideChildren(substepDelta, true, note);
+          const children = this.updateOrdinarySlideChildren(deltaTimeSeconds, true, note);
           if (children.status !== "ok") return children;
           if (note instanceof NoteSlide) {
             const afterChildren = note.executeAfterChildrenUpdate();
@@ -752,10 +781,10 @@ export class NoteManager {
 
       for (const note of this.activeNotesValue) {
         if (note instanceof NoteSlide || note.noteInformation?.laneSpan === undefined) continue;
-        const projected = this.advanceProjectedChildren(note, substepDelta);
+        const projected = this.advanceProjectedChildren(note, deltaTimeSeconds);
         if (projected?.status === "integrity-failure") return projected;
       }
-      const longChildUpdate = this.updateOrdinaryLongChildren(substepDelta);
+      const longChildUpdate = this.updateOrdinaryLongChildren(deltaTimeSeconds);
       if (longChildUpdate.status !== "ok") {
         return longChildUpdate;
       }
@@ -774,12 +803,32 @@ export class NoteManager {
         return multipleDirectionalLineUpdate;
       }
 
-      const activationResult = this.activateDueBatches(substepIndex);
-      if (activationResult.status !== "ok") {
-        return activationResult;
+    return ok(undefined);
+  }
+
+  private catchUpStartup(substepIndex: number): SimulatorResult<void> {
+    const tempo = this.musicScoreController.signedTempo;
+    if (!tempo?.folded) return ok(undefined);
+    const cutoff = tempo.positionAtSeconds(0);
+    while ((this.batches[this.nextBatchIndexValue]?.absolutePos ?? Infinity) < cutoff) {
+      const batch = this.batches[this.nextBatchIndexValue]!;
+      const activated = this.activateCurrentBatch(substepIndex);
+      if (activated.status !== "ok") return activated;
+      // Drain the shared state machines at the same clock instant, in connection order.
+      // A graph-derived bound allows Move -> Wait -> Stop and each child exactly once.
+      const owners = new Set(batch.informationList.flatMap(source => {
+        const note = this.getActiveNote(source); return note === null ? [] : [note];
+      }));
+      const progress = () => [...owners].map(note => `${note.state}:${note instanceof NoteSlide ?
+        `${note.headJudged}:${note.afterNotes.filter(child => child.judged).length}` : ""}`).join(";");
+      const steps = batch.informationList.reduce((count, source) => count + 2 * source.slideNoteList.length + 4, 0);
+      for (let step = 0; step < steps; step++) {
+        const before = progress();
+        const updated = this.updateActiveNotes(0, owners);
+        if (updated.status !== "ok") return updated;
+        if (progress() === before) break;
       }
     }
-
     return ok(undefined);
   }
 
@@ -796,7 +845,10 @@ export class NoteManager {
     return ok(undefined);
   }
 
+  get hasPendingNotes(): boolean { return this.nextBatchIndexValue < this.batches.length || this.activeNotesValue.length > 0; }
+
   getAdjustedMusicPosition(): number {
+    if (this.catchingStartup && this.musicScoreController.signedTempo?.folded) return this.musicScoreController.signedTempo.positionAtSeconds(0);
     return this.musicScoreController.getAdjustedMusicPosition(
       this.judgementAdjustValueB,
     );
@@ -1057,7 +1109,7 @@ export class NoteManager {
         ...allInformation.filter((candidate) =>
           candidate !== root &&
           candidate.fireNoteType === FrontNoteType.LongMultipleDirectionalFlickAdd &&
-          directionalEndpointPosition(candidate) === root.afterNoteAbsolutePos &&
+          authoredEndpointPosition(candidate, true) === authoredEndpointPosition(root, true) &&
           isSameDirectionalGroup(root, candidate)),
       ];
       if (members.length < 2) {
@@ -1095,7 +1147,7 @@ export class NoteManager {
         ...allInformation.filter((candidate) =>
           candidate !== root &&
           candidate.fireNoteType === visualType &&
-          directionalEndpointPosition(candidate) === directionalEndpointPosition(root) &&
+          authoredEndpointPosition(candidate, true) === authoredEndpointPosition(root, true) &&
           isSameDirectionalGroup(root, candidate)),
       ];
       if (members.length < 2) {
@@ -1602,6 +1654,7 @@ export class NoteManager {
     targetA: NoteBase, afterA: NoteConnectionEndpoint, targetB: NoteBase, afterB: NoteConnectionEndpoint,
     existing: ActiveOrdinarySyncLine | null = null,
   ): SimulatorResult<void> {
+    if (authoredEndpointPosition(targetA.noteInformation!, afterA) !== authoredEndpointPosition(targetB.noteInformation!, afterB)) return ok(undefined);
     if (!this.inGameCalculatedData.isSyncLineEnabled) {
       this.suppressedOrdinarySyncLinePairCountValue += 1;
       return ok(undefined);
@@ -1832,8 +1885,8 @@ export class NoteManager {
       const batch = this.batches[index];
       const activated = this.activateCurrentBatch(substepIndex);
       if (activated.status !== "ok") return activated;
-      // Only a separate SV visual axis needs to drain independently of the
-      // original launch scan. Coordinates and width never select another clock.
+      // SV and folded time can have several due batches in one update.
+      // Drain them through the same activation path.
       if (this.nextBatchIndexValue === index || batch === undefined ||
         !this.clock.usesIndependentVisualAxis(batch)) return ok(undefined);
     }

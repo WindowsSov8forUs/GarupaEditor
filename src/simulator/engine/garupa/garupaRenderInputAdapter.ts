@@ -162,7 +162,7 @@ export class GarupaRenderInputAdapter {
           this.singleStates.set(node.identity, { ...state, motionState });
           return ok(undefined);
         }
-        if (placement === null && this.axisGroups.has(node.timingGroup)) {
+        if (placement === null && this.usesNodeAxis(node)) {
           const moved = this.advanceSingle(node, { ...state, motionState }, frame, input);
           if (moved.status !== "ok") return moved;
           this.singleStates.set(node.identity, moved.value);
@@ -183,7 +183,7 @@ export class GarupaRenderInputAdapter {
     }
     if (!(note instanceof NoteLong || note instanceof NoteSlide)) return ok(undefined);
     const chain = this.chainByIdentity.get(node.chainIdentity)!;
-    const nodes = chain.connectionIdentities.map(id => noteRenderInput(this.chart.nodeByIdentity.get(id)!));
+    const nodes = this.renderNodesByChain.get(chain.identity)!;
     const previous = this.slideStates.get(chain.identity);
     let state: ExtensionSlideState | undefined = previous;
     if (state === undefined) {
@@ -193,7 +193,7 @@ export class GarupaRenderInputAdapter {
     }
     if (!children) {
       const moved = placement === null ? advanceExtensionMotion(state.root, nodes[0]!, frame, input,
-        this.axis, this.axisGroups.has(nodes[0]!.timingGroup)) : ok(state.root);
+        this.axis, this.usesNodeAxis(nodes[0]!)) : ok(state.root);
       if (moved.status !== "ok") return moved;
       let root = placement === null && moved.value.phase === "stop" ? { ...moved.value, phase: "move" as const } : moved.value;
       const vertical = advanceOrdinaryNoteVerticalMotion({ ...root.motionState, deltaTime: f32(0) });
@@ -209,7 +209,7 @@ export class GarupaRenderInputAdapter {
         // Activation follows child updates in NoteManager. Publish initial
         // geometry here without consuming another outer-frame delta.
         const initialized = advanceExtensionSlide(nodes, next, { ...frame, deltaTimeSeconds: 0 }, this.scene, this.ordinaryScene,
-          this.axis, node => this.axisGroups.has(node.timingGroup), note, false, true);
+          this.axis, node => this.usesNodeAxis(node), note, false, true);
         if (initialized.status !== "ok") return initialized;
         this.slideStates.set(chain.identity, { ...initialized.value.state, segments: initialized.value.segments });
       } else {
@@ -218,7 +218,7 @@ export class GarupaRenderInputAdapter {
       return ok(undefined);
     }
     const advanced = advanceExtensionSlide(nodes, state, frame, this.scene, this.ordinaryScene, this.axis,
-      node => this.axisGroups.has(node.timingGroup), note, false);
+      node => this.usesNodeAxis(node), note, false);
     if (advanced.status !== "ok") return advanced;
     this.slideStates.set(chain.identity, { ...advanced.value.state, segments: advanced.value.segments });
     if (note instanceof NoteSlide) note.commitRenderHides();
@@ -234,17 +234,23 @@ export class GarupaRenderInputAdapter {
       if (created.status !== "ok") return created;
       state = created.value;
     }
-    const advanced = advanceExtensionMotion(state, node, frame, input, this.axis, this.axisGroups.has(node.timingGroup));
+    const advanced = advanceExtensionMotion(state, node, frame, input, this.axis, this.usesNodeAxis(node));
     return advanced.status !== "ok" ? advanced : ok(advanced.value.phase === "stop" ? { ...advanced.value, phase: "move" } : advanced.value);
   }
 
   private connections: PresentationConnections | undefined;
   private readonly judgedNodeIdentities = new Set<string>();
   private readonly chainByIdentity: ReadonlyMap<string, GarupaProductSlideChain>;
+  private readonly renderNodesByChain = new Map<string, readonly GarupaProductNode[]>();
   private readonly slideStates = new Map<string, ProductSlideState>();
   private readonly singleStates = new Map<string, OrdinaryLongNormalChildState>();
   private readonly axisGroups: ReadonlySet<string>;
   private readonly axisChains: ReadonlySet<string>;
+  private readonly firstLinearChainPosition = new Map<string, number>();
+  private usesNodeAxis(node: GarupaProductNode): boolean {
+    return this.axisGroups.has(node.timingGroup) || node.chainIdentity !== null &&
+      this.chainByIdentity.get(node.chainIdentity)?.independentTiming === true;
+  }
 
   constructor(
     private readonly producer: RenderCommandProducer,
@@ -263,9 +269,17 @@ export class GarupaRenderInputAdapter {
     } | null>,
   ) {
     this.chainByIdentity = new Map(chart.slideChains.map((chain) => [chain.identity, chain]));
+    for (const chain of chart.slideChains) this.renderNodesByChain.set(chain.identity,
+      Object.freeze(chain.connectionIdentities.map(id => noteRenderInput(chart.nodeByIdentity.get(id)!))));
     this.axisGroups = new Set(axis.groups.filter(group => group.changes.some(change => change.speed !== 1)).map(group => group.id));
-    this.axisChains = new Set(chart.slideChains.filter(chain => chain.connectionIdentities.some(id =>
+    this.axisChains = new Set(chart.slideChains.filter(chain => chain.independentTiming || chain.connectionIdentities.some(id =>
       this.axisGroups.has(chart.nodeByIdentity.get(id)!.timingGroup))).map(chain => chain.identity));
+    for (const chain of chart.slideChains) {
+      if (chain.connectionIdentities.every(id => !this.axisGroups.has(chart.nodeByIdentity.get(id)!.timingGroup))) {
+        this.firstLinearChainPosition.set(chain.identity, chain.connectionIdentities.reduce(
+          (first, id) => Math.min(first, chart.nodeByIdentity.get(id)!.absolutePosition), Infinity));
+      }
+    }
     for (const node of chart.authoredNodes) {
       this.authoredRoots.set(node.chartItemIndex, node.runtimeRoot!);
       // The shared connection graph also contains ordinary Slide/Long owners.
@@ -278,7 +292,7 @@ export class GarupaRenderInputAdapter {
         }
         endpoints[node.connectionIndex] = node;
       }
-      if (this.axisGroups.has(node.timingGroup) || node.chainIdentity !== null && this.axisChains.has(node.chainIdentity)) this.earlyConnectionItems.add(node.chartItemIndex);
+      if (this.usesNodeAxis(node) || node.chainIdentity !== null && this.axisChains.has(node.chainIdentity)) this.earlyConnectionItems.add(node.chartItemIndex);
     }
     for (const node of chart.authoredNodes) {
       const source = node.scoringSource ?? chart.originalSources.get(node.identity);
@@ -382,13 +396,18 @@ export class GarupaRenderInputAdapter {
     const plannedJudged = new Set(this.judgedNodeIdentities);
     for (const node of judgedNodes) plannedJudged.add(node.identity);
     for (const id of frameInput.missed) plannedJudged.add(id);
+    const renderChains = this.chart.slideChains.filter(chain =>
+      this.slideStates.get(chain.identity)?.finished !== true &&
+      (this.slideStates.has(chain.identity) || this.axisChains.has(chain.identity) &&
+        (this.firstLinearChainPosition.get(chain.identity) ?? -Infinity) <= frameInput.launcherMusicPosition));
+    const scheduledChains = new Set(renderChains.map(chain => chain.identity));
     const samples = new Map<string, ProductNodeSample>();
     for (const authored of this.chart.nodes) {
       const node = this.connectionMembers.get(authored.identity)?.find(member => member.identity === authored.identity) ?? noteRenderInput(authored);
       const retired = node.chainIdentity === null ? plannedJudged.has(node.identity)
         : this.slideStates.get(node.chainIdentity)?.finished === true ||
           this.activatedConnectionSources.has(node.runtimeRoot!) && this.sharedOwner(node.runtimeRoot!) === null;
-      if (retired || !this.axisGroups.has(node.timingGroup)) {
+      if (retired || !this.usesNodeAxis(node) || node.chainIdentity !== null && !scheduledChains.has(node.chainIdentity)) {
         // Shared geometry is reflected below. Retired notes need no new SV projection.
         samples.set(node.identity, { node, curve: 0, position: null, uniformScale: null, moving: false, visible: false });
         continue;
@@ -403,7 +422,9 @@ export class GarupaRenderInputAdapter {
       const curve = calculateNoteMotionCurve(progress, true);
       let position: RenderVector3 | null = null;
       let uniformScale: RenderFloat32 | null = null;
-      if (Number.isFinite(curve)) {
+      // Slide transforms come from the shared lifecycle below. Only its signed
+      // curve is needed here; projecting again would immediately be overwritten.
+      if (node.chainIdentity === null && Number.isFinite(curve)) {
         const projected = this.scene.projectLaneAtCurve(
           projectedNodeLane(node),
           curve,
@@ -441,7 +462,7 @@ export class GarupaRenderInputAdapter {
       if (node.chainIdentity !== null || plannedJudged.has(node.identity)) continue;
       let state = plannedSingles.get(node.identity);
       const hasOwner = this.sharedOwner(node.runtimeRoot!) !== null;
-      if (!hasOwner && !this.axisGroups.has(node.timingGroup)) continue;
+      if (!hasOwner && !this.usesNodeAxis(node)) continue;
       if (!hasOwner) {
         const advanced = this.advanceSingle(node, state, frame, motionInput);
         if (advanced.status !== "ok") return advanced;
@@ -450,18 +471,17 @@ export class GarupaRenderInputAdapter {
       }
       if (state === undefined) continue;
       const previous = samples.get(node.identity)!;
-      samples.set(node.identity, { ...previous, curve: this.axisGroups.has(node.timingGroup) ? previous.curve
+      samples.set(node.identity, { ...previous, curve: this.usesNodeAxis(node) ? previous.curve
           : calculateNoteMotionCurve(state.motionState.progressRate.value, true), position: state.renderedTransform.position, unclipped: state.renderedTransform.unclipped,
         uniformScale: state.renderedTransform.localScale.x, moving: state.phase === "move",
-        visible: state.phase !== "wait" && (!this.axisGroups.has(node.timingGroup) || previous.curve >= entryCurve) });
+        visible: state.phase !== "wait" && (!this.usesNodeAxis(node) || previous.curve >= entryCurve) });
     }
     const plannedSlides = new Map(this.slideStates);
     // Non-SV chains start only when NoteManager activates their actual owner.
     // Signed displacement alone may require presentation before that activation.
-    const renderChains = this.chart.slideChains.filter(chain =>
-      this.axisChains.has(chain.identity) || this.slideStates.has(chain.identity));
+
     for (const chain of renderChains) {
-      const nodes = chain.connectionIdentities.map(id => noteRenderInput(this.chart.nodeByIdentity.get(id)!));
+      const nodes = this.renderNodesByChain.get(chain.identity)!;
       const root = nodes[0]!.runtimeRoot;
       const owner = root === undefined ? null : this.sharedOwner(root);
       let cached = this.slideStates.get(chain.identity);
@@ -479,7 +499,7 @@ export class GarupaRenderInputAdapter {
       const advanced = cached !== undefined && (owner !== null || complete)
         ? ok({ state: cached, segments: cached.segments })
         : advanceExtensionSlide(nodes, cached, frame, this.scene, this.ordinaryScene, this.axis,
-          node => this.axisGroups.has(node.timingGroup), null);
+          node => this.usesNodeAxis(node), null);
       if (advanced.status !== "ok") return advanced;
       const state: ProductSlideState = { ...advanced.value.state, segments: advanced.value.segments,
         ...(complete ? { finished: true, playableFinished: true, flashActive: false, rootVisible: false } : {}) };
@@ -496,7 +516,7 @@ export class GarupaRenderInputAdapter {
           curve: this.axisChains.has(chain.identity) ? slideRenderedCurve(lifecycle, node, previous.curve, this.scene)
             : stopped ? 1 : lifecycle.phase === "wait" ? 0 : calculateNoteMotionCurve(lifecycle.motionState.progressRate.value, true), moving: lifecycle.phase === "move",
           visible: !state.finished && visible && lifecycle.phase !== "wait" &&
-            (stopped || !this.axisGroups.has(node.timingGroup) || previous.curve >= entryCurve) });
+            (stopped || !this.usesNodeAxis(node) || previous.curve >= entryCurve) });
       }
     }
 

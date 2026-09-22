@@ -40,6 +40,20 @@ export interface ExtensionSlideState {
   readonly playableFinished: boolean;
 }
 
+// Chart topology and source coordinates are immutable for a session. Keep the
+// shared lifecycle inputs with that chain rather than rebuilding them per frame.
+const geometryByChain = new WeakMap<readonly GarupaProductNode[],
+  SlideGeometrySource & { readonly slideNoteList: readonly SlideGeometrySource[] }>();
+function chainGeometry(nodes: readonly GarupaProductNode[]) {
+  let source = geometryByChain.get(nodes);
+  if (source === undefined) {
+    source = Object.freeze({ ...geometrySource(nodes[0]!),
+      slideNoteList: Object.freeze(nodes.slice(1).map(node => Object.freeze(geometrySource(node)))) });
+    geometryByChain.set(nodes, source);
+  }
+  return source;
+}
+
 export function createExtensionSlideState(nodes: readonly GarupaProductNode[],
   scene: GarupaProductSceneLayout, axis: GarupaProductTimingGroupAxisProfile): SimulatorResult<ExtensionSlideState> {
   const states: OrdinarySlideChildState[] = [];
@@ -71,7 +85,8 @@ export function advanceExtensionSlide(
 ): SimulatorResult<{ readonly state: ExtensionSlideState; readonly segments: OrdinarySlideFrameResult["segments"] }> {
   const head = nodes[0]!;
   const chainUsesAxis = nodes.some(usesAxis);
-  const sources: SlideGeometrySource[] = nodes.slice(1).map(geometrySource);
+  const rootSource = chainGeometry(nodes);
+  const sources = rootSource.slideNoteList;
   const input: OrdinaryLongNormalChildFrameInput = {
     deltaTime: f32(frame.deltaTimeSeconds), launcherMusicPosition: frame.launcherMusicPosition,
     adjustedMusicPosition: frame.adjustedMusicPosition,
@@ -161,14 +176,13 @@ export function advanceExtensionSlide(
         curves.push(calculateNoteMotionCurve(progress, true));
       }
     }
-    let meshIndex = 0;
     const advanced = advanceOrdinarySlideChildren(root.renderedTransform, head.width, children,
       input, ordinaryScene.screenToSafeAreaRatio!, ordinaryScene.longMeshColor!, {
         advanceMotion: frame.deltaTimeSeconds > 0,
         rootWaiting: root.phase === "stop", rootExitApplied, hiddenEndpoints: head.runtimeRoot?.hiddenSlideEndpoints,
         judgementAdjustValueB: frame.adjustment,
         virtualPerfectLine: scene.virtualPerfectLine,
-        rootSource: { ...geometrySource(head), slideNoteList: sources },
+        rootSource,
         rootMotionState: root.motionState, currentBpm: frame.currentBpm,
         virtualLaneDeltaX: scene.laneSpacingWorld.value,
         stoppedChildWaited: previous.children.map((_, index) =>
@@ -181,7 +195,7 @@ export function advanceExtensionSlide(
         },
         outgoingTransform: (transform, index) => {
           const node = nodes[index + 1]!;
-          const offset = geometrySource(node).slideExitOffset ?? 0;
+          const offset = node.scoringSource?.slideExitOffset ?? 0;
           if (offset === 0) return ok(transform);
           const line = scene.fieldLines[0]!;
           const curve = (transform.position.y.value - line.start.y.value) / (line.goal.y.value - line.start.y.value);
@@ -216,8 +230,7 @@ export function advanceExtensionSlide(
           isAfterHitTime: (index: number) => usesAxis(nodes[index + 1]!)
             ? frame.absolutePosition > nodes[index + 1]!.absolutePosition : undefined,
           buildMesh: (input: import("../rendering/ordinaryLongChildLifecycle").OrdinaryLongNormalMeshInput,
-            after: OrdinaryLongNormalChildState, before: OrdinaryLongNormalChildState | undefined) => {
-          const index = meshIndex++;
+            after: OrdinaryLongNormalChildState, before: OrdinaryLongNormalChildState | undefined, index: number) => {
           const front = { ...(before ?? root), renderedTransform: input.front };
           if (front.phase === "wait" && after.phase === "wait") return ok(UNPRESENTED_SLIDE_MESH);
           // Signed SV may reveal the after node first. The unlaunched front
@@ -290,11 +303,12 @@ export function advanceExtensionMotion(
 
 function geometrySource(node: GarupaProductNode): SlideGeometrySource {
   return { absolutePos: node.absolutePosition, isInvisible: !node.visible,
+    authoredAfterAbsolutePos: node.runtimeRoot?.authoredAfterAbsolutePos,
     virtualLaneDirection: 0, virtualLaneDistance: 0,
     slideExitOffset: node.scoringSource?.slideExitOffset };
 }
 function outgoingNode(node: GarupaProductNode): GarupaProductNode {
-  const offset = geometrySource(node).slideExitOffset ?? 0;
+  const offset = node.scoringSource?.slideExitOffset ?? 0;
   return offset === 0 ? node : { ...node, lane: node.lane + offset, spanStart: node.spanStart + offset, spanEnd: node.spanEnd + offset };
 }
 function center(node: GarupaProductNode): number { return projectedNodeLane(node); }
