@@ -13,6 +13,7 @@ import { bestdoriGetMe, bestdoriLogin, bestdoriLogout } from "../../services/bes
 import { isMobileRuntime } from "../../app/mobileRuntime";
 import { SidebarPanel } from "./SidebarPanel";
 import { TimelineStrip } from "./TimelineStrip";
+import { useUiViewport } from "../useUiViewport";
 
 type ChartEditorLayoutProps = {
   vm: any;
@@ -21,7 +22,6 @@ type ChartEditorLayoutProps = {
 const CANVAS_INTERACTION_OVERSCAN_PX = 240;
 const CANVAS_INTERACTION_SNAP_PX = 96;
 const MOBILE_BOARD_SIDE_PADDING_PX = 16;
-const MOBILE_BOARD_MIN_SCALE = 0.65;
 const MOBILE_BOARD_MAX_SCALE = 8;
 
 function isHalfBeatAligned(value: number): boolean {
@@ -33,6 +33,7 @@ function isHalfBeatAligned(value: number): boolean {
 }
 
 export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
+  const uiViewport = useUiViewport();
   const {
     jsonImportRef,
     bestdoriV2ImportRef,
@@ -538,7 +539,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     }
     const availableWidth = Math.max(1, playfieldViewportWidth - MOBILE_BOARD_SIDE_PADDING_PX);
     const fitWidthScale = availableWidth / boardWidth;
-    return Math.min(MOBILE_BOARD_MAX_SCALE, Math.max(MOBILE_BOARD_MIN_SCALE, fitWidthScale));
+    return Math.min(MOBILE_BOARD_MAX_SCALE, fitWidthScale);
   }, [boardWidth, mobileRuntime, playfieldViewportWidth]);
   const scaledBoardWidth = mobileRuntime ? Math.max(1, boardWidth * mobileBoardScale) : boardWidth;
   const scaledScrollContentHeight = mobileRuntime
@@ -1217,7 +1218,11 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   return (
     <OriginalUiSoundProvider volumePercent={appOptionSettings.simulatorSettings.systemSeVolumePercent}
       masterPercent={appOptionSettings.simulatorSettings.masterVolumePercent} onError={vm.setStatusMessage}>
-    <main className={`app-shell ${mobileRuntime ? "is-mobile-runtime" : ""}`}>
+    <main className={`app-shell ${mobileRuntime ? "is-mobile-runtime" : ""}`}
+      data-ui-layout={uiViewport.stacked ? "stacked" : "columns"}
+      style={{ "--editor-ui-scale": uiViewport.scale,
+        "--editor-logical-width": `${uiViewport.logicalWidth}px`,
+        "--editor-logical-height": `${uiViewport.logicalHeight}px` } as CSSProperties}>
       <input
         ref={jsonImportRef}
         type="file"

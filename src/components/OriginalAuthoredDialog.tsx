@@ -1,21 +1,13 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { originalUiViewportScale } from "../simulator/public/layout";
+import { useOriginalUiScale } from "./useUiViewport";
+export { useOriginalUiScale } from "./useUiViewport";
 import { useModalLayer } from "./useModalLayer";
 import { useModalTransition, type DialogMotion } from "./useModalTransition";
 import { useOriginalDialogInput } from "./useOriginalDialogInput";
 import { OriginalPrefabView, type OriginalViewBindings } from "./OriginalPrefabView";
 import type { OriginalPrefabModel } from "./originalPrefabModel";
 
-export function useOriginalUiScale(): number {
-  const read = () => originalUiViewportScale(window.innerWidth, window.innerHeight);
-  const [scale, setScale] = useState(read);
-  useEffect(() => {
-    const resized = () => setScale(read()); window.addEventListener("resize", resized);
-    return () => window.removeEventListener("resize", resized);
-  }, []);
-  return scale;
-}
 export function OriginalAuthoredDialog({ open, model, bindings, onClose, onClosed, motion = "scale", busy = false, frameComponentId, coverAlpha, children, cameraOverlay }: {
   open: boolean; model: OriginalPrefabModel; bindings: OriginalViewBindings; onClose: () => void;
   onClosed?: () => void; motion?: DialogMotion; busy?: boolean; frameComponentId?: number; coverAlpha?: number; children?: ReactNode; cameraOverlay?: ReactNode;

@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, type ReactNode } from "react";
+import { useUiViewport } from "./useUiViewport";
 import { OriginalPrefabModel, ORIGINAL_PREFABS, originalRef } from "./originalPrefabModel";
 import { OriginalPrefabView, type OriginalViewBindings } from "./OriginalPrefabView";
 import { OriginalPageViewport, type OriginalPageScrollState } from "./OriginalPageViewport";
@@ -42,12 +43,8 @@ export function OriginalSkinSettingsPage({ model, bindings, draft, resources, an
   visible?: boolean;
   specialRow?: ReactNode;
 }) {
-  const [aspect, setAspect] = useState(() => Math.min(2, window.innerWidth / window.innerHeight));
-  useEffect(() => {
-    const resized = () => setAspect(Math.min(2, window.innerWidth / window.innerHeight));
-    window.addEventListener("resize", resized);
-    return () => window.removeEventListener("resize", resized);
-  }, []);
+  const viewport = useUiViewport();
+  const aspect = Math.min(2, viewport.width / viewport.height);
   const previewModel = useMemo(() => {
     const texture = model.components.get(272)!;
     // SkinPreview.Init: width = height; local X scale = min(screen aspect, 2).

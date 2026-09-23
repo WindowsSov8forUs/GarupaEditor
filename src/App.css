@@ -238,10 +238,15 @@ textarea:focus {
 
 .app-shell {
   height: 100%;
-  padding: 14px;
+  --editor-ui-scale: 1;
+  --editor-space: calc(14px * var(--editor-ui-scale));
+  padding: max(var(--editor-space), env(safe-area-inset-top))
+    max(var(--editor-space), env(safe-area-inset-right))
+    max(var(--editor-space), env(safe-area-inset-bottom))
+    max(var(--editor-space), env(safe-area-inset-left));
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: calc(12px * var(--editor-ui-scale));
 }
 
 .command-bar {
@@ -380,9 +385,10 @@ textarea:focus {
 
 .sidebar {
   width: 404px;
-  flex: 0 0 404px;
-  min-width: 404px;
-  max-width: 404px;
+  flex: 0 0 auto;
+  zoom: var(--editor-ui-scale);
+  min-width: 0;
+  max-width: none;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -401,7 +407,7 @@ textarea:focus {
 
 .workspace-divider {
   position: relative;
-  flex: 0 0 12px;
+  flex: 0 0 calc(12px * var(--editor-ui-scale));
 }
 
 .workspace-divider::before {
@@ -1605,6 +1611,8 @@ button.apply-icon-button:not(.original-button):not(.note-token):not(.bpm-label-b
 }
 
 .timeline-strip {
+  zoom: var(--editor-ui-scale);
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
@@ -1679,7 +1687,7 @@ button.apply-icon-button:not(.original-button):not(.note-token):not(.bpm-label-b
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: auto;
   background: #000;
 }
 
@@ -1703,7 +1711,7 @@ button.apply-icon-button:not(.original-button):not(.note-token):not(.bpm-label-b
   min-width: 100%;
   min-height: 100%;
   display: flex;
-  justify-content: center;
+  justify-content: safe center;
   align-items: flex-start;
   padding: 0 10px;
   background: #000;
@@ -2310,6 +2318,7 @@ button.apply-icon-button:not(.original-button):not(.note-token):not(.bpm-label-b
 }
 
 .status-strip {
+  zoom: var(--editor-ui-scale);
   flex: 0 0 33px;
   height: 33px;
   min-height: 33px;
@@ -2917,69 +2926,36 @@ button.app-settings-apply-button:not(.original-button):not(.note-token):not(.bpm
   outline: none;
 }
 
-@media (max-width: 1200px) {
-  .cover-column {
-    width: 112px;
-  }
-
-  .chart-info-body {
-    grid-template-columns: 112px minmax(0, 1fr);
-  }
-
-  .cover-frame {
-    width: 100%;
-  }
+/* Reflow follows the shared viewport, not a separate device-specific pixel threshold. */
+.app-shell[data-ui-layout="stacked"] .workspace {
+  flex-direction: column;
+  overflow: hidden;
 }
-
-@media (max-width: 980px) {
-  .workspace {
-    display: grid;
-    grid-template-columns: 1fr;
-  }
-
-  .sidebar {
-    width: auto;
-    min-width: 0;
-    max-width: none;
-    flex: none;
-    max-height: 48vh;
-  }
-
-  .workspace-divider {
-    display: none;
-  }
-
-  .selected-note-grid,
-  .metadata-editor-row-three,
-  .metadata-editor-row-two,
-  .modal-grid,
-  .app-settings-group-grid,
-  .app-settings-group-grid-triple,
-  .app-settings-option-toggle-row,
-  .app-settings-mv-row {
-    grid-template-columns: 1fr;
-  }
-
+.app-shell[data-ui-layout="stacked"] .sidebar {
+  width: auto;
+  flex: 0 1 auto;
+  max-height: calc(var(--editor-logical-height) * 0.4);
 }
-
-@media (max-width: 680px) {
-  .command-bar {
-    flex-direction: row;
-  }
-
-  .chart-info-body {
-    grid-template-columns: 1fr;
-  }
-
-  .cover-column {
-    width: min(220px, 100%);
-    margin-inline: auto;
-  }
-
-  .cover-frame {
-    width: 100%;
-    margin-inline: auto;
-  }
+.app-shell[data-ui-layout="stacked"] .workspace-divider {
+  flex-basis: calc(12px * var(--editor-ui-scale));
+}
+.app-shell[data-ui-layout="stacked"] .workspace-divider::before {
+  top: 50%; bottom: auto; left: 0; right: 0;
+  width: auto; height: 1px; transform: none;
+}
+.app-shell .modal-card {
+  zoom: var(--editor-ui-scale);
+  max-width: calc(var(--editor-logical-width) - 32px);
+  max-height: calc(var(--editor-logical-height) - 32px);
+}
+.app-shell .metadata-editor-modal {
+  --metadata-editor-page-max-height: min(
+    calc(min(760px, var(--editor-logical-width) - 56px) * 9 / 16),
+    calc(var(--editor-logical-height) - 260px));
+}
+.app-shell .download-progress-modal {
+  zoom: var(--editor-ui-scale);
+  max-width: calc(var(--editor-logical-width) - 12px);
 }
 
 .static-render-page {
@@ -3079,111 +3055,16 @@ button.app-settings-apply-button:not(.original-button):not(.note-token):not(.bpm
   background: rgba(255, 255, 255, 0.68);
 }
 
-@media (orientation: landscape) {
-  .app-shell.is-mobile-runtime .workspace {
-    --mobile-sidebar-width: clamp(230px, 36vw, 330px);
-    display: flex;
-    position: relative;
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow: hidden;
-    align-items: stretch;
-  }
-
-  .app-shell.is-mobile-runtime .workspace-divider {
-    display: block;
-    flex: 0 0 12px;
-  }
-
-  .app-shell.is-mobile-runtime .sidebar {
-    position: relative;
-    z-index: 24;
-    width: var(--mobile-sidebar-width);
-    flex: 0 0 var(--mobile-sidebar-width);
-    min-width: var(--mobile-sidebar-width);
-    max-width: var(--mobile-sidebar-width);
-    height: 100%;
-    max-height: none;
-    padding: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-    transition:
-      flex-basis 160ms ease,
-      width 160ms ease,
-      min-width 160ms ease,
-      max-width 160ms ease,
-      opacity 120ms ease;
-  }
-
-  .app-shell.is-mobile-runtime .editor-panel {
-    min-width: 0;
-    flex: 1 1 auto;
-  }
-
-  .app-shell.is-mobile-runtime .playfield-scroll {
-    width: 100%;
-    height: 100%;
-    overflow-y: auto;
-    overflow-x: hidden;
-    overscroll-behavior: contain;
-  }
-
-  .app-shell.is-mobile-runtime .playfield-host {
-    justify-content: center;
-    padding-inline: 4px;
-  }
-
-  .app-shell.is-mobile-runtime .playfield-board-visual-layer {
-    transform: scale(var(--mobile-board-scale, 1));
-  }
-
-  .app-shell.is-mobile-runtime .timeline-strip {
-    display: none;
-  }
+/* The chart's own projection is independent of the control scale. */
+.app-shell.is-mobile-runtime .playfield-scroll {
+  overscroll-behavior: contain;
+  touch-action: pan-y pinch-zoom;
 }
-
-@media (orientation: landscape) and (max-height: 520px) {
-  .app-shell.is-mobile-runtime {
-    padding: max(6px, env(safe-area-inset-top)) 8px max(6px, env(safe-area-inset-bottom));
-    gap: 6px;
-  }
-
-  .app-shell.is-mobile-runtime .command-bar {
-    --command-control-size: 34px;
-    --command-control-gap: 4px;
-    align-items: center;
-    gap: 6px;
-    flex: 0 0 auto;
-  }
-
-  .app-shell.is-mobile-runtime .command-group {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-
-  .app-shell.is-mobile-runtime .command-group::-webkit-scrollbar {
-    display: none;
-  }
-
-  .app-shell.is-mobile-runtime .command-group-right {
-    flex: 0 0 auto;
-    margin-left: 0;
-  }
-
-  .app-shell.is-mobile-runtime .command-icon-button > img,
-  .app-shell.is-mobile-runtime .command-icon-button > svg {
-    width: 21px;
-    height: 21px;
-  }
-
-  .app-shell.is-mobile-runtime .playfield-scroll {
-    touch-action: pan-y pinch-zoom;
-  }
-
-  .app-shell.is-mobile-runtime .playfield-host {
-    width: 100%;
-  }
+.app-shell.is-mobile-runtime .playfield-host {
+  padding-inline: 4px;
+}
+.app-shell.is-mobile-runtime .playfield-board-visual-layer {
+  transform: scale(var(--mobile-board-scale, 1));
 }
 
 .static-render-strip {
