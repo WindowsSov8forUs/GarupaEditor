@@ -309,6 +309,7 @@ export class ApplicationResourceManager {
     const offline = freezeCatalog({
       ...cached.value,
       freshness: "offline-cached",
+      refreshFailures: Object.freeze({ "*": refreshed.failure.boundary }),
       resources: cached.value.resources.map((resource) => Object.freeze({
         ...resource,
         availability: this.installed.has(resource.ref.id) ? "offline-cached" as const : "unavailable" as const,
@@ -386,6 +387,16 @@ export class ApplicationResourceManager {
     }
     if (descriptor === null) {
       const catalog = this.activeCatalogs.get(providerId);
+      const server = ref.id.split("/")[1] ?? "";
+      const catalogPath = ref.id.slice(providerId.length + 1);
+      const refreshFailure = Object.entries(catalog?.refreshFailures ?? {})
+        .filter(([prefix]) => prefix === "*" || catalogPath === prefix || catalogPath.startsWith(`${prefix}/`))
+        .sort(([a], [b]) => b.length - a.length)[0]?.[1];
+      if (refreshFailure) {
+        appLog("error", "resources.catalog.unresolved", { resourceId: ref.id, server, refreshFailure });
+        return resourceRejected("catalog-unavailable", "resources.manager.catalog-refresh-unresolved",
+          `Cannot resolve ${ref.id}: its catalog could not be refreshed and no cached identity exists. ${refreshFailure}`);
+      }
       appLog("error", "resources.catalog.miss", { resourceId: ref.id, provider: providerId,
         freshness: catalog?.freshness ?? "not-loaded", observedAt: catalog?.observedAt, count: catalog?.resources.length ?? 0 });
       return resourceRejected(
