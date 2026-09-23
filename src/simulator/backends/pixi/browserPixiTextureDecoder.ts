@@ -1,4 +1,5 @@
 import { ImageSource, Texture } from "pixi.js";
+import { SIMULATOR_CHINESE_FONT } from "../../scene/presentationLocalization";
 import { integrityFailure, ok, type SimulatorResult } from "../../engine/result";
 import type { RenderResourceAssetProfile } from "../renderingContracts";
 import type { PixiDecodedFont, PixiTextureDecoder } from "./pixiRendererBackend";
@@ -14,7 +15,8 @@ export class BrowserPixiTextureDecoder implements PixiTextureDecoder {
         "Browser Score Rank label preparation requires FontFace and document.fonts without a system-font fallback.",
       );
     }
-    const family = `GarupaScoreRank-${asset.sha256.slice(0, 16)}`;
+    const family = asset.logicalAssetId === "ui/chinese-font" ? SIMULATOR_CHINESE_FONT
+      : `GarupaScoreRank-${asset.sha256.slice(0, 16)}`;
     let face: FontFace | null = null;
     try {
       const owned = Uint8Array.from(bytes);

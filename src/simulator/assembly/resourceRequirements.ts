@@ -34,6 +34,7 @@ export interface SimulatorResourceSelection {
 }
 
 const COMMON_REQUIREMENTS: readonly SimulatorResourceRequirement[] = Object.freeze([
+  requirement("render.chinese-font", "fonts/chinese", ["chinese.ttf"]),
   requirement("render.sudden-line", "prefabs/bms/sudden", ["sudden-line.png"]),
   requirement("render.ordinary-profile", "portable/profiles/ordinary-render", ["profile.json"]),
   requirement("render.ordinary-visible-profile", "portable/profiles/ordinary-visible", ["profile.json"]),

@@ -1,3 +1,4 @@
+import { SIMULATOR_WORDING as w } from "./presentationLocalization";
 import { CURRENT_PAUSE_SERIALIZED_GRAPHS } from "../backends/resources/currentPauseSerializedProfile";
 import { ManualTouchPhase, type ManualInputFrame, type ManualInputTouch } from "../engine/data/manualInput";
 import { integrityFailure, ok, type SimulatorResult } from "../engine/result";
@@ -73,11 +74,7 @@ export interface PauseControlSceneSnapshot {
   readonly resumeCountdownSecondsRemaining: number | null;
   readonly resumeCountdownElapsedSeconds: number | null;
   readonly pressedButtons: readonly string[];
-  readonly words: {
-    readonly pause: { readonly title: "一時停止"; readonly message: "ライブを一時停止しました。\nライブを再開しますか？\nまた、リトライで最初からプレイできます。"; readonly buttons: readonly ["中断", "リトライ", "再開"] };
-    readonly retry: { readonly title: "リトライ"; readonly message: "リトライしてライブを最初からプレイしますか？"; readonly buttons: readonly ["キャンセル", "リトライ"] };
-    readonly abort: { readonly title: "中断"; readonly message: "ライブを中断してホーム画面に戻りますか？"; readonly annotation: "※中断した場合、ライブ報酬を獲得できません。"; readonly buttons: readonly ["キャンセル", "中断"] };
-  };
+  readonly words: typeof VISIBLE_WORDS;
 }
 
 export interface PauseControlRouteResult {
@@ -110,10 +107,13 @@ const CANCEL_BUTTON_X = Math.fround(-136.00001525878906);
 const RETRY_CONFIRM_BUTTON_X = Math.fround(136);
 const ABORT_CONFIRM_BUTTON_X = Math.fround(135);
 
-const VISIBLE_WORDS: PauseControlSceneSnapshot["words"] = deepFreeze({
-  pause: { title: "一時停止", message: "ライブを一時停止しました。\nライブを再開しますか？\nまた、リトライで最初からプレイできます。", buttons: ["中断", "リトライ", "再開"] as const },
-  retry: { title: "リトライ", message: "リトライしてライブを最初からプレイしますか？", buttons: ["キャンセル", "リトライ"] as const },
-  abort: { title: "中断", message: "ライブを中断してホーム画面に戻りますか？", annotation: "※中断した場合、ライブ報酬を獲得できません。", buttons: ["キャンセル", "中断"] as const },
+const VISIBLE_WORDS = deepFreeze({
+  pause: { title: w.dialog_rhythmgamePause_title, message: w.dialog_rhythmgamePause_retryableBody,
+    buttons: [w.dialog_rhythmgamePause_retire, w.dialog_rhythmgameRetry_buttonRetry, w.dialog_rhythmgamePause_resume] as const },
+  retry: { title: w.dialog_rhythmgameRetry_title, message: w.dialog_rhythmgameRetry_body,
+    buttons: [w.dialog_button_cancel, w.dialog_rhythmgameRetry_buttonRetry] as const },
+  abort: { title: w.dialog_rhythmgameRetire_title, message: w.dialog_rhythmgameRetire_body,
+    annotation: w.dialog_rhythmgameRetire_annotatedLB, buttons: [w.dialog_button_cancel, w.dialog_rhythmgamePause_retire] as const },
 });
 
 type PressTarget = "abort" | "retry" | "resume" | "cancel" | "confirm";

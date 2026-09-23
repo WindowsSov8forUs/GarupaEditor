@@ -1,3 +1,4 @@
+import { localizeSimulatorText, simulatorTextFonts } from "../../scene/presentationLocalization";
 import { PIXI_STAGE_DARK_COVER_BLEND } from "./pixiFlashBlend";
 import { layoutNguiText } from "./hud/nguiTextLayout";
 import { DIFFICULTY_LABEL_STYLE } from "../../scene/difficultyLabelStyle";
@@ -226,7 +227,7 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
       ["Arranger", "編曲：", presentation.song.arranger, -343],
     ] as const) {
       if (value !== null && value.length > 0) {
-        this.information.addChild(text(prefix + value, common.fontFamily, 0, authoredY, 22, `Startup${role}`, 925));
+        this.information.addChild(text(localizeSimulatorText(prefix) + value, common.fontFamily, 0, authoredY, 22, `Startup${role}`, 925));
       }
     }
     if (isFullLength) {
@@ -387,7 +388,7 @@ function text(value: string, fontFamily: string, x: number, y: number, fontSize:
   const result = new Text({
     text: value,
     label,
-    style: { fill: linearTintFromSrgbColor(fill), fontFamily, fontSize, align: "center" },
+    style: { fill: linearTintFromSrgbColor(fill), fontFamily: simulatorTextFonts(value, fontFamily), fontSize, align: "center" },
   });
   layoutNguiText(result);
   result.position.set(x, -y);

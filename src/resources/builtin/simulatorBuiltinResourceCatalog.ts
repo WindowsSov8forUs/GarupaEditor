@@ -16,7 +16,8 @@ import tapLaneEffect2Url from "../../assets/game/atlas/bms/ui/tap-lane-effect/ta
 import tapLaneEffect3Url from "../../assets/game/atlas/bms/ui/tap-lane-effect/tap-lane-effect-3.png?url&no-inline";
 import tapLaneEffect4Url from "../../assets/game/atlas/bms/ui/tap-lane-effect/tap-lane-effect-4.png?url&no-inline";
 import uiAdditiveEffectUrl from "../../assets/game/atlas/bms/ui/ui-additive-effect/ui-additive-effect.png?url&no-inline";
-import uiCommonUrl from "../../assets/game/atlas/bms/ui/uicommon/ui-common.png?url&no-inline";
+import uiCommonUrl from "../../assets/game/atlas/menu/ui-common-cn.png?url&no-inline";
+import chineseFontUrl from "../../assets/fonts/GB18030.ttf?url&no-inline";
 import rankLabelFontUrl from "../../assets/game/fonts/sgm/rank-label-font.ttf?url&no-inline";
 import ordinaryRenderProfileUrl from "../../assets/game/portable/profiles/ordinary-render/profile.json?url&no-inline";
 import ordinaryVisibleProfileUrl from "../../assets/game/portable/profiles/ordinary-visible/profile.json?url&no-inline";
@@ -82,7 +83,7 @@ import gameClearNativeSemanticProfileUrl from "../../assets/game/prefabs/bms/gam
 import manifestJson from "./builtinResourceManifest.json";
 import resultBgmUrl from "../../assets/game/sound/result/after_live.mp3?url&no-inline";
 import resultBackgroundUrl from "../../assets/game/prefabs/bms/result/rhythmBG.png?url&no-inline";
-import resultMenuUrl from "../../assets/game/prefabs/bms/result/result-menu.png?url&no-inline";
+import resultMenuUrl from "../../assets/game/atlas/menu/menu-atlas-cn.png?url&no-inline";
 import type { ApplicationResourceManager } from "../applicationResourceManager";
 import {
   createResourceRef,
@@ -133,7 +134,10 @@ const DEFINITIONS: readonly SimulatorBuiltinResourceDefinition[] = Object.freeze
     file("game/atlas/bms/ui/ui-additive-effect/ui-additive-effect.png", "ui-additive-effect.png", "image/png", uiAdditiveEffectUrl),
   ]),
   resource("atlas/bms/ui/uicommon", "UI common atlas", "image", [
-    file("game/atlas/bms/ui/uicommon/ui-common.png", "ui-common.png", "image/png", uiCommonUrl),
+    file("game/atlas/menu/ui-common-cn.png", "ui-common.png", "image/png", uiCommonUrl),
+  ]),
+  resource("fonts/chinese", "Mainland UI font", "font", [
+    file("fonts/GB18030.ttf", "chinese.ttf", "font/ttf", chineseFontUrl),
   ]),
   resource("fonts/sgm", "Rank label font", "font", [
     file("game/fonts/sgm/rank-label-font.ttf", "rank-label-font.ttf", "font/ttf", rankLabelFontUrl),
@@ -147,7 +151,7 @@ const DEFINITIONS: readonly SimulatorBuiltinResourceDefinition[] = Object.freeze
     file("game/prefabs/bms/result/Tex_parSet_1.png", "Tex_parSet_1.png", "image/png", resultParticle1Url),
     file("game/prefabs/bms/result/Tex_parSet_2.png", "Tex_parSet_2.png", "image/png", resultParticle2Url),
     file("game/prefabs/bms/result/rhythmBG.png", "rhythmBG.png", "image/png", resultBackgroundUrl),
-    file("game/prefabs/bms/result/result-menu.png", "result-menu.png", "image/png", resultMenuUrl),
+    file("game/atlas/menu/menu-atlas-cn.png", "result-menu.png", "image/png", resultMenuUrl),
   ]),
   resource("portable/profiles/default-particle", "Default current exact particle pack", "package", [
     file("game/portable/profiles/default-particle/profile.json", "profile.json", "application/json", defaultParticleProfileUrl),

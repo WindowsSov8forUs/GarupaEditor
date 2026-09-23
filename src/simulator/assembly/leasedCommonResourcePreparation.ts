@@ -1,4 +1,5 @@
 import uiCommonAtlas from "../../data/uiCommonAtlas.json";
+import chineseAtlases from "../../data/originalChineseAtlases.json";
 import commonCatalogJson from "../../data/simulator/commonRenderSemanticCatalog.json";
 import { parseCurrentOrdinaryVisibleProfile } from "../backends/resources/currentOrdinaryVisibleProfile";
 import { parseCurrentScoreHudNativeProfile } from "../backends/resources/currentScoreHudNativeProfile";
@@ -35,6 +36,23 @@ interface SemanticCatalogInput {
 
 const semanticGroups = parseSemanticCatalog({ ...commonCatalogJson, groups: { ...commonCatalogJson.groups,
   scoreHud: [...commonCatalogJson.groups.scoreHud, uiCommonAtlas],
+} }).map((entry): SemanticEntry => {
+  const atlas = entry.file === "ui-common.png" ? chineseAtlases.common
+    : entry.file === "result-menu.png" ? chineseAtlases.menu : null;
+  if (atlas === null) return entry;
+  return { ...entry, profile: { ...entry.profile,
+    width: atlas.source.texture.width, height: atlas.source.texture.height,
+    atlasRows: entry.profile.atlasRows.map(row => {
+      const localized = atlas.atlasRows.find(candidate => candidate.exactKey === row.exactKey);
+      if (!localized) throw new Error(`Mainland atlas lacks ${entry.file}/${row.exactKey}`);
+      return { ...row, ...localized };
+    }),
+  } };
+});
+semanticGroups.push({ file: "chinese.ttf", profile: {
+  logicalAssetId: "ui/chinese-font", role: "font", mime: "font/ttf",
+  width: null, height: null, textureSettings: null, atlasRows: [],
+  materialRole: "hud", animationRole: "none",
 } });
 
 export interface PreparedLeasedCommonRenderResources {
@@ -140,6 +158,7 @@ async function readJson(
 }
 
 function commonLogicalResource(file: string): string | null {
+  if (file === "chinese.ttf") return "fonts/chinese";
   if (file === "sudden-line.png") return "prefabs/bms/sudden";
   if (file === "combo-number.png") return "atlas/bms/ui/iconcombonumber";
   if (file === "rhythm-game-additive.png" || file === "rhythm-game-ui.png") return "atlas/bms/ui/rhythmgameui";

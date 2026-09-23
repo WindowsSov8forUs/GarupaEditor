@@ -122,7 +122,7 @@
         1.0
       ],
       "label": {
-        "text": "\u3082\u30461\u56de\u30e9\u30a4\u30d6",
+        "text": "もう1回ライブ",
         "size": [
           200,
           72
@@ -362,7 +362,7 @@
       ],
       "label": {
         "role": "next",
-        "text": "\u6b21\u3078",
+        "text": "次へ",
         "size": [
           200,
           72
@@ -1533,7 +1533,7 @@
       ],
       "label": {
         "role": "scoreTitle",
-        "text": "\u30b9\u30b3\u30a2",
+        "text": "スコア",
         "size": [
           200,
           100
@@ -1888,7 +1888,7 @@
       ],
       "label": {
         "role": "autoCaption",
-        "text": "\u30aa\u30fc\u30c8\u30e9\u30a4\u30d6",
+        "text": "オートライブ",
         "size": [
           312,
           104
@@ -2083,6 +2083,44 @@
         ],
         "type": 1
       }
+    },
+    {
+      "path": "RightContainer/MyResult/autoLiveLabel/background",
+      "parent": "RightContainer/MyResult/autoLiveLabel",
+      "position": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "sprite": {
+        "name": "label_round_white",
+        "atlas": "rhythm",
+        "size": [
+          206,
+          38
+        ],
+        "pivot": 4,
+        "depth": 10,
+        "color": [
+          1.0,
+          0.23137255012989044,
+          0.4470588266849518,
+          1.0
+        ],
+        "type": 1
+      }
     }
   ],
   "unrecordReplayNodes": [
@@ -2229,7 +2267,7 @@
         1.0
       ],
       "label": {
-        "text": "\u3082\u30461\u56de\u30e9\u30a4\u30d6",
+        "text": "もう1回ライブ",
         "size": [
           200,
           72
@@ -5708,13 +5746,13 @@
     }
   },
   "wording": {
-    "result_button_retryLive": "\u3082\u30461\u56de\u30e9\u30a4\u30d6",
-    "word_practice_caution_time_moved": "\u300c\u65e9\u9001\u308a\u300d\u300c\u5dfb\u304d\u623b\u3057\u300d\u6a5f\u80fd\u3092\u4f7f\u7528\u3057\u305f\u5834\u5408\u3001\n\u30b9\u30b3\u30a2\u304a\u3088\u3073\u5224\u5b9a\u306f\u8868\u793a\u3055\u308c\u307e\u305b\u3093\u3002",
-    "word_practice_caution_demo": "\u30c7\u30e2\u30d7\u30ec\u30a4\u3067\u306f\u30b9\u30b3\u30a2\u306f\u8868\u793a\u3001\u8a18\u9332\u3055\u308c\u307e\u305b\u3093\u3002",
-    "word_resultDetail_caution_autoLive": "\u30aa\u30fc\u30c8\u30e9\u30a4\u30d6\u3067\u306f\u3001\u30cf\u30a4\u30b9\u30b3\u30a2\u306f\u8a18\u9332\u3055\u308c\u305a\u3001\n\u5224\u5b9a\u306f\u8868\u793a\u3055\u308c\u307e\u305b\u3093\u3002",
-    "word_practice_caution": "\u30cf\u30a4\u30b9\u30b3\u30a2\u304a\u3088\u3073\n\u30b9\u30b3\u30a2\u30e9\u30f3\u30af\u306f\u8a18\u9332\u3055\u308c\u307e\u305b\u3093\u3002",
+    "result_button_retryLive": "もう1回ライブ",
+    "word_practice_caution_time_moved": "「早送り」「巻き戻し」機能を使用した場合、\nスコアおよび判定は表示されません。",
+    "word_practice_caution_demo": "デモプレイではスコアは表示、記録されません。",
+    "word_resultDetail_caution_autoLive": "オートライブでは、ハイスコアは記録されず、\n判定は表示されません。",
+    "word_practice_caution": "ハイスコアおよび\nスコアランクは記録されません。",
     "dialog_button_ok": "OK",
-    "word_toNext": "\u6b21\u3078"
+    "word_toNext": "次へ"
   },
   "rewardNextPath": "ComponentRoot/BottomRight/ButtonNext",
   "rewardReplayPath": "ComponentRoot/BottomRight/PlayAgainButton/StarUILabelButton",
