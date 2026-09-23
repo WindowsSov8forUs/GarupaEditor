@@ -371,9 +371,23 @@ export class ApplicationResourceManager {
     if (options.refresh !== true) {
       const existing = await this.backend.readRecord(ref);
       if (existing.status === "accepted") {
-        this.installed.set(ref.id, existing.value);
-        appLog("info", "resources.cache.hit", { resourceId: ref.id, revision: existing.value.revision });
-        return resourceAccepted(existing.value.descriptor);
+        const stored = existing.value.descriptor;
+        const current = this.findNetworkDescriptor(ref.id);
+        const sourceChanged = stored.origin === "network" && current !== null &&
+          (stored.source.manifestUrl !== current.source.manifestUrl ||
+            stored.source.assetBaseUrl !== current.source.assetBaseUrl);
+        if (!sourceChanged) {
+          this.installed.set(ref.id, existing.value);
+          appLog("info", "resources.cache.hit", { resourceId: ref.id, revision: existing.value.revision });
+          return resourceAccepted(stored);
+        }
+        // The logical ID can survive a corrected provider route. Replace the old
+        // package only after the complete new source has installed successfully.
+        appLog("info", "resources.cache.source-changed", {
+          resourceId: ref.id, revision: existing.value.revision,
+          previousSource: stored.origin === "network" ? stored.source : undefined,
+          source: current?.source,
+        });
       }
     }
     let descriptor = this.findNetworkDescriptor(ref.id);
