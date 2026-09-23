@@ -3513,8 +3513,8 @@
       "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_si",
       "parent": "Root/LiveFailedRoot/SprFailedRoot",
       "position": [
-        47.39999771118164,
-        -0.7000007629394531,
+        80.0,
+        0.0,
         0.0
       ],
       "scale": [
@@ -3533,8 +3533,8 @@
         "name": "failed_si",
         "atlas": "banner",
         "size": [
-          122,
-          122
+          116,
+          114
         ],
         "pivot": 4,
         "depth": 5,
@@ -3548,31 +3548,10 @@
       }
     },
     {
-      "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces",
-      "parent": "Root/LiveSuccesRoot/SprSuccesRoot",
-      "position": [
-        0.0,
-        0.0,
-        0.0
-      ],
-      "scale": [
-        1.0,
-        1.0,
-        1.0
-      ],
-      "active": false,
-      "rotationXY": [
-        1.0,
-        0.0,
-        0.0,
-        1.0
-      ]
-    },
-    {
       "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_i",
       "parent": "Root/LiveSuccesRoot/SprSuccesRoot",
       "position": [
-        -139.3000030517578,
+        -201.0,
         0.0,
         0.0
       ],
@@ -3592,8 +3571,8 @@
         "name": "success_i",
         "atlas": "banner",
         "size": [
-          110,
-          118
+          36,
+          110
         ],
         "pivot": 4,
         "depth": 0,
@@ -3610,8 +3589,8 @@
       "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_sei",
       "parent": "Root/LiveSuccesRoot/SprSuccesRoot",
       "position": [
-        74.59999084472656,
-        1.0,
+        107.0,
+        3.0,
         0.0
       ],
       "scale": [
@@ -3630,8 +3609,8 @@
         "name": "success_sei",
         "atlas": "banner",
         "size": [
-          124,
-          124
+          120,
+          122
         ],
         "pivot": 4,
         "depth": 0,
@@ -3648,7 +3627,7 @@
       "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_pai",
       "parent": "Root/LiveFailedRoot/SprFailedRoot",
       "position": [
-        155.3000030517578,
+        201.0,
         0.0,
         0.0
       ],
@@ -3668,8 +3647,8 @@
         "name": "failed_pai",
         "atlas": "banner",
         "size": [
-          124,
-          122
+          116,
+          116
         ],
         "pivot": 4,
         "depth": 7,
@@ -3704,32 +3683,11 @@
       ]
     },
     {
-      "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_successGlow",
-      "parent": "Root/LiveSuccesRoot/SprSuccesRoot",
-      "position": [
-        -6.0,
-        3.0,
-        0.0
-      ],
-      "scale": [
-        1.0199999809265137,
-        1.0199999809265137,
-        1.0199999809265137
-      ],
-      "active": true,
-      "rotationXY": [
-        1.0,
-        0.0,
-        0.0,
-        1.0
-      ]
-    },
-    {
       "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_bu",
       "parent": "Root/LiveSuccesRoot/SprSuccesRoot",
       "position": [
-        -31.599998474121094,
-        0.9000015258789062,
+        -125.0,
+        0.0,
         0.0
       ],
       "scale": [
@@ -3748,8 +3706,8 @@
         "name": "success_bu",
         "atlas": "banner",
         "size": [
-          116,
-          120
+          102,
+          110
         ],
         "pivot": 4,
         "depth": 0,
@@ -3766,8 +3724,8 @@
       "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_kou",
       "parent": "Root/LiveSuccesRoot/SprSuccesRoot",
       "position": [
-        185.99998474121094,
-        -1.5999984741210938,
+        234.0,
+        3.0,
         0.0
       ],
       "scale": [
@@ -3786,7 +3744,7 @@
         "name": "success_ko",
         "atlas": "banner",
         "size": [
-          120,
+          118,
           122
         ],
         "pivot": 4,
@@ -3804,8 +3762,8 @@
       "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_bu",
       "parent": "Root/LiveFailedRoot/SprFailedRoot",
       "position": [
-        -47.39999771118164,
-        2.4000015258789062,
+        -113.0,
+        0.0,
         0.0
       ],
       "scale": [
@@ -3824,8 +3782,8 @@
         "name": "failed_bu",
         "atlas": "banner",
         "size": [
-          116,
-          120
+          94,
+          100
         ],
         "pivot": 4,
         "depth": 4,
@@ -3842,7 +3800,7 @@
       "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_ra",
       "parent": "Root/LiveSuccesRoot/SprSuccesRoot",
       "position": [
-        -245.39996337890625,
+        -270.0,
         0.0,
         0.0
       ],
@@ -3862,8 +3820,8 @@
         "name": "success_ra",
         "atlas": "banner",
         "size": [
-          114,
-          112
+          82,
+          110
         ],
         "pivot": 4,
         "depth": 0,
@@ -3943,8 +3901,8 @@
       "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_i",
       "parent": "Root/LiveFailedRoot/SprFailedRoot",
       "position": [
-        -151.0,
-        -1.0,
+        -184.0,
+        0.0,
         0.0
       ],
       "scale": [
@@ -3963,8 +3921,8 @@
         "name": "failed_i",
         "atlas": "banner",
         "size": [
-          110,
-          118
+          28,
+          100
         ],
         "pivot": 4,
         "depth": 3,
@@ -4003,8 +3961,8 @@
       "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_...",
       "parent": "Root/LiveFailedRoot/SprFailedRoot",
       "position": [
-        251.79998779296875,
-        -1.2000007629394531,
+        329.0,
+        0.0,
         0.0
       ],
       "scale": [
@@ -4023,8 +3981,8 @@
         "name": "failed_ten",
         "atlas": "banner",
         "size": [
-          110,
-          40
+          84,
+          30
         ],
         "pivot": 4,
         "depth": 8,
@@ -4105,8 +4063,8 @@
       "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_!",
       "parent": "Root/LiveSuccesRoot/SprSuccesRoot",
       "position": [
-        274.39996337890625,
-        -4.5,
+        332.0,
+        0.0,
         0.0
       ],
       "scale": [
@@ -4125,8 +4083,8 @@
         "name": "success_!",
         "atlas": "banner",
         "size": [
-          54,
-          112
+          50,
+          104
         ],
         "pivot": 4,
         "depth": 0,
@@ -4164,8 +4122,8 @@
       "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_ra",
       "parent": "Root/LiveFailedRoot/SprFailedRoot",
       "position": [
-        -246.8000030517578,
-        -0.8999996185302734,
+        -247.0,
+        0.0,
         0.0
       ],
       "scale": [
@@ -4184,8 +4142,8 @@
         "name": "failed_ra",
         "atlas": "banner",
         "size": [
-          114,
-          112
+          74,
+          100
         ],
         "pivot": 4,
         "depth": 2,
@@ -4202,8 +4160,8 @@
       "path": "Root/LivePracticeRoot/SprSuccesRoot/Spr_liveSucces_sa",
       "parent": "Root/LivePracticeRoot/SprSuccesRoot",
       "position": [
-        75.0,
-        1.0,
+        -19.0,
+        0.0,
         0.0
       ],
       "scale": [
@@ -4279,11 +4237,49 @@
       ]
     },
     {
+      "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_e",
+      "parent": "Root/LiveFailedRoot/SprFailedRoot",
+      "position": [
+        -22.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "sprite": {
+        "name": "failed_e",
+        "atlas": "banner",
+        "size": [
+          80,
+          102
+        ],
+        "pivot": 4,
+        "depth": 4,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 0
+      }
+    },
+    {
       "path": "Root/LivePracticeRoot/SprSuccesRoot/Spr_liveSucces_ru",
       "parent": "Root/LivePracticeRoot/SprSuccesRoot",
       "position": [
-        186.0,
-        -2.0,
+        92.0,
+        0.0,
         0.0
       ],
       "scale": [
@@ -4320,7 +4316,7 @@
       "path": "Root/LivePracticeRoot/SprSuccesRoot/Spr_liveSucces_syu",
       "parent": "Root/LivePracticeRoot/SprSuccesRoot",
       "position": [
-        75.0,
+        199.0,
         1.0,
         0.0
       ],
@@ -4358,7 +4354,7 @@
       "path": "Root/LivePracticeRoot/SprSuccesRoot/Spr_liveSucces_ri",
       "parent": "Root/LivePracticeRoot/SprSuccesRoot",
       "position": [
-        -245.0,
+        -350.0,
         0.0,
         0.0
       ],
@@ -4415,6 +4411,44 @@
       "alpha": 1.0
     },
     {
+      "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_e",
+      "parent": "Root/LiveSuccesRoot/SprSuccesRoot",
+      "position": [
+        -19.0,
+        0.0,
+        0.0
+      ],
+      "scale": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "active": true,
+      "rotationXY": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "sprite": {
+        "name": "success_e",
+        "atlas": "banner",
+        "size": [
+          102,
+          110
+        ],
+        "pivot": 4,
+        "depth": 0,
+        "color": [
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "type": 0
+      }
+    },
+    {
       "path": "Root/LivePracticeRoot/Par_suscces_1/Par_star",
       "parent": "Root/LivePracticeRoot/Par_suscces_1",
       "position": [
@@ -4439,7 +4473,7 @@
       "path": "Root/LivePracticeRoot/SprSuccesRoot/Spr_liveSucces_ha",
       "parent": "Root/LivePracticeRoot/SprSuccesRoot",
       "position": [
-        -139.0,
+        -240.0,
         0.0,
         0.0
       ],
@@ -4498,8 +4532,8 @@
       "path": "Root/LivePracticeRoot/SprSuccesRoot/Spr_liveSucces_!",
       "parent": "Root/LivePracticeRoot/SprSuccesRoot",
       "position": [
-        274.0,
-        -4.0,
+        396.5,
+        0.0,
         0.0
       ],
       "scale": [
@@ -4557,8 +4591,8 @@
       "path": "Root/LivePracticeRoot/SprSuccesRoot/Spr_liveSucces_-",
       "parent": "Root/LivePracticeRoot/SprSuccesRoot",
       "position": [
-        -32.0,
-        1.0,
+        -130.0,
+        0.0,
         0.0
       ],
       "scale": [
@@ -4577,8 +4611,8 @@
         "name": "practice_-",
         "atlas": "banner",
         "size": [
-          112,
-          36
+          104,
+          108
         ],
         "pivot": 4,
         "depth": 0,
@@ -4616,8 +4650,8 @@
       "path": "Root/LivePracticeRoot/SprSuccesRoot/Spr_liveSucces_ryo",
       "parent": "Root/LivePracticeRoot/SprSuccesRoot",
       "position": [
-        186.0,
-        -2.0,
+        303.0,
+        0.0,
         0.0
       ],
       "scale": [
@@ -4655,12 +4689,8 @@
     "success": {
       "duration": 2.2333333492279053,
       "loop": false,
-      "curveCount": 33,
-      "constants": [
-        1.0199999809265137,
-        1.0199999809265137,
-        1.0199999809265137
-      ],
+      "curveCount": 35,
+      "constants": [],
       "bindings": [
         {
           "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_ra",
@@ -4699,88 +4729,82 @@
           "size": 3
         },
         {
+          "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_e",
+          "property": "position",
+          "index": 18,
+          "size": 3
+        },
+        {
           "path": "Root/LiveSuccesRoot/SprSuccesRoot",
           "property": "scale",
-          "index": 18,
+          "index": 21,
           "size": 3
         },
         {
           "path": "Root/LiveFailedRoot",
           "property": "active",
-          "index": 21,
-          "size": 1
-        },
-        {
-          "path": "Root/LiveSuccesRoot",
-          "property": "active",
-          "index": 22,
-          "size": 1
-        },
-        {
-          "path": "Root/LiveSuccesRoot/Par_suscces_1",
-          "property": "active",
-          "index": 23,
-          "size": 1
-        },
-        {
-          "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_!",
-          "property": "active",
           "index": 24,
           "size": 1
         },
         {
-          "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_kou",
+          "path": "Root/LiveSuccesRoot",
           "property": "active",
           "index": 25,
           "size": 1
         },
         {
-          "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_sei",
+          "path": "Root/LiveSuccesRoot/Par_suscces_1",
           "property": "active",
           "index": 26,
           "size": 1
         },
         {
-          "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_bu",
+          "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_!",
           "property": "active",
           "index": 27,
           "size": 1
         },
         {
-          "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_i",
+          "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_kou",
           "property": "active",
           "index": 28,
           "size": 1
         },
         {
-          "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_ra",
+          "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_sei",
           "property": "active",
           "index": 29,
           "size": 1
         },
         {
-          "path": "Root/LiveSuccesRoot",
-          "property": "alpha",
+          "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_bu",
+          "property": "active",
           "index": 30,
           "size": 1
         },
         {
-          "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_successGlow",
+          "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_i",
           "property": "active",
           "index": 31,
           "size": 1
         },
         {
-          "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_successGlow",
-          "property": "alpha",
+          "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_ra",
+          "property": "active",
           "index": 32,
           "size": 1
         },
         {
-          "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_successGlow",
-          "property": "scale",
+          "path": "Root/LiveSuccesRoot",
+          "property": "alpha",
           "index": 33,
-          "size": 3
+          "size": 1
+        },
+        {
+          "path": "Root/LiveSuccesRoot/SprSuccesRoot/Spr_liveSucces_e",
+          "property": "active",
+          "index": 34,
+          "size": 1
         }
       ],
       "frames": [
@@ -4793,7 +4817,7 @@
                 0.0,
                 0.0,
                 0.0,
-                -245.39996337890625
+                -270.0
               ]
             },
             {
@@ -4820,7 +4844,7 @@
                 0.0,
                 0.0,
                 0.0,
-                -139.3000030517578
+                -201.0
               ]
             },
             {
@@ -4847,7 +4871,7 @@
                 0.0,
                 0.0,
                 0.0,
-                -31.599998474121094
+                -125.0
               ]
             },
             {
@@ -4856,7 +4880,7 @@
                 0.0,
                 0.0,
                 0.0,
-                0.9000015258789062
+                0.0
               ]
             },
             {
@@ -4874,7 +4898,7 @@
                 0.0,
                 0.0,
                 0.0,
-                74.59999084472656
+                107.0
               ]
             },
             {
@@ -4901,7 +4925,7 @@
                 0.0,
                 0.0,
                 0.0,
-                185.99998474121094
+                234.0
               ]
             },
             {
@@ -4910,7 +4934,7 @@
                 0.0,
                 0.0,
                 0.0,
-                -1.5999984741210938
+                3.0
               ]
             },
             {
@@ -4928,7 +4952,7 @@
                 0.0,
                 0.0,
                 0.0,
-                274.39996337890625
+                332.0
               ]
             },
             {
@@ -4937,7 +4961,7 @@
                 0.0,
                 0.0,
                 0.0,
-                -4.5
+                0.0
               ]
             },
             {
@@ -4955,7 +4979,7 @@
                 0.0,
                 0.0,
                 0.0,
-                1.0
+                -19.0
               ]
             },
             {
@@ -4964,7 +4988,7 @@
                 0.0,
                 0.0,
                 0.0,
-                1.0
+                0.0
               ]
             },
             {
@@ -4973,7 +4997,7 @@
                 0.0,
                 0.0,
                 0.0,
-                1.0
+                0.0
               ]
             },
             {
@@ -4982,7 +5006,7 @@
                 0.0,
                 0.0,
                 0.0,
-                0.0
+                1.0
               ]
             },
             {
@@ -4991,7 +5015,7 @@
                 0.0,
                 0.0,
                 0.0,
-                0.0
+                1.0
               ]
             },
             {
@@ -5000,7 +5024,7 @@
                 0.0,
                 0.0,
                 0.0,
-                0.0
+                1.0
               ]
             },
             {
@@ -5063,7 +5087,7 @@
                 0.0,
                 0.0,
                 0.0,
-                1.0
+                0.0
               ]
             },
             {
@@ -5081,7 +5105,25 @@
                 0.0,
                 0.0,
                 0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 33,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
                 1.0
+              ]
+            },
+            {
+              "index": 34,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
               ]
             }
           ]
@@ -5092,10 +5134,10 @@
             {
               "index": 0,
               "coefficients": [
-                0.36048880219459534,
-                -0.01201629638671875,
-                -0.0009155272855423391,
-                -245.39996337890625
+                0.0,
+                0.0,
+                0.0,
+                -270.0
               ]
             },
             {
@@ -5122,7 +5164,7 @@
                 0.0,
                 0.0,
                 0.0,
-                -139.3000030517578
+                -201.0
               ]
             },
             {
@@ -5146,10 +5188,10 @@
             {
               "index": 6,
               "coefficients": [
-                0.025749200955033302,
-                -0.0008583067683503032,
-                -5.722045534639619e-05,
-                -31.599998474121094
+                0.0,
+                0.0,
+                0.0,
+                -125.0
               ]
             },
             {
@@ -5158,7 +5200,7 @@
                 0.0,
                 0.0,
                 0.0,
-                0.9000015258789062
+                0.0
               ]
             },
             {
@@ -5176,7 +5218,7 @@
                 0.0,
                 0.0,
                 0.0,
-                74.59999084472656
+                107.0
               ]
             },
             {
@@ -5200,19 +5242,19 @@
             {
               "index": 12,
               "coefficients": [
-                -0.20599360764026642,
-                0.006866454146802425,
-                0.00045776364277116954,
-                185.99998474121094
+                0.0,
+                0.0,
+                0.0,
+                234.0
               ]
             },
             {
               "index": 13,
               "coefficients": [
-                0.0008046625298447907,
-                -2.6822086510946974e-05,
                 0.0,
-                -1.5999984741210938
+                0.0,
+                0.0,
+                3.0
               ]
             },
             {
@@ -5227,10 +5269,10 @@
             {
               "index": 15,
               "coefficients": [
-                -0.41198721528053284,
-                0.01373290829360485,
-                0.0009155272855423391,
-                274.39996337890625
+                0.0,
+                0.0,
+                0.0,
+                332.0
               ]
             },
             {
@@ -5239,7 +5281,7 @@
                 0.0,
                 0.0,
                 0.0,
-                -4.5
+                0.0
               ]
             },
             {
@@ -5257,7 +5299,7 @@
                 0.0,
                 0.0,
                 0.0,
-                1.0
+                -19.0
               ]
             },
             {
@@ -5266,7 +5308,7 @@
                 0.0,
                 0.0,
                 0.0,
-                1.0
+                0.0
               ]
             },
             {
@@ -5275,7 +5317,7 @@
                 0.0,
                 0.0,
                 0.0,
-                1.0
+                0.0
               ]
             },
             {
@@ -5284,7 +5326,7 @@
                 0.0,
                 0.0,
                 0.0,
-                0.0
+                1.0
               ]
             },
             {
@@ -5293,7 +5335,7 @@
                 0.0,
                 0.0,
                 0.0,
-                0.0
+                1.0
               ]
             },
             {
@@ -5302,7 +5344,7 @@
                 0.0,
                 0.0,
                 0.0,
-                0.0
+                1.0
               ]
             },
             {
@@ -5365,7 +5407,7 @@
                 0.0,
                 0.0,
                 0.0,
-                1.0
+                0.0
               ]
             },
             {
@@ -5383,7 +5425,25 @@
                 0.0,
                 0.0,
                 0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 33,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
                 1.0
+              ]
+            },
+            {
+              "index": 34,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
               ]
             }
           ]
@@ -5394,10 +5454,10 @@
             {
               "index": 0,
               "coefficients": [
-                -0.01673697866499424,
-                0.005235670600086451,
-                -0.0005149840726517141,
-                -245.39999389648438
+                0.0,
+                0.0,
+                0.0,
+                -270.0
               ]
             },
             {
@@ -5424,7 +5484,7 @@
                 0.0,
                 0.0,
                 0.0,
-                -139.3000030517578
+                -201.0
               ]
             },
             {
@@ -5448,10 +5508,10 @@
             {
               "index": 6,
               "coefficients": [
-                -0.0016093250596895814,
-                0.0004291533841751516,
-                -2.8610227673198096e-05,
-                -31.600000381469727
+                0.0,
+                0.0,
+                0.0,
+                -125.0
               ]
             },
             {
@@ -5460,7 +5520,7 @@
                 0.0,
                 0.0,
                 0.0,
-                0.9000015258789062
+                0.0
               ]
             },
             {
@@ -5478,7 +5538,7 @@
                 0.0,
                 0.0,
                 0.0,
-                74.59999084472656
+                107.0
               ]
             },
             {
@@ -5502,10 +5562,10 @@
             {
               "index": 12,
               "coefficients": [
-                0.003218650119379163,
-                -0.0017166135367006063,
-                0.00022888182138558477,
-                186.0
+                0.0,
+                0.0,
+                0.0,
+                234.0
               ]
             },
             {
@@ -5514,7 +5574,7 @@
                 0.0,
                 0.0,
                 0.0,
-                -1.5999984741210938
+                3.0
               ]
             },
             {
@@ -5529,10 +5589,10 @@
             {
               "index": 15,
               "coefficients": [
-                0.004119873046875,
-                -0.00274658203125,
-                0.00045776364277116954,
-                274.3999938964844
+                0.0,
+                0.0,
+                0.0,
+                332.0
               ]
             },
             {
@@ -5541,29 +5601,11 @@
                 0.0,
                 0.0,
                 0.0,
-                -4.5
-              ]
-            },
-            {
-              "index": 17,
-              "coefficients": [
-                0.0,
-                0.0,
-                0.0,
                 0.0
               ]
             },
             {
-              "index": 22,
-              "coefficients": [
-                0.0,
-                0.0,
-                0.0,
-                1.0
-              ]
-            },
-            {
-              "index": 24,
+              "index": 17,
               "coefficients": [
                 0.0,
                 0.0,
@@ -5577,16 +5619,7 @@
                 0.0,
                 0.0,
                 0.0,
-                0.0
-              ]
-            },
-            {
-              "index": 26,
-              "coefficients": [
-                0.0,
-                0.0,
-                0.0,
-                0.0
+                1.0
               ]
             },
             {
@@ -5613,6 +5646,33 @@
                 0.0,
                 0.0,
                 0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 30,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 31,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 32,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
                 1.0
               ]
             }
@@ -5627,7 +5687,7 @@
                 0.0,
                 0.0,
                 0.0,
-                -139.3000030517578
+                -201.0
               ]
             },
             {
@@ -5649,7 +5709,7 @@
               ]
             },
             {
-              "index": 28,
+              "index": 31,
               "coefficients": [
                 0.0,
                 0.0,
@@ -5660,15 +5720,47 @@
           ]
         },
         {
+          "time": 0.13333334028720856,
+          "keys": [
+            {
+              "index": 12,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                234.0
+              ]
+            },
+            {
+              "index": 13,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                3.0
+              ]
+            },
+            {
+              "index": 14,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
           "time": 0.1666666716337204,
           "keys": [
             {
               "index": 0,
               "coefficients": [
-                -0.0037078857421875,
-                0.0012359619140625,
-                -1.1444088158896193e-05,
-                -245.40000915527344
+                0.0,
+                0.0,
+                0.0,
+                -270.0
               ]
             },
             {
@@ -5695,16 +5787,16 @@
                 0.0,
                 0.0,
                 0.0,
-                -31.600000381469727
+                -125.0
               ]
             },
             {
               "index": 7,
               "coefficients": [
-                37857.35546875,
-                -14909.734375,
+                37135.9609375,
+                -14762.9228515625,
                 2028.19482421875,
-                0.9000015258789062
+                0.0
               ]
             },
             {
@@ -5717,7 +5809,7 @@
               ]
             },
             {
-              "index": 27,
+              "index": 30,
               "coefficients": [
                 0.0,
                 0.0,
@@ -5736,7 +5828,7 @@
                 0.0,
                 0.0,
                 0.0,
-                -139.3000030517578
+                -201.0
               ]
             },
             {
@@ -5763,15 +5855,15 @@
                 0.0,
                 0.0,
                 0.0,
-                74.59999084472656
+                107.0
               ]
             },
             {
               "index": 10,
               "coefficients": [
-                27758.482421875,
-                -12211.63671875,
-                1847.234130859375,
+                0.0,
+                0.0,
+                0.0,
                 1.0
               ]
             },
@@ -5785,7 +5877,43 @@
               ]
             },
             {
-              "index": 26,
+              "index": 18,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -19.0
+              ]
+            },
+            {
+              "index": 19,
+              "coefficients": [
+                -80999.9765625,
+                16199.998046875,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 20,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 29,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 34,
               "coefficients": [
                 0.0,
                 0.0,
@@ -5804,15 +5932,15 @@
                 0.0,
                 0.0,
                 0.0,
-                -31.600000381469727
+                -125.0
               ]
             },
             {
               "index": 7,
               "coefficients": [
-                -121.86917114257812,
-                -3831.23779296875,
-                71.324951171875,
+                291.2289733886719,
+                -3936.53955078125,
+                71.99993896484375,
                 96.0
               ]
             },
@@ -5826,21 +5954,48 @@
               ]
             },
             {
+              "index": 9,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                107.0
+              ]
+            },
+            {
+              "index": 10,
+              "coefficients": [
+                27758.474609375,
+                -12211.6376953125,
+                1847.234130859375,
+                1.0
+              ]
+            },
+            {
+              "index": 11,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
               "index": 12,
               "coefficients": [
                 0.0,
                 0.0,
                 0.0,
-                186.0
+                234.0
               ]
             },
             {
               "index": 13,
               "coefficients": [
-                32589.158203125,
-                -13631.443359375,
-                1970.1627197265625,
-                -1.5999979972839355
+                0.0,
+                0.0,
+                0.0,
+                3.0
               ]
             },
             {
@@ -5853,7 +6008,7 @@
               ]
             },
             {
-              "index": 25,
+              "index": 28,
               "coefficients": [
                 0.0,
                 0.0,
@@ -5872,7 +6027,7 @@
                 0.0,
                 0.0,
                 0.0,
-                -245.39999389648438
+                -270.0
               ]
             },
             {
@@ -5904,20 +6059,47 @@
                 0.0,
                 0.0,
                 0.0,
-                74.59999084472656
+                107.0
               ]
             },
             {
               "index": 10,
               "coefficients": [
-                -11466.3466796875,
-                -1936.4417724609375,
-                71.25,
-                96.0
+                27758.474609375,
+                -6659.939453125,
+                589.1290283203125,
+                78.0997314453125
               ]
             },
             {
               "index": 11,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 12,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                234.0
+              ]
+            },
+            {
+              "index": 13,
+              "coefficients": [
+                36276.36328125,
+                -14381.8203125,
+                1970.1627197265625,
+                3.0
+              ]
+            },
+            {
+              "index": 14,
               "coefficients": [
                 0.0,
                 0.0,
@@ -5931,16 +6113,16 @@
                 0.0,
                 0.0,
                 0.0,
-                274.3999938964844
+                332.0
               ]
             },
             {
               "index": 16,
               "coefficients": [
-                1330.9913330078125,
-                -2229.170166015625,
+                1664.3245849609375,
+                -2379.170166015625,
                 967.295166015625,
-                -4.5
+                0.0
               ]
             },
             {
@@ -5953,7 +6135,34 @@
               ]
             },
             {
-              "index": 24,
+              "index": 18,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -19.0
+              ]
+            },
+            {
+              "index": 19,
+              "coefficients": [
+                41471.9921875,
+                -10367.9990234375,
+                0.0,
+                96.0
+              ]
+            },
+            {
+              "index": 20,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 27,
               "coefficients": [
                 0.0,
                 0.0,
@@ -5972,7 +6181,7 @@
                 0.0,
                 0.0,
                 0.0,
-                -139.3000030517578
+                -201.0
               ]
             },
             {
@@ -5999,21 +6208,48 @@
           "time": 0.4333333373069763,
           "keys": [
             {
+              "index": 9,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                107.0
+              ]
+            },
+            {
+              "index": 10,
+              "coefficients": [
+                -11466.3408203125,
+                -1936.442626953125,
+                71.25006103515625,
+                96.0
+              ]
+            },
+            {
+              "index": 11,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
               "index": 12,
               "coefficients": [
                 0.0,
                 0.0,
                 0.0,
-                186.0
+                234.0
               ]
             },
             {
               "index": 13,
               "coefficients": [
-                -7611.712890625,
-                -2684.180419921875,
-                73.2000732421875,
-                96.0
+                36276.3125,
+                -7126.5439453125,
+                536.2718505859375,
+                81.17353820800781
               ]
             },
             {
@@ -6036,7 +6272,7 @@
                 0.0,
                 0.0,
                 0.0,
-                -31.600000381469727
+                -125.0
               ]
             },
             {
@@ -6045,11 +6281,43 @@
                 0.0,
                 0.0,
                 0.0,
-                0.9000015258789062
+                0.0
               ]
             },
             {
               "index": 8,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.5,
+          "keys": [
+            {
+              "index": 12,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                234.0
+              ]
+            },
+            {
+              "index": 13,
+              "coefficients": [
+                -9723.1083984375,
+                -2145.9814453125,
+                69.75006103515625,
+                96.0
+              ]
+            },
+            {
+              "index": 14,
               "coefficients": [
                 0.0,
                 0.0,
@@ -6068,7 +6336,66 @@
                 0.0,
                 0.0,
                 0.0,
-                74.59999084472656
+                107.0
+              ]
+            },
+            {
+              "index": 10,
+              "coefficients": [
+                -11466.330078125,
+                -5376.34912109375,
+                -660.0288696289062,
+                72.29422760009766
+              ]
+            },
+            {
+              "index": 11,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 18,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -19.0
+              ]
+            },
+            {
+              "index": 19,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 20,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.6000000238418579,
+          "keys": [
+            {
+              "index": 9,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                107.0
               ]
             },
             {
@@ -6088,28 +6415,23 @@
                 0.0,
                 0.0
               ]
-            }
-          ]
-        },
-        {
-          "time": 0.6000000238418579,
-          "keys": [
+            },
             {
               "index": 12,
               "coefficients": [
                 0.0,
                 0.0,
                 0.0,
-                186.0
+                234.0
               ]
             },
             {
               "index": 13,
               "coefficients": [
-                0.0,
-                0.0,
-                0.0,
-                -1.5999979972839355
+                -9723.1083984375,
+                -5062.916015625,
+                -651.1396484375,
+                71.79206848144531
               ]
             },
             {
@@ -6127,19 +6449,46 @@
           "time": 0.6666666865348816,
           "keys": [
             {
+              "index": 12,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                234.0
+              ]
+            },
+            {
+              "index": 13,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                3.0
+              ]
+            },
+            {
+              "index": 14,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
               "index": 15,
               "coefficients": [
                 0.0,
                 0.0,
                 0.0,
-                274.3999938964844
+                332.0
               ]
             },
             {
               "index": 16,
               "coefficients": [
-                1507.38037109375,
-                -4576.60009765625,
+                -436.6211853027344,
+                -4090.599853515625,
                 -32.10531997680664,
                 121.0
               ]
@@ -6164,7 +6513,7 @@
                 0.0,
                 0.0,
                 0.0,
-                274.3999938964844
+                332.0
               ]
             },
             {
@@ -6173,7 +6522,7 @@
                 0.0,
                 0.0,
                 0.0,
-                -4.5
+                0.0
               ]
             },
             {
@@ -6186,7 +6535,7 @@
               ]
             },
             {
-              "index": 18,
+              "index": 21,
               "coefficients": [
                 -0.19412106275558472,
                 0.8506706357002258,
@@ -6195,7 +6544,7 @@
               ]
             },
             {
-              "index": 19,
+              "index": 22,
               "coefficients": [
                 -0.17078176140785217,
                 0.8163854479789734,
@@ -6204,7 +6553,7 @@
               ]
             },
             {
-              "index": 20,
+              "index": 23,
               "coefficients": [
                 -0.14706628024578094,
                 0.7818285226821899,
@@ -6213,63 +6562,12 @@
               ]
             },
             {
-              "index": 23,
+              "index": 26,
               "coefficients": [
                 0.0,
                 0.0,
                 0.0,
                 1.0
-              ]
-            },
-            {
-              "index": 31,
-              "coefficients": [
-                0.0,
-                0.0,
-                0.0,
-                1.0
-              ]
-            }
-          ]
-        },
-        {
-          "time": 0.8999999761581421,
-          "keys": [
-            {
-              "index": 32,
-              "coefficients": [
-                0.0,
-                0.0,
-                -2.2384612560272217,
-                1.0
-              ]
-            }
-          ]
-        },
-        {
-          "time": 1.3333333730697632,
-          "keys": [
-            {
-              "index": 32,
-              "coefficients": [
-                0.0,
-                0.0,
-                0.0,
-                0.029999999329447746
-              ]
-            }
-          ]
-        },
-        {
-          "time": 1.3666666746139526,
-          "keys": [
-            {
-              "index": 31,
-              "coefficients": [
-                0.0,
-                0.0,
-                0.0,
-                0.0
               ]
             }
           ]
@@ -6278,7 +6576,7 @@
           "time": 1.5666667222976685,
           "keys": [
             {
-              "index": 18,
+              "index": 21,
               "coefficients": [
                 0.0,
                 0.0,
@@ -6287,7 +6585,7 @@
               ]
             },
             {
-              "index": 19,
+              "index": 22,
               "coefficients": [
                 0.0,
                 0.0,
@@ -6296,7 +6594,7 @@
               ]
             },
             {
-              "index": 20,
+              "index": 23,
               "coefficients": [
                 0.0,
                 0.0,
@@ -6310,7 +6608,7 @@
           "time": 2.0,
           "keys": [
             {
-              "index": 30,
+              "index": 33,
               "coefficients": [
                 0.0,
                 0.0,
@@ -6324,7 +6622,7 @@
           "time": 2.200000047683716,
           "keys": [
             {
-              "index": 30,
+              "index": 33,
               "coefficients": [
                 0.0,
                 0.0,
@@ -6338,12 +6636,48 @@
           "time": 2.2333333492279053,
           "keys": [
             {
-              "index": 22,
+              "index": 18,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -19.0
+              ]
+            },
+            {
+              "index": 19,
               "coefficients": [
                 0.0,
                 0.0,
                 0.0,
                 0.0
+              ]
+            },
+            {
+              "index": 20,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 25,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 34,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
               ]
             }
           ]
@@ -6359,7 +6693,7 @@
     "failed": {
       "duration": 1.2000000476837158,
       "loop": false,
-      "curveCount": 28,
+      "curveCount": 32,
       "constants": [],
       "bindings": [
         {
@@ -6399,63 +6733,75 @@
           "size": 3
         },
         {
-          "path": "Root/LiveSuccesRoot",
-          "property": "active",
+          "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_e",
+          "property": "position",
           "index": 18,
-          "size": 1
+          "size": 3
         },
         {
-          "path": "Root/LiveFailedRoot",
-          "property": "active",
-          "index": 19,
-          "size": 1
-        },
-        {
-          "path": "Root/LiveFailedRoot/SprFailedRoot",
-          "property": "active",
-          "index": 20,
-          "size": 1
-        },
-        {
-          "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_...",
+          "path": "Root/LiveSuccesRoot",
           "property": "active",
           "index": 21,
           "size": 1
         },
         {
-          "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_pai",
+          "path": "Root/LiveFailedRoot",
           "property": "active",
           "index": 22,
           "size": 1
         },
         {
-          "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_si",
+          "path": "Root/LiveFailedRoot/SprFailedRoot",
           "property": "active",
           "index": 23,
           "size": 1
         },
         {
-          "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_bu",
+          "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_...",
           "property": "active",
           "index": 24,
           "size": 1
         },
         {
-          "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_i",
+          "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_pai",
           "property": "active",
           "index": 25,
           "size": 1
         },
         {
-          "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_ra",
+          "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_si",
           "property": "active",
           "index": 26,
           "size": 1
         },
         {
+          "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_bu",
+          "property": "active",
+          "index": 27,
+          "size": 1
+        },
+        {
+          "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_i",
+          "property": "active",
+          "index": 28,
+          "size": 1
+        },
+        {
+          "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_ra",
+          "property": "active",
+          "index": 29,
+          "size": 1
+        },
+        {
           "path": "Root/LiveFailedRoot",
           "property": "alpha",
-          "index": 27,
+          "index": 30,
+          "size": 1
+        },
+        {
+          "path": "Root/LiveFailedRoot/SprFailedRoot/Spr_liveFailed_e",
+          "property": "active",
+          "index": 31,
           "size": 1
         }
       ],
@@ -6469,7 +6815,7 @@
                 0.0,
                 0.0,
                 0.0,
-                -246.8000030517578
+                -247.0
               ]
             },
             {
@@ -6478,7 +6824,7 @@
                 0.0,
                 0.0,
                 0.0,
-                -0.8999996185302734
+                0.0
               ]
             },
             {
@@ -6496,7 +6842,7 @@
                 0.0,
                 0.0,
                 0.0,
-                -151.0
+                -184.0
               ]
             },
             {
@@ -6505,7 +6851,7 @@
                 0.0,
                 0.0,
                 0.0,
-                -1.0
+                0.0
               ]
             },
             {
@@ -6523,7 +6869,7 @@
                 0.0,
                 0.0,
                 0.0,
-                -47.39999771118164
+                -113.0
               ]
             },
             {
@@ -6532,7 +6878,7 @@
                 0.0,
                 0.0,
                 0.0,
-                2.4000015258789062
+                0.0
               ]
             },
             {
@@ -6550,7 +6896,7 @@
                 0.0,
                 0.0,
                 0.0,
-                47.39999771118164
+                80.0
               ]
             },
             {
@@ -6577,7 +6923,7 @@
                 0.0,
                 0.0,
                 0.0,
-                155.3000030517578
+                201.0
               ]
             },
             {
@@ -6604,7 +6950,7 @@
                 0.0,
                 0.0,
                 0.0,
-                251.79998779296875
+                329.0
               ]
             },
             {
@@ -6613,7 +6959,7 @@
                 0.0,
                 0.0,
                 0.0,
-                -1.2000007629394531
+                0.0
               ]
             },
             {
@@ -6631,7 +6977,7 @@
                 0.0,
                 0.0,
                 0.0,
-                0.0
+                -22.0
               ]
             },
             {
@@ -6658,7 +7004,7 @@
                 0.0,
                 0.0,
                 0.0,
-                1.0
+                0.0
               ]
             },
             {
@@ -6667,7 +7013,7 @@
                 0.0,
                 0.0,
                 0.0,
-                1.0
+                0.0
               ]
             },
             {
@@ -6676,7 +7022,7 @@
                 0.0,
                 0.0,
                 0.0,
-                1.0
+                0.0
               ]
             },
             {
@@ -6713,6 +7059,42 @@
                 0.0,
                 0.0,
                 1.0
+              ]
+            },
+            {
+              "index": 28,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 29,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 30,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 31,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
               ]
             }
           ]
@@ -6726,7 +7108,7 @@
                 0.0,
                 0.0,
                 0.0,
-                -246.8000030517578
+                -247.0
               ]
             },
             {
@@ -6735,7 +7117,7 @@
                 0.0,
                 0.0,
                 0.0,
-                -0.8999996185302734
+                0.0
               ]
             },
             {
@@ -6753,7 +7135,7 @@
                 0.0,
                 0.0,
                 0.0,
-                -151.0
+                -184.0
               ]
             },
             {
@@ -6762,7 +7144,7 @@
                 0.0,
                 0.0,
                 0.0,
-                -1.0
+                0.0
               ]
             },
             {
@@ -6780,7 +7162,7 @@
                 0.0,
                 0.0,
                 0.0,
-                -47.39999771118164
+                -113.0
               ]
             },
             {
@@ -6789,7 +7171,7 @@
                 0.0,
                 0.0,
                 0.0,
-                2.4000015258789062
+                0.0
               ]
             },
             {
@@ -6807,7 +7189,7 @@
                 0.0,
                 0.0,
                 0.0,
-                47.39999771118164
+                80.0
               ]
             },
             {
@@ -6834,7 +7216,7 @@
                 0.0,
                 0.0,
                 0.0,
-                155.3000030517578
+                201.0
               ]
             },
             {
@@ -6861,16 +7243,16 @@
                 0.0,
                 0.0,
                 0.0,
-                251.79998779296875
+                329.0
               ]
             },
             {
               "index": 16,
               "coefficients": [
-                0.0,
-                0.0,
-                0.0,
-                -1.2000007629394531
+                -1667.613037109375,
+                761.75927734375,
+                113.9804916381836,
+                0.0
               ]
             },
             {
@@ -6888,14 +7270,14 @@
                 0.0,
                 0.0,
                 0.0,
-                0.0
+                -22.0
               ]
             },
             {
               "index": 19,
               "coefficients": [
-                0.0,
-                0.0,
+                -7062.5009765625,
+                2962.500244140625,
                 0.0,
                 0.0
               ]
@@ -6915,7 +7297,7 @@
                 0.0,
                 0.0,
                 0.0,
-                1.0
+                0.0
               ]
             },
             {
@@ -6924,7 +7306,7 @@
                 0.0,
                 0.0,
                 0.0,
-                1.0
+                0.0
               ]
             },
             {
@@ -6933,7 +7315,7 @@
                 0.0,
                 0.0,
                 0.0,
-                1.0
+                0.0
               ]
             },
             {
@@ -6971,6 +7353,42 @@
                 0.0,
                 1.0
               ]
+            },
+            {
+              "index": 28,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 29,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 30,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 31,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
             }
           ]
         },
@@ -6983,14 +7401,14 @@
                 0.0,
                 0.0,
                 0.0,
-                -246.8000030517578
+                -247.0
               ]
             },
             {
               "index": 1,
               "coefficients": [
-                -2170.654541015625,
-                1971.479248046875,
+                -408955.875,
+                42650.0,
                 -605.7515258789062,
                 62.0
               ]
@@ -7005,33 +7423,6 @@
               ]
             },
             {
-              "index": 18,
-              "coefficients": [
-                0.0,
-                0.0,
-                0.0,
-                0.0
-              ]
-            },
-            {
-              "index": 19,
-              "coefficients": [
-                0.0,
-                0.0,
-                0.0,
-                1.0
-              ]
-            },
-            {
-              "index": 20,
-              "coefficients": [
-                0.0,
-                0.0,
-                0.0,
-                1.0
-              ]
-            },
-            {
               "index": 21,
               "coefficients": [
                 0.0,
@@ -7046,7 +7437,7 @@
                 0.0,
                 0.0,
                 0.0,
-                0.0
+                1.0
               ]
             },
             {
@@ -7055,7 +7446,7 @@
                 0.0,
                 0.0,
                 0.0,
-                0.0
+                1.0
               ]
             },
             {
@@ -7082,7 +7473,43 @@
                 0.0,
                 0.0,
                 0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 27,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 28,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 29,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
                 1.0
+              ]
+            },
+            {
+              "index": 31,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
               ]
             }
           ]
@@ -7091,19 +7518,46 @@
           "time": 0.10000000149011612,
           "keys": [
             {
+              "index": 0,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -247.0
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                25172.255859375,
+                -5204.3984375,
+                -371.8296813964844,
+                90.0
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
               "index": 3,
               "coefficients": [
                 0.0,
                 0.0,
                 0.0,
-                -151.0
+                -184.0
               ]
             },
             {
               "index": 4,
               "coefficients": [
-                -1380.172607421875,
-                1541.726806640625,
+                -414351.78125,
+                42147.984375,
                 -548.302490234375,
                 62.0
               ]
@@ -7118,33 +7572,19 @@
               ]
             },
             {
-              "index": 25,
-              "coefficients": [
-                0.0,
-                0.0,
-                0.0,
-                1.0
-              ]
-            }
-          ]
-        },
-        {
-          "time": 0.1666666716337204,
-          "keys": [
-            {
               "index": 6,
               "coefficients": [
                 0.0,
                 0.0,
                 0.0,
-                -47.39999771118164
+                -113.0
               ]
             },
             {
               "index": 7,
               "coefficients": [
-                -1349.600341796875,
-                1444.0369873046875,
+                -63213.62109375,
+                13831.583984375,
                 -510.4136962890625,
                 62.0
               ]
@@ -7159,7 +7599,7 @@
               ]
             },
             {
-              "index": 24,
+              "index": 28,
               "coefficients": [
                 0.0,
                 0.0,
@@ -7170,22 +7610,158 @@
           ]
         },
         {
+          "time": 0.1666666716337204,
+          "keys": [
+            {
+              "index": 3,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -184.0
+              ]
+            },
+            {
+              "index": 4,
+              "coefficients": [
+                11270.6435546875,
+                -2237.822265625,
+                -453.2611999511719,
+                90.0
+              ]
+            },
+            {
+              "index": 5,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 6,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -113.0
+              ]
+            },
+            {
+              "index": 7,
+              "coefficients": [
+                -63213.52734375,
+                1188.856689453125,
+                490.9493408203125,
+                70.71617126464844
+              ]
+            },
+            {
+              "index": 8,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 27,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            },
+            {
+              "index": 31,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.20000000298023224,
+          "keys": [
+            {
+              "index": 18,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -22.0
+              ]
+            },
+            {
+              "index": 19,
+              "coefficients": [
+                -113062.4375,
+                8774.99609375,
+                337.4999694824219,
+                62.0
+              ]
+            },
+            {
+              "index": 20,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
           "time": 0.23333333432674408,
           "keys": [
+            {
+              "index": 6,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -113.0
+              ]
+            },
+            {
+              "index": 7,
+              "coefficients": [
+                17455.822265625,
+                -4774.2470703125,
+                -193.38343811035156,
+                90.0
+              ]
+            },
+            {
+              "index": 8,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
             {
               "index": 9,
               "coefficients": [
                 0.0,
                 0.0,
                 0.0,
-                47.39999771118164
+                80.0
               ]
             },
             {
               "index": 10,
               "coefficients": [
-                -1794.845947265625,
-                1773.5740966796875,
+                -382095.46875,
+                40466.0703125,
                 -579.5361328125,
                 62.0
               ]
@@ -7200,7 +7776,7 @@
               ]
             },
             {
-              "index": 23,
+              "index": 26,
               "coefficients": [
                 0.0,
                 0.0,
@@ -7211,22 +7787,108 @@
           ]
         },
         {
+          "time": 0.2666666805744171,
+          "keys": [
+            {
+              "index": 0,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -247.0
+              ]
+            },
+            {
+              "index": 1,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 2,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 18,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -22.0
+              ]
+            },
+            {
+              "index": 19,
+              "coefficients": [
+                22500.0078125,
+                -6750.00146484375,
+                0.0,
+                90.0
+              ]
+            },
+            {
+              "index": 20,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
           "time": 0.30000001192092896,
           "keys": [
+            {
+              "index": 9,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                80.0
+              ]
+            },
+            {
+              "index": 10,
+              "coefficients": [
+                15533.33984375,
+                -3963.333984375,
+                -278.6666564941406,
+                90.0
+              ]
+            },
+            {
+              "index": 11,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
             {
               "index": 12,
               "coefficients": [
                 0.0,
                 0.0,
                 0.0,
-                155.3000030517578
+                201.0
               ]
             },
             {
               "index": 13,
               "coefficients": [
-                -683.8299560546875,
-                1110.71142578125,
+                -62828.56640625,
+                13539.65625,
                 -478.33538818359375,
                 62.0
               ]
@@ -7241,7 +7903,7 @@
               ]
             },
             {
-              "index": 22,
+              "index": 25,
               "coefficients": [
                 0.0,
                 0.0,
@@ -7260,7 +7922,7 @@
                 0.0,
                 0.0,
                 0.0,
-                -246.8000030517578
+                -247.0
               ]
             },
             {
@@ -7269,7 +7931,7 @@
                 0.0,
                 0.0,
                 0.0,
-                -0.8999996185302734
+                0.0
               ]
             },
             {
@@ -7287,20 +7949,47 @@
           "time": 0.36666667461395264,
           "keys": [
             {
+              "index": 3,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -184.0
+              ]
+            },
+            {
+              "index": 4,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 5,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
               "index": 15,
               "coefficients": [
                 0.0,
                 0.0,
                 0.0,
-                251.79998779296875
+                329.0
               ]
             },
             {
               "index": 16,
               "coefficients": [
-                -2090.064453125,
-                1980.7265625,
-                -616.7788696289062,
+                -189000.046875,
+                18900.001953125,
+                0.0,
                 62.0
               ]
             },
@@ -7314,7 +8003,7 @@
               ]
             },
             {
-              "index": 21,
+              "index": 24,
               "coefficients": [
                 0.0,
                 0.0,
@@ -7333,7 +8022,7 @@
                 0.0,
                 0.0,
                 0.0,
-                -151.0
+                -184.0
               ]
             },
             {
@@ -7342,11 +8031,97 @@
                 0.0,
                 0.0,
                 0.0,
-                -1.0
+                0.0
               ]
             },
             {
               "index": 5,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.4333333373069763,
+          "keys": [
+            {
+              "index": 6,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -113.0
+              ]
+            },
+            {
+              "index": 7,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 8,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 12,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                201.0
+              ]
+            },
+            {
+              "index": 13,
+              "coefficients": [
+                63834.8046875,
+                -11934.1826171875,
+                -218.6166534423828,
+                90.0
+              ]
+            },
+            {
+              "index": 14,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 15,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                329.0
+              ]
+            },
+            {
+              "index": 16,
+              "coefficients": [
+                22500.0078125,
+                -6750.00146484375,
+                0.0,
+                90.0
+              ]
+            },
+            {
+              "index": 17,
               "coefficients": [
                 0.0,
                 0.0,
@@ -7365,7 +8140,7 @@
                 0.0,
                 0.0,
                 0.0,
-                -47.39999771118164
+                -113.0
               ]
             },
             {
@@ -7374,11 +8149,70 @@
                 0.0,
                 0.0,
                 0.0,
-                2.4000015258789062
+                0.0
               ]
             },
             {
               "index": 8,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 18,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -22.0
+              ]
+            },
+            {
+              "index": 19,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 20,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.5,
+          "keys": [
+            {
+              "index": 9,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                80.0
+              ]
+            },
+            {
+              "index": 10,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 11,
               "coefficients": [
                 0.0,
                 0.0,
@@ -7397,7 +8231,7 @@
                 0.0,
                 0.0,
                 0.0,
-                47.39999771118164
+                80.0
               ]
             },
             {
@@ -7406,7 +8240,7 @@
                 0.0,
                 0.0,
                 0.0,
-                -0.7000007629394531
+                0.0
               ]
             },
             {
@@ -7421,7 +8255,7 @@
           ]
         },
         {
-          "time": 0.6000000238418579,
+          "time": 0.5666666626930237,
           "keys": [
             {
               "index": 12,
@@ -7429,7 +8263,7 @@
                 0.0,
                 0.0,
                 0.0,
-                155.3000030517578
+                201.0
               ]
             },
             {
@@ -7453,7 +8287,39 @@
           ]
         },
         {
-          "time": 0.6666666865348816,
+          "time": 0.6000000238418579,
+          "keys": [
+            {
+              "index": 12,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                201.0
+              ]
+            },
+            {
+              "index": 13,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 14,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.6333333253860474,
           "keys": [
             {
               "index": 15,
@@ -7461,7 +8327,7 @@
                 0.0,
                 0.0,
                 0.0,
-                251.79998779296875
+                329.0
               ]
             },
             {
@@ -7470,7 +8336,39 @@
                 0.0,
                 0.0,
                 0.0,
-                -1.2000007629394531
+                0.0
+              ]
+            },
+            {
+              "index": 17,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        },
+        {
+          "time": 0.6666666865348816,
+          "keys": [
+            {
+              "index": 15,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                329.0
+              ]
+            },
+            {
+              "index": 16,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
               ]
             },
             {
@@ -7488,7 +8386,7 @@
           "time": 1.0,
           "keys": [
             {
-              "index": 27,
+              "index": 30,
               "coefficients": [
                 0.0,
                 0.0,
@@ -7502,7 +8400,7 @@
           "time": 1.1666666269302368,
           "keys": [
             {
-              "index": 27,
+              "index": 30,
               "coefficients": [
                 0.0,
                 0.0,
@@ -7516,12 +8414,48 @@
           "time": 1.2000000476837158,
           "keys": [
             {
+              "index": 18,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                -22.0
+              ]
+            },
+            {
               "index": 19,
               "coefficients": [
                 0.0,
                 0.0,
                 0.0,
                 0.0
+              ]
+            },
+            {
+              "index": 20,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 22,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            {
+              "index": 31,
+              "coefficients": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
               ]
             }
           ]

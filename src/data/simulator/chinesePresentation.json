@@ -1,0 +1,50 @@
+{
+  "reverseCommit": "f7feebaf",
+  "source": "GirlsBandParty-Reverse/artifacts/investigations/cn-master-wording-9-4-4/master_wording_collection.json",
+  "localSource": "originalMenuChinese.json",
+  "wording": {
+    "dialog_rhythmgamePause_title": "暂停",
+    "dialog_rhythmgamePause_retryableBody": "演出暂停了。\n确认重新进行演出吗？\n重新开始的话点击【重新开始】从头进行演出。",
+    "dialog_rhythmgamePause_retire": "中断",
+    "dialog_rhythmgamePause_resume": "继续",
+    "dialog_rhythmgameRetry_title": "重新开始",
+    "dialog_rhythmgameRetry_body": "重新从歌曲最开始进行演出吗？",
+    "dialog_rhythmgameRetry_buttonRetry": "重新开始",
+    "dialog_rhythmgameRetire_title": "中断",
+    "dialog_rhythmgameRetire_body": "确认中断当前演出返回主页吗？",
+    "dialog_rhythmgameRetire_annotatedLB": "※中断当前演出的话，将不会获得演出报酬。",
+    "dialog_button_cancel": "取消",
+    "dialog_button_ok": "确定",
+    "word_toNext": "下一步",
+    "result_button_retryLive": "再次演出",
+    "rhythmgame_titleBoard_lyricist": "作词 : ",
+    "rhythmgame_titleBoard_composer": "作曲 : ",
+    "rhythmgame_titleBoard_arranger": "编曲 : ",
+    "word_practice_caution_time_moved": "使用了「快进」「倒退」功能的情况下，\n将不会显示分数和判定结果。",
+    "word_practice_caution_demo": "演示模式不会显示及记录分数结果。",
+    "word_resultDetail_caution_autoLive": "自动演出模式下将不会记录在最高分排行榜中，\n同时也不会显示判定结果。",
+    "word_practice_caution": "结果不会记录进最高分排行榜\n以及分数等级中。",
+    "word_autoLive": "自动演出",
+    "word_demoPlay": "演示模式",
+    "word_score": "得分"
+  },
+  "literals": {
+    "もう1回ライブ": "再次演出",
+    "「早送り」「巻き戻し」機能を使用した場合、\nスコアおよび判定は表示されません。": "使用了「快进」「倒退」功能的情况下，\n将不会显示分数和判定结果。",
+    "デモプレイではスコアは表示、記録されません。": "演示模式不会显示及记录分数结果。",
+    "オートライブでは、ハイスコアは記録されず、\n判定は表示されません。": "自动演出模式下将不会记录在最高分排行榜中，\n同时也不会显示判定结果。",
+    "ハイスコアおよび\nスコアランクは記録されません。": "结果不会记录进最高分排行榜\n以及分数等级中。",
+    "OK": "确定",
+    "次へ": "下一步",
+    "作詞：": "作词 : ",
+    "作曲：": "作曲 : ",
+    "編曲：": "编曲 : ",
+    "オートライブ": "自动演出",
+    "デモプレイ": "演示模式",
+    "スコア": "得分"
+  },
+  "resultBannerSource": {
+    "reverseCommit": "c0a458e9",
+    "evidence": "GirlsBandParty-Reverse/artifacts/investigations/cn-result-banner-9-4-4/presentation.json"
+  }
+}

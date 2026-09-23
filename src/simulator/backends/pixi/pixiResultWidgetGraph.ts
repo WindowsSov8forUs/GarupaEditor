@@ -1,3 +1,4 @@
+import { localizeSimulatorText, simulatorTextFonts } from "../../scene/presentationLocalization";
 import { Container, Matrix, NineSliceSprite, RenderLayer, Sprite, Text, TilingSprite, type Texture } from "pixi.js";
 import type { StageClipAnimation } from "../../engine/rendering/stageClipAnimation";
 import type { PixiResultNumberLabel } from "./pixiResultNumberLabel";
@@ -41,7 +42,7 @@ export class PixiResultWidgetGraph {
   private readonly poses = new Map<string, { x: number; y: number; z: number; sx: number; sy: number; sz: number; rotation: readonly number[]; euler?: readonly number[] }>();
   private readonly matrix = new Matrix();
 
-  constructor(private readonly profile: readonly ResultWidgetNode[], resources: ResultWidgetResources,
+  constructor(private readonly profile: readonly ResultWidgetNode[], private readonly resources: ResultWidgetResources,
     private readonly labelLayouts: Readonly<Record<string, OriginalLabelLayout>>, anchors: readonly string[] = [], order?: RenderLayer) {
     this.order = order ?? new RenderLayer({ sortableChildren: true });
     const byPath = new Map(profile.map(n => [n.path, n]));
@@ -79,7 +80,7 @@ export class PixiResultWidgetGraph {
       }
       const l = n.label;
       if (l !== undefined) {
-        const text = new Text({ text: l.text, style: { fontFamily: resources.font, fontSize: l.fontSize,
+        const text = new Text({ text: localizeSimulatorText(l.text), style: { fontFamily: simulatorTextFonts(localizeSimulatorText(l.text), resources.font), fontSize: l.fontSize,
           letterSpacing: l.spacing, fill: color(l.color),
           align: l.pivot % 3 === 0 ? "left" : l.pivot % 3 === 2 ? "right" : "center" } });
         fitNguiWidgetText(text, l.size, l.pivot, labelLayouts[n.path]!);
@@ -93,7 +94,8 @@ export class PixiResultWidgetGraph {
 
   setText(path: string, value: string): void {
     const label = this.labels.get(path)!;
-    label.text = value;
+    label.text = localizeSimulatorText(value);
+    label.style.fontFamily = simulatorTextFonts(label.text, this.resources.font);
     const source = this.profile.find(n => n.path === path)!.label!;
     fitNguiWidgetText(label, source.size, source.pivot, this.labelLayouts[path]!);
   }

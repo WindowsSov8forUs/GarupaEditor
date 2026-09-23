@@ -1,3 +1,4 @@
+import { localizeSimulatorText, simulatorTextFonts } from "../../scene/presentationLocalization";
 import { clipNotePolygon } from "../../engine/rendering/notePolygonClipping";
 import { coordinate, coordinateAdd, coordinateScale, coordinateDirection, copyExponentialLine, copyExponentialTransform } from "../../engine/rendering/exponentialCoordinates";
 import { NoteViewportClipper } from "./noteViewportClipping";
@@ -407,6 +408,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     const background = this.baseTextures.get("hud/result/background");
     if (background === undefined) return reject("render.result.background-unavailable", "Result requires the prepared default result background texture.");
     const atlasId = (atlas: string, key: string) => atlas === "judge" ? judge
+      : atlas === "rhythm" ? CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId
       : atlas === "banner" ? "hud/result/banner-atlas"
       : atlas === "rank-light" ? "hud/result/rank-light-atlas"
       : atlas === "common" || key === "button_pink" ? CURRENT_PAUSE_CONTROL_BINDINGS.uiCommonLogicalAssetId : "hud/result/menu-atlas";
@@ -2639,11 +2641,12 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
       CURRENT_PAUSE_DIALOG_COLORS, this.textBox.bind(this));
   }
   private text(value: string, size: number, fill: number, label: string): Text {
+    value = localizeSimulatorText(value);
     return new Text({
       text: value,
       style: {
         fill: linearTintFromSrgbColor(fill),
-        fontFamily: this.fontFamily,
+        fontFamily: simulatorTextFonts(value, this.fontFamily),
         fontSize: size,
         fontWeight: "normal",
         align: "center",
@@ -2668,7 +2671,7 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
       text: value,
       style: {
         fill: typeof fill === "number" ? linearTintFromSrgbColor(fill) : linearTintFromSrgbChannels(...fill),
-        fontFamily: this.fontFamily,
+        fontFamily: simulatorTextFonts(value, this.fontFamily),
         fontSize: size,
         fontWeight: "normal",
         align: pivot === "left" ? "left" : "center",

@@ -1,3 +1,4 @@
+import { localizeSimulatorText, simulatorTextFonts } from "../../scene/presentationLocalization";
 import { isSerializedTouchRelease } from "../../../components/SerializedButtonInput";
 import { Container, NineSliceSprite, RenderLayer, Sprite, Text, TilingSprite, type Texture } from "pixi.js";
 import headerProfile from "../../../data/simulator/resultHeaderProfile.json";
@@ -194,9 +195,9 @@ export class PixiResultScene {
           const wording = navigation.wording;
           const caption = r.moveTimeCount > 0 ? wording.word_practice_caution_time_moved : result.isDemoPlayMode ? wording.word_practice_caution_demo
             : result.isAutoLive ? wording.word_resultDetail_caution_autoLive : wording.word_practice_caution;
-          const value = l.role === "caution" ? caption : l.text;
+          const value = localizeSimulatorText(l.role === "caution" ? caption : l.text ?? "");
           const text = new Text({ text: value, style: {
-            fontFamily: font, fontSize: l.fontSize, letterSpacing: l.spacing,
+            fontFamily: simulatorTextFonts(value, font), fontSize: l.fontSize, letterSpacing: l.spacing,
             align: l.pivot % 3 === 0 ? "left" : l.pivot % 3 === 2 ? "right" : "center",
             fill: linearTintFromSrgbChannels(l.color[0]!, l.color[1]!, l.color[2]!),
           } });
@@ -257,7 +258,7 @@ export class PixiResultScene {
           topHeight: edges.top, bottomHeight: edges.bottom });
       } else {
         const value = item.role === "title" ? presentation.song.title : item.role === "level" ? String(presentation.difficulty.level) : "Lv.";
-        widget = new Text({ text: value, style: { fontFamily: font, fontSize: item.fontSize,
+        widget = new Text({ text: value, style: { fontFamily: simulatorTextFonts(value, font), fontSize: item.fontSize,
           letterSpacing: item.spacing, fill: linearTintFromSrgbChannels(item.color[0]!, item.color[1]!, item.color[2]!),
           stroke: item.outline === undefined ? undefined : { color: 0xffffff, width: item.outline * 2 } } });
         const layouts: Readonly<Record<string, OriginalLabelLayout>> = labelLayouts["result-header.json"];
