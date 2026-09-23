@@ -23,6 +23,7 @@ import {
   createBestdoriNetworkResourceRef,
 } from "../../resources/providers/bestdoriCatalogProvider";
 import type { BestdoriAssetFamily, BestdoriAssetServer } from "../../services/bestdori/api";
+import { buildBestdoriSkinCatalogOptionsFromDescriptors } from "../../services/bestdori/catalog";
 import {
   decodeAppliedSkinResources,
   type AppliedSkinResources,
@@ -2066,7 +2067,7 @@ export function useEditorIoAndShortcuts(params: any) {
     persist: boolean,
     announceSuccess = true,
   ) => {
-    const normalized = normalizeSkinSelection(selection);
+    let normalized = normalizeSkinSelection(selection);
     const finishSkin = startOperation("editor.skin.apply", { selection: normalized });
     const sequence = skinApplySeqRef.current + 1;
     skinApplySeqRef.current = sequence;
@@ -2083,6 +2084,20 @@ export function useEditorIoAndShortcuts(params: any) {
       const catalog = await resourceManager.refreshCatalog("bestdori");
       if (catalog.status === "rejected") {
         throw new Error(`${catalog.failure.capability}: ${catalog.failure.boundary}`);
+      }
+      // Older catalog merging selected TW HABAHIRO even without its sample package.
+      // Repair that saved selection using a complete catalogued pair, never mixing servers.
+      if (normalized.rhythmRipName === "habahiro" && normalized.rhythmServer === "tw" &&
+          !catalog.value.resources.some(resource => resource.source.server === "tw" &&
+            resource.source.family === "noteskin" && resource.source.nativeId === "habahiro_sample")) {
+        const replacement = buildBestdoriSkinCatalogOptionsFromDescriptors(catalog.value.resources)
+          .resources.habahiroRhythm.habahiro;
+        if (replacement) {
+          appLog("warn", "editor.skin.repair-incomplete-habahiro-source", {
+            previousServer: normalized.rhythmServer, server: replacement.server,
+          });
+          normalized = { ...normalized, rhythmServer: replacement.server };
+        }
       }
       const resourceRefs = {
         "skin.rhythm": requireBestdoriRef(normalized.rhythmServer, "noteskin", normalized.rhythmRipName),
