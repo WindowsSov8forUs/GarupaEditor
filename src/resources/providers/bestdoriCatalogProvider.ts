@@ -1,3 +1,4 @@
+import { appLog } from "../../logging/applicationLogger";
 import { detectUserMediaType } from "../userMediaFormat";
 import type {
   ResourceCatalogProvider,
@@ -124,7 +125,7 @@ export class BestdoriApplicationResourceProvider implements ResourceCatalogProvi
     previous: ResourceCatalogSnapshot | null,
   ): Promise<ResourceResult<ResourceCatalogSnapshot>> {
     try {
-      const resources = await loadBestdoriNetworkResourceDescriptors();
+      const { resources, refreshFailures } = await loadBestdoriNetworkResourceDescriptors(previous);
       const observedAt = new Date().toISOString();
       const encoded = new TextEncoder().encode(JSON.stringify(resources.map((resource) => ({
         id: resource.ref.id,
@@ -136,15 +137,14 @@ export class BestdoriApplicationResourceProvider implements ResourceCatalogProvi
       const notModified = previous?.bodySha256 === integrity.value.sha256;
       return resourceAccepted(Object.freeze({
         provider: this.provider,
-        freshness: notModified ? "not-modified" as const : "fresh" as const,
+        freshness: Object.keys(refreshFailures).length ? "offline-cached" as const
+          : notModified ? "not-modified" as const : "fresh" as const,
+        refreshFailures: Object.freeze(refreshFailures),
         observedAt,
         etag: null,
         lastModified: null,
         bodySha256: integrity.value.sha256,
-        resources: Object.freeze(resources.map((resource) => Object.freeze({
-          ...resource,
-          catalogObservedAt: observedAt,
-        }))),
+        resources,
       }));
     } catch (error) {
       return resourceRejected(
@@ -236,24 +236,32 @@ export class BestdoriApplicationResourceProvider implements ResourceCatalogProvi
   }
 }
 
-export async function loadBestdoriNetworkResourceDescriptors(): Promise<readonly NetworkResourceDescriptor[]> {
-  const [assets, names, songs] = await Promise.all([
-    Promise.all(BESTDORI_ASSET_SERVERS.map((server) =>
-      fetchBestdoriJson<BestdoriAssetsInfo>(
-        `/api/explorer/${server}/assets/_info.json`,
-        `bestdori ${server} assets info`,
-      ))),
+async function loadBestdoriNetworkResourceDescriptors(previous: ResourceCatalogSnapshot | null): Promise<{
+  resources: readonly NetworkResourceDescriptor[]; refreshFailures: Record<string, string>;
+}> {
+  const [assets, names, songResult] = await Promise.all([
+    Promise.allSettled(BESTDORI_ASSET_SERVERS.map((server) =>
+      fetchBestdoriJson<BestdoriAssetsInfo>(`/api/explorer/${server}/assets/_info.json`, `bestdori ${server} assets info`))),
     loadNames(),
-    fetchBestdoriJson<Record<string, BestdoriSongCatalogEntry>>(
-      "/api/songs/all.8.json",
-      "bestdori complete song media catalog",
-    ),
+    Promise.allSettled([fetchBestdoriJson<Record<string, BestdoriSongCatalogEntry>>(
+      "/api/songs/all.8.json", "bestdori complete song media catalog")]),
   ]);
+  const refreshFailures: Record<string, string> = {};
+  const song = songResult[0]!;
+  if (song.status === "rejected") appLog("warn", "resources.catalog.songs-unavailable", { error: String(song.reason) });
   const observedAt = new Date().toISOString();
   const resources: NetworkResourceDescriptor[] = [];
   for (let index = 0; index < BESTDORI_ASSET_SERVERS.length; index += 1) {
     const server = BESTDORI_ASSET_SERVERS[index]!;
-    const info = assets[index] ?? {};
+    const result = assets[index]!;
+    if (result.status === "rejected") {
+      refreshFailures[server] = String(result.reason);
+      const cached = previous?.resources.filter(resource => resource.source.server === server) ?? [];
+      resources.push(...cached);
+      appLog("warn", "resources.catalog.server-fallback", { server, count: cached.length, error: String(result.reason) });
+      continue;
+    }
+    const info = result.value;
     collect(resources, server, "noteskin", info.ingameskin?.noteskin, names, observedAt);
     collect(resources, server, "fieldskin", info.ingameskin?.fieldskin, names, observedAt);
     collect(resources, server, "bgskin", info.ingameskin?.bgskin, names, observedAt);
@@ -267,14 +275,29 @@ export async function loadBestdoriNetworkResourceDescriptors(): Promise<readonly
     if (info.sound?.common !== undefined) resources.push(commonSoundDescriptor(server, observedAt));
     if (info.tutorial !== undefined) resources.push(tutorialDescriptor(server, observedAt));
     if (info.thumb?.limitedskin !== undefined) resources.push(limitedSkinThumbnailDescriptor(server, observedAt));
-    collectSongMedia(resources, server, index, songs, info, observedAt);
+    if (song.status === "fulfilled") collectSongMedia(resources, server, index, song.value, info, observedAt);
+    else {
+      refreshFailures[`${server}/musicjacket`] = String(song.reason);
+      // Keep the last verified song-derived identities without reverting this server's skin catalog.
+      resources.push(...(previous?.resources.filter(resource => resource.source.server === server &&
+        resource.source.family === "media-cover" && resource.logicalPlacement.canonicalPath.startsWith("musicjacket/")) ?? []));
+    }
+  }
+  if (previous === null && assets.every(result => result.status === "rejected")) {
+    throw new Error(`No server catalog could be loaded: ${Object.entries(refreshFailures)
+      .map(([server, error]) => `${server}: ${error}`).join("; ")}`);
   }
   const deduplicated = new Map<string, NetworkResourceDescriptor>();
-  for (const resource of resources) deduplicated.set(resource.ref.id, resource);
-  return Object.freeze(Array.from(deduplicated.values()).sort((a, b) =>
+  const cachedById = new Map(previous?.resources.map(resource => [resource.ref.id, resource]) ?? []);
+  for (const resource of resources) {
+    const cached = cachedById.get(resource.ref.id);
+    deduplicated.set(resource.ref.id, resource.title === resource.source.nativeId && cached
+      ? Object.freeze({ ...resource, title: cached.title }) : resource);
+  }
+  return { refreshFailures, resources: Object.freeze(Array.from(deduplicated.values()).sort((a, b) =>
     a.source.server.localeCompare(b.source.server) ||
     a.source.family.localeCompare(b.source.family) ||
-    a.source.nativeId.localeCompare(b.source.nativeId)));
+    a.source.nativeId.localeCompare(b.source.nativeId))) };
 }
 
 function collect(
@@ -448,14 +471,20 @@ function tutorialDescriptor(server: BestdoriAssetServer, observedAt: string): Ne
 }
 
 async function loadNames(): Promise<BestdoriNames> {
-  const [note, directional, field, effect, background] = await Promise.all([
+  const results = await Promise.allSettled([
     fetchBestdoriJson<Record<string, BestdoriInfoEntry>>("/api/skin/notes.all.3.json", "bestdori note skin names"),
     fetchBestdoriJson<Record<string, BestdoriInfoEntry>>("/api/skin/directionalFlicks.all.3.json", "bestdori directional skin names"),
     fetchBestdoriJson<Record<string, BestdoriInfoEntry>>("/api/skin/lanes.all.3.json", "bestdori field skin names"),
     fetchBestdoriJson<Record<string, BestdoriInfoEntry>>("/api/skin/effects.all.3.json", "bestdori effect skin names"),
     fetchBestdoriJson<Record<string, BestdoriInfoEntry>>("/api/skin/backgrounds.all.3.json", "bestdori background names"),
   ]);
-  return { note, directional, field, effect, background };
+  const keys = ["note", "directional", "field", "effect", "background"] as const;
+  return Object.fromEntries(results.map((result, index) => {
+    if (result.status === "rejected") appLog("warn", "resources.catalog.names-unavailable", {
+      kind: keys[index], error: String(result.reason),
+    });
+    return [keys[index], result.status === "fulfilled" ? result.value : {}];
+  })) as unknown as BestdoriNames;
 }
 
 function titleFor(

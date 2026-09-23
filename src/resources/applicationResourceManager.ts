@@ -309,6 +309,7 @@ export class ApplicationResourceManager {
     const offline = freezeCatalog({
       ...cached.value,
       freshness: "offline-cached",
+      refreshFailures: Object.freeze({ "*": refreshed.failure.boundary }),
       resources: cached.value.resources.map((resource) => Object.freeze({
         ...resource,
         availability: this.installed.has(resource.ref.id) ? "offline-cached" as const : "unavailable" as const,
@@ -370,9 +371,23 @@ export class ApplicationResourceManager {
     if (options.refresh !== true) {
       const existing = await this.backend.readRecord(ref);
       if (existing.status === "accepted") {
-        this.installed.set(ref.id, existing.value);
-        appLog("info", "resources.cache.hit", { resourceId: ref.id, revision: existing.value.revision });
-        return resourceAccepted(existing.value.descriptor);
+        const stored = existing.value.descriptor;
+        const current = this.findNetworkDescriptor(ref.id);
+        const sourceChanged = stored.origin === "network" && current !== null &&
+          (stored.source.manifestUrl !== current.source.manifestUrl ||
+            stored.source.assetBaseUrl !== current.source.assetBaseUrl);
+        if (!sourceChanged) {
+          this.installed.set(ref.id, existing.value);
+          appLog("info", "resources.cache.hit", { resourceId: ref.id, revision: existing.value.revision });
+          return resourceAccepted(stored);
+        }
+        // The logical ID can survive a corrected provider route. Replace the old
+        // package only after the complete new source has installed successfully.
+        appLog("info", "resources.cache.source-changed", {
+          resourceId: ref.id, revision: existing.value.revision,
+          previousSource: stored.origin === "network" ? stored.source : undefined,
+          source: current?.source,
+        });
       }
     }
     let descriptor = this.findNetworkDescriptor(ref.id);
@@ -386,6 +401,16 @@ export class ApplicationResourceManager {
     }
     if (descriptor === null) {
       const catalog = this.activeCatalogs.get(providerId);
+      const server = ref.id.split("/")[1] ?? "";
+      const catalogPath = ref.id.slice(providerId.length + 1);
+      const refreshFailure = Object.entries(catalog?.refreshFailures ?? {})
+        .filter(([prefix]) => prefix === "*" || catalogPath === prefix || catalogPath.startsWith(`${prefix}/`))
+        .sort(([a], [b]) => b.length - a.length)[0]?.[1];
+      if (refreshFailure) {
+        appLog("error", "resources.catalog.unresolved", { resourceId: ref.id, server, refreshFailure });
+        return resourceRejected("catalog-unavailable", "resources.manager.catalog-refresh-unresolved",
+          `Cannot resolve ${ref.id}: its catalog could not be refreshed and no cached identity exists. ${refreshFailure}`);
+      }
       appLog("error", "resources.catalog.miss", { resourceId: ref.id, provider: providerId,
         freshness: catalog?.freshness ?? "not-loaded", observedAt: catalog?.observedAt, count: catalog?.resources.length ?? 0 });
       return resourceRejected(

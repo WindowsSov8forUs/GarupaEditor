@@ -1,4 +1,5 @@
 import type { ResourceRef } from "../../resources/contracts";
+import { bestdoriNoteskinSampleNativeId } from "../../resources/providers/bestdoriCatalogProvider";
 import type {
   BestdoriAssetFamily,
   BestdoriAssetServer,
@@ -51,6 +52,9 @@ export function buildEmptyBestdoriSkinCatalogOptions(): BestdoriSkinCatalogOptio
 export function buildBestdoriSkinCatalogOptionsFromDescriptors(
   descriptors: readonly import("../../resources/contracts").NetworkResourceDescriptor[],
 ): BestdoriSkinCatalogOptions {
+  const notePackages = new Set(descriptors
+    .filter((item) => item.source.family === "noteskin")
+    .map((item) => `${item.source.server}/${item.source.nativeId}`));
   const groups: Record<BestdoriCatalogKind, BestdoriCatalogResource[]> = {
     rhythm: [],
     habahiroRhythm: [],
@@ -72,9 +76,13 @@ export function buildBestdoriSkinCatalogOptionsFromDescriptors(
       title: descriptor.title,
     });
     if (family === "noteskin") {
+      // The decoder consumes the main and sample packages from the same server.
+      if (id.endsWith("sample") || !notePackages.has(
+        `${resource.server}/${bestdoriNoteskinSampleNativeId(id)}`,
+      )) continue;
       if (id === "habahiro") groups.habahiroRhythm.push(resource);
-      else if (id.startsWith("directionalflick") && !id.endsWith("sample")) groups.directional.push(resource);
-      else if (!id.endsWith("sample")) groups.rhythm.push(resource);
+      else if (id.startsWith("directionalflick")) groups.directional.push(resource);
+      else groups.rhythm.push(resource);
     } else if (family === "tapseskin") {
       if (id.startsWith("directionalflick")) groups.directionalSe.push(resource);
       else groups.rhythmSe.push(resource);
@@ -102,9 +110,12 @@ function buildOptions(
     labels[kind] = {};
     resources[kind] = {};
     for (const item of list) {
+      // Lists are ordered by server preference; keep the first complete source.
+      if (Object.prototype.hasOwnProperty.call(resources[kind], item.id)) continue;
       resources[kind][item.id] = item;
       labels[kind][item.id] = item.title;
     }
+    groups[kind] = Object.values(resources[kind]);
   }
   return {
     rhythm: groups.rhythm.map((item) => item.id),

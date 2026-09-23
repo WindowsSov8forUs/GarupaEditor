@@ -130,6 +130,8 @@ export interface ResourceCatalogSnapshot {
   readonly etag: string | null;
   readonly lastModified: string | null;
   readonly bodySha256: string | null;
+  /** Refresh failures by server/path prefix; "*" denotes a provider-wide failure. */
+  readonly refreshFailures?: Readonly<Record<string, string>>;
   readonly resources: readonly NetworkResourceDescriptor[];
 }
 
