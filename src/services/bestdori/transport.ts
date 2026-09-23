@@ -1,4 +1,5 @@
 import { loggedInvoke as invoke } from "../../logging/applicationLogger";
+import { DownloadFailure } from "../downloadError";
 
 export function isTauriRuntimeEnvironment(): boolean {
   if (typeof window === "undefined") {
@@ -18,7 +19,18 @@ export function isTauriRuntimeEnvironment(): boolean {
 }
 
 export async function invokeTauriCommand<T>(command: string, args?: Record<string, unknown>): Promise<T> {
-  return invoke<T>(command, args);
+  try {
+    return await invoke<T>(command, args);
+  } catch (error) {
+    if ((command === "bestdori_fetch_json" || command === "bestdori_fetch_binary")
+      && error !== null && typeof error === "object" && "message" in error && typeof error.message === "string") {
+      if ("userMessage" in error && typeof error.userMessage === "string") {
+        throw new DownloadFailure(error.message, error.userMessage);
+      }
+      throw new Error(error.message);
+    }
+    throw error;
+  }
 }
 
 export function decodeBase64ToArrayBuffer(base64: string): ArrayBuffer {

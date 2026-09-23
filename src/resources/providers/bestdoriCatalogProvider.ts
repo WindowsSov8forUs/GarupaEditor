@@ -1,3 +1,4 @@
+import { DownloadFailure } from "../../services/downloadError";
 import { appLog } from "../../logging/applicationLogger";
 import { detectUserMediaType } from "../userMediaFormat";
 import type {
@@ -151,6 +152,7 @@ export class BestdoriApplicationResourceProvider implements ResourceCatalogProvi
         "catalog-unavailable",
         "resources.bestdori.catalog-refresh-failed",
         error instanceof Error ? error.message : String(error),
+        error instanceof DownloadFailure ? `更新资源目录失败：${error.userMessage}` : undefined,
       );
     }
   }
@@ -185,6 +187,7 @@ export class BestdoriApplicationResourceProvider implements ResourceCatalogProvi
           "resource-transaction-failed",
           "resources.bestdori.media-download-failed",
           error instanceof Error ? error.message : String(error),
+        error instanceof DownloadFailure ? `获取媒体失败：${error.userMessage}` : undefined,
         );
       }
     }
@@ -208,6 +211,7 @@ export class BestdoriApplicationResourceProvider implements ResourceCatalogProvi
         "resource-unavailable",
         "resources.bestdori.manifest-fetch-failed",
         error instanceof Error ? error.message : String(error),
+        error instanceof DownloadFailure ? `获取资源清单失败：${error.userMessage}` : undefined,
       );
     }
     const filenames = normalizeManifest(manifest);
@@ -226,6 +230,7 @@ export class BestdoriApplicationResourceProvider implements ResourceCatalogProvi
           "resource-transaction-failed",
           "resources.bestdori.package-download-failed",
           `${logicalPath}: ${error instanceof Error ? error.message : String(error)}`,
+        error instanceof DownloadFailure ? `获取资源文件失败：${error.userMessage}` : undefined,
         );
       }
     }

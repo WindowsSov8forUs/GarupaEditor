@@ -5,6 +5,7 @@ const ATTEMPTS: usize = 3;
 
 pub struct DownloadError {
     pub message: String,
+    summary: String,
     pub status: Option<reqwest::StatusCode>,
     retryable: bool,
     retry_after: Option<Duration>,
@@ -13,12 +14,33 @@ pub struct DownloadError {
 impl DownloadError {
     fn network(error: reqwest::Error) -> Self {
         let retryable = error.is_timeout() || error.is_connect() || error.is_body() || error.is_decode() || error.is_request();
-        Self { message: super::describe_request_error(error), status: None, retryable, retry_after: None }
+        let summary = if error.is_timeout() { "网络连接或读取超时" }
+            else if error.is_connect() { "无法连接资源服务器" }
+            else if error.is_body() || error.is_decode() { "资源传输中断" }
+            else { "资源请求失败" }.to_owned();
+        Self { message: super::describe_request_error(error), summary, status: None, retryable, retry_after: None }
     }
 
     fn local(error: std::io::Error) -> Self {
-        Self { message: format!("download destination failed: {error}"), status: None,
+        Self { message: format!("download destination failed: {error}"), summary: "无法写入下载文件，请检查存储空间和目录权限".to_owned(), status: None,
             retryable: false, retry_after: None }
+    }
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CommandError {
+    message: String,
+    user_message: Option<String>,
+}
+
+impl From<String> for CommandError {
+    fn from(message: String) -> Self { Self { message, user_message: None } }
+}
+
+impl From<DownloadError> for CommandError {
+    fn from(error: DownloadError) -> Self {
+        Self { message: error.message, user_message: Some(error.summary) }
     }
 }
 
@@ -72,6 +94,7 @@ async fn receive<W: Write>(
                         .or_else(|| httpdate::parse_http_date(value).ok()
                             .map(|time| time.duration_since(std::time::SystemTime::now()).unwrap_or_default())));
                 return Err(DownloadError { message: format!("http status {status} at {}", endpoint(url)),
+                    summary: format!("资源服务器返回 HTTP {}", status.as_u16()),
                     status: Some(status), retryable: matches!(status.as_u16(), 408 | 429 | 500 | 502 | 503 | 504), retry_after });
             }
             let mut output = destination().map_err(DownloadError::local)?;
@@ -97,6 +120,10 @@ async fn receive<W: Write>(
                 // Do not retry before Retry-After, or keep an action waiting indefinitely.
                 if !error.retryable || attempt == ATTEMPTS || delay > Duration::from_secs(30) {
                     error.message = format!("{}; attempts={attempt}/{ATTEMPTS}", error.message);
+                    error.summary = format!("{}（已尝试 {attempt} 次）", error.summary);
+                    if delay > Duration::from_secs(30) && error.retryable && attempt < ATTEMPTS {
+                        error.summary.push_str("，服务器要求稍后重试");
+                    }
                     log::error!(target: "download", "failed endpoint={} {}", endpoint(url), error.message);
                     return Err(error);
                 }

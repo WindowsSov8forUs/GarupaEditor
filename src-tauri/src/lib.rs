@@ -1513,11 +1513,11 @@ async fn bestdori_fetch_json(
     auth_state: tauri::State<'_, BestdoriAuthState>,
     url: String,
     host_scope: Option<String>,
-) -> Result<serde_json::Value, String> {
+) -> Result<serde_json::Value, download::CommandError> {
     let (normalized_url, client, cookie_header) =
         build_scoped_request_context(&auth_state, &url, "url", host_scope.as_deref())?;
-    let bytes = download_url_bytes(&client, &normalized_url, cookie_header.as_deref()).await?;
-    parse_json_value_for_url(&bytes, &normalized_url)
+    let bytes = download::get(&client, &normalized_url, cookie_header.as_deref(), || Ok(Vec::new()), |_, _| {}).await?;
+    parse_json_value_for_url(&bytes, &normalized_url).map_err(Into::into)
 }
 
 #[tauri::command]
@@ -1594,10 +1594,10 @@ async fn bestdori_fetch_binary(
     auth_state: tauri::State<'_, BestdoriAuthState>,
     url: String,
     host_scope: Option<String>,
-) -> Result<String, String> {
+) -> Result<String, download::CommandError> {
     let (normalized_url, client, cookie_header) =
         build_scoped_request_context(&auth_state, &url, "url", host_scope.as_deref())?;
-    let bytes = download_url_bytes(&client, &normalized_url, cookie_header.as_deref()).await?;
+    let bytes = download::get(&client, &normalized_url, cookie_header.as_deref(), || Ok(Vec::new()), |_, _| {}).await?;
     Ok(encode_base64(bytes))
 }
 

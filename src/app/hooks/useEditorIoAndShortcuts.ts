@@ -1,3 +1,5 @@
+import { userFacingErrorMessage } from "../../services/downloadError";
+import { ResourceFailureError } from "../../resources/contracts";
 import { appLog, startOperation } from "../../logging/applicationLogger";
 import { loggedInvoke as invoke } from "../../logging/applicationLogger";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
@@ -144,7 +146,7 @@ function requireBestdoriRef(
 ) {
   const reference = createBestdoriNetworkResourceRef(server, family, nativeId);
   if (reference.status === "rejected") {
-    throw new Error(`${reference.failure.capability}: ${reference.failure.boundary}`);
+    throw new ResourceFailureError(reference.failure);
   }
   return reference.value;
 }
@@ -230,9 +232,9 @@ export function useEditorIoAndShortcuts(params: any) {
   const appliedSkinResourcesRef = useRef<AppliedSkinResources | null>(null);
   const materializeBestdoriMediaInWorkspace = async (input: Parameters<typeof createBestdoriNetworkMediaDescriptor>[0]) => {
     const descriptor = createBestdoriNetworkMediaDescriptor(input);
-    if (descriptor.status === "rejected") throw new Error(`${descriptor.failure.capability}: ${descriptor.failure.boundary}`);
+    if (descriptor.status === "rejected") throw new ResourceFailureError(descriptor.failure);
     const materialized = await resourceManager.materializeNetworkMediaInWorkspace(descriptor.value, input.purpose);
-    if (materialized.status === "rejected") throw new Error(`${materialized.failure.capability}: ${materialized.failure.boundary}`);
+    if (materialized.status === "rejected") throw new ResourceFailureError(materialized.failure);
     return materialized.value.ref;
   };
 
@@ -935,7 +937,7 @@ export function useEditorIoAndShortcuts(params: any) {
       setStatusMessage(`已导出到 ${savedPath}`);
       setIsExportJsonModalOpen(false);
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+      const message = userFacingErrorMessage(error);
       setStatusMessage(`导出失败：${message}`);
     } finally {
       setIsExportJsonSaving(false);
@@ -965,7 +967,7 @@ export function useEditorIoAndShortcuts(params: any) {
         setStatusMessage("已导出 Bestdori V2 到剪贴板。");
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+      const message = userFacingErrorMessage(error);
       if (typeof openOverlayDialog === "function") {
         openOverlayDialog({
           tone: "error",
@@ -1290,7 +1292,7 @@ export function useEditorIoAndShortcuts(params: any) {
       setImportJsonModalLevel("chart");
       setIsImportJsonModalOpen(false);
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+      const message = userFacingErrorMessage(error);
       setStatusMessage(`应用 JSON 失败：${message}`);
     }
   };
@@ -1457,7 +1459,7 @@ export function useEditorIoAndShortcuts(params: any) {
       setIsImportJsonModalOpen(false);
     } catch (error) {
       await resourceManager.reconcileCurrentChartMedia(chartMediaResources);
-      const message = error instanceof Error ? error.message : String(error);
+      const message = userFacingErrorMessage(error);
       completeDownloadProgress(`官方谱面导入失败：${message}`, 900);
       setStatusMessage(`官方谱面导入失败：${message}`);
     } finally {
@@ -1595,7 +1597,7 @@ export function useEditorIoAndShortcuts(params: any) {
       setIsImportJsonModalOpen(false);
     } catch (error) {
       await resourceManager.reconcileCurrentChartMedia(chartMediaResources);
-      const message = error instanceof Error ? error.message : String(error);
+      const message = userFacingErrorMessage(error);
       completeDownloadProgress(`社区谱面导入失败：${message}`, 900);
       setStatusMessage(`社区谱面导入失败：${message}`);
     } finally {
@@ -1662,7 +1664,7 @@ export function useEditorIoAndShortcuts(params: any) {
       setImportJsonModalLevel("chart");
       setIsImportJsonModalOpen(false);
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+      const message = userFacingErrorMessage(error);
       completeDownloadProgress(`社区谱面上传失败：${message}`, 900);
       if (typeof openOverlayDialog === "function") {
         openOverlayDialog({
@@ -1736,7 +1738,7 @@ export function useEditorIoAndShortcuts(params: any) {
       setImportJsonModalLevel("chart");
       setIsImportJsonModalOpen(false);
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+      const message = userFacingErrorMessage(error);
       completeDownloadProgress(`NotGarupa 服务器谱面上传失败：${message}`, 900);
       if (typeof openOverlayDialog === "function") {
         openOverlayDialog({
@@ -1804,7 +1806,7 @@ export function useEditorIoAndShortcuts(params: any) {
       setImportJsonModalLevel("chart");
       setIsImportJsonModalOpen(false);
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+      const message = userFacingErrorMessage(error);
       completeDownloadProgress(`测试服谱面上传失败：${message}`, 900);
       if (typeof openOverlayDialog === "function") {
         openOverlayDialog({
@@ -1841,7 +1843,7 @@ export function useEditorIoAndShortcuts(params: any) {
       setIsImportJsonModalOpen(false);
     } catch (error) {
       setImportJsonSelectedPath(previousSelectedPath);
-      const message = error instanceof Error ? error.message : String(error);
+      const message = userFacingErrorMessage(error);
       setStatusMessage(`导入失败：${message}`);
     }
   };
@@ -1865,7 +1867,7 @@ export function useEditorIoAndShortcuts(params: any) {
       setStatusMessage("已将 Bestdori V2 转换为Garupa 谱面 JSON，请在导入页点击“应用”。");
     } catch (error) {
       setImportBestdoriV2SelectedPath(previousSelectedPath);
-      const message = error instanceof Error ? error.message : String(error);
+      const message = userFacingErrorMessage(error);
       setStatusMessage(`Bestdori V2 导入失败：${message}`);
     }
   };
@@ -1894,7 +1896,7 @@ export function useEditorIoAndShortcuts(params: any) {
       bytes: new Uint8Array(await file.arrayBuffer()),
     });
     if (imported.status === "rejected") {
-      throw new Error(`${imported.failure.capability}: ${imported.failure.boundary}`);
+      throw new ResourceFailureError(imported.failure);
     }
     return imported.value.ref;
   };
@@ -2052,7 +2054,7 @@ export function useEditorIoAndShortcuts(params: any) {
       }
     } catch (error) {
       if (!options?.silent) {
-        const message = error instanceof Error ? error.message : String(error);
+        const message = userFacingErrorMessage(error);
         setStatusMessage(`窗口分辨率设置失败：${message}`);
       }
     }
@@ -2083,7 +2085,7 @@ export function useEditorIoAndShortcuts(params: any) {
     try {
       const catalog = await resourceManager.refreshCatalog("bestdori");
       if (catalog.status === "rejected") {
-        throw new Error(`${catalog.failure.capability}: ${catalog.failure.boundary}`);
+        throw new ResourceFailureError(catalog.failure);
       }
       // Older catalog merging selected TW HABAHIRO even without its sample package.
       // Repair that saved selection using a complete catalogued pair, never mixing servers.
@@ -2126,11 +2128,11 @@ export function useEditorIoAndShortcuts(params: any) {
         ...sampleResourceRefs,
       }));
       if (snapshot.status === "rejected") {
-        throw new Error(`${snapshot.failure.capability}: ${snapshot.failure.boundary}`);
+        throw new ResourceFailureError(snapshot.failure);
       }
       const lease = await resourceManager.acquireSnapshot(snapshot.value.snapshotId);
       if (lease.status === "rejected") {
-        throw new Error(`${lease.failure.capability}: ${lease.failure.boundary}`);
+        throw new ResourceFailureError(lease.failure);
       }
       const nextApplied = await decodeAppliedSkinResources(lease.value, {
         rhythm: normalized.rhythmRipName,
@@ -2145,7 +2147,7 @@ export function useEditorIoAndShortcuts(params: any) {
       const selected = resourceManager.replaceSelection(resourceRefs);
       if (selected.status === "rejected") {
         await nextApplied.dispose();
-        throw new Error(`${selected.failure.capability}: ${selected.failure.boundary}`);
+        throw new ResourceFailureError(selected.failure);
       }
       const previousApplied = appliedSkinResourcesRef.current;
       appliedSkinResourcesRef.current = nextApplied;
@@ -2170,9 +2172,9 @@ export function useEditorIoAndShortcuts(params: any) {
         finishSkin(undefined, { superseded: true });
         return;
       }
-      const message = error instanceof Error ? error.message : String(error);
+      const message = userFacingErrorMessage(error);
       completeDownloadProgress(`下载失败：${message}`, 900);
-      finishSkin(error);
+      finishSkin(error instanceof ResourceFailureError ? error.failure : error);
       setStatusMessage(`皮肤下载失败：${message}`);
     } finally {
       if (skinApplySeqRef.current === sequence) {

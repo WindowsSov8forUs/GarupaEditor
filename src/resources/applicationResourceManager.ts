@@ -603,7 +603,7 @@ export class ApplicationResourceManager {
       const available = await this.ensureAvailable(ref);
       if (available.status === "rejected") {
         appLog("error", "resources.snapshot.slot.failed", { slot, resourceId: ref.id, failure: available.failure });
-        return resourceRejected(available.failure.code, available.failure.capability, `${slot}: ${available.failure.boundary}`);
+        return resourceRejected(available.failure.code, available.failure.capability, `${slot}: ${available.failure.boundary}`, available.failure.userMessage);
       }
       slots[slot] = ref;
     }
@@ -627,7 +627,7 @@ export class ApplicationResourceManager {
       const available = await this.ensureAvailable(ref);
       if (available.status === "rejected") {
         appLog("error", "resources.snapshot.slot.failed", { slot, resourceId: ref.id, failure: available.failure });
-        return resourceRejected(available.failure.code, available.failure.capability, `${slot}: ${available.failure.boundary}`);
+        return resourceRejected(available.failure.code, available.failure.capability, `${slot}: ${available.failure.boundary}`, available.failure.userMessage);
       }
       slots[slot] = ref;
       ready.add(ref.id);

@@ -1,4 +1,5 @@
 import { appLog } from "../logging/applicationLogger";
+import { DownloadFailure } from "./downloadError";
 
 const ATTEMPTS = 3;
 const RETRY_STATUS = new Set([408, 429, 500, 502, 503, 504]);
@@ -17,9 +18,11 @@ export async function downloadBytes(url: string): Promise<ArrayBuffer> {
     const timer = setTimeout(() => controller.abort(), 45_000);
     let retryable: boolean | undefined;
     let delay = 1000 * 2 ** (attempt - 1);
+    let status: number | undefined;
     try {
       const response = await fetch(url, { method: "GET", cache: "no-store", signal: controller.signal });
       if (!response.ok) {
+        status = response.status;
         retryable = RETRY_STATUS.has(response.status);
         const after = response.headers.get("Retry-After");
         if (after !== null) {
@@ -37,7 +40,12 @@ export async function downloadBytes(url: string): Promise<ArrayBuffer> {
         && ["AbortError", "TimeoutError", "NetworkError"].includes(error.name));
       if (!retryable || attempt === attempts || delay > 30_000) {
         appLog("error", "download.failed", { url, attempt, attempts, error });
-        throw Object.assign(new Error(`${error instanceof Error ? error.message : String(error)} at ${endpoint}; attempts=${attempt}/${attempts}`), { cause: error });
+        const summary = status !== undefined ? `资源服务器返回 HTTP ${status}`
+          : controller.signal.aborted ? "网络连接或读取超时" : "资源请求失败或传输中断";
+        throw Object.assign(new DownloadFailure(
+          `${error instanceof Error ? error.message : String(error)} at ${endpoint}; attempts=${attempt}/${attempts}`,
+          `${summary}（已尝试 ${attempt} 次）${delay > 30_000 ? "，服务器要求稍后重试" : ""}`,
+        ), { cause: error });
       }
       appLog("warn", "download.retry", { url, attempt, attempts, delayMs: delay, error });
     } finally {
