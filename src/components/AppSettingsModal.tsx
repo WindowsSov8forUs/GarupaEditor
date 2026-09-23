@@ -27,8 +27,10 @@ export function AppSettingsModal(props: AppSettingsModalProps) {
     { key: "editor-import", label: "导入谱面", image: importIcon, action: props.onImport },
     { key: "editor-export", label: "导出谱面", image: exportIcon, action: props.onExport },
     ...ORIGINAL_MENU_ITEMS.map(item => ({ ...item,
-    action: () => setSettingsOpen(true),
-  }))];
+      action: () => setSettingsOpen(true),
+    })),
+    { key: "editor-account", label: "Bestdori 账号", icon: "icon_data_take_over", action: props.onAccount },
+  ];
   const positions = originalMenuPositions(items);
   return <>
     <OriginalAuthoredDialog open={props.open} model={model} onClose={props.onClose}

@@ -9,9 +9,9 @@ const sourceTabs = [...source.components.values()].filter(item => item.kind === 
   .sort((a, b) => a.data.tabIndex - b.data.tabIndex);
 
 /** Editor-owned content hosted in the existing settings window, in its original coordinate system. */
-export function OriginalTransferDialog({ open, title, tabs, selected, onSelect, onClose, children }: {
+export function OriginalTransferDialog({ open, title, tabs, selected, onSelect, onClose, busy = false, children }: {
   open: boolean; title: string; tabs?: readonly { key: string; label: string }[];
-  selected?: string; onSelect?: (key: string) => void; onClose(): void; children: ReactNode;
+  selected?: string; onSelect?: (key: string) => void; onClose(): void; busy?: boolean; children: ReactNode;
 }) {
   const nodes: NonNullable<OriginalOverrides["nodes"]> extends Readonly<infer T> ? T : never = {
     [source.nodeAt("etc").id]: { active: false },
@@ -49,7 +49,7 @@ export function OriginalTransferDialog({ open, title, tabs, selected, onSelect, 
       action: () => onSelect?.(item.key) };
   });
   const model = new OriginalPrefabModel(source.prefab, { nodes, components });
-  return <OriginalAuthoredDialog open={open} model={model} bindings={{ buttons }} motion="slide-left" onClose={onClose}>
+  return <OriginalAuthoredDialog open={open} model={model} bindings={{ buttons }} motion="slide-left" onClose={onClose} busy={busy}>
     <div className="transfer-authored-content" data-tabs={!!tabs?.length}
       style={{ zIndex: source.components.get(99)!.data.mDepth + 1 }}>{children}</div>
   </OriginalAuthoredDialog>;

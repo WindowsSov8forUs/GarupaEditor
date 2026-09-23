@@ -248,27 +248,6 @@ textarea:focus {
   --command-control-size: 42px;
   --command-control-gap: 8px;
   --command-control-radius: 8px;
-  --command-user-top-row-ratio: 3;
-  --command-user-bottom-row-ratio: 2;
-  --command-user-row-ratio-total: calc(
-    var(--command-user-top-row-ratio) + var(--command-user-bottom-row-ratio)
-  );
-  --command-user-top-row-height: calc(
-    var(--command-control-size) * var(--command-user-top-row-ratio) / var(--command-user-row-ratio-total)
-  );
-  --command-user-bottom-row-height: calc(
-    var(--command-control-size) * var(--command-user-bottom-row-ratio) / var(--command-user-row-ratio-total)
-  );
-  --command-user-nickname-font-size: clamp(
-    11px,
-    calc(var(--command-user-top-row-height) * 0.55),
-    16px
-  );
-  --command-user-username-font-size: clamp(
-    8px,
-    calc(var(--command-user-bottom-row-height) * 0.55),
-    12px
-  );
   position: relative;
   display: flex;
   justify-content: space-between;
@@ -350,59 +329,6 @@ textarea:focus {
   border-radius: var(--command-control-radius);
   background: transparent;
   box-shadow: none;
-}
-
-.command-user-bar {
-  width: 232px;
-  height: var(--command-control-size);
-  min-height: var(--command-control-size);
-  padding: 0 11px;
-  box-sizing: border-box;
-  display: grid;
-  grid-template-rows: var(--command-user-top-row-height) var(--command-user-bottom-row-height);
-  border: 1px solid rgb(190, 190, 190);
-  border-top-left-radius: calc(var(--command-control-size) / 2);
-  border-bottom-left-radius: calc(var(--command-control-size) / 2);
-  border-top-right-radius: var(--command-control-radius);
-  border-bottom-right-radius: var(--command-control-radius);
-  background: rgb(255, 255, 255);
-  overflow: hidden;
-}
-
-.command-user-bar.is-clickable {
-  cursor: pointer;
-}
-
-.command-user-bar.is-clickable:focus-visible {
-  outline: 2px solid rgba(255, 59, 113, 0.72);
-  outline-offset: 1px;
-}
-
-.command-user-row {
-  min-width: 0;
-  min-height: 0;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  text-align: right;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: 1;
-}
-
-.command-user-row-nickname {
-  color: var(--text);
-  font-size: var(--command-user-nickname-font-size);
-  align-items: flex-end;
-  padding-bottom: 2px;
-}
-
-.command-user-row-username {
-  color: var(--muted);
-  font-size: var(--command-user-username-font-size);
-  align-items: flex-start;
-  padding-top: 2px;
 }
 
 .command-icon-button::before {
@@ -3243,10 +3169,6 @@ button.app-settings-apply-button:not(.original-button):not(.note-token):not(.bpm
   .app-shell.is-mobile-runtime .command-group-right {
     flex: 0 0 auto;
     margin-left: 0;
-  }
-
-  .app-shell.is-mobile-runtime .command-user-bar {
-    display: none;
   }
 
   .app-shell.is-mobile-runtime .command-icon-button > img,
