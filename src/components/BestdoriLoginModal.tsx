@@ -1,111 +1,67 @@
-import { OriginalButton, OriginalDialogFrame, OriginalDialogHeader } from "./OriginalUi";
-﻿import { useCallback, type KeyboardEvent } from "react";
-import { useModalLayer } from "./useModalLayer";
-import { useModalTransition } from "./useModalTransition";
+import { useEffect, useState, type KeyboardEvent } from "react";
+import { OriginalTransferDialog } from "./OriginalTransferDialog";
+import { OriginalAuthoredDialog } from "./OriginalAuthoredDialog";
+import { OriginalPrefabModel, ORIGINAL_PREFABS } from "./originalPrefabModel";
+import { OriginalFormButton, OriginalFormInput, OriginalFormSubtitle, OriginalFormNote } from "./OriginalFormParts";
 
 type BestdoriLoginModalProps = {
-  open: boolean;
-  username: string;
-  password: string;
-  submitting: boolean;
-  errorMessage: string;
-  onUsernameChange: (value: string) => void;
-  onPasswordChange: (value: string) => void;
-  onSubmit: () => void;
-  onClose: () => void;
+  open: boolean; username: string; password: string; submitting: boolean; errorMessage: string;
+  accountUsername: string; accountNickname: string;
+  onUsernameChange: (value: string) => void; onPasswordChange: (value: string) => void;
+  onSubmit: () => void; onLogout: () => void; onClose: () => void;
 };
+const logoutModel = new OriginalPrefabModel(ORIGINAL_PREFABS.selectablecommondialog!, { components: {
+  33: { mText: "退出 Bestdori 账号" },
+  35: { mText: "确定退出当前 Bestdori 账号？", mEncoding: false },
+  38: { mText: "取消" }, 42: { mText: "退出登录" },
+} });
 
-export function BestdoriLoginModal({
-  open,
-  username,
-  password,
-  submitting,
-  errorMessage,
-  onUsernameChange,
-  onPasswordChange,
-  onSubmit,
-  onClose,
-}: BestdoriLoginModalProps) {
-  const { mounted, phase, transitionStyle, transitionRef } = useModalTransition(open);
-  const modalLayerStyle = useModalLayer(open, mounted);
-
-  const handleConfirm = useCallback(() => {
-    if (submitting) {
-      return;
-    }
-    onSubmit();
-  }, [onSubmit, submitting]);
-
-  const handleKeyDown = useCallback((event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      handleConfirm();
-    }
-  }, [handleConfirm]);
-
-  if (!mounted) {
-    return null;
-  }
-
-  const transitionClassName = phase === "enter" ? "is-enter" : "is-exit";
-
-  return (
-    <div
-      className={`modal-mask modal-transition-mask ${transitionClassName}`}
-      ref={transitionRef} style={{ ...modalLayerStyle, ...transitionStyle }}
-    >
-      <OriginalDialogFrame
-        className={`modal-card bestdori-login-modal modal-transition-card ${transitionClassName}`}
-        onClick={(event) => event.stopPropagation()}
-      >
-        <OriginalDialogHeader>{"\u767B\u5F55"}</OriginalDialogHeader>
-
-        <div className="modal-body">
-          <div className="bestdori-login-form">
-            <div className="setting-block">
-              <span className="setting-title-strip">{"\u7528\u6237\u540D"}</span>
-              <input
-                type="text"
-                className="value-input"
-                value={username}
-                onChange={(event) => onUsernameChange(event.currentTarget.value)}
-                onKeyDown={handleKeyDown}
-                autoComplete="username"
-                disabled={submitting}
-              />
-            </div>
-
-            <div className="setting-block">
-              <span className="setting-title-strip">{"\u5BC6\u7801"}</span>
-              <input
-                type="password"
-                className="value-input"
-                value={password}
-                onChange={(event) => onPasswordChange(event.currentTarget.value)}
-                onKeyDown={handleKeyDown}
-                autoComplete="current-password"
-                disabled={submitting}
-              />
-            </div>
-          </div>
-
-          {errorMessage && <div className="bestdori-login-error">{errorMessage}</div>}
-
-          <div className="modal-actions is-centered">
-            <OriginalButton tone="pink"
-              type="button"
-              className="app-settings-apply-button bestdori-login-submit"
-              onClick={handleConfirm}
-              disabled={submitting || username.trim().length === 0 || password.trim().length === 0}
-            >
-              <span className="btn-content">{submitting ? "\u767B\u5F55\u4E2D..." : "\u767B\u5F55"}</span>
-            </OriginalButton>
-            <OriginalButton tone="gray" type="button" className="app-settings-back-button" onClick={onClose} disabled={submitting}>
-              <span className="btn-content">{"\u5173\u95ED"}</span>
-            </OriginalButton>
-          </div>
+export function BestdoriLoginModal(props: BestdoriLoginModalProps) {
+  const [switching, setSwitching] = useState(false);
+  const [confirmLogout, setConfirmLogout] = useState(false);
+  useEffect(() => { if (props.open) { setSwitching(false); setConfirmLogout(false); } }, [props.open]);
+  const form = !props.accountUsername || switching;
+  const close = () => { if (!props.submitting) props.onClose(); };
+  const submit = () => { if (!props.submitting) props.onSubmit(); };
+  const keyDown = (event: KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (event.key === "Enter" && !event.nativeEvent.isComposing) { event.preventDefault(); submit(); }
+  };
+  return <>
+    <OriginalTransferDialog open={props.open} title="Bestdori 账号" onClose={close} busy={props.submitting}>
+      <div className="transfer-body">
+        <div className="transfer-page">
+          <OriginalFormSubtitle text="用户名" />
+          <OriginalFormInput aria-label="Bestdori 用户名" value={form ? props.username : props.accountUsername}
+            readOnly={!form} disabled={props.submitting} autoComplete="username"
+            onChange={event => props.onUsernameChange(event.currentTarget.value)} onKeyDown={keyDown} />
+          {form ? <>
+            <OriginalFormSubtitle text="密码" />
+            <OriginalFormInput aria-label="Bestdori 密码" type="password" value={props.password}
+              disabled={props.submitting} autoComplete="current-password"
+              onChange={event => props.onPasswordChange(event.currentTarget.value)} onKeyDown={keyDown} />
+          </> : <>
+            <OriginalFormSubtitle text="昵称" />
+            <OriginalFormInput aria-label="Bestdori 昵称" value={props.accountNickname} readOnly />
+          </>}
+          {props.errorMessage && <div role="alert"><OriginalFormNote text={props.errorMessage} /></div>}
         </div>
-      </OriginalDialogFrame>
-    </div>
-  );
+        <div className="transfer-actions">
+          {form ? <OriginalFormButton tone="pink" disabled={props.submitting || !props.username.trim() || !props.password}
+            onClick={submit}>{props.submitting ? "登录中…" : "登录"}</OriginalFormButton> : <>
+            <OriginalFormButton tone="pink" disabled={props.submitting} onClick={() => {
+              props.onPasswordChange(""); setSwitching(true);
+            }}>切换账号</OriginalFormButton>
+            <OriginalFormButton disabled={props.submitting} onClick={() => setConfirmLogout(true)}>退出登录</OriginalFormButton>
+          </>}
+          <OriginalFormButton disabled={props.submitting} onClick={close}>关闭</OriginalFormButton>
+        </div>
+      </div>
+    </OriginalTransferDialog>
+    <OriginalAuthoredDialog open={props.open && confirmLogout} model={logoutModel} busy={props.submitting}
+      onClose={() => { if (!props.submitting) setConfirmLogout(false); }}
+      bindings={{ buttons: {
+        39: { label: "取消", action: () => setConfirmLogout(false), disabled: props.submitting },
+        45: { label: "退出登录", action: () => { setConfirmLogout(false); props.onLogout(); }, disabled: props.submitting },
+      } }} />
+  </>;
 }

@@ -744,6 +744,11 @@ export async function bestdoriLogin(username: string, password: string): Promise
   });
 }
 
+export async function bestdoriLogout(): Promise<void> {
+  ensureBestdoriBackendAvailable();
+  return invokeTauriCommand<void>("bestdori_logout");
+}
+
 export async function bestdoriGetMe(): Promise<BestdoriUserMeResponse> {
   ensureBestdoriBackendAvailable();
   return invokeTauriCommand<BestdoriUserMeResponse>("bestdori_get_me");

@@ -548,13 +548,6 @@ fn set_bestdori_cookie_header_inner(
     Ok(())
 }
 
-fn set_bestdori_cookie_header(
-    state: &tauri::State<BestdoriAuthState>,
-    value: Option<String>,
-) -> Result<(), String> {
-    set_bestdori_cookie_header_inner(state.inner(), value)
-}
-
 fn get_bestdori_user_me(
     state: &tauri::State<BestdoriAuthState>,
 ) -> Result<Option<BestdoriUserMeResponse>, String> {
@@ -588,9 +581,25 @@ fn clear_bestdori_auth_state_and_persist(
     app: &tauri::AppHandle,
     state: &tauri::State<BestdoriAuthState>,
 ) -> Result<(), String> {
-    set_bestdori_cookie_header(state, None)?;
-    set_bestdori_user_me(state, None)?;
-    persist_bestdori_auth_state(app, state.inner())
+    replace_bestdori_auth_state(app, state.inner(), None, None)
+}
+
+// Keep both in-memory fields unchanged when saving the candidate fails.
+fn replace_bestdori_auth_state(
+    app: &tauri::AppHandle,
+    state: &BestdoriAuthState,
+    cookie: Option<String>,
+    me: Option<BestdoriUserMeResponse>,
+) -> Result<(), String> {
+    let mut cookie_guard = state.cookie_header.lock()
+        .map_err(|error| format!("lock bestdori auth state failed: {error}"))?;
+    let mut me_guard = state.user_me.lock()
+        .map_err(|error| format!("lock bestdori auth state failed: {error}"))?;
+    let candidate = BestdoriAuthCache { cookie_header: cookie, user_me: me };
+    persist_bestdori_auth_cache(app, &candidate)?;
+    *cookie_guard = candidate.cookie_header;
+    *me_guard = candidate.user_me;
+    Ok(())
 }
 
 fn persist_bestdori_user_me_state(
@@ -620,8 +629,12 @@ fn snapshot_bestdori_auth_state(state: &BestdoriAuthState) -> Result<BestdoriAut
 }
 
 fn persist_bestdori_auth_state(app: &tauri::AppHandle, state: &BestdoriAuthState) -> Result<(), String> {
-    let cache_path = resolve_bestdori_auth_cache_path(app)?;
     let snapshot = snapshot_bestdori_auth_state(state)?;
+    persist_bestdori_auth_cache(app, &snapshot)
+}
+
+fn persist_bestdori_auth_cache(app: &tauri::AppHandle, snapshot: &BestdoriAuthCache) -> Result<(), String> {
+    let cache_path = resolve_bestdori_auth_cache_path(app)?;
     let has_cookie = snapshot
         .cookie_header
         .as_deref()
@@ -1687,13 +1700,12 @@ async fn bestdori_login(
         ));
     }
 
-    set_bestdori_cookie_header(&auth_state, Some(cookie_header.clone()))?;
+    // Validate the candidate session before replacing the current account.
     let me_payload = request_bestdori_me(&client, &cookie_header).await?;
     if !me_payload.result {
-        clear_bestdori_auth_state_and_persist(&app, &auth_state)?;
         return Err("bestdori login failed: /api/user/me returned result=false".to_string());
     }
-    persist_bestdori_user_me_state(&app, &auth_state, &me_payload)?;
+    replace_bestdori_auth_state(&app, auth_state.inner(), Some(cookie_header), Some(me_payload.clone()))?;
     Ok(me_payload)
 }
 

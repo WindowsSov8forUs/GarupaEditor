@@ -9,7 +9,7 @@ import { MetadataEditorModal } from "../MetadataEditorModal";
 import { DownloadProgressModal } from "../DownloadProgressModal";
 import { OverlayDialogModal } from "../OverlayDialogModal";
 import { SkinSettingsModal } from "../SkinSettingsModal";
-import { bestdoriGetMe, bestdoriLogin } from "../../services/bestdori/api";
+import { bestdoriGetMe, bestdoriLogin, bestdoriLogout } from "../../services/bestdori/api";
 import { isMobileRuntime } from "../../app/mobileRuntime";
 import { SidebarPanel } from "./SidebarPanel";
 import { TimelineStrip } from "./TimelineStrip";
@@ -77,8 +77,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     cancelOverlayDialog,
     openAppSettings,
     openSkinSettings,
-    bestdoriNickname,
-    bestdoriUsername,
     metadata,
     chartMediaSources,
     chartMediaError,
@@ -334,36 +332,23 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   const judgeSkinTypes = bestdoriSkinCatalogOptions?.judge ?? [];
   const catalogResource = (kind: keyof NonNullable<typeof bestdoriSkinCatalogOptions>["resources"], value: string) =>
     bestdoriSkinCatalogOptions?.resources[kind]?.[value] ?? null;
+  const bestdoriAuthRevision = useRef(0);
+  const bestdoriAuthBusy = useRef(false);
   const [isBestdoriLoginOpen, setIsBestdoriLoginOpen] = useState(false);
   const [bestdoriLoginUsernameInput, setBestdoriLoginUsernameInput] = useState("");
   const [bestdoriLoginPasswordInput, setBestdoriLoginPasswordInput] = useState("");
   const [bestdoriLoginSubmitting, setBestdoriLoginSubmitting] = useState(false);
   const [bestdoriLoginErrorMessage, setBestdoriLoginErrorMessage] = useState("");
-  const [bestdoriNicknameDisplay, setBestdoriNicknameDisplay] = useState(
-    typeof bestdoriNickname === "string" ? bestdoriNickname.trim() : "",
-  );
-  const [bestdoriUsernameDisplay, setBestdoriUsernameDisplay] = useState(
-    typeof bestdoriUsername === "string" ? bestdoriUsername.trim() : "",
-  );
-
-  useEffect(() => {
-    if (typeof bestdoriNickname === "string") {
-      setBestdoriNicknameDisplay(bestdoriNickname.trim());
-    }
-  }, [bestdoriNickname]);
-
-  useEffect(() => {
-    if (typeof bestdoriUsername === "string") {
-      setBestdoriUsernameDisplay(bestdoriUsername.trim());
-    }
-  }, [bestdoriUsername]);
+  const [bestdoriNicknameDisplay, setBestdoriNicknameDisplay] = useState("");
+  const [bestdoriUsernameDisplay, setBestdoriUsernameDisplay] = useState("");
 
   useEffect(() => {
     let disposed = false;
+    const revision = bestdoriAuthRevision.current;
     void (async () => {
       try {
         const response = await bestdoriGetMe();
-        if (!response.result || disposed) {
+        if (!response.result || disposed || revision !== bestdoriAuthRevision.current) {
           return;
         }
         const resolvedUsername = typeof response.username === "string" ? response.username.trim() : "";
@@ -387,7 +372,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   }, [bestdoriUsernameDisplay]);
 
   const closeBestdoriLoginModal = useCallback(() => {
-    if (bestdoriLoginSubmitting) {
+    if (bestdoriAuthBusy.current) {
       return;
     }
     setIsBestdoriLoginOpen(false);
@@ -395,7 +380,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   }, [bestdoriLoginSubmitting]);
 
   const submitBestdoriLogin = useCallback(async () => {
-    if (bestdoriLoginSubmitting) {
+    if (bestdoriAuthBusy.current) {
       return;
     }
     const username = bestdoriLoginUsernameInput.trim();
@@ -404,6 +389,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       setBestdoriLoginErrorMessage("请输入用户名和密码。");
       return;
     }
+    bestdoriAuthBusy.current = true;
+    bestdoriAuthRevision.current += 1;
     setBestdoriLoginSubmitting(true);
     setBestdoriLoginErrorMessage("");
     try {
@@ -420,9 +407,30 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       setBestdoriLoginErrorMessage(message);
       setStatusMessage(`Bestdori 登录失败：${message}`);
     } finally {
+      bestdoriAuthBusy.current = false;
       setBestdoriLoginSubmitting(false);
     }
   }, [bestdoriLoginPasswordInput, bestdoriLoginSubmitting, bestdoriLoginUsernameInput, setStatusMessage]);
+
+  const logoutBestdori = useCallback(async () => {
+    if (bestdoriAuthBusy.current) return;
+    bestdoriAuthBusy.current = true;
+    bestdoriAuthRevision.current += 1;
+    setBestdoriLoginSubmitting(true);
+    setBestdoriLoginErrorMessage("");
+    try {
+      await bestdoriLogout();
+      setBestdoriUsernameDisplay("");
+      setBestdoriNicknameDisplay("");
+      setBestdoriLoginPasswordInput("");
+      setStatusMessage("已退出 Bestdori 账号。");
+    } catch (error) {
+      setBestdoriLoginErrorMessage(error instanceof Error ? error.message : String(error));
+    } finally {
+      bestdoriAuthBusy.current = false;
+      setBestdoriLoginSubmitting(false);
+    }
+  }, [setStatusMessage]);
 
   const isColorAssistEnabled = appOptionSettings?.colorAssistEnabled === true;
   const isCanvasRenderBackend = renderBackendMode === "canvas";
@@ -1234,9 +1242,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         onOpenSimulator={openSimulatorWindow}
         onOpenAppSettings={openAppSettings}
         menuOpen={isAppSettingsOpen}
-        userNickname={bestdoriNicknameDisplay}
-        userUsername={bestdoriUsernameDisplay}
-        onUserBarClick={openBestdoriLoginModal}
       />
 
       <section className={`workspace ${mobileRuntime ? "is-mobile-workspace" : ""}`}>
@@ -2019,6 +2024,9 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
 
       <BestdoriLoginModal
         open={isBestdoriLoginOpen}
+        accountUsername={bestdoriUsernameDisplay}
+        accountNickname={bestdoriNicknameDisplay}
+        onLogout={() => void logoutBestdori()}
         username={bestdoriLoginUsernameInput}
         password={bestdoriLoginPasswordInput}
         submitting={bestdoriLoginSubmitting}
