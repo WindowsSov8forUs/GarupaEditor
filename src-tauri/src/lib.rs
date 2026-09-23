@@ -723,7 +723,7 @@ async fn ensure_file_from_url(
     let mut response = request
         .send()
         .await
-        .map_err(|error| format!("request failed: {error}"))?;
+        .map_err(describe_request_error)?;
 
     if !response.status().is_success() {
         return Err(format!("http status {} for {}", response.status(), url));
@@ -740,7 +740,7 @@ async fn ensure_file_from_url(
     while let Some(chunk) = response
         .chunk()
         .await
-        .map_err(|error| format!("read body failed: {error}"))?
+        .map_err(|error| format!("read body failed: {}", describe_request_error(error)))?
     {
         file.write_all(&chunk)
             .map_err(|error| format!("write file failed: {error}"))?;
@@ -1370,6 +1370,21 @@ fn with_optional_cookie_header(
     request
 }
 
+fn describe_request_error(error: reqwest::Error) -> String {
+    let endpoint = error.url().map(|url| format!("{}://{}{}", url.scheme(), url.host_str().unwrap_or(""), url.path()))
+        .unwrap_or_else(|| "unknown endpoint".to_string());
+    let kind = if error.is_timeout() { "timeout" } else if error.is_connect() { "connection" }
+        else if error.is_body() { "body" } else if error.is_decode() { "decode" } else { "request" };
+    let error = error.without_url();
+    let mut details = vec![error.to_string()];
+    let mut source = std::error::Error::source(&error);
+    while let Some(cause) = source {
+        details.push(cause.to_string());
+        source = cause.source();
+    }
+    format!("request failed [{kind}] at {endpoint}: {}", details.join("; caused by: "))
+}
+
 fn build_http_status_error(status: reqwest::StatusCode, url: &str, body_bytes: &[u8]) -> String {
     let body = String::from_utf8_lossy(body_bytes);
     format!("http status {} for {} body: {}", status, url, body)
@@ -1387,12 +1402,12 @@ async fn send_request_expect_json(
     let response = request
         .send()
         .await
-        .map_err(|error| format!("request failed: {error}"))?;
+        .map_err(describe_request_error)?;
     let status = response.status();
     let bytes = response
         .bytes()
         .await
-        .map_err(|error| format!("read body failed: {error}"))?;
+        .map_err(|error| format!("read body failed: {}", describe_request_error(error)))?;
     if !status.is_success() {
         return Err(build_http_status_error(status, url, &bytes));
     }
@@ -1419,7 +1434,7 @@ async fn download_url_bytes(
     let response = with_optional_cookie_header(client.get(url), cookie_header)
         .send()
         .await
-        .map_err(|error| format!("request failed: {error}"))?;
+        .map_err(describe_request_error)?;
 
     if !response.status().is_success() {
         return Err(format!("http status {} for {}", response.status(), url));
@@ -1428,7 +1443,7 @@ async fn download_url_bytes(
     let bytes = response
         .bytes()
         .await
-        .map_err(|error| format!("read body failed: {error}"))?;
+        .map_err(|error| format!("read body failed: {}", describe_request_error(error)))?;
 
     Ok(bytes.to_vec())
 }
@@ -1624,7 +1639,7 @@ async fn bestdori_probe_url(
     let response = with_optional_cookie_header(client.get(&normalized_url), cookie_header.as_deref())
         .send()
         .await
-        .map_err(|error| format!("request failed: {error}"))?;
+        .map_err(describe_request_error)?;
     Ok(response.status().is_success())
 }
 
