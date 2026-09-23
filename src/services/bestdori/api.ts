@@ -1,3 +1,4 @@
+import { downloadBytes } from "../download";
 import {
   decodeBase64ToArrayBuffer,
   invokeTauriCommand,
@@ -769,14 +770,7 @@ async function requestBestdoriJson<T>(
       hostScope: options?.hostScope ?? "bestdori",
     });
   }
-  const response = await fetch(normalizedEndpoint, {
-    method: "GET",
-    cache: "no-store",
-  });
-  if (!response.ok) {
-    throw new Error(`${label} http status ${response.status}`);
-  }
-  return response.json() as Promise<T>;
+  return JSON.parse(new TextDecoder().decode(await downloadBytes(normalizedEndpoint))) as T;
 }
 
 export async function fetchBestdoriJson<T>(endpoint: string, label = "bestdori json"): Promise<T> {
@@ -920,14 +914,7 @@ async function requestBestdoriBinaryBase64(
       hostScope: options?.hostScope ?? "bestdori",
     });
   }
-  const response = await fetch(normalizedEndpoint, {
-    method: "GET",
-    cache: "no-store",
-  });
-  if (!response.ok) {
-    throw new Error(`${label} http status ${response.status}`);
-  }
-  const buffer = await response.arrayBuffer();
+  const buffer = await downloadBytes(normalizedEndpoint);
   const bytes = new Uint8Array(buffer);
   let binary = "";
   for (let index = 0; index < bytes.length; index += 1) {

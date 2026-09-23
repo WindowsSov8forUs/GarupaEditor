@@ -3,7 +3,6 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
-use std::io::Write;
 use std::net::{IpAddr, Ipv4Addr};
 use std::path::{Component, Path, PathBuf};
 use std::sync::Mutex;
@@ -11,6 +10,7 @@ use std::time::Duration;
 use tauri::{Emitter, Manager};
 
 mod application_log;
+mod download;
 mod resource_manager;
 use resource_manager::{resource_read_skin_thumbnail, resource_write_skin_thumbnail};
 use resource_manager::{
@@ -714,52 +714,36 @@ async fn ensure_file_from_url(
         progress.report_file_start(file_name, file_index);
     }
 
-    let mut request = client.get(url);
-    if let Some(cookie_value) = cookie_header {
-        if !cookie_value.trim().is_empty() {
-            request = request.header(reqwest::header::COOKIE, cookie_value);
-        }
-    }
-    let mut response = request
-        .send()
-        .await
-        .map_err(describe_request_error)?;
-
-    if !response.status().is_success() {
-        return Err(format!("http status {} for {}", response.status(), url));
-    }
-
     ensure_parent_directory(path)?;
-    let mut file =
-        fs::File::create(path).map_err(|error| format!("create file failed: {error}"))?;
-
-    let total_bytes = response.content_length();
-    let mut downloaded_bytes: u64 = 0;
+    let partial = path.with_file_name(format!("{}.download-part", path.file_name()
+        .ok_or("download destination has no filename")?.to_string_lossy()));
     let mut last_reported_percent: i32 = -1;
-
-    while let Some(chunk) = response
-        .chunk()
-        .await
-        .map_err(|error| format!("read body failed: {}", describe_request_error(error)))?
-    {
-        file.write_all(&chunk)
-            .map_err(|error| format!("write file failed: {error}"))?;
-        downloaded_bytes = downloaded_bytes.saturating_add(chunk.len() as u64);
-
-        if let (Some(progress), Some(total)) = (progress.as_ref(), total_bytes) {
+    let result = download::get(client, url, cookie_header, || fs::File::create(&partial), |received, total| {
+        if received == 0 { last_reported_percent = -1; }
+        if let (Some(progress), Some(total)) = (progress.as_ref(), total) {
             if total > 0 {
-                let percent = ((downloaded_bytes as f64 / total as f64) * 100.0).floor() as i32;
+                let ratio = (received as f64 / total as f64).clamp(0.0, 1.0);
+                let percent = (ratio * 100.0).floor() as i32;
                 if percent > last_reported_percent {
                     last_reported_percent = percent;
-                    progress.report_file_progress(
-                        file_name,
-                        file_index,
-                        (downloaded_bytes as f64 / total as f64).clamp(0.0, 1.0),
-                    );
+                    progress.report_file_progress(file_name, file_index, ratio);
                 }
             }
         }
+    }).await;
+    let completion = match result {
+        Ok(file) => {
+            drop(file);
+            fs::rename(&partial, path).map_err(|error| format!("commit downloaded file failed: {error}"))
+        }
+        Err(error) => Err(error.message),
+    };
+    if completion.is_err() && partial.exists() {
+        if let Err(error) = fs::remove_file(&partial) {
+            log::warn!(target: "download", "partial file cleanup failed: {error}");
+        }
     }
+    completion?;
 
     if let Some(progress) = progress {
         progress.report_file_complete(file_name, file_index);
@@ -1349,13 +1333,15 @@ fn write_chart_resources_meta(path: &Path, meta: &ChartResourcesMeta) -> Result<
 }
 
 fn build_bestdori_http_client() -> Result<reqwest::Client, String> {
-    reqwest::Client::builder()
+    static CLIENT: std::sync::OnceLock<Result<reqwest::Client, String>> = std::sync::OnceLock::new();
+    CLIENT.get_or_init(|| reqwest::Client::builder()
         .local_address(IpAddr::V4(Ipv4Addr::UNSPECIFIED))
         .http1_only()
+        .connect_timeout(Duration::from_secs(15))
         .timeout(Duration::from_secs(45))
         .user_agent("GarupaEditor/0.1.0")
         .build()
-        .map_err(|error| format!("build http client failed: {error}"))
+        .map_err(|error| format!("build http client failed: {error}"))).clone()
 }
 
 fn with_optional_cookie_header(
@@ -1431,21 +1417,8 @@ async fn download_url_bytes(
     url: &str,
     cookie_header: Option<&str>,
 ) -> Result<Vec<u8>, String> {
-    let response = with_optional_cookie_header(client.get(url), cookie_header)
-        .send()
-        .await
-        .map_err(describe_request_error)?;
-
-    if !response.status().is_success() {
-        return Err(format!("http status {} for {}", response.status(), url));
-    }
-
-    let bytes = response
-        .bytes()
-        .await
-        .map_err(|error| format!("read body failed: {}", describe_request_error(error)))?;
-
-    Ok(bytes.to_vec())
+    download::get(client, url, cookie_header, || Ok(Vec::new()), |_, _| {})
+        .await.map_err(|error| error.message)
 }
 
 #[tauri::command]
@@ -1540,11 +1513,11 @@ async fn bestdori_fetch_json(
     auth_state: tauri::State<'_, BestdoriAuthState>,
     url: String,
     host_scope: Option<String>,
-) -> Result<serde_json::Value, String> {
+) -> Result<serde_json::Value, download::CommandError> {
     let (normalized_url, client, cookie_header) =
         build_scoped_request_context(&auth_state, &url, "url", host_scope.as_deref())?;
-    let bytes = download_url_bytes(&client, &normalized_url, cookie_header.as_deref()).await?;
-    parse_json_value_for_url(&bytes, &normalized_url)
+    let bytes = download::get(&client, &normalized_url, cookie_header.as_deref(), || Ok(Vec::new()), |_, _| {}).await?;
+    parse_json_value_for_url(&bytes, &normalized_url).map_err(Into::into)
 }
 
 #[tauri::command]
@@ -1621,10 +1594,10 @@ async fn bestdori_fetch_binary(
     auth_state: tauri::State<'_, BestdoriAuthState>,
     url: String,
     host_scope: Option<String>,
-) -> Result<String, String> {
+) -> Result<String, download::CommandError> {
     let (normalized_url, client, cookie_header) =
         build_scoped_request_context(&auth_state, &url, "url", host_scope.as_deref())?;
-    let bytes = download_url_bytes(&client, &normalized_url, cookie_header.as_deref()).await?;
+    let bytes = download::get(&client, &normalized_url, cookie_header.as_deref(), || Ok(Vec::new()), |_, _| {}).await?;
     Ok(encode_base64(bytes))
 }
 
@@ -1636,34 +1609,14 @@ async fn bestdori_probe_url(
 ) -> Result<bool, String> {
     let (normalized_url, client, cookie_header) =
         build_scoped_request_context(&auth_state, &url, "url", host_scope.as_deref())?;
-    let response = with_optional_cookie_header(client.get(&normalized_url), cookie_header.as_deref())
-        .send()
-        .await
-        .map_err(describe_request_error)?;
-    Ok(response.status().is_success())
+    download::probe(&client, &normalized_url, cookie_header.as_deref()).await
 }
 
 async fn request_bestdori_me(
     client: &reqwest::Client,
     cookie_header: &str,
 ) -> Result<BestdoriUserMeResponse, String> {
-    let response = with_optional_cookie_header(client.get(BESTDORI_ME_API), Some(cookie_header))
-        .send()
-        .await
-        .map_err(|error| format!("request bestdori me failed: {error}"))?;
-
-    if !response.status().is_success() {
-        return Err(format!(
-            "bestdori me http status {} for {}",
-            response.status(),
-            BESTDORI_ME_API
-        ));
-    }
-
-    let bytes = response
-        .bytes()
-        .await
-        .map_err(|error| format!("read bestdori me response failed: {error}"))?;
+    let bytes = download_url_bytes(client, BESTDORI_ME_API, Some(cookie_header)).await?;
     let payload = serde_json::from_slice::<BestdoriUserMeResponse>(&bytes)
         .map_err(|error| format!("parse bestdori me response failed: {error}"))?;
     Ok(payload)

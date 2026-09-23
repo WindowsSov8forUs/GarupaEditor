@@ -174,6 +174,14 @@ export interface ResourceFailure {
   readonly code: ResourceFailureCode;
   readonly capability: string;
   readonly boundary: string;
+  readonly userMessage?: string;
+}
+
+export class ResourceFailureError extends Error {
+  constructor(readonly failure: ResourceFailure) {
+    super(failure.userMessage ?? `${failure.capability}: ${failure.boundary}`);
+    this.name = "ResourceFailureError";
+  }
 }
 
 export type ResourceResult<T> =
@@ -292,8 +300,9 @@ export function resourceRejected<T>(
   code: ResourceFailureCode,
   capability: string,
   boundary: string,
+  userMessage?: string,
 ): ResourceResult<T> {
-  return rejected(code, capability, boundary);
+  return rejected(code, capability, boundary, userMessage);
 }
 
 function accepted<T>(value: T): ResourceResult<T> {
@@ -317,9 +326,10 @@ function rejected<T>(
   code: ResourceFailureCode,
   capability: string,
   boundary: string,
+  userMessage?: string,
 ): ResourceResult<T> {
   return Object.freeze({
     status: "rejected" as const,
-    failure: Object.freeze({ code, capability, boundary }),
+    failure: Object.freeze({ code, capability, boundary, ...(userMessage === undefined ? {} : { userMessage }) }),
   });
 }

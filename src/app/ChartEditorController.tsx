@@ -1,3 +1,4 @@
+import { downloadBytes } from "../services/download";
 import { appLog } from "../logging/applicationLogger";
 
 import {
@@ -3927,11 +3928,7 @@ function ChartEditorController() {
 
     const task = (async () => {
       try {
-        const response = await fetch(src);
-        if (!response.ok) {
-          throw new Error(`fetch failed: ${response.status}`);
-        }
-        const binary = await response.arrayBuffer();
+        const binary = await downloadBytes(src);
         const decoded = await context.decodeAudioData(binary.slice(0));
         cacheRef.current.set(src, decoded);
         return decoded;
