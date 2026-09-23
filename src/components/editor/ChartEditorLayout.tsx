@@ -1,3 +1,4 @@
+import { SongInformationDialog } from "../SongInformation";
 import { AppSettingsModal } from "../AppSettingsModal";
 import { OriginalUiSoundProvider } from "../OriginalUiSound";
 import { BestdoriLoginModal } from "../BestdoriLoginModal";
@@ -335,6 +336,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     bestdoriSkinCatalogOptions?.resources[kind]?.[value] ?? null;
   const bestdoriAuthRevision = useRef(0);
   const bestdoriAuthBusy = useRef(false);
+  const [isSongInformationOpen, setIsSongInformationOpen] = useState(false);
   const [isBestdoriLoginOpen, setIsBestdoriLoginOpen] = useState(false);
   const [bestdoriLoginUsernameInput, setBestdoriLoginUsernameInput] = useState("");
   const [bestdoriLoginPasswordInput, setBestdoriLoginPasswordInput] = useState("");
@@ -1243,21 +1245,14 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       />
 
       <CommandBar
-        onOpenStaticRender={openStaticRenderWindow}
-        onOpenSimulator={openSimulatorWindow}
+        metadata={metadata}
+        onOpenSong={() => setIsSongInformationOpen(true)}
         onOpenAppSettings={openAppSettings}
         menuOpen={isAppSettingsOpen}
       />
 
       <section className={`workspace ${mobileRuntime ? "is-mobile-workspace" : ""}`}>
         <SidebarPanel
-          metadata={metadata}
-          coverImageSrc={coverImageSrc}
-          audioDurationSec={audioDurationSec}
-          visibleNoteCount={visibleNoteCount}
-          openMetadataEditor={openMetadataEditor}
-          isCoverLoadFailed={isCoverLoadFailed}
-          setIsCoverLoadFailed={setIsCoverLoadFailed}
           isSkinReady={isSkinReady}
           isExGarupaEnabled={vm.appOptionSettings.exGarupaEnabled === true}
           isToolArmed={isToolArmed}
@@ -2014,6 +2009,13 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         </section>
       </section>
 
+      <SongInformationDialog open={isSongInformationOpen} metadata={metadata}
+        coverImageSrc={coverImageSrc} audioDurationSec={audioDurationSec} noteCount={visibleNoteCount}
+        onCoverError={() => { if (!isCoverLoadFailed) setIsCoverLoadFailed(true); }}
+        onClose={() => setIsSongInformationOpen(false)}
+        onEdit={openMetadataEditor}
+        onPlay={() => { setIsSongInformationOpen(false); openSimulatorWindow(); }} />
+
       <MetadataEditorModal
         open={isMetadataEditorOpen}
         metadata={metadata}
@@ -2046,6 +2048,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         resourcesReady={vm.settingsResourcesReady}
         onSettingsError={vm.setStatusMessage}
         onImport={openImportJsonModal} onExport={downloadJson} onPreview={openStaticRenderWindow}
+        onMetadata={openMetadataEditor}
         onSimulator={openSimulatorWindow} onSkinLibrary={openSkinSettings} onAccount={openBestdoriLoginModal}
         open={isAppSettingsOpen}
         onClose={() => setIsAppSettingsOpen(false)}

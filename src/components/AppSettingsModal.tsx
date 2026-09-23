@@ -8,7 +8,7 @@ import { useApplicationResourceUrl } from "../resources/applicationResourceConte
 
 type AppSettingsModalProps = EditorSettingsModalProps & {
   resourcesReady: boolean;
-  onImport: () => void; onExport: () => void; onPreview: () => void;
+  onImport: () => void; onExport: () => void; onPreview: () => void; onMetadata: () => void;
   onSimulator: () => void; onSkinLibrary: () => void; onAccount: () => void;
   onSettingsError?: (message: string) => void;
 };
@@ -20,6 +20,7 @@ const cellsRoot = model.transform([...model.nodes.values()].find(node => node.tr
 
 export function AppSettingsModal(props: AppSettingsModalProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const previewIcon = useApplicationResourceUrl("ui.icon.preview");
   const importIcon = useApplicationResourceUrl("ui.icon.json-import");
   const exportIcon = useApplicationResourceUrl("ui.icon.json-export");
   useEffect(() => { if (!props.open) setSettingsOpen(false); }, [props.open]);
@@ -29,6 +30,8 @@ export function AppSettingsModal(props: AppSettingsModalProps) {
     ...ORIGINAL_MENU_ITEMS.map(item => ({ ...item,
       action: () => setSettingsOpen(true),
     })),
+    { key: "editor-metadata", label: "谱面信息", icon: "button_bandtop_music", action: props.onMetadata },
+    { key: "editor-preview", label: "谱面预览", image: previewIcon, action: props.onPreview },
     { key: "editor-account", label: "Bestdori 账号", icon: "icon_data_take_over", action: props.onAccount },
   ];
   const positions = originalMenuPositions(items);
