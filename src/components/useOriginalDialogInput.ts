@@ -16,6 +16,8 @@ export function useOriginalDialogInput(ref: RefObject<HTMLDivElement | null>, mo
     const node = ref.current;
     if (!mounted || !node) return;
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const restoreKeyboardFocus = previous?.matches(":focus-visible")
+      && !previous.hasAttribute("data-original-restored-pointer-focus");
     const focusable = () => [...node.querySelectorAll<HTMLElement>(
       'button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex="0"]',
     )].filter(item => item.getClientRects().length && !item.closest('[inert]') && item.tabIndex >= 0);
@@ -51,7 +53,24 @@ export function useOriginalDialogInput(ref: RefObject<HTMLDivElement | null>, mo
       cancelAnimationFrame(frame);
       document.removeEventListener("keydown", keydown, true);
       document.removeEventListener("focusin", focusin, true);
-      queueMicrotask(() => { if (previous?.isConnected && !previous.closest("[inert]")) previous.focus({ preventScroll: true }); });
+      queueMicrotask(() => {
+        if (!previous?.isConnected || previous.closest("[inert]")) return;
+        if (!restoreKeyboardFocus) {
+          previous.setAttribute("data-original-restored-pointer-focus", "");
+          // ESC must not turn a pointer-opened button into a keyboard selection.
+          // The next interaction returns focus-visible decisions to the browser.
+          const clear = () => {
+            previous.removeAttribute("data-original-restored-pointer-focus");
+            document.removeEventListener("keydown", clear, true);
+            document.removeEventListener("pointerdown", clear, true);
+            previous.removeEventListener("blur", clear);
+          };
+          document.addEventListener("keydown", clear, true);
+          document.addEventListener("pointerdown", clear, true);
+          previous.addEventListener("blur", clear, { once: true });
+        }
+        previous.focus({ preventScroll: true });
+      });
     };
   }, [ref, mounted]);
 }
