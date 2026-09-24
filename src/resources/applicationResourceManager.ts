@@ -368,6 +368,7 @@ export class ApplicationResourceManager {
   ): Promise<ResourceResult<ResourceDescriptor>> {
     const builtin = this.builtins.get(ref.id);
     if (builtin !== undefined) return this.ensureBuiltinAvailable(builtin);
+    let repairDescriptor: NetworkResourceDescriptor | null = null;
     if (options.refresh !== true) {
       const existing = await this.backend.readRecord(ref);
       if (existing.status === "accepted") {
@@ -376,21 +377,27 @@ export class ApplicationResourceManager {
         const sourceChanged = stored.origin === "network" && current !== null &&
           (stored.source.manifestUrl !== current.source.manifestUrl ||
             stored.source.assetBaseUrl !== current.source.assetBaseUrl);
-        if (!sourceChanged) {
+        const structure = stored.origin === "network"
+          ? this.providers.get(stored.source.provider)?.validatePackageFiles?.(stored,
+            existing.value.files.map(file => file.logicalPath)) : undefined;
+        const incomplete = structure?.status === "rejected";
+        if (!sourceChanged && !incomplete) {
           this.installed.set(ref.id, existing.value);
           appLog("info", "resources.cache.hit", { resourceId: ref.id, revision: existing.value.revision });
           return resourceAccepted(stored);
         }
         // The logical ID can survive a corrected provider route. Replace the old
         // package only after the complete new source has installed successfully.
-        appLog("info", "resources.cache.source-changed", {
+        if (incomplete && stored.origin === "network") repairDescriptor = stored;
+        appLog("info", incomplete ? "resources.cache.incomplete-repair" : "resources.cache.source-changed", {
           resourceId: ref.id, revision: existing.value.revision,
           previousSource: stored.origin === "network" ? stored.source : undefined,
           source: current?.source,
+          ...(incomplete ? { failure: structure.failure } : {}),
         });
       }
     }
-    let descriptor = this.findNetworkDescriptor(ref.id);
+    let descriptor = this.findNetworkDescriptor(ref.id) ?? repairDescriptor;
     const providerId = ref.id.split("/", 1)[0];
     if (descriptor === null && this.activeCatalogs.get(providerId)?.freshness === "offline-cached") {
       // A cached directory can serve startup immediately, but cannot disprove

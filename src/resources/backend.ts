@@ -90,6 +90,11 @@ export interface ApplicationResourceBackend {
 
 export interface ResourceCatalogProvider {
   readonly provider: string;
+  /** Consumer-required package structure, shared by cache reuse and new installs. */
+  validatePackageFiles?(
+    descriptor: NetworkResourceDescriptor,
+    paths: readonly string[],
+  ): ResourceResult<void>;
   refresh(
     previous: ResourceCatalogSnapshot | null,
   ): Promise<ResourceResult<ResourceCatalogSnapshot>>;
