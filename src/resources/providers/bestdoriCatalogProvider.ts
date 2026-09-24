@@ -122,6 +122,19 @@ export function bestdoriNoteskinSampleNativeId(nativeId: string): string {
 export class BestdoriApplicationResourceProvider implements ResourceCatalogProvider {
   readonly provider = "bestdori";
 
+  validatePackageFiles(descriptor: NetworkResourceDescriptor, paths: readonly string[]): ResourceResult<void> {
+    if (descriptor.source.family !== "fieldskin") return resourceAccepted(undefined);
+    const names = paths.map(path => path.replace(/\\/g, "/").split("/").pop()!.toLowerCase());
+    const sprites = names.filter(name => name.endsWith(".sprites")).length;
+    const bundles = names.filter(name => name.endsWith(".bundle")).length;
+    if (sprites === 1 && bundles > 0) return resourceAccepted(undefined);
+    const details = { resourceId: descriptor.ref.id, source: descriptor.source, sprites, bundles, files: paths };
+    appLog("warn", "resources.bestdori.incomplete-field-package", details);
+    return resourceRejected("resource-integrity", "resources.bestdori.incomplete-field-package",
+      `${descriptor.ref.id}: expected one .sprites and at least one .bundle; found ${sprites} and ${bundles}. Files: ${paths.join(", ")}`,
+      "场地皮肤缺少或包含重复的预览／模拟器元数据，请稍后重试下载。");
+  }
+
   async refresh(
     previous: ResourceCatalogSnapshot | null,
   ): Promise<ResourceResult<ResourceCatalogSnapshot>> {
@@ -216,6 +229,8 @@ export class BestdoriApplicationResourceProvider implements ResourceCatalogProvi
     }
     const filenames = normalizeManifest(manifest);
     if (filenames.status === "rejected") return filenames;
+    const complete = this.validatePackageFiles(descriptor, filenames.value);
+    if (complete.status === "rejected") return complete;
     const files: ResourceInstallFile[] = [];
     for (const logicalPath of filenames.value) {
       const url = `${source.assetBaseUrl}/${encodeLogicalPath(logicalPath)}`;

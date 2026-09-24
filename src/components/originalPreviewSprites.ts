@@ -1,4 +1,5 @@
 import type { ResourceConsumerLease } from "../resources/contracts";
+import { appLog } from "../logging/applicationLogger";
 import { extractNamedSprites, parseBundleJsonOrThrow, parseSpritesJsonOrThrow } from "../noteSkinAssetTool";
 
 export interface OriginalPreviewSprite {
@@ -24,7 +25,11 @@ export async function readOriginalPreviewSprites(lease: ResourceConsumerLease, s
   }
   const text = async (suffix: string) => {
     const matches = files.filter(file => basename(file.logicalPath).endsWith(suffix));
-    if (matches.length !== 1) throw new Error(`Expected one preview metadata file ${slot}/${suffix}.`);
+    if (matches.length !== 1) {
+      appLog("error", "skin.preview.metadata-invalid", { slot, identity, suffix, count: matches.length,
+        files: files.map(file => file.logicalPath) });
+      throw new Error(`皮肤预览元数据不完整或重复：${identity}（${suffix}，找到 ${matches.length} 个）。`);
+    }
     return new TextDecoder().decode(await lease.readBytes(slot, matches[0]!.logicalPath));
   };
   const sprites = parseSpritesJsonOrThrow(await text(".sprites"), identity)
