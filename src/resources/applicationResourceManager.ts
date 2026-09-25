@@ -377,9 +377,10 @@ export class ApplicationResourceManager {
         const sourceChanged = stored.origin === "network" && current !== null &&
           (stored.source.manifestUrl !== current.source.manifestUrl ||
             stored.source.assetBaseUrl !== current.source.assetBaseUrl);
+        const owner = stored.origin === "network" ? this.providers.get(stored.source.provider) : undefined;
+        const validateCache = owner?.validateCachedPackageFiles ?? owner?.validatePackageFiles;
         const structure = stored.origin === "network"
-          ? this.providers.get(stored.source.provider)?.validatePackageFiles?.(stored,
-            existing.value.files.map(file => file.logicalPath)) : undefined;
+          ? validateCache?.call(owner, stored, existing.value.files.map(file => file.logicalPath)) : undefined;
         const incomplete = structure?.status === "rejected";
         if (!sourceChanged && !incomplete) {
           this.installed.set(ref.id, existing.value);
@@ -395,6 +396,14 @@ export class ApplicationResourceManager {
           source: current?.source,
           ...(incomplete ? { failure: structure.failure } : {}),
         });
+      } else {
+        // The record may be valid while a content-addressed file is missing or corrupt.
+        // Retain its known download source even when no catalog is loaded yet.
+        const known = this.installed.get(ref.id)?.descriptor;
+        if (known?.origin === "network") {
+          repairDescriptor = known;
+          appLog("warn", "resources.cache.integrity-repair", { resourceId: ref.id, failure: existing.failure });
+        }
       }
     }
     let descriptor = this.findNetworkDescriptor(ref.id) ?? repairDescriptor;
