@@ -95,6 +95,10 @@ export interface ResourceCatalogProvider {
     descriptor: NetworkResourceDescriptor,
     paths: readonly string[],
   ): ResourceResult<void>;
+  validateCachedPackageFiles?(
+    descriptor: NetworkResourceDescriptor,
+    paths: readonly string[],
+  ): ResourceResult<void>;
   refresh(
     previous: ResourceCatalogSnapshot | null,
   ): Promise<ResourceResult<ResourceCatalogSnapshot>>;

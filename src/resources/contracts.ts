@@ -83,6 +83,8 @@ export interface NetworkResourceSource {
 export interface NetworkResourceDescriptor extends GlobalResourceDescriptor {
   readonly origin: "network";
   readonly source: NetworkResourceSource;
+  /** Complete provider manifest used by a successful package installation, not an inventory inferred from a legacy directory. */
+  readonly installedManifest?: readonly string[];
 }
 
 export interface BuiltinResourceDescriptor extends GlobalResourceDescriptor {

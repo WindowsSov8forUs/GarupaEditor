@@ -123,16 +123,49 @@ export class BestdoriApplicationResourceProvider implements ResourceCatalogProvi
   readonly provider = "bestdori";
 
   validatePackageFiles(descriptor: NetworkResourceDescriptor, paths: readonly string[]): ResourceResult<void> {
-    if (descriptor.source.family !== "fieldskin") return resourceAccepted(undefined);
+    const { family, nativeId } = descriptor.source;
     const names = paths.map(path => path.replace(/\\/g, "/").split("/").pop()!.toLowerCase());
-    const sprites = names.filter(name => name.endsWith(".sprites")).length;
-    const bundles = names.filter(name => name.endsWith(".bundle")).length;
-    if (sprites === 1 && bundles > 0) return resourceAccepted(undefined);
-    const details = { resourceId: descriptor.ref.id, source: descriptor.source, sprites, bundles, files: paths };
-    appLog("warn", "resources.bestdori.incomplete-field-package", details);
-    return resourceRejected("resource-integrity", "resources.bestdori.incomplete-field-package",
-      `${descriptor.ref.id}: expected one .sprites and at least one .bundle; found ${sprites} and ${bundles}. Files: ${paths.join(", ")}`,
-      "场地皮肤缺少或包含重复的预览／模拟器元数据，请稍后重试下载。");
+    const issues: string[] = [];
+    const count = (suffix: string) => names.filter(name => name.endsWith(suffix)).length;
+    const bundleFamilies = ["noteskin", "fieldskin", "bgskin", "judgeskin", "tapeffect", "stageskin", "tapseskin"];
+    if (bundleFamilies.includes(family) && count(".bundle") === 0) issues.push("missing .bundle");
+    if ((family === "fieldskin" || (family === "noteskin" && !nativeId.endsWith("sample"))) &&
+      (count(".sprites") !== 1 || !names.includes(".sprites"))) issues.push("expected one .sprites");
+    // HABAHIRO's flash uses its Root_effect recipe, not the ordinary particle derivative.
+    if ((family === "judgeskin" || (family === "tapeffect" && nativeId !== "habahiro")) && count(".asset") !== 1)
+      issues.push("expected one .asset");
+    if (family === "judgeskin" && (count(".bundle") !== 1 || count(".png") !== 1))
+      issues.push("expected one judge bundle and atlas PNG");
+    if (family === "tapseskin" && count(".mp3") === 0) issues.push("missing MP3 cues");
+    if (issues.length === 0) return resourceAccepted(undefined);
+    appLog("warn", "resources.bestdori.incomplete-package", { resourceId: descriptor.ref.id,
+      source: descriptor.source, issues, files: paths });
+    return resourceRejected("resource-integrity", "resources.bestdori.incomplete-package",
+      `${descriptor.ref.id}: ${issues.join("; ")}. Files: ${paths.join(", ")}`,
+      "资源包缺少必要文件或存在重复元数据，请稍后重试下载。");
+  }
+
+  validateCachedPackageFiles(descriptor: NetworkResourceDescriptor, paths: readonly string[]): ResourceResult<void> {
+    const structure = this.validatePackageFiles(descriptor, paths);
+    if (structure.status === "rejected") return structure;
+    // Direct media is one file, without an explorer package manifest.
+    if (descriptor.source.manifestUrl === null || descriptor.source.family.startsWith("media-")) return structure;
+    const manifest = descriptor.installedManifest;
+    if (!Array.isArray(manifest) || manifest.length === 0) {
+      return resourceRejected("resource-integrity", "resources.bestdori.package-manifest-unverified",
+        `${descriptor.ref.id}: legacy package has no verified installation manifest.`,
+        "正在更新旧版资源缓存的完整性记录。");
+    }
+    const normalized = normalizeManifest(manifest);
+    if (normalized.status === "rejected") return normalized;
+    const actual = new Set(paths);
+    const missing = manifest.filter(path => !actual.has(path));
+    if (missing.length || paths.length !== manifest.length || actual.size !== paths.length) {
+      return resourceRejected("resource-integrity", "resources.bestdori.cached-package-incomplete",
+        `${descriptor.ref.id}: installed file inventory differs from its manifest; missing=${missing.join(", ")}; actual=${paths.join(", ")}.`,
+        "本地资源包文件不完整，需要重新下载。");
+    }
+    return structure;
   }
 
   async refresh(
@@ -250,7 +283,7 @@ export class BestdoriApplicationResourceProvider implements ResourceCatalogProvi
       }
     }
     return resourceAccepted(Object.freeze({
-      descriptor,
+      descriptor: Object.freeze({ ...descriptor, installedManifest: Object.freeze([...filenames.value]) }),
       files: Object.freeze(files),
     }));
   }
