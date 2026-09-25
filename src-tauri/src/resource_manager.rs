@@ -1153,14 +1153,7 @@ fn commit_workspace_resource(
             let temp_path = transaction.join(format!("file-{index}"));
             write_synced(&temp_path, &bytes)?;
             let blob_path = root.join("blobs").join(&integrity.sha256);
-            if blob_path.exists() {
-                verify_blob_path(&blob_path, &integrity)?;
-                fs::remove_file(&temp_path)
-                    .map_err(|error| format!("remove duplicate workspace blob failed: {error}"))?;
-            } else {
-                fs::rename(&temp_path, &blob_path)
-                    .map_err(|error| format!("publish workspace blob failed: {error}"))?;
-            }
+            publish_resource_blob(&temp_path, &blob_path, &integrity)?;
             stored_files.push(StoredResourceFile {
                 logical_path,
                 media_type,
@@ -1254,15 +1247,7 @@ fn commit_resource(
             let temp_path = transaction.join(format!("file-{index}"));
             write_synced(&temp_path, &bytes)?;
             let blob_path = root.join("blobs").join(&integrity.sha256);
-            if blob_path.exists() {
-                verify_blob_path(&blob_path, &integrity)?;
-                fs::remove_file(&temp_path).map_err(|error| {
-                    format!("remove duplicate transaction blob failed: {error}")
-                })?;
-            } else {
-                fs::rename(&temp_path, &blob_path)
-                    .map_err(|error| format!("publish resource blob failed: {error}"))?;
-            }
+            publish_resource_blob(&temp_path, &blob_path, &integrity)?;
             stored_files.push(StoredResourceFile {
                 logical_path,
                 media_type,
@@ -1448,6 +1433,23 @@ fn read_and_verify_blob(root: &Path, file: &StoredResourceFile) -> Result<Vec<u8
     let path = root.join("blobs").join(&file.blob);
     verify_blob_path(&path, &file.integrity)?;
     fs::read(path).map_err(|error| format!("read resource blob failed: {error}"))
+}
+
+fn publish_resource_blob(temp: &Path, target: &Path, expected: &ObservedIntegrityDto) -> Result<(), String> {
+    if target.exists() && verify_blob_path(target, expected).is_ok() {
+        return fs::remove_file(temp).map_err(|error| format!("remove duplicate resource blob failed: {error}"));
+    }
+    verify_blob_path(temp, expected)?;
+    let backup = temp.with_extension("previous");
+    if target.exists() {
+        fs::rename(target, &backup).map_err(|error| format!("stage damaged resource blob failed: {error}"))?;
+    }
+    if let Err(error) = fs::rename(temp, target) {
+        if backup.exists() { let _ = fs::rename(&backup, target); }
+        return Err(format!("publish repaired resource blob failed: {error}"));
+    }
+    // The enclosing transaction removes the old, invalid blob after publication.
+    Ok(())
 }
 
 fn verify_blob_path(path: &Path, expected: &ObservedIntegrityDto) -> Result<(), String> {
@@ -2126,7 +2128,6 @@ fn migrate_storage_schema_v1(root: &Path, state: &ApplicationResourceState) -> R
             descriptor,
             files,
         };
-        verify_record(root, &record)?;
         let encoded = serde_json::to_vec(&record)
             .map_err(|error| format!("serialize migrated resource record failed: {error}"))?;
         atomic_write(
@@ -2135,15 +2136,7 @@ fn migrate_storage_schema_v1(root: &Path, state: &ApplicationResourceState) -> R
             &encoded,
             &next_identity(state, "schema-record"),
         )?;
-        let projection = projection_resource_path(root, &record.descriptor)?;
-        publish_projection(
-            root,
-            &projection,
-            &resource_id,
-            &revision,
-            &record.files,
-            &next_identity(state, "schema-projection"),
-        )?;
+        // The shared startup recovery rebuilds valid projections after all records migrate.
     }
     let migrated = ResourceIndex {
         storage_schema: STORAGE_SCHEMA,
@@ -2262,7 +2255,13 @@ fn migrate_resource_ids_to_logical(
     let mut skipped = Vec::new();
     let old_ids = index.resource_ids.clone();
     for old_id in old_ids {
-        let record = read_record(root, &old_id)?;
+        let record = match read_record(root, &old_id) {
+            Ok(record) => record,
+            Err(error) => {
+                skipped.push(format!("{old_id}: {error}"));
+                continue;
+            }
+        };
         let Some(new_id) = canonical_record_resource_id(&record.descriptor, &old_id) else {
             if old_id.starts_with("bestdori/") {
                 skipped.push(old_id);
@@ -2295,15 +2294,7 @@ fn migrate_resource_ids_to_logical(
             &encoded,
             &next_identity(state, "identity-record"),
         )?;
-        let projection = projection_resource_path(root, &migrated_record.descriptor)?;
-        publish_projection(
-            root,
-            &projection,
-            &new_id,
-            &revision,
-            &migrated_record.files,
-            &next_identity(state, "identity-projection"),
-        )?;
+        // Startup projection recovery owns file validation and defers damaged packages for repair.
         let old_path = record_path(root, &old_id);
         if old_path.exists() {
             fs::remove_file(old_path)
@@ -2410,8 +2401,19 @@ fn install_logical_placement_for_canonical_id(
 
 fn recover_projections(root: &Path, state: &ApplicationResourceState) -> Result<(), String> {
     for resource_id in read_index(root)?.resource_ids {
-        let record = read_record(root, &resource_id)?;
-        verify_record(root, &record)?;
+        let record = match read_record(root, &resource_id) {
+            Ok(record) => record,
+            Err(error) => {
+                crate::application_log::record("warn", "resources.projection.record-invalid",
+                    serde_json::json!({"resourceId":resource_id,"error":error}));
+                continue;
+            }
+        };
+        if let Err(error) = verify_record(root, &record) {
+            crate::application_log::record("warn", "resources.projection.awaiting-repair",
+                serde_json::json!({"resourceId":resource_id,"error":error}));
+            continue;
+        }
         let projection = projection_resource_path(root, &record.descriptor)?;
         publish_projection(
             root,
