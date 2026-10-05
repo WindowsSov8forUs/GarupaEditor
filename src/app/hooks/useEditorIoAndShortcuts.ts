@@ -1443,6 +1443,7 @@ export function useEditorIoAndShortcuts(params: any) {
       setMetadata((current: ChartMetadata) => ({
         ...current,
         title: resolveTrimmedString(payload.metadata.title),
+        isFullLength: payload.metadata.isFullLength,
         artist: resolveTrimmedString(payload.metadata.artist),
         charter: resolveTrimmedString(payload.metadata.charter),
         difficulty: resolveCommunityPostDifficulty(payload.metadata.difficulty),
@@ -1578,6 +1579,7 @@ export function useEditorIoAndShortcuts(params: any) {
       setMetadata((current: ChartMetadata) => ({
         ...current,
         title: resolveTrimmedString(post.title),
+        isFullLength: songResources?.isFullLength === true,
         artist: resolveTrimmedString(post.artists),
         charter: resolveCommunityPostCharter(post.author),
         difficulty: resolveCommunityPostDifficulty(post.diff),
@@ -2250,6 +2252,4 @@ export function useEditorIoAndShortcuts(params: any) {
     downloadProgress,
   };
 };
-
-
 
