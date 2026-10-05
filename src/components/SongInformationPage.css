@@ -1,0 +1,22 @@
+.song-information-page {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  flex: 1;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  gap: 0;
+  container-type: inline-size;
+  font-family: "ChartUI", "TTShinGoM", sans-serif;
+}
+.song-information-composition { position: absolute; min-height: 0; display: grid; align-items: start; }
+.song-profile-page-mask { position: absolute; z-index: 1; pointer-events: none; }
+.song-profile-information { position: relative; }
+.song-information-cover-column { min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 20px; }
+.song-information-cover-column > .ui-fit-surface { flex-shrink: 0; align-self: center; }
+.song-information-jacket { width: 100%; flex: 1; min-width: 0; min-height: 0; }
+.song-difficulty-base { position: relative; align-self: center; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+.song-difficulty-base > .original-difficulty-select { position: relative; }
+.song-jacket-image { object-fit: contain; }
+.song-jacket-empty { display: grid; place-items: center; width: 100%; height: 100%; background: #fff; color: #505050; font-size: 24px; }

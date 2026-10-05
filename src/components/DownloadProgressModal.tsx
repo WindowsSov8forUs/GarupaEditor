@@ -23,7 +23,7 @@ export function DownloadProgressModal({
   return (
     <>
       {blocking && <div className="download-progress-lock-mask" aria-hidden="true" />}
-      <aside className="download-progress-modal" aria-live="polite" role="status">
+      <aside className="download-progress-modal ui-design-scale" aria-live="polite" role="status">
         <div className="download-progress-head">
           <span className="download-progress-title">加载中...</span>
           <span className="download-progress-percent">{clampedPercent}%</span>

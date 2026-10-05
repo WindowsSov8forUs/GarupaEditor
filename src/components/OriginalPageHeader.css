@@ -1,0 +1,9 @@
+.original-page-header { position: relative; width: 100%; flex-shrink: 0; }
+.original-page-header-left, .original-page-header-menu { position: absolute; }
+/* The persistent Header owns window-edge layout independently of page content. */
+.original-page-header-host {
+  flex-shrink: 0;
+  margin-top: calc(-1 * max(var(--editor-space), var(--ui-safe-top)));
+  margin-left: calc(-1 * max(var(--editor-space), var(--ui-safe-left)));
+  margin-right: calc(-1 * max(var(--editor-space), var(--ui-safe-right)));
+}

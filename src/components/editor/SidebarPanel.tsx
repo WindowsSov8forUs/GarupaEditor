@@ -560,7 +560,7 @@ export const SidebarPanel = memo(function SidebarPanel({
   );
 
   return (
-    <aside className="sidebar">
+    <aside className="sidebar ui-design-scale">
       <section className="note-tools-panel">
           {isSkinReady ? (
             <>

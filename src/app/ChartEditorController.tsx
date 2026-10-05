@@ -6068,6 +6068,7 @@ function ChartEditorController() {
         canMirrorSelection,
         clearAllNotes,
         notes,
+        slideChains,
         noteById,
         mirrorActionIcon,
         undoActionIcon,
@@ -6250,7 +6251,6 @@ function ChartEditorController() {
 }
 
 export default ChartEditorController;
-
 
 
 

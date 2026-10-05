@@ -163,7 +163,7 @@ export function SkinSettingsModal({
   return (
     <div className={`modal-mask modal-transition-mask ${transitionClassName}`} ref={transitionRef} style={{ ...modalLayerStyle, ...transitionStyle }}>
       <OriginalDialogFrame
-        className={`modal-card skin-settings-modal modal-transition-card ${transitionClassName}`}
+        className={`modal-card ui-design-scale skin-settings-modal modal-transition-card ${transitionClassName}`}
         onClick={(event) => event.stopPropagation()}
       >
         <OriginalDialogHeader>皮肤设置</OriginalDialogHeader>

@@ -53,7 +53,7 @@ export const TimelineStrip = memo(function TimelineStrip({
   };
 
   return (
-    <div className="timeline-strip">
+    <div className="timeline-strip ui-design-scale">
       <div className="timeline-item">
         <span className="timeline-key">轨道数</span>
         <div className="inline-stepper timeline-inline-stepper">

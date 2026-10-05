@@ -1,3 +1,4 @@
+import { getUiViewport } from "./useUiViewport";
 import { useEffect, useRef, useState } from "react";
 import { autoDetectRenderer, Container } from "pixi.js";
 import profile from "../data/originalRhythmAdjust.json";
@@ -97,7 +98,7 @@ export function OriginalRhythmAdjustDialog({ draft, onDecide, onClose, onError }
     let previousParentScale = NaN;
     const paint = (delta: number) => {
       if (!renderer || !particles) return;
-      const width = window.innerWidth, height = window.innerHeight;
+      const { width, height } = getUiViewport();
       if (renderer.screen.width !== width || renderer.screen.height !== height) renderer.resize(width, height);
       stage.position.set(width / 2, height / 2);
       const motion = Number(getComputedStyle(mask).getPropertyValue("--original-dialog-scale"));
@@ -117,7 +118,7 @@ export function OriginalRhythmAdjustDialog({ draft, onDecide, onClose, onError }
     const labelTimes = [-1, -1, -1, -1];
     const fail = (error: unknown) => { if (active) { live.current.onError(String(error)); live.current.onClose(); } };
     void (async () => {
-      renderer = await autoDetectRenderer({ canvas, width: window.innerWidth, height: window.innerHeight, backgroundAlpha: 0, resolution: devicePixelRatio, autoDensity: true, preference: "webgl" });
+      renderer = await autoDetectRenderer({ canvas, width: getUiViewport().width, height: getUiViewport().height, backgroundAlpha: 0, resolution: devicePixelRatio, autoDensity: true, preference: "webgl" });
       if (!active) { renderer.destroy(); renderer = null; return; }
       particles = await createRhythmAdjustParticles(resources.particles, step === "ready");
       if (!active) { particles.dispose(); renderer?.destroy(); particles = null; renderer = null; return; }

@@ -1,0 +1,10 @@
+:root { --ui-scale: 1; --ui-logical-width: 1334px; --ui-logical-height: 750px; --ui-safe-left: 0px; --ui-safe-right: 0px; --ui-safe-top: 0px; --ui-safe-bottom: 0px; --ui-safe-logical-width: 1334px; --ui-safe-logical-height: 750px; }
+.ui-design-scale { zoom: var(--ui-scale); }
+.ui-page-viewport { position: relative; flex: 1; min-width: 0; min-height: 0; }
+.ui-page-design { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.ui-authored-surface { position: relative; flex: 0 0 auto; }
+.ui-scale-origin { position: absolute; width: 0; height: 0; transform: scale(var(--ui-scale)); transform-origin: 0 0; }
+.ui-scale-origin.is-centered { left: 50%; top: 50%; }
+.ui-fit-surface { position: relative; width: 100%; min-width: 0; overflow: clip; overflow-clip-margin: 2px; }
+.ui-fallback-page { height: 100%; display: grid; place-items: center; padding: var(--ui-safe-top) var(--ui-safe-right) var(--ui-safe-bottom) var(--ui-safe-left); }
+.ui-fallback-content { padding: 20px; max-width: var(--ui-safe-logical-width); max-height: var(--ui-safe-logical-height); overflow: auto; }

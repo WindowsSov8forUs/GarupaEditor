@@ -1,12 +1,11 @@
-import { SongInformationDialog } from "../SongInformation";
 import { AppSettingsModal } from "../AppSettingsModal";
 import { OriginalUiSoundProvider } from "../OriginalUiSound";
 import { BestdoriLoginModal } from "../BestdoriLoginModal";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent as ReactMouseEvent } from "react";
-import { CommandBar } from "../CommandBar";
 import { ExportJsonModal } from "../ExportJsonModal";
 import { ImportJsonModal } from "../ImportJsonModal";
-import { MetadataEditorModal } from "../MetadataEditorModal";
+import { SongInformationPage } from "../SongInformationPage";
+import { OriginalPageSwitch } from "../OriginalPageSwitch";
 import { DownloadProgressModal } from "../DownloadProgressModal";
 import { OverlayDialogModal } from "../OverlayDialogModal";
 import { SkinSettingsModal } from "../SkinSettingsModal";
@@ -81,13 +80,9 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     openSkinSettings,
     metadata,
     chartMediaSources,
-    chartMediaError,
-    coverImageSrc,
     audioDurationSec,
     visibleNoteCount,
     openMetadataEditor,
-    isCoverLoadFailed,
-    setIsCoverLoadFailed,
     isSkinReady,
     isToolArmed,
     tool,
@@ -282,10 +277,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     isMetadataEditorOpen,
     setMetadata,
     setIsMetadataEditorOpen,
-    handleCoverUpload,
-    handleAudioUpload,
-    handleMvUpload,
-    handleStageBackdropUpload,
     isAppSettingsOpen,
     setIsAppSettingsOpen,
     appOptionSettings,
@@ -336,7 +327,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     bestdoriSkinCatalogOptions?.resources[kind]?.[value] ?? null;
   const bestdoriAuthRevision = useRef(0);
   const bestdoriAuthBusy = useRef(false);
-  const [isSongInformationOpen, setIsSongInformationOpen] = useState(false);
   const [isBestdoriLoginOpen, setIsBestdoriLoginOpen] = useState(false);
   const [bestdoriLoginUsernameInput, setBestdoriLoginUsernameInput] = useState("");
   const [bestdoriLoginPasswordInput, setBestdoriLoginPasswordInput] = useState("");
@@ -1222,9 +1212,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       masterPercent={appOptionSettings.simulatorSettings.masterVolumePercent} onError={vm.setStatusMessage}>
     <main className={`app-shell ${mobileRuntime ? "is-mobile-runtime" : ""}`}
       data-ui-layout={uiViewport.stacked ? "stacked" : "columns"}
-      style={{ "--editor-ui-scale": uiViewport.scale,
-        "--editor-logical-width": `${uiViewport.logicalWidth}px`,
-        "--editor-logical-height": `${uiViewport.logicalHeight}px` } as CSSProperties}>
+      >
       <input
         ref={jsonImportRef}
         type="file"
@@ -1244,12 +1232,25 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         }}
       />
 
-      <CommandBar
+      <OriginalPageSwitch open={isMetadataEditorOpen} title="歌曲信息"
+        onOpenMenu={openAppSettings} menuOpen={isAppSettingsOpen}
+        onBack={() => setIsMetadataEditorOpen(false)} page={
+      <SongInformationPage
+        audioDurationSec={audioDurationSec}
+        noteCount={visibleNoteCount}
+        notes={notes}
+        slideChains={vm.slideChains}
         metadata={metadata}
-        onOpenSong={() => setIsSongInformationOpen(true)}
-        onOpenAppSettings={openAppSettings}
-        menuOpen={isAppSettingsOpen}
+        mediaSources={chartMediaSources}
+          onCoverUpload={vm.handleCoverUpload}
+          onMvUpload={vm.handleMvUpload}
+          optionSettings={appOptionSettings}
+          onError={vm.setStatusMessage}
+        setMetadata={setMetadata}
       />
+
+      }>
+
 
       <section className={`workspace ${mobileRuntime ? "is-mobile-workspace" : ""}`}>
         <SidebarPanel
@@ -2005,29 +2006,11 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
             </div>
           )}
 
-          <div className="status-strip" title={statusMessage}>{statusMessage}</div>
+          <div className="status-strip ui-design-scale" title={statusMessage}>{statusMessage}</div>
         </section>
       </section>
 
-      <SongInformationDialog open={isSongInformationOpen} metadata={metadata}
-        coverImageSrc={coverImageSrc} audioDurationSec={audioDurationSec} noteCount={visibleNoteCount}
-        onCoverError={() => { if (!isCoverLoadFailed) setIsCoverLoadFailed(true); }}
-        onClose={() => setIsSongInformationOpen(false)}
-        onEdit={openMetadataEditor}
-        onPlay={() => { setIsSongInformationOpen(false); openSimulatorWindow(); }} />
-
-      <MetadataEditorModal
-        open={isMetadataEditorOpen}
-        metadata={metadata}
-        mediaSources={chartMediaSources}
-        mediaError={chartMediaError}
-        setMetadata={setMetadata}
-        onClose={() => setIsMetadataEditorOpen(false)}
-        onCoverUpload={handleCoverUpload}
-        onAudioUpload={handleAudioUpload}
-        onMvUpload={handleMvUpload}
-        onStageBackdropUpload={handleStageBackdropUpload}
-      />
+      </OriginalPageSwitch>
 
       <BestdoriLoginModal
         open={isBestdoriLoginOpen}
@@ -2045,10 +2028,10 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       />
 
       <AppSettingsModal
+        onSongInformation={() => { setIsAppSettingsOpen(false); openMetadataEditor(); }}
         resourcesReady={vm.settingsResourcesReady}
         onSettingsError={vm.setStatusMessage}
         onImport={openImportJsonModal} onExport={downloadJson} onPreview={openStaticRenderWindow}
-        onMetadata={openMetadataEditor}
         onSimulator={openSimulatorWindow} onSkinLibrary={openSkinSettings} onAccount={openBestdoriLoginModal}
         open={isAppSettingsOpen}
         onClose={() => setIsAppSettingsOpen(false)}

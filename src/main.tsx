@@ -2,6 +2,7 @@ import { appLog, initializeLogging, startOperation } from "./logging/application
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+import { UiViewportRoot } from "./components/UiViewport";
 import "./App.css";
 import { ApplicationResourceProvider } from "./resources/applicationResourceContext";
 import { bootstrapApplicationResources } from "./resources/applicationResources";
@@ -35,24 +36,23 @@ class AppErrorBoundary extends Component<{ children: ReactNode; onError?: (error
   render(): ReactNode {
     if (this.state.hasError) {
       return (
-        <main
+        <main className="ui-fallback-page"
           style={{
-            minHeight: "100vh",
+            height: "100%",
             display: "grid",
             placeItems: "center",
             color: "#ecf7fb",
             background: "#0b1724",
             fontFamily: "Rajdhani, Noto Sans SC, sans-serif",
-            padding: "20px",
           }}
         >
-          <section
+          <section className="ui-fallback-content ui-design-scale"
             style={{
               border: "1px solid rgba(114,214,229,0.45)",
               borderRadius: "12px",
               background: "rgba(8,23,34,0.9)",
               padding: "16px",
-              maxWidth: "640px",
+              maxWidth: "min(640px, var(--ui-safe-logical-width))",
               width: "100%",
             }}
           >
@@ -81,6 +81,7 @@ class AppErrorBoundary extends Component<{ children: ReactNode; onError?: (error
 initializeLogging();
 const finishBootstrap = startOperation("application.bootstrap");
 const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
+const renderApplication = (content: ReactNode) => root.render(<UiViewportRoot>{content}</UiViewportRoot>);
 
 const simulatorWindow = window.location.hash.startsWith("#simulator") && !isMobileRuntime();
 async function showSimulatorWindow(): Promise<void> {
@@ -89,22 +90,22 @@ async function showSimulatorWindow(): Promise<void> {
 
 void bootstrapApplicationResources(simulatorWindow ? async (manager) => {
   await new Promise<void>((resolve, reject) => {
-    root.render(<AppErrorBoundary onError={reject}><ApplicationResourceProvider manager={manager}>
+    renderApplication(<AppErrorBoundary onError={reject}><ApplicationResourceProvider manager={manager}>
       <SimulatorLoadingBoundary resourcesReady={false} onReady={(error) => error === undefined ? resolve() : reject(error)} />
     </ApplicationResourceProvider></AppErrorBoundary>);
   });
   await showSimulatorWindow();
 } : undefined).then(async (resources) => {
   finishBootstrap(resources.status === "rejected" ? resources.failure : undefined);
-  root.render(
+  renderApplication(
     <AppErrorBoundary>
       {resources.status === "accepted" ? (
         <ApplicationResourceProvider manager={resources.value}>
           {simulatorWindow ? <SimulatorLoadingBoundary><App /></SimulatorLoadingBoundary> : <App />}
         </ApplicationResourceProvider>
       ) : (
-        <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "20px" }}>
-          <section>
+        <main className="ui-fallback-page">
+          <section className="ui-fallback-content ui-design-scale">
             资源系统初始化失败：{resources.failure.capability}：{resources.failure.boundary}
           </section>
         </main>
@@ -116,6 +117,6 @@ void bootstrapApplicationResources(simulatorWindow ? async (manager) => {
     console.warn("皮肤预下载暂不可用", error));
 }).catch(async (error: unknown) => {
   finishBootstrap(error); appLog("error", "application.bootstrap.exception", { error });
-  root.render(<main style={{ padding: 20 }}>资源系统初始化失败：{error instanceof Error ? error.message : String(error)}</main>);
+  renderApplication(<main className="ui-fallback-page"><section className="ui-fallback-content ui-design-scale">资源系统初始化失败：{error instanceof Error ? error.message : String(error)}</section></main>);
   await showSimulatorWindow();
 });

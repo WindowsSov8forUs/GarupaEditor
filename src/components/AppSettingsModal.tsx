@@ -8,7 +8,8 @@ import { useApplicationResourceUrl } from "../resources/applicationResourceConte
 
 type AppSettingsModalProps = EditorSettingsModalProps & {
   resourcesReady: boolean;
-  onImport: () => void; onExport: () => void; onPreview: () => void; onMetadata: () => void;
+  onSongInformation: () => void;
+  onImport: () => void; onExport: () => void; onPreview: () => void;
   onSimulator: () => void; onSkinLibrary: () => void; onAccount: () => void;
   onSettingsError?: (message: string) => void;
 };
@@ -19,6 +20,7 @@ const model = new OriginalPrefabModel(source.prefab, { nodes: {
 const cellsRoot = model.transform([...model.nodes.values()].find(node => node.transformId === 25)!.id);
 
 export function AppSettingsModal(props: AppSettingsModalProps) {
+  const [pendingSong, setPendingSong] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const previewIcon = useApplicationResourceUrl("ui.icon.preview");
   const importIcon = useApplicationResourceUrl("ui.icon.json-import");
@@ -30,13 +32,14 @@ export function AppSettingsModal(props: AppSettingsModalProps) {
     ...ORIGINAL_MENU_ITEMS.map(item => ({ ...item,
       action: () => setSettingsOpen(true),
     })),
-    { key: "editor-metadata", label: "谱面信息", icon: "button_bandtop_music", action: props.onMetadata },
+    { key: "editor-song", label: "歌曲信息", icon: "button_bandtop_music", action: () => { setPendingSong(true); props.onClose(); } },
     { key: "editor-preview", label: "谱面预览", image: previewIcon, action: props.onPreview },
     { key: "editor-account", label: "Bestdori 账号", icon: "icon_data_take_over", action: props.onAccount },
   ];
   const positions = originalMenuPositions(items);
   return <>
     <OriginalAuthoredDialog open={props.open} model={model} onClose={props.onClose}
+      onClosed={() => { if (pendingSong) { setPendingSong(false); props.onSongInformation(); } }}
       bindings={{ buttons: { 54: { action: props.onClose, label: model.text(model.components.get(51)!) } } }}>
       {items.map((item, index) => <div key={item.key} className="original-prefab-origin"
         data-original-menu-key={item.key}

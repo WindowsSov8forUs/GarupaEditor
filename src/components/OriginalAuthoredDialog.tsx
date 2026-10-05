@@ -1,6 +1,6 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { useOriginalUiScale } from "./useUiViewport";
+import { UiAuthoredSurface } from "./UiViewport";
 export { useOriginalUiScale } from "./useUiViewport";
 import { useModalLayer } from "./useModalLayer";
 import { useModalTransition, type DialogMotion } from "./useModalTransition";
@@ -35,7 +35,7 @@ export function OriginalAuthoredDialog({ open, model, bindings, onClose, onClose
     return () => observer.disconnect();
   }, [open, prepared, transition.mounted, transition.transitionRef]);
   useOriginalDialogInput(transition.transitionRef, transition.mounted, onClose, !transition.shown || busy);
-  const scale = useOriginalUiScale(), windowNode = model.nodeAt("Window");
+  const windowNode = model.nodeAt("Window");
   const frame = frameComponentId === undefined ? model.componentAt(windowNode.id, "UISprite")!
     : model.components.get(frameComponentId)!;
   const title = [...model.components.values()].find(item => item.kind === "UILabel" && model.nodes.get(item.node)?.name === "Title");
@@ -44,19 +44,18 @@ export function OriginalAuthoredDialog({ open, model, bindings, onClose, onClose
   return <><div id={dialogId} ref={transition.transitionRef} className="modal-mask modal-transition-mask original-authored-mask"
     style={{ ...layer, ...transition.transitionStyle, ...(motion === "none" && coverAlpha !== undefined
       ? { "--original-dialog-alpha": open ? coverAlpha : 0 } : {}) } as CSSProperties} tabIndex={-1}>
-    <div className="original-authored-viewport" role="dialog" aria-modal="true"
+    <div role="dialog" aria-modal="true"
       aria-label={title ? model.text(title) : undefined} aria-busy={!prepared} inert={!ownsInput}
       data-original-prefab={model.prefab.resource} data-motion={motion}
-      style={{ width: frame.data.mWidth * scale, height: frame.data.mHeight * scale,
-        visibility: prepared ? undefined : "hidden" }}>
-      <div className="original-prefab-origin" style={{ left: "50%", top: "50%", transform: `scale(${scale})` }}>
+      style={{ visibility: prepared ? undefined : "hidden" }}>
+      <UiAuthoredSurface className="original-authored-viewport" width={frame.data.mWidth} height={frame.data.mHeight}>
         <div className="original-authored-window" style={{ transform: motion === "slide-left"
           ? "translateX(calc(var(--original-dialog-x, -800) * 1px))"
           : "scale(var(--original-dialog-scale, 0))" }}>
           <OriginalPrefabView model={model} root={windowNode.id} bindings={bindings} />
           {children}
         </div>
-      </div>
+      </UiAuthoredSurface>
     </div>
   </div>
     {cameraOverlay && createPortal(<div ref={cameraRef} data-original-camera-for={dialogId}

@@ -1,4 +1,8 @@
 :root {
+  --original-safe-left: env(safe-area-inset-left, 0px);
+  --original-safe-right: env(safe-area-inset-right, 0px);
+  --original-safe-top: env(safe-area-inset-top, 0px);
+  --original-safe-bottom: env(safe-area-inset-bottom, 0px);
   --bg-0: #f7e9df;
   --bg-1: #e7dff3;
   --bg-2: #dde9f7;
@@ -238,46 +242,14 @@ textarea:focus {
 
 .app-shell {
   height: 100%;
-  --editor-ui-scale: 1;
-  --editor-space: calc(14px * var(--editor-ui-scale));
-  padding: max(var(--editor-space), env(safe-area-inset-top))
-    max(var(--editor-space), env(safe-area-inset-right))
-    max(var(--editor-space), env(safe-area-inset-bottom))
-    max(var(--editor-space), env(safe-area-inset-left));
+  --editor-space: calc(14px * var(--ui-scale));
+  padding: max(var(--editor-space), var(--ui-safe-top))
+    max(var(--editor-space), var(--ui-safe-right))
+    max(var(--editor-space), var(--ui-safe-bottom))
+    max(var(--editor-space), var(--ui-safe-left));
   display: flex;
   flex-direction: column;
-  gap: calc(12px * var(--editor-ui-scale));
-}
-
-.command-bar {
-  --command-control-size: 42px;
-  --command-control-gap: 8px;
-  --command-control-radius: 8px;
-  position: relative;
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-}
-
-.command-bar::before {
-  content: none;
-}
-
-.command-group {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--command-control-gap);
-}
-
-.command-group-right {
-  margin-left: auto;
-  gap: var(--command-control-gap);
+  gap: calc(12px * var(--ui-scale));
 }
 
 .command-text-button {
@@ -386,7 +358,6 @@ textarea:focus {
 .sidebar {
   width: 404px;
   flex: 0 0 auto;
-  zoom: var(--editor-ui-scale);
   min-width: 0;
   max-width: none;
   min-height: 0;
@@ -407,7 +378,7 @@ textarea:focus {
 
 .workspace-divider {
   position: relative;
-  flex: 0 0 calc(12px * var(--editor-ui-scale));
+  flex: 0 0 calc(12px * var(--ui-scale));
 }
 
 .workspace-divider::before {
@@ -1147,24 +1118,6 @@ label.ui-checkbox.is-disabled .ui-checkbox-box {
   gap: 8px;
 }
 
-.metadata-editor-grid {
-  display: grid;
-  gap: 8px;
-}
-
-.metadata-editor-row {
-  display: grid;
-  gap: 8px;
-}
-
-.metadata-editor-row-three {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.metadata-editor-row-two {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
 .setting-block {
   display: flex;
   flex-direction: column;
@@ -1611,7 +1564,6 @@ button.apply-icon-button:not(.original-button):not(.note-token):not(.bpm-label-b
 }
 
 .timeline-strip {
-  zoom: var(--editor-ui-scale);
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -2318,7 +2270,6 @@ button.apply-icon-button:not(.original-button):not(.note-token):not(.bpm-label-b
 }
 
 .status-strip {
-  zoom: var(--editor-ui-scale);
   flex: 0 0 33px;
   height: 33px;
   min-height: 33px;
@@ -2344,12 +2295,12 @@ button.apply-icon-button:not(.original-button):not(.note-token):not(.bpm-label-b
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding: max(calc(16px * var(--ui-scale)), var(--ui-safe-top)) max(calc(16px * var(--ui-scale)), var(--ui-safe-right)) max(calc(16px * var(--ui-scale)), var(--ui-safe-bottom)) max(calc(16px * var(--ui-scale)), var(--ui-safe-left));
 }
 
 .modal-card {
   width: min(760px, 100%);
-  max-height: min(86vh, 740px);
+  max-height: min(calc(var(--ui-safe-logical-height) - 32px), 740px);
   overflow: auto;
 }
 
@@ -2436,8 +2387,8 @@ button.apply-icon-button:not(.original-button):not(.note-token):not(.bpm-label-b
   --app-settings-page-aspect-width: 16;
   --app-settings-page-aspect-height: 9;
   --app-settings-page-max-height: min(
-    calc((min(620px, 100dvw - 56px)) * var(--app-settings-page-aspect-height) / var(--app-settings-page-aspect-width)),
-    calc(100dvh - 260px)
+    calc((min(620px, var(--ui-safe-logical-width) - 56px)) * var(--app-settings-page-aspect-height) / var(--app-settings-page-aspect-width)),
+    calc(var(--ui-safe-logical-height) - 260px)
   );
   width: min(620px, 100%);
   overflow: hidden;
@@ -2453,8 +2404,8 @@ button.apply-icon-button:not(.original-button):not(.note-token):not(.bpm-label-b
   --skin-settings-page-aspect-width: 16;
   --skin-settings-page-aspect-height: 9;
   --skin-settings-page-max-height: min(
-    calc((min(760px, 100dvw - 56px)) * var(--skin-settings-page-aspect-height) / var(--skin-settings-page-aspect-width)),
-    calc(100dvh - 260px)
+    calc((min(760px, var(--ui-safe-logical-width) - 56px)) * var(--skin-settings-page-aspect-height) / var(--skin-settings-page-aspect-width)),
+    calc(var(--ui-safe-logical-height) - 260px)
   );
   width: min(760px, 100%);
   overflow: hidden;
@@ -2464,124 +2415,6 @@ button.apply-icon-button:not(.original-button):not(.note-token):not(.bpm-label-b
   padding-top: 4px;
   min-height: 0;
   grid-template-rows: minmax(0, 1fr) auto;
-}
-
-.metadata-editor-modal {
-  --metadata-editor-page-aspect-width: 16;
-  --metadata-editor-page-aspect-height: 9;
-  --metadata-editor-page-max-height: min(
-    calc((min(760px, 100dvw - 56px)) * var(--metadata-editor-page-aspect-height) / var(--metadata-editor-page-aspect-width)),
-    calc(100dvh - 260px)
-  );
-  width: min(760px, 100%);
-  overflow: hidden;
-}
-
-.metadata-editor-modal .modal-body {
-  padding-top: 4px;
-  overflow: hidden;
-  min-height: 0;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  gap: 8px;
-}
-
-.metadata-editor-tabs {
-  margin-bottom: 0;
-}
-
-.metadata-editor-page-shell {
-  min-height: 0;
-  max-height: var(--metadata-editor-page-max-height);
-  overflow-y: auto;
-  overflow-x: hidden;
-  display: grid;
-  gap: 8px;
-  padding-right: 2px;
-}
-
-.metadata-upload-group {
-  display: grid;
-  gap: 6px;
-}
-
-.metadata-upload-block {
-  display: grid;
-  gap: 8px;
-  justify-items: center;
-  align-items: center;
-  text-align: center;
-}
-
-.metadata-upload-preview {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 0;
-}
-
-.metadata-upload-preview-media {
-  max-width: min(320px, 100%);
-}
-
-.metadata-upload-preview-image {
-  display: block;
-  width: min(180px, 100%);
-  max-height: 140px;
-  object-fit: contain;
-}
-
-.metadata-upload-preview-audio {
-  width: min(300px, 100%);
-  height: 34px;
-}
-
-.metadata-upload-preview-video {
-  display: block;
-  width: min(280px, 100%);
-  max-height: 158px;
-  background: #000;
-}
-
-.metadata-upload-action-button {
-  min-width: 120px;
-  min-height: 34px;
-}
-
-.metadata-upload-source-line {
-  width: 100%;
-  min-height: 34px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 4px;
-}
-
-.metadata-upload-source-link,
-.metadata-upload-source-empty {
-  max-width: 100%;
-  display: inline-block;
-  line-height: 1.25;
-  text-align: center;
-  word-break: break-all;
-}
-
-.metadata-upload-source-link {
-  color: #4f4c59;
-  text-decoration: underline;
-}
-
-.metadata-upload-source-link:hover {
-  color: rgb(255, 59, 113);
-}
-
-.metadata-upload-source-empty {
-  color: var(--muted);
-}
-
-.metadata-editor-actions {
-  flex: 0 0 auto;
 }
 
 .app-settings-page-shell {
@@ -2760,7 +2593,7 @@ button.app-settings-apply-button:not(.original-button):not(.note-token):not(.bpm
 
 .bestdori-login-modal {
   width: min(420px, 100%);
-  max-height: min(70vh, 420px);
+  max-height: min(calc(var(--ui-safe-logical-height) * 0.7), 420px);
 }
 
 .bestdori-login-form {
@@ -2839,10 +2672,10 @@ button.app-settings-apply-button:not(.original-button):not(.note-token):not(.bpm
 
 .download-progress-modal {
   position: fixed;
-  left: 4px;
-  bottom: 40px;
+  left: calc(var(--ui-safe-left) / var(--ui-scale) + 4px);
+  bottom: calc(var(--ui-safe-bottom) / var(--ui-scale) + 40px);
   z-index: 120;
-  width: min(520px, calc(100vw - 12px));
+  width: min(520px, calc(var(--ui-safe-logical-width) - 12px));
   height: 128px;
   box-sizing: border-box;
   padding: 10px 12px 9px;
@@ -2934,37 +2767,30 @@ button.app-settings-apply-button:not(.original-button):not(.note-token):not(.bpm
 .app-shell[data-ui-layout="stacked"] .sidebar {
   width: auto;
   flex: 0 1 auto;
-  max-height: calc(var(--editor-logical-height) * 0.4);
+  max-height: calc(var(--ui-logical-height) * 0.4);
 }
 .app-shell[data-ui-layout="stacked"] .workspace-divider {
-  flex-basis: calc(12px * var(--editor-ui-scale));
+  flex-basis: calc(12px * var(--ui-scale));
 }
 .app-shell[data-ui-layout="stacked"] .workspace-divider::before {
   top: 50%; bottom: auto; left: 0; right: 0;
   width: auto; height: 1px; transform: none;
 }
-.app-shell .modal-card {
-  zoom: var(--editor-ui-scale);
-  max-width: calc(var(--editor-logical-width) - 32px);
-  max-height: calc(var(--editor-logical-height) - 32px);
+.modal-card {
+  max-width: calc(var(--ui-safe-logical-width) - 32px);
+  max-height: calc(var(--ui-safe-logical-height) - 32px);
 }
-.app-shell .metadata-editor-modal {
-  --metadata-editor-page-max-height: min(
-    calc(min(760px, var(--editor-logical-width) - 56px) * 9 / 16),
-    calc(var(--editor-logical-height) - 260px));
-}
-.app-shell .download-progress-modal {
-  zoom: var(--editor-ui-scale);
-  max-width: calc(var(--editor-logical-width) - 12px);
+.download-progress-modal {
+  max-width: calc(var(--ui-safe-logical-width) - 12px);
 }
 
 .static-render-page {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  height: 100vh;
+  height: 100%;
   min-height: 0;
-  padding: 14px;
-  gap: 12px;
+  padding: max(calc(14px * var(--ui-scale)), var(--ui-safe-top)) max(calc(14px * var(--ui-scale)), var(--ui-safe-right)) max(calc(14px * var(--ui-scale)), var(--ui-safe-bottom)) max(calc(14px * var(--ui-scale)), var(--ui-safe-left));
+  gap: calc(12px * var(--ui-scale));
   overflow: hidden;
   background: transparent;
   color: var(--text);
@@ -3128,4 +2954,13 @@ button.app-settings-apply-button:not(.original-button):not(.note-token):not(.bpm
   color: var(--muted);
   border: 1px solid var(--panel-border);
   background: var(--panel);
+}
+
+.metadata-upload-source-empty {
+  max-width: 100%;
+  display: inline-block;
+  line-height: 1.25;
+  text-align: center;
+  word-break: break-all;
+  color: var(--muted);
 }

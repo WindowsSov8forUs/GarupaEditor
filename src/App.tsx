@@ -51,7 +51,7 @@ class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorBoundary
     if (this.state.hasError) {
       return (
         <main className="app-shell">
-          <section className="playfield-loading">
+          <section className="playfield-loading ui-design-scale">
             界面渲染发生异常：{this.state.message || "未知错误"}
             <button type="button" onClick={this.handleRecover}>
               <span className="btn-content">重试</span>
@@ -85,7 +85,7 @@ function App() {
 
   const routeLoadingFallback = (
     <main className="app-shell">
-      <section className="playfield-loading">加载中...</section>
+      <section className="playfield-loading ui-design-scale">加载中...</section>
     </main>
   );
 
