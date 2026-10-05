@@ -3,6 +3,8 @@
 .original-prefab-origin, .original-authored-window { position: absolute; width: 0; height: 0; transform-origin: 0 0; }
 .original-prefab-label { display: flex; align-items: flex-start; overflow: visible; white-space: pre-wrap; pointer-events: none; user-select: none; }
 .original-prefab-label > span { max-width: 100%; }
+.original-prefab-label-horizontal { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; pointer-events: auto; user-select: text; touch-action: pan-x; }
+.original-prefab-label-horizontal::-webkit-scrollbar { display: none; }
 button.original-button.original-prefab-hit,
 button.original-button.original-prefab-hit:hover,
 button.original-button.original-prefab-hit:active,

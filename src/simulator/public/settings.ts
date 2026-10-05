@@ -13,8 +13,8 @@ import { resolveOriginalSkinRecipe } from "../engine/skin/originalSkinResolver";
 import { createSimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
 
 /** The original settings preview uses Live/manual skin eligibility. */
-export function resolveOriginalPreviewSkin(settings: OriginalSkinSettings) {
-  const result = resolveOriginalSkinRecipe(settings, createSimulatorModeIdentity("live", "manual"), "ordinary", "standard");
+export function resolveOriginalPreviewSkin(settings: OriginalSkinSettings, chartMode: "ordinary" | "habahiro" = "ordinary") {
+  const result = resolveOriginalSkinRecipe(settings, createSimulatorModeIdentity("live", "manual"), chartMode, "standard");
   if (result.status !== "ok") throw new Error(result.boundary);
   return result.value;
 }

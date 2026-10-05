@@ -54,23 +54,28 @@ export function useOriginalDialogInput(ref: RefObject<HTMLDivElement | null>, mo
       document.removeEventListener("keydown", keydown, true);
       document.removeEventListener("focusin", focusin, true);
       queueMicrotask(() => {
-        if (!previous?.isConnected || previous.closest("[inert]")) return;
-        if (!restoreKeyboardFocus) {
-          previous.setAttribute("data-original-restored-pointer-focus", "");
-          // ESC must not turn a pointer-opened button into a keyboard selection.
-          // The next interaction returns focus-visible decisions to the browser.
-          const clear = () => {
-            previous.removeAttribute("data-original-restored-pointer-focus");
-            document.removeEventListener("keydown", clear, true);
-            document.removeEventListener("pointerdown", clear, true);
-            previous.removeEventListener("blur", clear);
-          };
-          document.addEventListener("keydown", clear, true);
-          document.addEventListener("pointerdown", clear, true);
-          previous.addEventListener("blur", clear, { once: true });
-        }
-        previous.focus({ preventScroll: true });
+        restoreOriginalFocus(previous, !!restoreKeyboardFocus);
       });
     };
   }, [ref, mounted]);
+}
+
+/** Preserve whether the return target was activated by keyboard or pointer. */
+export function restoreOriginalFocus(previous: HTMLElement | null, restoreKeyboardFocus: boolean): void {
+  if (!previous?.isConnected || previous.closest("[inert]")) return;
+  if (!restoreKeyboardFocus) {
+    previous.setAttribute("data-original-restored-pointer-focus", "");
+    // ESC must not turn a pointer-opened button into a keyboard selection.
+    // The next interaction returns focus-visible decisions to the browser.
+    const clear = () => {
+      previous.removeAttribute("data-original-restored-pointer-focus");
+      document.removeEventListener("keydown", clear, true);
+      document.removeEventListener("pointerdown", clear, true);
+      previous.removeEventListener("blur", clear);
+    };
+    document.addEventListener("keydown", clear, true);
+    document.addEventListener("pointerdown", clear, true);
+    previous.addEventListener("blur", clear, { once: true });
+  }
+  previous.focus({ preventScroll: true });
 }

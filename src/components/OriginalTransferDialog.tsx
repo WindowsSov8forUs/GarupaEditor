@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useLayoutEffect, useState, type ReactNode } from "react";
 import { OriginalAuthoredDialog } from "./OriginalAuthoredDialog";
 import { OriginalPrefabModel, ORIGINAL_PREFABS, originalRef, type OriginalData, type OriginalOverrides } from "./originalPrefabModel";
 import type { OriginalButtonBinding } from "./OriginalPrefabView";
@@ -9,16 +9,40 @@ const sourceTabs = [...source.components.values()].filter(item => item.kind === 
   .sort((a, b) => a.data.tabIndex - b.data.tabIndex);
 
 /** Editor-owned content hosted in the existing settings window, in its original coordinate system. */
-export function OriginalTransferDialog({ open, title, tabs, selected, onSelect, onClose, busy = false, children }: {
+export function OriginalTransferDialog({ open, title, tabs, selected, onSelect, onClose, busy = false, fitContent = false, children }: {
   open: boolean; title: string; tabs?: readonly { key: string; label: string }[];
-  selected?: string; onSelect?: (key: string) => void; onClose(): void; busy?: boolean; children: ReactNode;
+  selected?: string; onSelect?: (key: string) => void; onClose(): void; busy?: boolean; fitContent?: boolean; children: ReactNode;
 }) {
+  const compact = fitContent && !tabs?.length;
+  const [contentElement, setContentElement] = useState<HTMLDivElement | null>(null);
+  const [contentSize, setContentSize] = useState({ width: 950, height: 506 });
+  useLayoutEffect(() => {
+    if (!compact || !contentElement) return;
+    const measure = () => setContentSize(previous => {
+      const width = contentElement.offsetWidth, height = contentElement.offsetHeight;
+      return previous.width === width && previous.height === height ? previous : { width, height };
+    });
+    measure();
+    const observer = new ResizeObserver(measure); observer.observe(contentElement);
+    return () => observer.disconnect();
+  }, [compact, contentElement]);
   const nodes: NonNullable<OriginalOverrides["nodes"]> extends Readonly<infer T> ? T : never = {
     [source.nodeAt("etc").id]: { active: false },
     [source.nodeAt("ButtonOK").id]: { active: false },
   };
   const components: Record<number, OriginalData> = { 101: { mText: title } };
   const buttons: Record<number, OriginalButtonBinding> = {};
+  if (compact) {
+    // Keep the source header and outside margins; fit only the content area.
+    const width = contentSize.width + 66, height = contentSize.height + 138;
+    const dx = (source.components.get(99)!.data.mWidth - width) / 2;
+    const dy = (source.components.get(99)!.data.mHeight - height) / 2;
+    components[99] = { mWidth: width, mHeight: height };
+    components[97] = { mWidth: source.components.get(97)!.data.mWidth - dx * 2 };
+    components[101] = { ...components[101], mWidth: source.components.get(101)!.data.mWidth - dx * 2 };
+    nodes[source.nodeAt("Header").id] = { y: source.nodeAt("Header").position.y - dy };
+    nodes[source.nodeAt("Header/Title").id] = { x: source.nodeAt("Header/Title").position.x + dx };
+  }
   if (!tabs?.length) nodes[source.nodeAt("Pages/SwitchTab").id] = { active: false };
   sourceTabs.forEach((tab, index) => {
     const item = tabs?.[index];
@@ -50,7 +74,10 @@ export function OriginalTransferDialog({ open, title, tabs, selected, onSelect, 
   });
   const model = new OriginalPrefabModel(source.prefab, { nodes, components });
   return <OriginalAuthoredDialog open={open} model={model} bindings={{ buttons }} motion="slide-left" onClose={onClose} busy={busy}>
-    <div className="transfer-authored-content" data-tabs={!!tabs?.length}
-      style={{ zIndex: source.components.get(99)!.data.mDepth + 1 }}>{children}</div>
+    <div ref={setContentElement} className="transfer-authored-content" data-tabs={!!tabs?.length} data-fit-content={compact}
+      style={{ zIndex: source.components.get(99)!.data.mDepth + 1, ...(compact ? {
+        left: -contentSize.width / 2, top: -(contentSize.height + 138) / 2 + 104,
+        width: "max-content", height: "auto",
+      } : {}) }}>{children}</div>
   </OriginalAuthoredDialog>;
 }

@@ -3,6 +3,7 @@ import { OriginalSprite } from "./OriginalUi";
 import { originalSurfaceRow } from "./useOriginalSurface";
 import { originalSpriteDrawingRect, originalUiRound, ORIGINAL_PROGRESS_HIDE_THRESHOLD } from "./originalSpriteGeometry";
 import { useOriginalFontRevision } from "./useOriginalFontRevision";
+import { useHorizontalTextScroll } from "./useHorizontalTextScroll";
 import { originalLabelTextShadow } from "./originalLabelEffects";
 import { originalLabelBaseline, originalLabelFirstBaseline } from "./text/originalLabelMetrics";
 import { useOriginalButtonAction } from "./useOriginalButtonAction";
@@ -36,6 +37,7 @@ export interface OriginalViewBindings {
   beforeClick?: (type: number) => void;
   labelMeasurements?: Readonly<Record<number, (width: number) => void>>;
   labelNaturalSizes?: Readonly<Record<number, { width: boolean; height: boolean }>>;
+  horizontalScrollLabels?: ReadonlySet<number>;
 }
 const color = (value: OriginalData) => `rgba(${value.r * 255},${value.g * 255},${value.b * 255},${value.a})`;
 const rectStyle = (model: OriginalPrefabModel, component: OriginalComponent): CSSProperties => {
@@ -87,10 +89,11 @@ function richText(text: string, initial: string): ReactNode {
 }
 let labelMetricsContext: CanvasRenderingContext2D | null = null;
 
-function LabelView({ model, component, fontRevision, onMeasured, naturalSize }: { model: OriginalPrefabModel;
+function LabelView({ model, component, fontRevision, onMeasured, naturalSize, horizontalScroll = false }: { model: OriginalPrefabModel;
   component: OriginalComponent; fontRevision: number; onMeasured?: (width: number) => void;
-  naturalSize?: { width: boolean; height: boolean } }) {
+  naturalSize?: { width: boolean; height: boolean }; horizontalScroll?: boolean }) {
   const label = useRef<HTMLSpanElement>(null);
+  useHorizontalTextScroll(label, undefined, horizontalScroll);
   const visible = useContext(OriginalPageVisible);
   const data = component.data, text = model.text(component), transform = model.transform(component.node);
   const textColor = color(data.mColor), scale = Math.abs(transform.scaleY);
@@ -124,7 +127,7 @@ function LabelView({ model, component, fontRevision, onMeasured, naturalSize }: 
     // ShrinkContent applies to every authored line limit, including unlimited wrapping.
     // Measure used CSS dimensions, independent of the dialog opening transform.
     // Reverse b8260bb7: UILabel.ProcessText retries ShrinkContent at size - 2.
-    for (let size = data.mFontSize; data.mOverflow === 0 && size >= 1; size -= 2) {
+    for (let size = data.mFontSize; !horizontalScroll && data.mOverflow === 0 && size >= 1; size -= 2) {
       const pixels = size * scale, lineHeight = pixels + spacingY;
       element.style.fontSize = `${pixels}px`; element.style.lineHeight = `${lineHeight}px`;
       const measured = getComputedStyle(content);
@@ -156,18 +159,23 @@ function LabelView({ model, component, fontRevision, onMeasured, naturalSize }: 
     }
     if (Number.isFinite(printedWidth)) onMeasured?.(printedWidth);
   }, [visible, fontRevision, text, box.x, box.y, box.width, box.height, fontSize, scale, transform.scaleX, spacingX, spacingY, data.mFontSize, data.mOverflow,
-    data.mMaxLineCount, data.mFontStyle, data.mEncoding, data.mPivot, naturalSize?.width, naturalSize?.height, onMeasured]);
+    data.mMaxLineCount, data.mFontStyle, data.mEncoding, data.mPivot, naturalSize?.width, naturalSize?.height, onMeasured, horizontalScroll]);
+  useLayoutEffect(() => { if (horizontalScroll && label.current) label.current.scrollLeft = 0; }, [text, horizontalScroll]);
   const align = data.mAlignment === 1 ? "left" : data.mAlignment === 2 ? "center" : data.mAlignment === 3 ? "right"
     : data.mPivot % 3 === 0 ? "left" : data.mPivot % 3 === 2 ? "right" : "center";
-  return <span ref={label} className="original-prefab-label" data-original-widget={component.id} style={{ ...rectStyle(model, component),
+  return <span ref={label} className={`original-prefab-label${horizontalScroll ? " original-prefab-label-horizontal" : ""}`}
+    tabIndex={horizontalScroll ? 0 : undefined} data-original-widget={component.id} style={{ ...rectStyle(model, component),
     fontSize, alignItems: "flex-start",
-    whiteSpace: data.mMaxLineCount === 1 ? "pre" : "pre-wrap", color: textColor, textAlign: align, justifyContent: align === "left" ? "flex-start" : align === "right" ? "flex-end" : "center",
+    whiteSpace: horizontalScroll || data.mMaxLineCount === 1 ? "pre" : "pre-wrap", color: textColor, textAlign: align, justifyContent: horizontalScroll || align === "left" ? "flex-start" : align === "right" ? "flex-end" : "center",
     fontWeight: data.mFontStyle === 1 ? 700 : 400, letterSpacing: spacingX,
     lineHeight: `${fontSize + spacingY}px`,
     textShadow: originalLabelTextShadow(data.mEffectStyle, data.mEffectDistance, data.mEffectColor,
       transform.scaleX, transform.scaleY, data.mColor.a),
-    paintOrder: "stroke fill" }}><span style={data.mMaxLineCount === 1
-      ? { position: "relative", maxWidth: "none", flexShrink: 0 } : { position: "relative", overflowWrap: "anywhere" }}>
+    paintOrder: "stroke fill" }}><span style={horizontalScroll || data.mMaxLineCount === 1
+      ? { position: "relative", maxWidth: "none", flexShrink: 0,
+          marginLeft: horizontalScroll && align !== "left" ? "auto" : undefined,
+          marginRight: horizontalScroll && align === "center" ? "auto" : undefined }
+      : { position: "relative", overflowWrap: "anywhere" }}>
       <span aria-hidden="true" style={{ display: "inline-block", width: 0, height: 0, padding: 0, margin: 0, verticalAlign: "baseline" }} />
       {data.mEncoding ? richText(text, textColor) : text}</span></span>;
 }
@@ -295,7 +303,8 @@ export function OriginalPrefabView({ model: source, root, bindings: initialBindi
       switch (component.kind) {
         case "UISprite": return <SpriteView key={component.id} model={model} component={component} />;
         case "UILabel": return <LabelView key={component.id} model={model} component={component} fontRevision={fontRevision}
-          onMeasured={bindings.labelMeasurements?.[component.id]} naturalSize={bindings.labelNaturalSizes?.[component.id]} />;
+          onMeasured={bindings.labelMeasurements?.[component.id]} naturalSize={bindings.labelNaturalSizes?.[component.id]}
+          horizontalScroll={bindings.horizontalScrollLabels?.has(component.id)} />;
         case "UITexture": return bindings.textures?.[component.id] === undefined ? null :
           <div key={component.id} style={rectStyle(model, component)}>{bindings.textures[component.id]}</div>;
         case "StarUIButton": return <ButtonView key={component.id} model={model} component={component}

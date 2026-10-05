@@ -54,7 +54,12 @@ export function OriginalPageViewport({ model, bindings, children, scrollState, l
   const barModel = new OriginalPrefabModel(model.prefab, { ...model.overrides,
     nodes: { ...model.overrides.nodes, [bar.id]: { ...model.overrides.nodes?.[bar.id], active: maximum > 0 },
       [thumb.id]: { ...model.overrides.nodes?.[thumb.id], y: -barHeight * size / 2 - fraction * barHeight * (1 - size) } },
-    components: { ...model.overrides.components, [thumbSprite.id]: { ...thumbSprite.data, mHeight: barHeight * size, mPivot: 4 } },
+    // UIScrollView initializes progress-bar alpha from whether its content can move.
+    // The prefab's zero alpha is only its pre-initialization state.
+    components: { ...model.overrides.components,
+      [background.id]: { ...background.data, mColor: { ...background.data.mColor, a: maximum > 0 ? 1 : 0 } },
+      [thumbSprite.id]: { ...thumbSprite.data, mHeight: barHeight * size, mPivot: 4,
+        mColor: { ...thumbSprite.data.mColor, a: maximum > 0 ? 1 : 0 } } },
   });
   const thumbBox = barModel.rect(barModel.components.get(thumbSprite.id)!);
   const hit = model.componentAt(bar.id, "BoxCollider2D");
