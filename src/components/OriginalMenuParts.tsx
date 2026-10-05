@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { UiAuthoredSurface } from "./UiViewport";
 import content from "../data/originalMenuContent.json";
 import { OriginalPrefabView } from "./OriginalPrefabView";
 import { OriginalPrefabModel, ORIGINAL_PREFABS, ORIGINAL_WORDING, originalUiText } from "./originalPrefabModel";
@@ -15,11 +16,10 @@ export function OriginalHeaderMenuButton({ open, onClick }: { open: boolean; onC
         source.componentAt(node.id, "StarUIButton")?.id === 196 || source.componentAt(node.id, "StarUIButton")?.id === 197).map(node => [node.id, { active: false }])),
     });
   }, []);
-  return <div className="original-header-slot" style={{ width: 48, height: 48 }}>
-    <div className="original-prefab-origin" style={{ transform: "scale(0.5)" }}>
+  const surface = model.componentAt(model.nodeAt("TopRightMenu/buttonMenu").id, "UISprite")!;
+  return <UiAuthoredSurface className="original-header-slot" width={surface.data.mWidth} height={surface.data.mHeight}>
       <OriginalPrefabView model={model} bindings={{ buttons: { 200: open ? undefined : { label: originalUiText("メニュー"), action: onClick } } }} />
-    </div>
-  </div>;
+  </UiAuthoredSurface>;
 }
 export interface OriginalMenuItem { key: string; label: string; action?: () => void; icon?: string; image?: string }
 export const ORIGINAL_MENU_ITEMS = content.items.filter(item => item.key === "menuList_option_button")

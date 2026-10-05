@@ -1,3 +1,4 @@
+import { getUiViewport } from "./useUiViewport";
 import behavior from "../data/originalSkinPreviewBehavior.json";
 import { useEffect, useRef, useState } from "react";
 import { autoDetectRenderer, Container, Mesh, MeshGeometry, Sprite, Texture } from "pixi.js";
@@ -147,7 +148,8 @@ export function OriginalSkinPreview({ resources, animated, effects, speed, noteS
         canvas.style.width = "100%"; canvas.style.height = "100%";
         // SkinPreview renders beneath the width-fitted UI Root, then fits that texture into
         // min(aspect, 2). FrontCamera's authored scale participates before projection.
-        const aspect = window.innerWidth / window.innerHeight;
+        const viewport = getUiViewport();
+        const aspect = viewport.width / viewport.height;
         const height = roundDimension(behavior.rendering.uiRootWidth / aspect), width = height * aspect;
         const projection = frontScale / halfHeight;
         root.position.set(box.width / 2, box.height / 2);

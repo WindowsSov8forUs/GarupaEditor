@@ -1330,7 +1330,7 @@ export default function StaticChartRenderWindow() {
 
   return (
     <main className="static-render-page">
-      <header className="static-render-toolbar">
+      <header className="static-render-toolbar ui-design-scale">
         {isMobileRoute ? (
           <button
             type="button"

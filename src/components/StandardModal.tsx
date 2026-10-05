@@ -74,7 +74,7 @@ function renderStandardModalFrame(
       <OriginalDialogFrame atlas={atlas} role="dialog" aria-modal="true"
         aria-label={typeof title === "string" ? title : undefined} data-motion={motion}
         inert={phase === "exit" || layerStyle.pointerEvents === "none"}
-        className={`modal-card ${cardClassName} modal-transition-card ${transitionClassName}`}
+        className={`modal-card ui-design-scale ${cardClassName} modal-transition-card ${transitionClassName}`}
         onClick={(event) => event.stopPropagation()}
       >
         <OriginalDialogHeader atlas={atlas}>{title}</OriginalDialogHeader>

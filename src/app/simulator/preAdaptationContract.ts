@@ -5,7 +5,6 @@ export const SIMULATOR_ALL_PERFECT_DISPLAY_DEFAULT_PRODUCT_SEMANTICS_ID =
   "app.simulator.all-perfect-status-display-default-on-v1";
 
 export const SIMULATOR_PRE_ADAPTATION_DEFAULTS = Object.freeze({
-  isFullLength: false,
   sessionMode: "live" as const,
   inputMode: "auto" as const,
   judgementAdjustValue: 0,

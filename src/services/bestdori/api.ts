@@ -75,6 +75,7 @@ export interface BestdoriOfficialChartImportPayload {
   bands: BestdoriBandsAll1;
   resources: BestdoriSongResourceUrls;
   metadata: {
+    isFullLength: boolean;
     title: string;
     artist: string;
     charter: string;
@@ -243,6 +244,7 @@ export interface BestdoriCreateCommunityChartPostResponse {
 }
 
 export interface BestdoriCommunitySongResourceUrls {
+  isFullLength: boolean;
   type: BestdoriPostSong["type"];
   songId: number | null;
   audioUrl: string | null;
@@ -1239,6 +1241,7 @@ export async function resolveBestdoriCommunitySongResourceUrls(
   }
   if (song.type === "custom") {
     return {
+      isFullLength: false,
       type: "custom",
       songId: null,
       audioUrl: trimNonEmptyStringOrNull(song.audio),
@@ -1250,6 +1253,7 @@ export async function resolveBestdoriCommunitySongResourceUrls(
     const songInfo = await fetchBestdoriSongInfo(songId);
     return {
       type: "bandori",
+      isFullLength: isBestdoriFullLengthSong(songInfo),
       songId,
       audioUrl: buildBestdoriSongAudioUrl(songId, songInfo),
       coverUrl: buildBestdoriSongJacketUrl(songId, songInfo),
@@ -1259,10 +1263,15 @@ export async function resolveBestdoriCommunitySongResourceUrls(
   const llsifInfo = llsifMisc[String(songId)];
   return {
     type: "llsif",
+    isFullLength: false,
     songId,
     audioUrl: buildBestdoriLlsifAssetUrl(llsifInfo?.sound_asset),
     coverUrl: buildBestdoriLlsifAssetUrl(llsifInfo?.live_icon_asset),
   };
+}
+
+export function isBestdoriFullLengthSong(songInfo: Pick<BestdoriSongInfo, "tag">): boolean {
+  return songInfo.tag === "full";
 }
 
 export function resolveBestdoriSongServerName(songInfo: BestdoriSongInfo): BestdoriSongServerName {
@@ -1384,6 +1393,7 @@ export async function fetchBestdoriOfficialChartImportPayload(
     bands,
     resources,
     metadata: {
+      isFullLength: isBestdoriFullLengthSong(songInfo),
       title: resolveBestdoriSongTitle(songInfo),
       artist: resolveBestdoriBandArtist(songInfo, bands),
       charter: BESTDORI_OFFICIAL_CHART_TEAM,

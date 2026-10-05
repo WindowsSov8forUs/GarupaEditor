@@ -28,21 +28,66 @@ function useFormWidth() {
 }
 
 const formPrefabs = formProfile.prefabs as unknown as Record<string, OriginalPrefab>;
-const fieldSource = new OriginalPrefabModel(formPrefabs.takeoversettingdialog!);
-const fieldBackground = fieldSource.components.get(134)!;
-const fieldLabel = fieldSource.components.get(101)!;
-const fieldMarker = fieldSource.components.get(125)!;
-const backgroundRect = fieldSource.rect(fieldBackground);
-const labelRect = fieldSource.rect(fieldLabel);
-const markerRect = fieldSource.rect(fieldMarker);
 
-type FieldProps = { multiline?: boolean } & InputHTMLAttributes<HTMLInputElement> & TextareaHTMLAttributes<HTMLTextAreaElement>;
+const stepperSource = new OriginalPrefabModel(ORIGINAL_PREFABS.livesettingstabpage!);
+const stepperRoot = stepperSource.nodeAt("HiSpeed");
+const stepperNodes = stepperSource.prefab.nodes.filter(node => stepperSource.isWithin(node.id, stepperRoot.id))
+  .map(node => node.id === stepperRoot.id ? { ...node, parent: null, position: { x: 0, y: 0, z: 0 } } : node);
+const stepperPrefab = { ...stepperSource.prefab, nodes: stepperNodes,
+  components: stepperSource.prefab.components.filter(component => stepperNodes.some(node => node.id === component.node)) };
+const stepperLayout = new OriginalPrefabModel(stepperPrefab);
+const stepperBody = stepperLayout.nodeAt("HiSpeed/Body");
+
+/** The authored HiSpeed row, with integer steps and bounds supplied by the editor field. */
+export function OriginalFormStepper({ title, value, minimum, maximum, onChange }: {
+  title: string; value: number; minimum: number; maximum: number; onChange(value: number): void;
+}) {
+  const model = new OriginalPrefabModel(stepperPrefab, { components: {
+    570: { mText: String(value) },
+  } });
+  const buttons = Object.fromEntries([[466, -10], [545, -5], [621, -1], [486, 1], [628, 5], [648, 10]]
+    .map(([id, amount]) => [id, { label: `${title}${amount < 0 ? "减少" : "增加"}${Math.abs(amount)}`,
+      disabled: amount < 0 ? value <= minimum : value >= maximum,
+      action: () => onChange(Math.min(maximum, Math.max(minimum, value + amount))) }]));
+  const boxes = [...model.components.values()].filter(component => model.isActive(component.node)
+    && model.isWithin(component.node, stepperBody.id)
+    && ["UISprite", "UILabel", "BoxCollider2D"].includes(component.kind)).map(component => model.rect(component));
+  const left = Math.min(0, ...boxes.map(box => box.x));
+  const top = model.rect(model.components.get(574)!).y;
+  const right = Math.max(...boxes.map(box => box.x + box.width)), bottom = Math.max(...boxes.map(box => box.y + box.height));
+  return <div style={{ position: "relative", minWidth: right - left, height: bottom - top, flexShrink: 0, alignSelf: "stretch" }}>
+    <OriginalFormSubtitle text={title} />
+    <div className="original-prefab-origin" style={{ left: -left, top: -top }}>
+      <OriginalPrefabView model={model} root={stepperBody.id} bindings={{ buttons }} />
+    </div>
+  </div>;
+}
+
+export interface OriginalInputSource {
+  model: OriginalPrefabModel;
+  background: number;
+  label: number;
+  marker: number;
+  input: number;
+}
+const defaultInputSource: OriginalInputSource = {
+  model: new OriginalPrefabModel(formPrefabs.takeoversettingdialog!),
+  background: 134, label: 101, marker: 125, input: 114,
+};
+type FieldProps = { multiline?: boolean; source?: OriginalInputSource } & InputHTMLAttributes<HTMLInputElement> & TextareaHTMLAttributes<HTMLTextAreaElement>;
 const inputColor = (color: { r: number; g: number; b: number; a: number }) =>
   `rgba(${color.r * 255},${color.g * 255},${color.b * 255},${color.a})`;
 /** Original sliced surface and label geometry, with host caret/selection/IME.
  * Multiline rows are editor content sizing, not a copied original UIInput mode. */
-export function OriginalFormInput({ multiline = false, rows = 6, className = "", style,
+export function OriginalFormInput({ multiline = false, rows = 6, className = "", style, source = defaultInputSource,
   onFocus, onBlur, placeholder, ...props }: FieldProps) {
+  const fieldSource = source.model;
+  const fieldBackground = fieldSource.components.get(source.background)!;
+  const fieldLabel = fieldSource.components.get(source.label)!;
+  const fieldMarker = fieldSource.components.get(source.marker)!;
+  const backgroundRect = fieldSource.rect(fieldBackground);
+  const labelRect = fieldSource.rect(fieldLabel);
+  const markerRect = fieldSource.rect(fieldMarker);
   const { ref, width } = useFormWidth();
   const [focused, setFocused] = useState(false);
   const fontRevision = useOriginalFontRevision();
@@ -72,7 +117,7 @@ export function OriginalFormInput({ multiline = false, rows = 6, className = "",
   const height = multiline ? Math.max(1, rows) * lineHeight + textTop + left : backgroundRect.height;
   const surface = useOriginalSurface(fieldBackground.data.mSpriteName,
     Math.abs(fieldSource.transform(fieldBackground.node).scaleX), "menu", Math.max(1, width), height);
-  const input = fieldSource.components.get(114)!.data;
+  const input = fieldSource.components.get(source.input)!.data;
   const color = focused ? input.activeTextColor : label.mColor;
   const markerRight = backgroundRect.width - (markerRect.x - backgroundRect.x) - markerRect.width;
   const right = props.readOnly ? left : markerRight + markerRect.width + left;
@@ -146,10 +191,14 @@ export function OriginalFormNote({ text }: { text: string }) {
 }
 
 export const ORIGINAL_DIFFICULTIES = ["EASY", "NORMAL", "HARD", "EXPERT", "SPECIAL"] as const;
-export function OriginalDifficultySelect({ value, onChange }: {
+export function OriginalDifficultySelect({ value, onChange, layout, children }: {
   value: typeof ORIGINAL_DIFFICULTIES[number]; onChange(value: typeof ORIGINAL_DIFFICULTIES[number]): void;
+  layout?: { width: number; height: number; positions: readonly { x: number; y: number }[] };
+  children?: ReactNode;
 }) {
-  return <div className="original-difficulty-select" role="radiogroup" aria-label="难度">
+  return <div className="original-difficulty-select" role="radiogroup" aria-label="难度"
+    style={layout ? { position: "relative", width: layout.width, height: layout.height } : undefined}>
+    {children}
     {ORIGINAL_DIFFICULTIES.map((difficulty, index) => {
       const prefix = formProfile.difficulty.prefixes[difficulty.toLowerCase() as keyof typeof formProfile.difficulty.prefixes];
       const sprite = prefix + (value === difficulty ? "on" : "off");
@@ -157,7 +206,9 @@ export function OriginalDifficultySelect({ value, onChange }: {
         nodes: { 3: { active: false } },
         components: { 8: { mSpriteName: sprite }, 11: { mSpriteName: sprite }, 10: { mNormalSprite: sprite } },
       });
-      return <div className="original-difficulty-button" key={difficulty}>
+      return <div className="original-difficulty-button" key={difficulty} style={layout ? {
+        position: "absolute", left: layout.positions[index].x - 51, top: layout.positions[index].y - 51,
+      } : undefined}>
         <div className="original-prefab-origin" style={{ left: 51, top: 51 }}>
           <OriginalPrefabView model={model} bindings={{ buttons: { 10: { label: difficulty,
             role: "radio", selected: value === difficulty, navigationIndex: index, action: () => onChange(difficulty) } } }} />
@@ -227,9 +278,15 @@ export function OriginalFormButton({ tone = "gray", size = "normal", children, o
     { components: { [labelId]: { mText: labelText(children), ...(size !== "normal"
       ? { mWidth: size === "icon" ? 54 : 150, mHeight: 48, mMaxLineCount: 1 } : {}) } } });
   const sprite = model.componentAt(root.id, "UISprite")!;
+  // Layout must reserve the original hit region as well as the visible sprite.
+  const collider = model.componentAt(root.id, "BoxCollider2D");
+  const boxes = [sprite, ...(collider ? [collider] : [])].map(component => model.rect(component));
+  const left = Math.min(...boxes.map(box => box.x)), top = Math.min(...boxes.map(box => box.y));
+  const width = Math.max(...boxes.map(box => box.x + box.width)) - left;
+  const height = Math.max(...boxes.map(box => box.y + box.height)) - top;
   return <div className={`transfer-authored-button ${className}`} title={title}
-    style={{ width: sprite.data.mWidth, height: sprite.data.mHeight }}>
-    <div className="original-prefab-origin" style={{ left: "50%", top: "50%" }}>
+    style={{ width, height }}>
+    <div className="original-prefab-origin" style={{ left: -left, top: -top }}>
       <OriginalPrefabView model={model} bindings={{ buttons: {
         [buttonId]: { action: onClick, disabled, label: ariaLabel ?? labelText(children) },
       } }} />

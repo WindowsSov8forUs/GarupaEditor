@@ -2,10 +2,10 @@ import { AppSettingsModal } from "../AppSettingsModal";
 import { OriginalUiSoundProvider } from "../OriginalUiSound";
 import { BestdoriLoginModal } from "../BestdoriLoginModal";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent as ReactMouseEvent } from "react";
-import { CommandBar } from "../CommandBar";
 import { ExportJsonModal } from "../ExportJsonModal";
 import { ImportJsonModal } from "../ImportJsonModal";
-import { MetadataEditorModal } from "../MetadataEditorModal";
+import { SongInformationPage } from "../SongInformationPage";
+import { OriginalPageSwitch } from "../OriginalPageSwitch";
 import { DownloadProgressModal } from "../DownloadProgressModal";
 import { OverlayDialogModal } from "../OverlayDialogModal";
 import { SkinSettingsModal } from "../SkinSettingsModal";
@@ -13,6 +13,7 @@ import { bestdoriGetMe, bestdoriLogin, bestdoriLogout } from "../../services/bes
 import { isMobileRuntime } from "../../app/mobileRuntime";
 import { SidebarPanel } from "./SidebarPanel";
 import { TimelineStrip } from "./TimelineStrip";
+import { useUiViewport } from "../useUiViewport";
 
 type ChartEditorLayoutProps = {
   vm: any;
@@ -21,7 +22,6 @@ type ChartEditorLayoutProps = {
 const CANVAS_INTERACTION_OVERSCAN_PX = 240;
 const CANVAS_INTERACTION_SNAP_PX = 96;
 const MOBILE_BOARD_SIDE_PADDING_PX = 16;
-const MOBILE_BOARD_MIN_SCALE = 0.65;
 const MOBILE_BOARD_MAX_SCALE = 8;
 
 function isHalfBeatAligned(value: number): boolean {
@@ -33,6 +33,7 @@ function isHalfBeatAligned(value: number): boolean {
 }
 
 export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
+  const uiViewport = useUiViewport();
   const {
     jsonImportRef,
     bestdoriV2ImportRef,
@@ -79,13 +80,9 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     openSkinSettings,
     metadata,
     chartMediaSources,
-    chartMediaError,
-    coverImageSrc,
     audioDurationSec,
     visibleNoteCount,
     openMetadataEditor,
-    isCoverLoadFailed,
-    setIsCoverLoadFailed,
     isSkinReady,
     isToolArmed,
     tool,
@@ -280,10 +277,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     isMetadataEditorOpen,
     setMetadata,
     setIsMetadataEditorOpen,
-    handleCoverUpload,
-    handleAudioUpload,
-    handleMvUpload,
-    handleStageBackdropUpload,
     isAppSettingsOpen,
     setIsAppSettingsOpen,
     appOptionSettings,
@@ -538,7 +531,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     }
     const availableWidth = Math.max(1, playfieldViewportWidth - MOBILE_BOARD_SIDE_PADDING_PX);
     const fitWidthScale = availableWidth / boardWidth;
-    return Math.min(MOBILE_BOARD_MAX_SCALE, Math.max(MOBILE_BOARD_MIN_SCALE, fitWidthScale));
+    return Math.min(MOBILE_BOARD_MAX_SCALE, fitWidthScale);
   }, [boardWidth, mobileRuntime, playfieldViewportWidth]);
   const scaledBoardWidth = mobileRuntime ? Math.max(1, boardWidth * mobileBoardScale) : boardWidth;
   const scaledScrollContentHeight = mobileRuntime
@@ -1217,7 +1210,9 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   return (
     <OriginalUiSoundProvider volumePercent={appOptionSettings.simulatorSettings.systemSeVolumePercent}
       masterPercent={appOptionSettings.simulatorSettings.masterVolumePercent} onError={vm.setStatusMessage}>
-    <main className={`app-shell ${mobileRuntime ? "is-mobile-runtime" : ""}`}>
+    <main className={`app-shell ${mobileRuntime ? "is-mobile-runtime" : ""}`}
+      data-ui-layout={uiViewport.stacked ? "stacked" : "columns"}
+      >
       <input
         ref={jsonImportRef}
         type="file"
@@ -1237,22 +1232,28 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         }}
       />
 
-      <CommandBar
-        onOpenStaticRender={openStaticRenderWindow}
-        onOpenSimulator={openSimulatorWindow}
-        onOpenAppSettings={openAppSettings}
-        menuOpen={isAppSettingsOpen}
+      <OriginalPageSwitch open={isMetadataEditorOpen} title="歌曲信息"
+        onOpenMenu={openAppSettings} menuOpen={isAppSettingsOpen}
+        onBack={() => setIsMetadataEditorOpen(false)} page={
+      <SongInformationPage
+        audioDurationSec={audioDurationSec}
+        noteCount={visibleNoteCount}
+        notes={notes}
+        slideChains={vm.slideChains}
+        metadata={metadata}
+        mediaSources={chartMediaSources}
+          onCoverUpload={vm.handleCoverUpload}
+          onMvUpload={vm.handleMvUpload}
+          optionSettings={appOptionSettings}
+          onError={vm.setStatusMessage}
+        setMetadata={setMetadata}
       />
+
+      }>
+
 
       <section className={`workspace ${mobileRuntime ? "is-mobile-workspace" : ""}`}>
         <SidebarPanel
-          metadata={metadata}
-          coverImageSrc={coverImageSrc}
-          audioDurationSec={audioDurationSec}
-          visibleNoteCount={visibleNoteCount}
-          openMetadataEditor={openMetadataEditor}
-          isCoverLoadFailed={isCoverLoadFailed}
-          setIsCoverLoadFailed={setIsCoverLoadFailed}
           isSkinReady={isSkinReady}
           isExGarupaEnabled={vm.appOptionSettings.exGarupaEnabled === true}
           isToolArmed={isToolArmed}
@@ -2005,22 +2006,11 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
             </div>
           )}
 
-          <div className="status-strip" title={statusMessage}>{statusMessage}</div>
+          <div className="status-strip ui-design-scale" title={statusMessage}>{statusMessage}</div>
         </section>
       </section>
 
-      <MetadataEditorModal
-        open={isMetadataEditorOpen}
-        metadata={metadata}
-        mediaSources={chartMediaSources}
-        mediaError={chartMediaError}
-        setMetadata={setMetadata}
-        onClose={() => setIsMetadataEditorOpen(false)}
-        onCoverUpload={handleCoverUpload}
-        onAudioUpload={handleAudioUpload}
-        onMvUpload={handleMvUpload}
-        onStageBackdropUpload={handleStageBackdropUpload}
-      />
+      </OriginalPageSwitch>
 
       <BestdoriLoginModal
         open={isBestdoriLoginOpen}
@@ -2038,6 +2028,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       />
 
       <AppSettingsModal
+        onSongInformation={() => { setIsAppSettingsOpen(false); openMetadataEditor(); }}
         resourcesReady={vm.settingsResourcesReady}
         onSettingsError={vm.setStatusMessage}
         onImport={openImportJsonModal} onExport={downloadJson} onPreview={openStaticRenderWindow}

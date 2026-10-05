@@ -12,7 +12,6 @@ import {
 } from "react";
 import {
   NOTE_SPECS,
-  type ChartMetadata,
   type EditorTool,
   type NoteType,
 } from "../../chartCore";
@@ -23,7 +22,6 @@ import type {
   LongLineShape,
 } from "../../app/hooks/useLongLineEditorSettings";
 import { type SkinNoteType } from "../../skinLoader";
-import { ChartInfoPanel } from "../ChartInfoPanel";
 import { StepperIcon } from "../StepperIcon";
 
 type SpriteLayers = { base?: string; overlay?: string; overlayMode: "none" | "flick" | "directional" };
@@ -72,13 +70,6 @@ function SettingBlock({ title, children, className, titleWidth = "full" }: Setti
 }
 
 type SidebarPanelProps = {
-  metadata: ChartMetadata;
-  coverImageSrc: string;
-  audioDurationSec: number;
-  visibleNoteCount: number;
-  openMetadataEditor: () => void;
-  isCoverLoadFailed: boolean;
-  setIsCoverLoadFailed: (value: boolean) => void;
   isSkinReady: boolean;
   isExGarupaEnabled: boolean;
   isToolArmed: boolean;
@@ -211,13 +202,6 @@ type SidebarPanelProps = {
 };
 
 export const SidebarPanel = memo(function SidebarPanel({
-  metadata,
-  coverImageSrc,
-  audioDurationSec,
-  visibleNoteCount,
-  openMetadataEditor,
-  isCoverLoadFailed,
-  setIsCoverLoadFailed,
   isSkinReady,
   isExGarupaEnabled,
   isToolArmed,
@@ -574,23 +558,9 @@ export const SidebarPanel = memo(function SidebarPanel({
       undoLastNote,
     ],
   );
-  const handleCoverImageError = useCallback(() => {
-    if (!isCoverLoadFailed) {
-      setIsCoverLoadFailed(true);
-    }
-  }, [isCoverLoadFailed, setIsCoverLoadFailed]);
 
   return (
-    <aside className="sidebar">
-      <ChartInfoPanel
-        metadata={metadata}
-        coverImageSrc={coverImageSrc}
-        audioDurationSec={audioDurationSec}
-        noteCount={visibleNoteCount}
-        onOpenMetadataEditor={openMetadataEditor}
-        onCoverImageError={handleCoverImageError}
-      />
-
+    <aside className="sidebar ui-design-scale">
       <section className="note-tools-panel">
           {isSkinReady ? (
             <>

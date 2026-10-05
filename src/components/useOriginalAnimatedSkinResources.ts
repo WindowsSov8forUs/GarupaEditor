@@ -14,14 +14,15 @@ export interface OriginalAnimatedSkinResources {
   readonly longNoteLine: string;
   readonly flickTops: Readonly<Record<OriginalPreviewFlickDirection, OriginalPreviewSprite>>;
   readonly flickAnimations: OriginalPreviewFlickAnimations;
+  readonly slideAmong: OriginalPreviewSprite | null;
 }
 const basename = (value: string) => value.replace(/\\/g, "/").split("/").pop()!.toLowerCase();
 
 export function useOriginalAnimatedSkinResources(recipe: ResolvedOriginalSkinRecipe,
-  onError?: (message: string) => void): OriginalAnimatedSkinResources | null {
+  onError?: (message: string) => void, includeSlideAmong = false): OriginalAnimatedSkinResources | null {
   const manager = useApplicationResourceManager(), report = useRef(onError); report.current = onError;
   const noteResource = recipe.note.logicalResource!, directionalResource = recipe.directional.noteLogicalResource;
-  const key = `${noteResource}:${directionalResource}`;
+  const key = `${noteResource}:${directionalResource}:${includeSlideAmong}`;
   const [result, setResult] = useState<OriginalAnimatedSkinResources | null>(null);
   useEffect(() => {
     let active = true, finished = false, lease: ResourceConsumerLease | null = null;
@@ -64,7 +65,8 @@ export function useOriginalAnimatedSkinResources(recipe: ResolvedOriginalSkinRec
       // Crop only the sprites consumed by the preview, through the live skin decoder.
       // Keep decoding sequential so a failed decoder cannot release a sibling's lease.
       const note = await readOriginalPreviewSprites(lease, "preview.motion.note", ids[0]!, createImageUrl,
-        new Set(["note_normal_3", "note_skill_3", "note_flick_3", "note_long_3", flickAnimations.directionalSpriteKeys.up]));
+        new Set(["note_normal_3", "note_skill_3", "note_flick_3", "note_long_3", flickAnimations.directionalSpriteKeys.up,
+          ...(includeSlideAmong ? ["note_slide_among"] : [])]));
       const directional = await readOriginalPreviewSprites(lease, "preview.motion.directional", ids[1]!, createImageUrl,
         new Set(["note_flick_r_3", "note_flick_l_3", flickAnimations.directionalSpriteKeys.left, flickAnimations.directionalSpriteKeys.right]));
       const take = (source: ReadonlyMap<string, OriginalPreviewSprite>, name: string) => {
@@ -83,12 +85,13 @@ export function useOriginalAnimatedSkinResources(recipe: ResolvedOriginalSkinRec
       const flickTops = { up: take(note, flickAnimations.directionalSpriteKeys.up),
         left: take(directional, flickAnimations.directionalSpriteKeys.left),
         right: take(directional, flickAnimations.directionalSpriteKeys.right) };
-      if (active) setResult({ key, bodies, longNoteLine, flickTops, flickAnimations });
+      if (active) setResult({ key, bodies, longNoteLine, flickTops, flickAnimations,
+        slideAmong: includeSlideAmong ? take(note, "note_slide_among") : null });
     })().catch(error => {
       if (active) report.current?.(error instanceof Error ? error.message : String(error));
       release();
     }).finally(() => { finished = true; if (!active) release(); });
     return () => { active = false; if (finished) release(); };
-  }, [manager, key, noteResource, directionalResource]);
+  }, [manager, key, noteResource, directionalResource, includeSlideAmong]);
   return result?.key === key ? result : null;
 }

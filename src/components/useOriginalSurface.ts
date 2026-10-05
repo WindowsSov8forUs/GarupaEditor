@@ -199,8 +199,19 @@ function drawNineSlice(context: CanvasRenderingContext2D, image: HTMLImageElemen
     if (!fillCenter && x === 1 && y === 1) continue;
     const sw = sourceX[x + 1]! - sourceX[x]!, sh = sourceY[y + 1]! - sourceY[y]!;
     const dw = targetX[x + 1]! - targetX[x]!, dh = targetY[y + 1]! - targetY[y]!;
-    if (sw <= 0 || sh <= 0 || dw <= 0 || dh <= 0) continue;
-    context.drawImage(image, row.x + sourceX[x]!, row.y + sourceY[y]!, sw, sh,
-      targetX[x]!, targetY[y]!, dw, dh);
+    if (sw === 0 || sh === 0 || dw <= 0 || dh <= 0) continue;
+    if (sw > 0 && sh > 0) {
+      context.drawImage(image, row.x + sourceX[x]!, row.y + sourceY[y]!, sw, sh,
+        targetX[x]!, targetY[y]!, dw, dh);
+    } else {
+      // Overlapping atlas borders reverse the inner UV interval (bg_base_tab:
+      // 81 - 44 - 40 = -3). Canvas negative source sizes do not reverse sampling.
+      context.save();
+      context.translate(targetX[x]! + (sw < 0 ? dw : 0), targetY[y]! + (sh < 0 ? dh : 0));
+      context.scale(sw < 0 ? -1 : 1, sh < 0 ? -1 : 1);
+      context.drawImage(image, row.x + Math.min(sourceX[x]!, sourceX[x + 1]!),
+        row.y + Math.min(sourceY[y]!, sourceY[y + 1]!), Math.abs(sw), Math.abs(sh), 0, 0, dw, dh);
+      context.restore();
+    }
   }
 }

@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
+import { useUiViewport } from "../../components/useUiViewport";
+import { UiAuthoredSurface } from "../../components/UiViewport";
 import { useApplicationResourceUrl } from "../../resources/applicationResourceContext";
 import { originalLabelBaseline, roundLabelCoordinate } from "../../components/text/originalLabelMetrics";
 
@@ -20,7 +22,7 @@ export function SimulatorLoadingScreen({ progress, onReady, ariaLabel = "加载�
   const onpu1 = useApplicationResourceUrl("ui.loading.onpu1");
   const onpu2 = useApplicationResourceUrl("ui.loading.onpu2");
   const shadow = useApplicationResourceUrl("ui.loading.shadow");
-  const host = useRef<HTMLElement | null>(null);
+  const viewport = useUiViewport();
   const [framesReady, setFramesReady] = useState<number | Error>(0);
   const markReady = useCallback((bit: number, error?: Error) => setFramesReady(current =>
     current instanceof Error ? current : error ?? (current | bit)), []);
@@ -30,16 +32,6 @@ export function SimulatorLoadingScreen({ progress, onReady, ariaLabel = "加载�
   const onCaptionReady = useCallback((error?: Error) => markReady(8, error), [markReady]);
   const onDotsReady = useCallback((error?: Error) => markReady(16, error), [markReady]);
   const onPercentReady = useCallback((error?: Error) => markReady(32, error), [markReady]);
-  const [size, setSize] = useState({ width: 0, scale: 0 });
-  useLayoutEffect(() => {
-    const element = host.current!;
-    const measure = () => setSize({ width: element.clientWidth,
-      scale: Math.min(element.clientWidth / 1334, element.clientHeight / 750) });
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, []);
   useEffect(() => {
     if (onReady === undefined) return;
     if (framesReady instanceof Error) { onReady(framesReady); return; }
@@ -60,16 +52,16 @@ export function SimulatorLoadingScreen({ progress, onReady, ariaLabel = "加载�
   if (framesReady instanceof Error && onReady === undefined) throw framesReady;
   const p = Math.min(1, Math.max(0, progress ?? 0));
   const comicY = 60;
-  return <section ref={host} aria-label={ariaLabel} style={{ position: "absolute", inset: 0, zIndex: 10,
+  return <section aria-label={ariaLabel} style={{ position: "absolute", inset: 0, zIndex: 10,
     overflow: "hidden" }}>
     {/* UITexture is Tiled: fill from the widget's bottom-left in texture-sized
         blocks, then scale the whole widget. Partial edge blocks retain their UVs. */}
     <div aria-hidden="true" style={{ position: "absolute", left: "50%", top: "50%", width: 1334, height: 1000,
-      transform: `translate(-50%, -50%) scale(${size.width / 1334})`, pointerEvents: "none",
+      transform: `translate(-50%, -50%) scale(${viewport.width / 1334})`, pointerEvents: "none",
       backgroundImage: `url("${background}")`, backgroundPosition: "left bottom",
       backgroundSize: "117px 142px", backgroundRepeat: "repeat" }} />
-    <div style={{ position: "absolute", left: "50%", top: "50%", width: 1334, height: 750,
-      transform: `translate(-50%, -50%) scale(${size.scale})`, fontFamily: '"ChartUI", "TTShinGoM", sans-serif' }}>
+    <UiAuthoredSurface width={1334} height={750} centered={false}
+      style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)", fontFamily: '"ChartUI", "TTShinGoM", sans-serif' }}>
       <LoadingSlicedImage source={frame} width={680} height={460} border={14}
         style={at(0, comicY, 680, 460)} onReady={onFrameReady} />
       <div style={{ ...at(0, comicY - 173.6, 680, 109), background: `url("${pattern}") left bottom / 37px 109px repeat` }} />
@@ -103,7 +95,7 @@ export function SimulatorLoadingScreen({ progress, onReady, ariaLabel = "加载�
         <LoadingLabel x={239} y={-242} width={200} height={77} fontSize={30} color="white"
           outline="black" distance={1} right text={`${Math.trunc(p * 100)}%`} onReady={onPercentReady} />
       </>
-    </div>
+    </UiAuthoredSurface>
   </section>;
 }
 

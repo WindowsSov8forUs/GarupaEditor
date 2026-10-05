@@ -37,6 +37,7 @@ export type NoteType =
   | "hidden";
 
 export interface ChartMetadata {
+  isFullLength: boolean;
   title: string;
   artist: string;
   charter: string;
@@ -220,6 +221,7 @@ export const WINDOW_SIZE_PRESETS: WindowPreset[] = [
 ];
 
 export const DEFAULT_METADATA: ChartMetadata = {
+  isFullLength: false,
   title: "Untitled",
   artist: "Unknown Artist",
   charter: "Your Name",
@@ -298,9 +300,9 @@ function normalizeDifficulty(value: unknown): Difficulty {
 }
 
 export function normalizeDifficultyLevel(value: unknown): string {
-  const fallback = Math.max(1, Math.round(toFinite(DEFAULT_METADATA.difficultyLevel, 1)));
+  const fallback = Math.max(0, Math.min(99, Math.round(toFinite(DEFAULT_METADATA.difficultyLevel, 0))));
   const normalized = Math.round(toFinite(value, fallback));
-  return String(Math.max(1, normalized));
+  return String(Math.max(0, Math.min(99, normalized)));
 }
 
 export function normalizePositiveInt(value: unknown, fallback: number): number {
@@ -848,6 +850,7 @@ export function sortNotes(notes: ChartNote[]): ChartNote[] {
 
 export function normalizeMetadata(input: Partial<ChartMetadata>): ChartMetadata {
   return {
+    isFullLength: input.isFullLength === true,
     title:
       typeof input.title === "string" && input.title.trim() !== ""
         ? input.title
@@ -1001,6 +1004,3 @@ export function normalizeNote(
 
   return normalized;
 }
-
-
-

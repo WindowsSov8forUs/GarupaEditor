@@ -119,7 +119,7 @@ export async function buildSimulatorLaunchDescriptor(
     requestId: input.requestId,
     mediaSnapshotId: snapshot.value.snapshotId,
     chartJson: JSON.stringify(chart),
-    isFullLength: false,
+    isFullLength: input.metadata.isFullLength === true,
     presentation: Object.freeze({
       song: Object.freeze({
         title,

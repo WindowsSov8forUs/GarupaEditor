@@ -40,6 +40,7 @@ button.original-button::before { content: none; }
 button.original-button:disabled { cursor: default; opacity: 1; }
 button.original-button:disabled > .original-button-cover { opacity: 0.5 !important; }
 button.original-button:focus-visible { outline: 2px solid #ff3b72; outline-offset: 2px; }
+:root button.original-button[data-original-restored-pointer-focus]:focus-visible { outline: none; }
 
 button.original-button > .original-button-surface,
 button.original-button > .original-button-cover {

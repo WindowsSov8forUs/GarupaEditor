@@ -32,7 +32,7 @@ export interface SimulatorLaunchTransportDescriptor {
   readonly requestId: string;
   readonly mediaSnapshotId: ResourceSnapshotId;
   readonly chartJson: string;
-  readonly isFullLength: false;
+  readonly isFullLength: boolean;
   readonly presentation: {
     readonly song: {
       readonly title: string;
