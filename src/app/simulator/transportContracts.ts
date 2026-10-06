@@ -10,6 +10,7 @@ export const SIMULATOR_MEDIA_SLOTS = Object.freeze({
   jacket: "simulator.media.jacket",
   stage: "simulator.media.stage",
   mv: "simulator.media.mv",
+  displayImage: "simulator.media.display-image",
 } as const);
 
 export type SimulatorTransportFloat32Bits = `0x${string}`;

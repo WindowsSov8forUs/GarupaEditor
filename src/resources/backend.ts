@@ -59,6 +59,7 @@ export interface OpenedResourceSnapshot extends ResourceSnapshotReceipt {
 }
 
 export interface ApplicationResourceBackend {
+  installDisplayImage(input: ResourceInstallFile): Promise<ResourceResult<StoredResourceRecord>>;
   readSkinThumbnail(key: string): Promise<ResourceResult<Uint8Array | null>>;
   writeSkinThumbnail(key: string, bytes: Uint8Array): Promise<ResourceResult<void>>;
   initialize(): Promise<ResourceResult<readonly StoredResourceRecord[]>>;

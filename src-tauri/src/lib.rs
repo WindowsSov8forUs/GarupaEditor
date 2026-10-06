@@ -12,7 +12,7 @@ use tauri::{Emitter, Manager};
 mod application_log;
 mod download;
 mod resource_manager;
-use resource_manager::{resource_read_skin_thumbnail, resource_write_skin_thumbnail};
+use resource_manager::{resource_read_skin_thumbnail, resource_write_skin_thumbnail, resource_install_display_image};
 use resource_manager::{
     resource_abort_workspace_media_import, resource_append_workspace_media_chunk,
     resource_begin_workspace_media_import, resource_collect_garbage,
@@ -2193,6 +2193,7 @@ pub fn run() {
             resource_commit_catalog_snapshot,
             resource_install_builtin_package,
             resource_install_network_package,
+            resource_install_display_image,
             resource_begin_workspace_media_import,
             resource_append_workspace_media_chunk,
             resource_commit_workspace_media_import,

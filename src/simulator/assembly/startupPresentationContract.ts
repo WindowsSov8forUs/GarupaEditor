@@ -66,6 +66,9 @@ export function copyAndFreezeSimulatorPresentation(
   if (jacket.status === "rejected") return jacket;
   const backdrop = copyPng(presentation.stage.backdropPng, null, null, "stage-backdrop");
   if (backdrop.status === "rejected") return backdrop;
+  const displayImage = presentation.displayImagePng == null ? null
+    : copyPng(presentation.displayImagePng, null, null, "display-image");
+  if (displayImage?.status === "rejected") return displayImage;
   const mv = copyMvPackage(presentation.mv);
   if (mv.status === "rejected") return mv;
   return accepted(Object.freeze({
@@ -81,6 +84,7 @@ export function copyAndFreezeSimulatorPresentation(
       level: presentation.difficulty.level,
     }),
     jacketPng: jacket.value,
+    displayImagePng: displayImage?.value ?? null,
     stage: Object.freeze({
       backdropPng: backdrop.value,
       ...(commandNotes.length === 0 ? {} : { commandNotes: Object.freeze(commandNotes) }),

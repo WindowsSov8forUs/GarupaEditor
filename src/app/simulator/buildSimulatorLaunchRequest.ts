@@ -36,6 +36,8 @@ export async function buildSimulatorLaunchRequest(
       song: Object.freeze({ ...descriptor.presentation.song }),
       difficulty: Object.freeze({ ...descriptor.presentation.difficulty }),
       jacketPng,
+      displayImagePng: mediaLease.slots[SIMULATOR_MEDIA_SLOTS.displayImage]
+        ? await normalizeSourcePng(await readSingle(mediaLease, SIMULATOR_MEDIA_SLOTS.displayImage), "display image", null) : null,
       stage: Object.freeze({ backdropPng: stagePng }),
       mv,
     }),

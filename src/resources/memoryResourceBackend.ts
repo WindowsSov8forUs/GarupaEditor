@@ -24,6 +24,7 @@ import type {
   WorkspaceMediaImportInput,
 } from "./backend";
 import { observeResourceIntegrity } from "./sha256";
+import { DISPLAY_IMAGE_DESCRIPTOR, DISPLAY_IMAGE_REF } from "./displayImage";
 
 interface MemoryStoredResource {
   readonly record: StoredResourceRecord;
@@ -37,6 +38,12 @@ interface MemorySnapshot {
 }
 
 export class MemoryApplicationResourceBackend implements ApplicationResourceBackend {
+  async installDisplayImage(input: ResourceInstallFile): Promise<ResourceResult<StoredResourceRecord>> {
+    const prepared = await prepareStoredResource(DISPLAY_IMAGE_DESCRIPTOR, [input]);
+    if (prepared.status === "rejected") return prepared;
+    this.records.set(DISPLAY_IMAGE_REF.id, prepared.value);
+    return resourceAccepted(prepared.value.record);
+  }
   private readonly skinThumbnails = new Map<string, Uint8Array>();
   async readSkinThumbnail(key: string): Promise<ResourceResult<Uint8Array | null>> {
     return resourceAccepted(this.skinThumbnails.get(key)?.slice() ?? null);
@@ -167,7 +174,7 @@ export class MemoryApplicationResourceBackend implements ApplicationResourceBack
     let removedProviderMediaCount = 0;
     for (const [id, stored] of this.records) {
       const descriptor = stored.record.descriptor;
-      if (descriptor.origin === "user") {
+      if (descriptor.origin === "user" && descriptor.purpose !== "display-image") {
         if (active.has(id)) migratedActiveCount += 1;
         else archivedUserCount += 1;
         this.records.delete(id);

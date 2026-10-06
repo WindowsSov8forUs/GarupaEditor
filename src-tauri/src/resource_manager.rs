@@ -428,6 +428,57 @@ pub fn resource_install_network_package(
 }
 
 #[tauri::command]
+pub fn resource_install_display_image(
+    app: tauri::AppHandle,
+    file: ResourceInstallFileInput,
+    state: tauri::State<'_, ApplicationResourceState>,
+) -> Result<StoredResourceRecordDto, String> {
+    let _guard = state.runtime.lock().map_err(|error| format!("lock resource state failed: {error}"))?;
+    if file.logical_path != "display.png" || file.media_type != "image/png" {
+        return Err("display image must be a decoded PNG".to_string());
+    }
+    let bytes = base64::engine::general_purpose::STANDARD.decode(&file.base64_data).map_err(|error| format!("decode display image failed: {error}"))?;
+    if !bytes.starts_with(&[137, 80, 78, 71, 13, 10, 26, 10]) {
+        return Err("display image PNG signature is invalid".to_string());
+    }
+    let descriptor = serde_json::json!({
+        "ref": { "id": "user/application/display-image" },
+        "origin": "user", "kind": "image", "title": "首页与结算展示图片",
+        "availability": "installed", "files": null, "catalogObservedAt": null,
+        "purpose": "display-image", "fileName": "display.png",
+        "logicalPlacement": { "provider": "user", "server": null,
+            "canonicalPath": "application/display-image", "identityClass": "user-media" }
+    });
+    let root = resource_root(&app)?;
+    // This fixed application selection replaces an existing record. Preserve its
+    // published pointers as well as the index if a later publication step fails.
+    let paths = [record_path(&root, "user/application/display-image"),
+        projection_resource_path(&root, &descriptor)?.join("current.json"), root.join(INDEX_FILE)];
+    let previous = paths.iter().map(|path| match fs::read(path) {
+        Ok(bytes) => Ok(Some(bytes)),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
+        Err(error) => Err(format!("read previous display image selection failed: {error}")),
+    }).collect::<Result<Vec<_>, String>>()?;
+    let transaction = next_identity(state.inner(), "display-image");
+    match commit_resource(&root, descriptor, vec![file], &transaction) {
+        Ok(record) => Ok(record.dto()),
+        Err(error) => {
+            let mut rollback_errors = Vec::new();
+            for (index, (path, bytes)) in paths.iter().zip(previous).enumerate() {
+                let restored = if let Some(bytes) = bytes {
+                    atomic_write(&root, path, &bytes, &format!("{transaction}-rollback-{index}"))
+                } else if path.exists() {
+                    fs::remove_file(path).map_err(|error| error.to_string())
+                } else { Ok(()) };
+                if let Err(error) = restored { rollback_errors.push(error); }
+            }
+            if rollback_errors.is_empty() { Err(error) }
+            else { Err(format!("{error}; restoring previous display image failed: {}", rollback_errors.join("; "))) }
+        }
+    }
+}
+
+#[tauri::command]
 pub fn resource_begin_workspace_media_import(
     app: tauri::AppHandle,
     input: ResourceBeginWorkspaceMediaImportInput,
@@ -673,7 +724,7 @@ pub fn resource_finalize_legacy_media_migration(
                 .and_then(|source| source.get("family"))
                 .and_then(Value::as_str)
                 .is_some_and(|family| family.starts_with("media-"));
-        if origin == Some("user") {
+        if origin == Some("user") && resource_id != "user/application/display-image" {
             if active.contains(resource_id) {
                 migrated_active_count += 1;
                 removable_ids.push(resource_id.clone());
@@ -719,7 +770,7 @@ pub fn resource_finalize_legacy_media_migration(
     }
     if blocked.is_empty() {
         let user_library = root.join("library/user");
-        if user_library.exists() {
+        if user_library.exists() && !index.resource_ids.iter().any(|id| id == "user/application/display-image") {
             fs::remove_dir_all(user_library).map_err(|error| {
                 format!("remove legacy user library projection failed: {error}")
             })?;

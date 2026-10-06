@@ -1,6 +1,8 @@
 import type { ResourceRef } from "./contracts";
 
 export const APPLICATION_RESOURCE_SLOTS = Object.freeze([
+  "ui.home.display-button",
+  "ui.home.default-display-image",
   "ui.icon.apply-action",
   "ui.icon.back-arrow",
   "ui.icon.clear-action",

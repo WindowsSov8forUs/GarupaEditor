@@ -3,6 +3,7 @@ import { useApplicationResourceManager } from "../resources/applicationResourceC
 import { OriginalPrefabModel, type OriginalPrefab } from "./originalPrefabModel";
 import { OriginalPrefabView } from "./OriginalPrefabView";
 import { UiPageViewport } from "./UiViewport";
+import { HomeDisplayImage } from "./HomeDisplayImage";
 
 // Original ordinary FreeLiveTransitionButtonView instance, including its ancestors.
 // Source: live-entrance-10-1-4, 58cb521c02d504146d7c516e2ea397d1be01bcbf.
@@ -18,6 +19,7 @@ export function LiveSelectionPage({ onFreeLive }: { onFreeLive(): void }) {
   if (icon.status === "rejected") throw new Error(`${icon.failure.capability}: ${icon.failure.boundary}`);
   return <UiPageViewport><section aria-label="选择功能"
     style={{ position: "absolute", inset: 0 }}>
+    <HomeDisplayImage />
     <div className="original-prefab-origin" style={{ left: "var(--ui-page-window-center-x)", top: "var(--ui-page-window-center-y)" }}>
       <OriginalPrefabView model={model} bindings={{
         buttons: { [source.button]: { label: editorLabel, action: onFreeLive } },

@@ -45,16 +45,17 @@ export function OriginalDialogHeader({ children, atlas = "common" }: { children:
   </header>;
 }
 
-export function OriginalButton({ tone = "gray", sprite, atlas = "common", spriteScale = 0.5,
+export function OriginalButton({ tone = "gray", sprite, surfaceImage, atlas = "common", spriteScale = 0.5,
   flipX = false, enableDoubleTap = false, longPressJudgementTime = 1, clickSEType = 1, className = "", style,
   children, disabled, onPointerDown, onPointerMove, onPointerUp, onPointerCancel,
   onLostPointerCapture, onKeyDown, onKeyUp, onBlur, onClick, ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
-  tone?: "gray" | "pink"; sprite?: string; atlas?: OriginalAtlas; spriteScale?: number;
+  tone?: "gray" | "pink"; sprite?: string; surfaceImage?: string; atlas?: OriginalAtlas; spriteScale?: number;
   flipX?: boolean; enableDoubleTap?: boolean; longPressJudgementTime?: number; clickSEType?: number;
 }) {
   const surface = useOriginalSurface(sprite ?? (tone === "pink" ? "button_pink" : "button_gray"), spriteScale, atlas);
-  const painted = { ...surface, transform: flipX ? "scaleX(-1)" : undefined };
+  const painted = { ...(surfaceImage ? { backgroundImage: `url("${surfaceImage}")`, backgroundSize: "100% 100%", backgroundRepeat: "no-repeat" } : surface),
+    transform: flipX ? "scaleX(-1)" : undefined };
   const sound = useOriginalUiSound();
   const { pressed, handlers } = useOriginalButtonAction(onClick, !!disabled, enableDoubleTap, longPressJudgementTime,
     () => sound?.play(clickSEType));

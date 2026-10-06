@@ -5,6 +5,7 @@ import type {
   LegacyMediaRecoveryStatus,
   OpenedResourceSnapshot,
   ResourceInstallInput,
+  ResourceInstallFile,
   StoredResourceRecord,
   WorkspaceMediaImportInput,
 } from "../backend";
@@ -26,6 +27,11 @@ interface TauriOpenedSnapshot {
 }
 
 export class TauriApplicationResourceBackend implements ApplicationResourceBackend {
+  async installDisplayImage(input: ResourceInstallFile): Promise<ResourceResult<StoredResourceRecord>> {
+    return invokeResult("resource_install_display_image", { file: {
+      logicalPath: input.logicalPath, mediaType: input.mediaType, base64Data: encodeBase64(input.bytes),
+    } });
+  }
   async readSkinThumbnail(key: string): Promise<ResourceResult<Uint8Array | null>> {
     const result = await invokeResult<string | null>("resource_read_skin_thumbnail", { key });
     if (result.status === "rejected") return result;

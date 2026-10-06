@@ -39,6 +39,7 @@ import {
   type ChartMediaResources,
 } from "./selections";
 import { observeResourceIntegrity } from "./sha256";
+import { DEFAULT_DISPLAY_IMAGE_REF, DISPLAY_IMAGE_REF } from "./displayImage";
 
 export interface BuiltinResourceRegistrationFile {
   readonly logicalPath: string;
@@ -82,6 +83,19 @@ export interface AdoptedLegacyChartMedia {
 }
 
 export class ApplicationResourceManager {
+  getDisplayImageRef(): ResourceRef {
+    return this.installed.has(DISPLAY_IMAGE_REF.id) ? DISPLAY_IMAGE_REF : DEFAULT_DISPLAY_IMAGE_REF;
+  }
+
+  async setDisplayImage(bytes: Uint8Array): Promise<ResourceResult<ResourceDescriptor>> {
+    const validated = validateChartMediaImport({ purpose: "cover", fileName: "display.png", mediaType: "image/png", bytes });
+    if (validated.status === "rejected") return validated;
+    const installed = await this.backend.installDisplayImage({ logicalPath: "display.png", mediaType: "image/png", bytes: validated.value.bytes });
+    if (installed.status === "rejected") return installed;
+    this.installed.set(DISPLAY_IMAGE_REF.id, installed.value);
+    appLog("info", "resources.display-image.replaced", { byteLength: bytes.byteLength });
+    return resourceAccepted(installed.value.descriptor);
+  }
   readSkinThumbnail(key: string) { return this.backend.readSkinThumbnail(key); }
   writeSkinThumbnail(key: string, bytes: Uint8Array) { return this.backend.writeSkinThumbnail(key, bytes); }
   private readonly builtins = new Map<string, RegisteredBuiltinResource>();

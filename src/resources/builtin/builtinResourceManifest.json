@@ -82,6 +82,16 @@
       "sha256": "D47ACA1208262590624AA3E946BEBF8264613596CEC0C7902A11F142574D4C4B"
     },
     {
+      "path": "game/button-viewmode-edit.png",
+      "byteLength": 1487,
+      "sha256": "E4958DF377E9B6B5B8B8479F1B479E2E756AA1062212AA69C8855E43920D2F27"
+    },
+    {
+      "path": "game/default-display-card-1703.png",
+      "byteLength": 205511,
+      "sha256": "A2F91B398C3D4D32C093CCCA62F7EE16C52E2601F5BEF3CFAC7DC510D34A6AB2"
+    },
+    {
       "path": "game/field-band-logos/001-logoS.png",
       "byteLength": 6348,
       "sha256": "7B9C6BEA4B727B42D428412318B9E8C365D3692EAB0553F637206B34D8CEDC6F"
