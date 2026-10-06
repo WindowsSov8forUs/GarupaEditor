@@ -1,0 +1,23 @@
+.original-menu-background {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.original-menu-background-view {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  --background-play-state: paused;
+}
+.original-menu-background-layer {
+  position: absolute;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-play-state: var(--background-play-state);
+}
+@keyframes original-menu-background-scroll {
+  from { background-position: 0px var(--background-start-y); }
+  to { background-position: var(--background-end-x) var(--background-end-y); }
+}

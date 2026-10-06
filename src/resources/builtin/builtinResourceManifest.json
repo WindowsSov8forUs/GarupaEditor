@@ -177,6 +177,56 @@
       "sha256": "9FA14ACB50A3320F42C82AF6D7688E7667AFBF2F1D7877295FB2ABA9A4E00F70"
     },
     {
+      "path": "game/menu-background/animationbg-common-bg_object_big.png",
+      "byteLength": 16578,
+      "sha256": "578E7E47D032ECF65801A28E243F23DDF8997252768979D145202FDCD3D911C4"
+    },
+    {
+      "path": "game/menu-background/animationbg-common-bg_object_small.png",
+      "byteLength": 21351,
+      "sha256": "5CD8B3E94598043B4BC953A96FE94205865E6A757B10A81FDB03333849C4E173"
+    },
+    {
+      "path": "game/menu-background/bg-common-common.png",
+      "byteLength": 1265534,
+      "sha256": "E784ECB5636174EF193684815778574E73CCF1D88D75DD5EAC3B84563318B3AB"
+    },
+    {
+      "path": "game/menu-background/bg-common-rehearsal.png",
+      "byteLength": 1213529,
+      "sha256": "A4781E0776C26A29C1A793B3C28E1A340208F0BDD8D2027BFF76210642E45576"
+    },
+    {
+      "path": "game/menu-background/bg-text-editor.png",
+      "byteLength": 21329,
+      "sha256": "98F117862687115AF415B6255A543B5B4CC5E7671FEA335E79DB62887A9302FE"
+    },
+    {
+      "path": "game/menu-background/bg-text-live.png",
+      "byteLength": 12927,
+      "sha256": "59D8D0711853B51BB3A1F6E258729A74A7E533B5F29599AC860B3156521A4F9B"
+    },
+    {
+      "path": "game/menu-background/bg-text-rehearsal.png",
+      "byteLength": 31736,
+      "sha256": "F536938559151FCF074456D815BFE201F29C9BC6135FFC30C279EF9284A70912"
+    },
+    {
+      "path": "game/menu-background/normal-bg_object_big.png",
+      "byteLength": 105617,
+      "sha256": "DAEF10084F380A264EA2032E440B2EB1A3BC835F4D14BD9C12DB3072125D9410"
+    },
+    {
+      "path": "game/menu-background/normal-bg_object_small.png",
+      "byteLength": 82597,
+      "sha256": "C55C5B071A6FF59F48111B9928C6EAD30E81CC9ACDE9565C0306D87AC80C7E61"
+    },
+    {
+      "path": "game/menu-background/normal-normalBG.png",
+      "byteLength": 79,
+      "sha256": "6A46FFD1CB82D4E1829C3390CBE36ABD5D1983F9CAECAF9C8EABFF21183843B8"
+    },
+    {
       "path": "game/menu-preview/default-background.png",
       "byteLength": 127555,
       "sha256": "8BE0136D9461B0834028A94A1DD91C653AE44E3E2E6D1632602D939251F5A186"

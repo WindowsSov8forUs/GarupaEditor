@@ -241,6 +241,8 @@ textarea:focus {
 }
 
 .app-shell {
+  position: relative;
+  z-index: 1;
   height: 100%;
   --editor-space: calc(14px * var(--ui-scale));
   padding: max(var(--editor-space), var(--ui-safe-top))

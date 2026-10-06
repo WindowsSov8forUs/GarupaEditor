@@ -6,9 +6,10 @@ import "./OriginalPageSwitch.css";
 /** ScreenAlphaInOut: linear 0.2 s, final sample followed by one frame before completion.
  * Source: GirlsBandParty-Reverse db872dca, menu-settings-ui-10-1-4/screen-navigation.json.
  * The editor retains its mounted workspace as a return-stack page. */
-export function OriginalPageSwitch({ open, title, section = "歌曲", pageId = "song", onBack, onOpenMenu, menuOpen, children, page }: {
+export function OriginalPageSwitch({ open, title, section = "歌曲", pageId = "song", onBack, onOpenMenu, menuOpen, onPageShown, children, page }: {
   open: boolean; title: string; onBack(): void; onOpenMenu(): void; menuOpen: boolean;
   section?: string; pageId?: string;
+  onPageShown?(pageId: string | null): void;
   children: ReactNode; page: ReactNode;
 }) {
   const header = useRef<HTMLDivElement>(null);
@@ -24,6 +25,7 @@ export function OriginalPageSwitch({ open, title, section = "歌曲", pageId = "
   useLayoutEffect(() => { if (displayed.pageId === pageId) outgoingPage.current = page; });
   const returnFocus = useRef<{ node: HTMLElement | null; keyboard: boolean } | null>(null);
   const backAction = useRef(onBack); backAction.current = onBack;
+  const pageShown = useRef(onPageShown); pageShown.current = onPageShown;
   const visited = useRef(false);
   useLayoutEffect(() => {
     if (!open && !shown.current && !returnFocus.current) return;
@@ -53,6 +55,7 @@ export function OriginalPageSwitch({ open, title, section = "歌曲", pageId = "
           shownPage.current = pageId;
           setDisplayed(current.current);
           setVisible(open);
+          pageShown.current?.(open ? pageId : null);
           exiting = false; started = undefined; finalSample = false;
         } else { setBusy(false); return; }
       } else if (progress === 1) finalSample = true;
