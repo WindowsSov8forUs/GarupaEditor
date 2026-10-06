@@ -6,9 +6,10 @@ import "./OriginalPageSwitch.css";
 /** ScreenAlphaInOut: linear 0.2 s, final sample followed by one frame before completion.
  * Source: GirlsBandParty-Reverse db872dca, menu-settings-ui-10-1-4/screen-navigation.json.
  * The editor retains its mounted workspace as a return-stack page. */
-export function OriginalPageSwitch({ open, title, section = "歌曲", pageId = "song", onBack, onOpenMenu, menuOpen, onPageShown, children, page }: {
+export function OriginalPageSwitch({ open, title, section = "歌曲", pageId = "song", onBack, onWorkspaceBack, showPageBack = true, onOpenMenu, menuOpen, onPageShown, children, page }: {
   open: boolean; title: string; onBack(): void; onOpenMenu(): void; menuOpen: boolean;
   section?: string; pageId?: string;
+  onWorkspaceBack?(): void; showPageBack?: boolean;
   onPageShown?(pageId: string | null): void;
   children: ReactNode; page: ReactNode;
 }) {
@@ -17,9 +18,9 @@ export function OriginalPageSwitch({ open, title, section = "歌曲", pageId = "
   const [visible, setVisible] = useState(false), [busy, setBusy] = useState(false);
   const shown = useRef(false), frame = useRef(0);
   const shownPage = useRef(pageId);
-  const [displayed, setDisplayed] = useState({ pageId, title, section });
-  const current = useRef({ pageId, title, section });
-  current.current = { pageId, title, section };
+  const [displayed, setDisplayed] = useState({ pageId, title, section, showPageBack });
+  const current = useRef({ pageId, title, section, showPageBack });
+  current.current = { pageId, title, section, showPageBack };
   // Retain the latest committed outgoing content, not its first-entry snapshot.
   const outgoingPage = useRef(page);
   useLayoutEffect(() => { if (displayed.pageId === pageId) outgoingPage.current = page; });
@@ -88,11 +89,12 @@ export function OriginalPageSwitch({ open, title, section = "歌曲", pageId = "
       visited.current = false;
     }
   }, [open, visible, busy]);
-  const visibleHeader = displayed.pageId === pageId ? { title, section } : displayed;
+  const visibleHeader = displayed.pageId === pageId ? { title, section, showPageBack } : displayed;
   return <div className="original-page-switch">
     <div ref={header} className="original-page-header-host" inert={busy || open !== visible}>
       <OriginalPageHeader section={visible ? visibleHeader.section : "编辑器"} title={visible ? visibleHeader.title : "谱面编辑"}
-        onBack={visible ? onBack : undefined} menuOpen={menuOpen} onOpenMenu={onOpenMenu} />
+        onBack={visible ? onBack : onWorkspaceBack} showBack={!visible || visibleHeader.showPageBack}
+        menuOpen={menuOpen} onOpenMenu={onOpenMenu} />
     </div>
     <div className="original-page-body">
     <div ref={workspace} className="editor-retained-page" inert={open || visible || busy}

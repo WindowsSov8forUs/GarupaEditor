@@ -5,7 +5,7 @@ import type { ApplicationResourceSlot } from "../resources/selections";
 import { UiScaleOrigin } from "./UiViewport";
 import "./OriginalMenuBackground.css";
 
-export type MenuBackgroundType = 0 | 1 | 2 | 257 | "editor";
+export type MenuBackgroundType = 0 | 1 | 2 | 257 | "editor" | "home";
 interface Layer {
   role: string; slot: string; x: number; y: number; rotationDegrees: number;
   width: number; height: number; textureWidth: number; textureHeight: number;

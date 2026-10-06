@@ -1,3 +1,5 @@
+import homeBackgroundTextUrl from "../../assets/game/menu-background/bg-text-home.png?url&no-inline";
+import chartEditorIconUrl from "../../assets/icon-chart-editor.png?url&no-inline";
 import menuBackground0Url from "../../assets/game/menu-background/normal-normalBG.png?url&no-inline";
 import menuBackground1Url from "../../assets/game/menu-background/normal-bg_object_big.png?url&no-inline";
 import menuBackground2Url from "../../assets/game/menu-background/normal-bg_object_small.png?url&no-inline";
@@ -213,6 +215,12 @@ const DEFINITIONS: readonly BuiltinDefinition[] = Object.freeze([
     title: "Menu background rehearsal-text", kind: "image", mediaType: "image/png", url: menuBackground5Url,
   }),
   Object.freeze({
+    slot: "ui.live-selection.chart-editor",
+    id: "builtin/ui/live-selection/chart-editor",
+    path: "icon-chart-editor.png",
+    title: "Chart editor selection icon", kind: "image", mediaType: "image/png", url: chartEditorIconUrl,
+  }),
+  Object.freeze({
     slot: "ui.application-background",
     id: "builtin/ui/application-background",
     path: "live.png",
@@ -220,6 +228,12 @@ const DEFINITIONS: readonly BuiltinDefinition[] = Object.freeze([
     kind: "image",
     mediaType: "image/png",
     url: applicationBackgroundUrl,
+  }),
+  Object.freeze({
+    slot: "ui.application-background.home-text",
+    id: "builtin/ui/application-background/home-text",
+    path: "game/menu-background/bg-text-home.png",
+    title: "Home background text", kind: "image", mediaType: "image/png", url: homeBackgroundTextUrl,
   }),
   Object.freeze({
     slot: "ui.application-background.editor-text",

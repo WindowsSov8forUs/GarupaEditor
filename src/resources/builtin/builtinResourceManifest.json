@@ -202,6 +202,11 @@
       "sha256": "98F117862687115AF415B6255A543B5B4CC5E7671FEA335E79DB62887A9302FE"
     },
     {
+      "path": "game/menu-background/bg-text-home.png",
+      "byteLength": 14207,
+      "sha256": "74F0307C60D25BC1400670469EA3A3C9D0FE75AA06B2F8BB77F34A9A3A19F9B2"
+    },
+    {
       "path": "game/menu-background/bg-text-live.png",
       "byteLength": 12927,
       "sha256": "59D8D0711853B51BB3A1F6E258729A74A7E533B5F29599AC860B3156521A4F9B"
@@ -630,6 +635,11 @@
       "path": "game/sound/rhythm-adjust/short2.wav",
       "byteLength": 529244,
       "sha256": "83212AE80CCB42938B156516DF05F46DB7984327E752AB52A959DE2BF7696962"
+    },
+    {
+      "path": "icon-chart-editor.png",
+      "byteLength": 422388,
+      "sha256": "319BFC0133088C6C45CEA761EB5F5CEE355F53B10697B0817BFEFBAC3A09332E"
     },
     {
       "path": "icons/apply-action.svg",
