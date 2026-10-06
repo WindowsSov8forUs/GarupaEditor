@@ -1,6 +1,6 @@
 import { useMemo, useRef, type ChangeEventHandler, type Dispatch, type SetStateAction } from "react";
-import { formatDuration, isDirectionalNoteType, type ChartMetadata, type ChartNote, type EditorOptionSettings } from "../chartCore";
-import { countSongNoteKinds } from "./songNoteStatistics";
+import { formatDuration, type ChartMetadata, type ChartNote, type EditorOptionSettings } from "../chartCore";
+import { countSongNoteKinds, songHasSpecialNotes } from "./songNoteStatistics";
 import { SongNoteStatisticsPage } from "./SongNoteStatisticsPage";
 import type { SlideChain } from "../app/editorHelpers";
 import { SongJacket, SongDifficultySelect, SongProfileInformation, SONG_INFORMATION_CONTENT_BOUNDS, SONG_INFORMATION_LEFT_BOUNDS } from "./OriginalSongDetailParts";
@@ -26,11 +26,7 @@ export function SongInformationPage({ audioDurationSec, noteCount, notes, slideC
   const coverInput = useRef<HTMLInputElement>(null);
   const mvInput = useRef<HTMLInputElement>(null);
   const noteCounts = useMemo(() => countSongNoteKinds(notes, slideChains), [notes, slideChains]);
-  const hasSpecialNotes = useMemo(() => {
-    if (notes.some(note => isDirectionalNoteType(note.type))) return true;
-    const hiddenIds = new Set(notes.filter(note => note.type === "hidden").map(note => note.id));
-    return slideChains.some(chain => chain.noteIds.some(id => hiddenIds.has(id)));
-  }, [notes, slideChains]);
+  const hasSpecialNotes = useMemo(() => songHasSpecialNotes(notes, slideChains), [notes, slideChains]);
   return (
     <UiPageViewport>
     <section className="song-information-page" aria-label="歌曲信息">
