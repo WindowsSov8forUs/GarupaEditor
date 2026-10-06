@@ -6,14 +6,22 @@ import "./OriginalPageSwitch.css";
 /** ScreenAlphaInOut: linear 0.2 s, final sample followed by one frame before completion.
  * Source: GirlsBandParty-Reverse db872dca, menu-settings-ui-10-1-4/screen-navigation.json.
  * The editor retains its mounted workspace as a return-stack page. */
-export function OriginalPageSwitch({ open, title, onBack, onOpenMenu, menuOpen, children, page }: {
+export function OriginalPageSwitch({ open, title, section = "歌曲", pageId = "song", onBack, onOpenMenu, menuOpen, children, page }: {
   open: boolean; title: string; onBack(): void; onOpenMenu(): void; menuOpen: boolean;
+  section?: string; pageId?: string;
   children: ReactNode; page: ReactNode;
 }) {
   const header = useRef<HTMLDivElement>(null);
   const workspace = useRef<HTMLDivElement>(null), detail = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false), [busy, setBusy] = useState(false);
   const shown = useRef(false), frame = useRef(0);
+  const shownPage = useRef(pageId);
+  const [displayed, setDisplayed] = useState({ pageId, title, section });
+  const current = useRef({ pageId, title, section });
+  current.current = { pageId, title, section };
+  // Retain the latest committed outgoing content, not its first-entry snapshot.
+  const outgoingPage = useRef(page);
+  useLayoutEffect(() => { if (displayed.pageId === pageId) outgoingPage.current = page; });
   const returnFocus = useRef<{ node: HTMLElement | null; keyboard: boolean } | null>(null);
   const backAction = useRef(onBack); backAction.current = onBack;
   const visited = useRef(false);
@@ -27,7 +35,7 @@ export function OriginalPageSwitch({ open, title, onBack, onOpenMenu, menuOpen, 
     setBusy(true);
     let started: number | undefined;
     // An interrupted return fades the currently visible page back in.
-    let exiting = shown.current !== open;
+    let exiting = shown.current !== open || (open && shownPage.current !== pageId);
     let finalSample = false;
     const outgoing = shown.current ? detail.current : workspace.current;
     const startOpacity = Number(outgoing?.style.opacity || 1);
@@ -42,6 +50,8 @@ export function OriginalPageSwitch({ open, title, onBack, onOpenMenu, menuOpen, 
       if (finalSample) {
         if (exiting) {
           shown.current = open;
+          shownPage.current = pageId;
+          setDisplayed(current.current);
           setVisible(open);
           exiting = false; started = undefined; finalSample = false;
         } else { setBusy(false); return; }
@@ -50,7 +60,7 @@ export function OriginalPageSwitch({ open, title, onBack, onOpenMenu, menuOpen, 
     };
     frame.current = requestAnimationFrame(update);
     return () => cancelAnimationFrame(frame.current);
-  }, [open]);
+  }, [open, pageId]);
   useLayoutEffect(() => {
     if (!open && !visible && !busy) return;
     const key = (event: KeyboardEvent) => {
@@ -75,9 +85,10 @@ export function OriginalPageSwitch({ open, title, onBack, onOpenMenu, menuOpen, 
       visited.current = false;
     }
   }, [open, visible, busy]);
+  const visibleHeader = displayed.pageId === pageId ? { title, section } : displayed;
   return <div className="original-page-switch">
     <div ref={header} className="original-page-header-host" inert={busy || open !== visible}>
-      <OriginalPageHeader section={visible ? "歌曲" : "编辑器"} title={visible ? title : "谱面编辑"}
+      <OriginalPageHeader section={visible ? visibleHeader.section : "编辑器"} title={visible ? visibleHeader.title : "谱面编辑"}
         onBack={visible ? onBack : undefined} menuOpen={menuOpen} onOpenMenu={onOpenMenu} />
     </div>
     <div className="original-page-body">
@@ -85,9 +96,9 @@ export function OriginalPageSwitch({ open, title, onBack, onOpenMenu, menuOpen, 
       style={{ visibility: visible ? "hidden" : "visible" }} aria-hidden={visible}>
       {children}
     </div>
-    {(open || visible || busy) && <div className="original-detail-page" ref={detail} tabIndex={-1} aria-label={title}
+    {(open || visible || busy) && <div className="original-detail-page" ref={detail} tabIndex={-1} aria-label={visibleHeader.title}
       style={{ visibility: visible ? "visible" : "hidden" }} inert={!visible || busy}>
-      <div className="original-page-content">{page}</div>
+      <div className="original-page-content">{displayed.pageId === pageId ? page : outgoingPage.current}</div>
     </div>}
     {busy && <div className="original-page-input-cover" />}
     </div>

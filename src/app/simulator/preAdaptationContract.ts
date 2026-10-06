@@ -27,7 +27,9 @@ export const SIMULATOR_PRE_ADAPTATION_DEFAULTS = Object.freeze({
   }),
 });
 
-export interface SimulatorPreAdaptationInput {
+export type SimulatorModeSelection = Pick<SimulatorLaunchConfig, "sessionMode" | "inputMode">;
+
+export interface SimulatorPreAdaptationInput extends SimulatorModeSelection {
   readonly judgementAdjustValue: number;
   readonly judgementAdjustValueB: number;
   readonly noteColor: boolean;
@@ -72,8 +74,8 @@ export function buildSimulatorPreAdaptedConfig(
     throw new Error("Simulator コンボ状態表示 requires one resolved boolean.");
   }
   return Object.freeze({
-    sessionMode: SIMULATOR_PRE_ADAPTATION_DEFAULTS.sessionMode,
-    inputMode: SIMULATOR_PRE_ADAPTATION_DEFAULTS.inputMode,
+    sessionMode: input.sessionMode,
+    inputMode: input.inputMode,
     highFrequencyMode: input.fps === 120,
     judgementAdjustValue: input.judgementAdjustValue,
     judgementAdjustValueB: input.judgementAdjustValueB,

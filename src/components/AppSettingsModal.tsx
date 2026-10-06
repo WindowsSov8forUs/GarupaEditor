@@ -9,6 +9,8 @@ import { useApplicationResourceUrl } from "../resources/applicationResourceConte
 type AppSettingsModalProps = EditorSettingsModalProps & {
   resourcesReady: boolean;
   onSongInformation: () => void;
+  onLivePreparation: () => void;
+  optionsOpen?: boolean; onOptionsClose?: () => void;
   onImport: () => void; onExport: () => void; onPreview: () => void;
   onSimulator: () => void; onSkinLibrary: () => void; onAccount: () => void;
   onSettingsError?: (message: string) => void;
@@ -20,9 +22,10 @@ const model = new OriginalPrefabModel(source.prefab, { nodes: {
 const cellsRoot = model.transform([...model.nodes.values()].find(node => node.transformId === 25)!.id);
 
 export function AppSettingsModal(props: AppSettingsModalProps) {
-  const [pendingSong, setPendingSong] = useState(false);
+  const [pendingPage, setPendingPage] = useState<"song" | "live" | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const previewIcon = useApplicationResourceUrl("ui.icon.preview");
+  const liveIcon = useApplicationResourceUrl("ui.icon.simulator-play");
   const importIcon = useApplicationResourceUrl("ui.icon.json-import");
   const exportIcon = useApplicationResourceUrl("ui.icon.json-export");
   useEffect(() => { if (!props.open) setSettingsOpen(false); }, [props.open]);
@@ -32,14 +35,15 @@ export function AppSettingsModal(props: AppSettingsModalProps) {
     ...ORIGINAL_MENU_ITEMS.map(item => ({ ...item,
       action: () => setSettingsOpen(true),
     })),
-    { key: "editor-song", label: "歌曲信息", icon: "button_bandtop_music", action: () => { setPendingSong(true); props.onClose(); } },
+    { key: "editor-song", label: "歌曲信息", icon: "button_bandtop_music", action: () => { setPendingPage("song"); props.onClose(); } },
+    { key: "editor-live", label: "演出", image: liveIcon, action: () => { setPendingPage("live"); props.onClose(); } },
     { key: "editor-preview", label: "谱面预览", image: previewIcon, action: props.onPreview },
     { key: "editor-account", label: "Bestdori 账号", icon: "icon_data_take_over", action: props.onAccount },
   ];
   const positions = originalMenuPositions(items);
   return <>
     <OriginalAuthoredDialog open={props.open} model={model} onClose={props.onClose}
-      onClosed={() => { if (pendingSong) { setPendingSong(false); props.onSongInformation(); } }}
+      onClosed={() => { if (pendingPage) { setPendingPage(null); if (pendingPage === "song") props.onSongInformation(); else props.onLivePreparation(); } }}
       bindings={{ buttons: { 54: { action: props.onClose, label: model.text(model.components.get(51)!) } } }}>
       {items.map((item, index) => <div key={item.key} className="original-prefab-origin"
         data-original-menu-key={item.key}
@@ -47,6 +51,7 @@ export function AppSettingsModal(props: AppSettingsModalProps) {
         <OriginalMenuCell item={item} large={positions[index]!.large} />
       </div>)}
     </OriginalAuthoredDialog>
-    {props.resourcesReady && <OriginalGameSettingsModal {...props} open={props.open && settingsOpen} onClose={() => setSettingsOpen(false)} />}
+    {props.resourcesReady && <OriginalGameSettingsModal {...props} open={(props.open && settingsOpen) || !!props.optionsOpen}
+      onClose={() => { setSettingsOpen(false); props.onOptionsClose?.(); }} />}
   </>;
 }

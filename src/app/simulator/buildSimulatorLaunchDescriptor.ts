@@ -8,14 +8,14 @@ import {
 } from "../../resources/contracts";
 import type { ChartMediaResources } from "../../resources/selections";
 import { buildSimulatorGarupaChart } from "./chartAdapter";
-import { buildSimulatorPreAdaptedConfig } from "./preAdaptationContract";
+import { buildSimulatorPreAdaptedConfig, type SimulatorModeSelection } from "./preAdaptationContract";
 import {
   encodeSimulatorLaunchTransportConfig,
   SIMULATOR_MEDIA_SLOTS,
   type SimulatorLaunchTransportDescriptor,
 } from "./transportContracts";
 
-export interface BuildSimulatorLaunchDescriptorInput {
+export interface BuildSimulatorLaunchDescriptorInput extends SimulatorModeSelection {
   readonly judgementAdjustValue: number;
   readonly judgementAdjustValueB: number;
   readonly noteColor: boolean;
@@ -66,6 +66,7 @@ export async function buildSimulatorLaunchDescriptor(
   const height = strictPositiveInteger(input.requestedWindowHeight, "window height");
   const chart = buildSimulatorGarupaChart(input.chartJson, input.mirror);
   const config = buildSimulatorPreAdaptedConfig({
+    sessionMode: input.sessionMode, inputMode: input.inputMode,
     judgementAdjustValue: input.judgementAdjustValue,
     judgementAdjustValueB: input.judgementAdjustValueB,
     noteColor: input.noteColor,

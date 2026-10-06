@@ -157,7 +157,8 @@ export class OriginalPrefabModel {
   }
 }
 
-export function originalAtlasFor(component: OriginalComponent): "common" | "menu" {
+export function originalAtlasFor(component: OriginalComponent): "common" | "menu" | "spot" {
+  if (component.data.sourceAtlas === "spot") return "spot";
   const id = originalRef(component.data.mAtlas);
   if (id === 1796 || id === 1801 || id === 1520) return "menu";
   if (id === 1883 || id === 1809 || id === 1611 || id === 1533) return "common";

@@ -72,6 +72,11 @@
       "sha256": "D07EEFBCA0817174DE1199215E801D6A495AEC1602BD90D651F027C2EDF9F8AA"
     },
     {
+      "path": "game/atlas/menu/spot-atlas.png",
+      "byteLength": 312984,
+      "sha256": "26B6ED6C2E1D9F3B171B8768CC928DF31862F0409161DB60027E674A4526F786"
+    },
+    {
       "path": "game/atlas/menu/ui-common-cn.png",
       "byteLength": 43291,
       "sha256": "D47ACA1208262590624AA3E946BEBF8264613596CEC0C7902A11F142574D4C4B"

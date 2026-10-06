@@ -204,6 +204,7 @@ function ButtonView({ model, component, binding, beforeClick }: { model: Origina
   </>;
 }
 const RADIO_MODEL = new OriginalPrefabModel(ORIGINAL_PREFABS.staruiradiobutton!);
+const RADIO_ROOT = RADIO_MODEL.prefab.nodes.find(node => node.parent === null)!;
 function radioText(key: string): string {
   // Literal ON/OFF are also visible in the original runtime captures; no translated aliases.
   if (key === "word_on") return "ON";
@@ -230,8 +231,15 @@ function RadioGroupView({ model, component, binding, beforeClick }: { model: Ori
       const maxLineCount = binding?.maxLineCount ?? label.data.mMaxLineCount;
       // AdjustCollider consumes the same label's printed size, not a second font fitter.
       const printedWidth = printedWidths[index] ?? 0;
+      const x = start.x + (index % data.columnCount * data.widthMargin + (layout?.offsetX ?? 0)) * start.scaleX;
+      const y = start.y - Math.floor(index / data.columnCount) * data.heightMargin * Math.abs(start.scaleY);
       const radioWithCheck = new OriginalPrefabModel(RADIO_MODEL.prefab, {
-        nodes: { [check.node]: { active: checked }, [label.node]: {
+        // Project into the owning panel. A transformed DOM wrapper would trap
+        // all radio widget depths below the dialog frame's sibling z-index.
+        nodes: { [RADIO_ROOT.id]: {
+          x: x + RADIO_ROOT.position.x * start.scaleX, y: y + RADIO_ROOT.position.y * start.scaleY,
+          scaleX: RADIO_ROOT.scale.x * start.scaleX, scaleY: RADIO_ROOT.scale.y * start.scaleY,
+        }, [check.node]: { active: checked }, [label.node]: {
           x: labelNode.position.x + (binding?.labelOffset?.x ?? 0),
           y: labelNode.position.y + (binding?.labelOffset?.y ?? 0),
         } },
@@ -241,21 +249,21 @@ function RadioGroupView({ model, component, binding, beforeClick }: { model: Ori
           9: { m_Size: { x: printedWidth + 50, y: 50 }, m_Offset: { x: printedWidth / 2, y: 0 } },
         },
       });
-      return <div key={index} className="original-prefab-origin" style={{ left: start.x +
-        (index % data.columnCount * data.widthMargin + (layout?.offsetX ?? 0)) * start.scaleX,
-        top: -start.y + Math.floor(index / data.columnCount) * data.heightMargin * Math.abs(start.scaleY),
-        transform: `scale(${start.scaleX},${start.scaleY})` }}>
+      return <div key={index} style={{ display: "contents" }}>
         <OriginalPrefabView model={radioWithCheck} bindings={{ beforeClick,
           labelNaturalSizes: binding?.labelNaturalSize ? { 14: {
             width: binding.labelNaturalSize.width && layout?.labelWidth === undefined,
             height: binding.labelNaturalSize.height && layout?.labelHeight === undefined,
           } } : undefined,
-          labelMeasurements: { 14: width => setPrintedWidths(previous => previous[index] === width
-            ? previous : { ...previous, [index]: width }) }, buttons: {
+          labelMeasurements: { 14: width => {
+            const localWidth = start.scaleX === 0 ? 0 : width / Math.abs(start.scaleX);
+            setPrintedWidths(previous => previous[index] === localWidth ? previous : { ...previous, [index]: localWidth });
+          } }, buttons: {
           13: { label: text, selected: checked, navigationIndex: index, role: "radio", disabled: !binding?.onChange || !!binding.disabled || binding.disabledOptions?.includes(index),
             action: binding?.onChange ? () => binding.onChange?.(index) : undefined },
         } }} />
-        {binding?.renderOption?.(index)}
+        {binding?.renderOption && <div className="original-prefab-origin" style={{ left: x, top: -y,
+          transform: `scale(${start.scaleX},${start.scaleY})` }}>{binding.renderOption(index)}</div>}
       </div>;
     })}
   </div>;

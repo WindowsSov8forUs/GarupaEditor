@@ -152,7 +152,7 @@ import "../App.css";
 import { type OverlayDialogState } from "../components/OverlayDialogModal";
 import type { StaticRenderPayload } from "./staticRenderTypes";
 import { buildSimulatorLaunchDescriptor, createSimulatorLaunchRequestId } from "./simulator/buildSimulatorLaunchDescriptor";
-import { SIMULATOR_PRE_ADAPTATION_DEFAULTS } from "./simulator/preAdaptationContract";
+import { SIMULATOR_PRE_ADAPTATION_DEFAULTS, type SimulatorModeSelection } from "./simulator/preAdaptationContract";
 import {
   SIMULATOR_WINDOW_CLOSED_EVENT,
   SIMULATOR_WINDOW_PAYLOAD_EVENT,
@@ -5766,8 +5766,8 @@ function ChartEditorController() {
     updatePreviewLoadingProgress,
   ]);
 
-  const openSimulatorWindow = useCallback(async () => {
-    appLog("info", "editor.window.request", { kind: "openSimulatorWindow" });
+  const openSimulatorWindow = useCallback(async (mode: SimulatorModeSelection = SIMULATOR_PRE_ADAPTATION_DEFAULTS) => {
+    appLog("info", "editor.window.request", { kind: "openSimulatorWindow", sessionMode: mode.sessionMode, inputMode: mode.inputMode });
     let readyUnlisten: UnlistenFn | null = null;
     let closedUnlisten: UnlistenFn | null = null;
     let timeoutId: number | null = null;
@@ -5858,13 +5858,14 @@ function ChartEditorController() {
         setStatusMessage("播放器窗口正在打开。");
       }
       const prepared = await buildSimulatorLaunchDescriptor({
+        sessionMode: mode.sessionMode, inputMode: mode.inputMode,
         requestId,
         manager: resourceManager,
         chartJson: garupaChartJsonText,
         media: chartMediaResources,
         metadata,
         mirror: appOptionSettings.mirrorEnabled,
-        mvEnabled: playbackMvMode,
+        mvEnabled: mode.sessionMode === "live" && playbackMvMode && chartMediaResources.mv !== null,
         fps: playbackFps === 120 ? 120 : 60,
         noteSize: appOptionSettings.rhythmNoteSizePercent,
         noteSpeed: appOptionSettings.rhythmNoteSpeed,

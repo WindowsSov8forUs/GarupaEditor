@@ -3,13 +3,15 @@ import common from "../data/uiCommonAtlas.json";
 import menu from "../data/menuUiAtlas.json";
 import chinese from "../data/originalChineseAtlases.json";
 import drawing from "../data/originalUiDrawing.json";
+import songDetail from "../data/originalSongDetailProfile.json";
 import { useApplicationResourceUrl } from "../resources/applicationResourceContext";
 
-export type OriginalAtlas = "common" | "menu";
-const rows = { common: common.profile.atlasRows, menu: menu.atlasRows };
+export type OriginalAtlas = "common" | "menu" | "spot";
+const rows = { common: common.profile.atlasRows, menu: menu.atlasRows, spot: songDetail.spotAtlas.atlasRows };
 const chineseRows = { common: new Map(chinese.common.atlasRows.map(row => [row.exactKey, row])),
+  spot: new Map<string, typeof chinese.menu.atlasRows[number]>(),
   menu: new Map(chinese.menu.atlasRows.map(row => [row.exactKey, row])) };
-const atlasSlot = (atlas: OriginalAtlas, name: string) => chineseRows[atlas].has(name)
+const atlasSlot = (atlas: OriginalAtlas, name: string) => atlas === "spot" ? "ui.spot-atlas" : chineseRows[atlas].has(name)
   ? atlas === "menu" ? "ui.menu-cn-atlas" : "ui.common-cn-atlas"
   : atlas === "menu" ? "ui.menu-atlas" : "ui.common-atlas";
 export function originalSurfaceRow(atlas: OriginalAtlas, name: string) {

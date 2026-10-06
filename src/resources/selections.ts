@@ -35,6 +35,7 @@ export const APPLICATION_RESOURCE_SLOTS = Object.freeze([
   "ui.loading.shadow",
   "ui.common-atlas",
   "ui.menu-atlas",
+  "ui.spot-atlas",
   "ui.menu-cn-atlas",
   "ui.common-cn-atlas",
   "ui.skin-preview-background",

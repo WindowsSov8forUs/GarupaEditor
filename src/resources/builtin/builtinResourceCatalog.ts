@@ -50,6 +50,7 @@ import guideImage3 from "../../assets/game/settings-guides/tutorial_timing_music
 import guideImage4 from "../../assets/game/settings-guides/tutorial_timing_judge1.png?url&no-inline";
 import guideImage5 from "../../assets/game/settings-guides/tutorial_timing_judge2.png?url&no-inline";
 import manifestJson from "./builtinResourceManifest.json";
+import spotAtlasUrl from "../../assets/game/atlas/menu/spot-atlas.png?url&no-inline";
 import type { ApplicationResourceManager } from "../applicationResourceManager";
 import {
   resourceAccepted,
@@ -77,6 +78,8 @@ interface BuiltinDefinition {
 }
 
 const DEFINITIONS: readonly BuiltinDefinition[] = Object.freeze([
+  Object.freeze({ slot: "ui.spot-atlas", id: "builtin/ui/spot-atlas", path: "game/atlas/menu/spot-atlas.png",
+    title: "Original preparation SpotAtlas", kind: "image", mediaType: "image/png", url: spotAtlasUrl }),
   Object.freeze({ slot: "ui.settings-guide.tutorial_sudden_plus1", id: "builtin/ui/settings-guide/tutorial_sudden_plus1",
     path: "game/settings-guides/tutorial_sudden_plus1.png", title: "Original settings guide", kind: "image", mediaType: "image/png", url: guideImage0 }),
   Object.freeze({ slot: "ui.settings-guide.tutorial_sudden_plus2", id: "builtin/ui/settings-guide/tutorial_sudden_plus2",
