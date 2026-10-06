@@ -1,3 +1,4 @@
+import { OriginalMenuBackground } from "../OriginalMenuBackground";
 import { AppSettingsModal } from "../AppSettingsModal";
 import { OriginalUiSoundProvider } from "../OriginalUiSound";
 import { BestdoriLoginModal } from "../BestdoriLoginModal";
@@ -333,6 +334,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   const bestdoriAuthBusy = useRef(false);
   const [isBestdoriLoginOpen, setIsBestdoriLoginOpen] = useState(false);
   const [livePreparationOpen, setLivePreparationOpen] = useState(false);
+  const [backgroundPage, setBackgroundPage] = useState<string | null>(null);
   const [preparationSettingsOpen, setPreparationSettingsOpen] = useState(false);
   const preparationInputs = useRef<Record<SimulatorModeSelection["sessionMode"], SimulatorModeSelection["inputMode"]>>({
     live: SIMULATOR_PRE_ADAPTATION_DEFAULTS.inputMode, rehearsal: SIMULATOR_PRE_ADAPTATION_DEFAULTS.inputMode,
@@ -1230,6 +1232,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   return (
     <OriginalUiSoundProvider volumePercent={appOptionSettings.simulatorSettings.systemSeVolumePercent}
       masterPercent={appOptionSettings.simulatorSettings.masterVolumePercent} onError={vm.setStatusMessage}>
+    <OriginalMenuBackground type={backgroundPage === "live" ? (preparationMode.sessionMode === "rehearsal" ? 2 : 1)
+      : backgroundPage === "song" ? 257 : "editor"} onError={vm.setStatusMessage} />
     <main className={`app-shell ${mobileRuntime ? "is-mobile-runtime" : ""}`}
       data-ui-layout={uiViewport.stacked ? "stacked" : "columns"}
       >
@@ -1253,6 +1257,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       />
 
       <OriginalPageSwitch open={isMetadataEditorOpen || livePreparationOpen}
+        onPageShown={setBackgroundPage}
         pageId={livePreparationOpen ? "live" : "song"} section={livePreparationOpen ? "演出" : "歌曲"}
         title={livePreparationOpen ? songDetailSource.wording[preparationMode.sessionMode === "rehearsal"
           ? "header_mainTitle_freeLivePracticeMode" : "header_mainTitle_freeLive"] : "歌曲信息"}

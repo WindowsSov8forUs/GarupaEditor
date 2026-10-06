@@ -1,3 +1,9 @@
+import menuBackground0Url from "../../assets/game/menu-background/normal-normalBG.png?url&no-inline";
+import menuBackground1Url from "../../assets/game/menu-background/normal-bg_object_big.png?url&no-inline";
+import menuBackground2Url from "../../assets/game/menu-background/normal-bg_object_small.png?url&no-inline";
+import menuBackground3Url from "../../assets/game/menu-background/bg-common-common.png?url&no-inline";
+import menuBackground4Url from "../../assets/game/menu-background/bg-common-rehearsal.png?url&no-inline";
+import menuBackground5Url from "../../assets/game/menu-background/bg-text-rehearsal.png?url&no-inline";
 import fieldBandLogo1Url from "../../assets/game/field-band-logos/001-logoS.png?url&no-inline";
 import fieldBandLogo2Url from "../../assets/game/field-band-logos/002-logoS.png?url&no-inline";
 import fieldBandLogo4Url from "../../assets/game/field-band-logos/004-logoS.png?url&no-inline";
@@ -28,6 +34,10 @@ import chartUiPrimaryFontUrl from "../../assets/fonts/TTShinGoM.ttf?url&no-inlin
 import chartUiFallbackFontUrl from "../../assets/fonts/GB18030.ttf?url&no-inline";
 import defaultCoverUrl from "../../assets/default-cover.png?url&no-inline";
 import applicationBackgroundUrl from "../../assets/live.png?url&no-inline";
+import backgroundTextUrl from "../../assets/game/menu-background/bg-text-live.png?url&no-inline";
+import backgroundEditorTextUrl from "../../assets/game/menu-background/bg-text-editor.png?url&no-inline";
+import backgroundFastUrl from "../../assets/game/menu-background/animationbg-common-bg_object_big.png?url&no-inline";
+import backgroundSlowUrl from "../../assets/game/menu-background/animationbg-common-bg_object_small.png?url&no-inline";
 import loadingBackgroundUrl from "../../assets/game/loading/background.png?url&no-inline";
 import loadingFrameUrl from "../../assets/game/loading/bg_base_r12.png?url&no-inline";
 import loadingCaptionUrl from "../../assets/game/loading/bg_dialog_caption.png?url&no-inline";
@@ -167,6 +177,42 @@ const DEFINITIONS: readonly BuiltinDefinition[] = Object.freeze([
     url: defaultCoverUrl,
   }),
   Object.freeze({
+    slot: "ui.application-background.normal",
+    id: "builtin/ui/application-background/normal",
+    path: "game/menu-background/normal-normalBG.png",
+    title: "Menu background normal", kind: "image", mediaType: "image/png", url: menuBackground0Url,
+  }),
+  Object.freeze({
+    slot: "ui.application-background.normal-fast",
+    id: "builtin/ui/application-background/normal-fast",
+    path: "game/menu-background/normal-bg_object_big.png",
+    title: "Menu background normal-fast", kind: "image", mediaType: "image/png", url: menuBackground1Url,
+  }),
+  Object.freeze({
+    slot: "ui.application-background.normal-slow",
+    id: "builtin/ui/application-background/normal-slow",
+    path: "game/menu-background/normal-bg_object_small.png",
+    title: "Menu background normal-slow", kind: "image", mediaType: "image/png", url: menuBackground2Url,
+  }),
+  Object.freeze({
+    slot: "ui.application-background.profile",
+    id: "builtin/ui/application-background/profile",
+    path: "game/menu-background/bg-common-common.png",
+    title: "Menu background profile", kind: "image", mediaType: "image/png", url: menuBackground3Url,
+  }),
+  Object.freeze({
+    slot: "ui.application-background.rehearsal",
+    id: "builtin/ui/application-background/rehearsal",
+    path: "game/menu-background/bg-common-rehearsal.png",
+    title: "Menu background rehearsal", kind: "image", mediaType: "image/png", url: menuBackground4Url,
+  }),
+  Object.freeze({
+    slot: "ui.application-background.rehearsal-text",
+    id: "builtin/ui/application-background/rehearsal-text",
+    path: "game/menu-background/bg-text-rehearsal.png",
+    title: "Menu background rehearsal-text", kind: "image", mediaType: "image/png", url: menuBackground5Url,
+  }),
+  Object.freeze({
     slot: "ui.application-background",
     id: "builtin/ui/application-background",
     path: "live.png",
@@ -174,6 +220,42 @@ const DEFINITIONS: readonly BuiltinDefinition[] = Object.freeze([
     kind: "image",
     mediaType: "image/png",
     url: applicationBackgroundUrl,
+  }),
+  Object.freeze({
+    slot: "ui.application-background.editor-text",
+    id: "builtin/ui/application-background/editor-text",
+    path: "game/menu-background/bg-text-editor.png",
+    title: "Editor background text",
+    kind: "image",
+    mediaType: "image/png",
+    url: backgroundEditorTextUrl,
+  }),
+  Object.freeze({
+    slot: "ui.application-background.text",
+    id: "builtin/ui/application-background/text",
+    path: "game/menu-background/bg-text-live.png",
+    title: "Application background text",
+    kind: "image",
+    mediaType: "image/png",
+    url: backgroundTextUrl,
+  }),
+  Object.freeze({
+    slot: "ui.application-background.fast",
+    id: "builtin/ui/application-background/fast",
+    path: "game/menu-background/animationbg-common-bg_object_big.png",
+    title: "Application background fast",
+    kind: "image",
+    mediaType: "image/png",
+    url: backgroundFastUrl,
+  }),
+  Object.freeze({
+    slot: "ui.application-background.slow",
+    id: "builtin/ui/application-background/slow",
+    path: "game/menu-background/animationbg-common-bg_object_small.png",
+    title: "Application background slow",
+    kind: "image",
+    mediaType: "image/png",
+    url: backgroundSlowUrl,
   }),
 ]);
 
