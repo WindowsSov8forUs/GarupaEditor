@@ -5,6 +5,10 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, 
 import { ExportJsonModal } from "../ExportJsonModal";
 import { ImportJsonModal } from "../ImportJsonModal";
 import { SongInformationPage } from "../SongInformationPage";
+import { LivePreparationPage } from "../LivePreparationPage";
+import songDetailSource from "../../data/originalSongDetailProfile.json";
+import { songHasSpecialNotes } from "../songNoteStatistics";
+import { SIMULATOR_PRE_ADAPTATION_DEFAULTS, type SimulatorModeSelection } from "../../app/simulator/preAdaptationContract";
 import { OriginalPageSwitch } from "../OriginalPageSwitch";
 import { DownloadProgressModal } from "../DownloadProgressModal";
 import { OverlayDialogModal } from "../OverlayDialogModal";
@@ -328,6 +332,22 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   const bestdoriAuthRevision = useRef(0);
   const bestdoriAuthBusy = useRef(false);
   const [isBestdoriLoginOpen, setIsBestdoriLoginOpen] = useState(false);
+  const [livePreparationOpen, setLivePreparationOpen] = useState(false);
+  const [preparationSettingsOpen, setPreparationSettingsOpen] = useState(false);
+  const preparationInputs = useRef<Record<SimulatorModeSelection["sessionMode"], SimulatorModeSelection["inputMode"]>>({
+    live: SIMULATOR_PRE_ADAPTATION_DEFAULTS.inputMode, rehearsal: SIMULATOR_PRE_ADAPTATION_DEFAULTS.inputMode,
+  });
+  const [preparationMode, setPreparationMode] = useState<SimulatorModeSelection>({
+    sessionMode: SIMULATOR_PRE_ADAPTATION_DEFAULTS.sessionMode, inputMode: SIMULATOR_PRE_ADAPTATION_DEFAULTS.inputMode,
+  });
+  const changePreparationMode = (next: SimulatorModeSelection) => {
+    if (next.sessionMode !== preparationMode.sessionMode) {
+      setPreparationMode({ ...next, inputMode: preparationInputs.current[next.sessionMode] });
+    } else {
+      preparationInputs.current[next.sessionMode] = next.inputMode;
+      setPreparationMode(next);
+    }
+  };
   const [bestdoriLoginUsernameInput, setBestdoriLoginUsernameInput] = useState("");
   const [bestdoriLoginPasswordInput, setBestdoriLoginPasswordInput] = useState("");
   const [bestdoriLoginSubmitting, setBestdoriLoginSubmitting] = useState(false);
@@ -1232,10 +1252,17 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         }}
       />
 
-      <OriginalPageSwitch open={isMetadataEditorOpen} title="歌曲信息"
+      <OriginalPageSwitch open={isMetadataEditorOpen || livePreparationOpen}
+        pageId={livePreparationOpen ? "live" : "song"} section={livePreparationOpen ? "演出" : "歌曲"}
+        title={livePreparationOpen ? songDetailSource.wording[preparationMode.sessionMode === "rehearsal"
+          ? "header_mainTitle_freeLivePracticeMode" : "header_mainTitle_freeLive"] : "歌曲信息"}
         onOpenMenu={openAppSettings} menuOpen={isAppSettingsOpen}
-        onBack={() => setIsMetadataEditorOpen(false)} page={
-      <SongInformationPage
+        onBack={() => { setIsMetadataEditorOpen(false); setLivePreparationOpen(false); }} page={livePreparationOpen ?
+      <LivePreparationPage metadata={metadata} mode={preparationMode} onModeChange={changePreparationMode}
+        mvEnabled={playbackMvMode} hasMv={!!chartMediaSources.mv}
+        hasSpecialNotes={songHasSpecialNotes(notes, vm.slideChains)}
+        onMvChange={setPlaybackMvMode} onSettings={() => setPreparationSettingsOpen(true)}
+        resourcesReady={vm.settingsResourcesReady} onStart={openSimulatorWindow} /> : <SongInformationPage
         audioDurationSec={audioDurationSec}
         noteCount={visibleNoteCount}
         notes={notes}
@@ -2028,7 +2055,9 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       />
 
       <AppSettingsModal
-        onSongInformation={() => { setIsAppSettingsOpen(false); openMetadataEditor(); }}
+        onSongInformation={() => { setIsAppSettingsOpen(false); setLivePreparationOpen(false); openMetadataEditor(); }}
+        onLivePreparation={() => { setIsAppSettingsOpen(false); setIsMetadataEditorOpen(false); setLivePreparationOpen(true); }}
+        optionsOpen={preparationSettingsOpen} onOptionsClose={() => setPreparationSettingsOpen(false)}
         resourcesReady={vm.settingsResourcesReady}
         onSettingsError={vm.setStatusMessage}
         onImport={openImportJsonModal} onExport={downloadJson} onPreview={openStaticRenderWindow}

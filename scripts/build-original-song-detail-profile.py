@@ -90,5 +90,50 @@ result['sources']['wording'] = {'path': wording_path, 'sha256': hashlib.sha256(w
 result['wording'] = {key: json.loads(wording_raw)[key] for key in ['word_musicLevel', 'myProfile_contentCaption_rank', 'word_setting']}
 
 target = Path(__file__).resolve().parents[1] / 'src/data/originalSongDetailProfile.json'
+def select_subtrees(name, path, roots):
+    graph = json.loads(subprocess.check_output(['git', 'show', args.reverse_commit + ':' + base + path], cwd=args.reverse_root))
+    transforms = {o['pathId']: o['tree'] for o in graph['objects'] if o['class'] == 'Transform'}
+    parents = {t['m_GameObject']['m_PathID']: transforms[t['m_Father']['m_PathID']]['m_GameObject']['m_PathID']
+               if t['m_Father']['m_PathID'] else None for t in transforms.values()}
+    def included(node):
+        return node in roots or (parents.get(node) is not None and included(parents[node]))
+    ids = [o['pathId'] for o in graph['objects'] if o['class'] not in ('GameObject', 'Transform')
+           and included(o['tree'].get('m_GameObject', {}).get('m_PathID'))]
+    # Empty placement transforms are runtime consumers too (radio start positions,
+    # nested view mounts). Preserve them along with the drawable components.
+    select(name, path, ids, [node for node in parents if included(node)])
+
+select_subtrees('livePreparation', 'info-pages-10-1-4/resources/prefabs__screen__sololivedeckselect.json', [3, 6, 13, 18, 26, 86, 89, 67])
+select_subtrees('demoPlayDialog', 'live-preparation-10-1-4/demoplaymodeselectdialog.json', [16])
+select_subtrees('preparationMv', 'live-preparation-10-1-4/deckselectmvselectormvview.json', [4])
+select_subtrees('preparationMvOff', 'live-preparation-10-1-4/deckselectmvselectordisableview.json', [5])
+spot_path = base + 'live-preparation-10-1-4/spot-atlas.json'
+spot_raw = subprocess.check_output(['git', 'show', args.reverse_commit + ':' + spot_path], cwd=args.reverse_root)
+result['sources']['spotAtlas'] = {'path': spot_path, 'sha256': hashlib.sha256(spot_raw).hexdigest().upper()}
+result['spotAtlas'] = json.loads(spot_raw)
+for component in result['prefabs']['livePreparation']['components']:
+    if component['data'].get('mAtlas') == {'m_FileID': 4, 'm_PathID': 1}:
+        component['data']['sourceAtlas'] = 'spot'
+spot_png = subprocess.check_output(['git', 'show', args.reverse_commit + ':' + base + 'live-preparation-10-1-4/spot-atlas.png'], cwd=args.reverse_root)
+assert hashlib.sha256(spot_png).hexdigest().upper() == result['spotAtlas']['pngSha256']
+(target.parents[1] / 'assets/game/atlas/menu/spot-atlas.png').write_bytes(spot_png)
+live_contract_path = base + 'live-preparation-10-1-4/contract.json'
+live_contract_raw = subprocess.check_output(['git', 'show', args.reverse_commit + ':' + live_contract_path], cwd=args.reverse_root)
+result['sources']['livePreparationContract'] = {'path': live_contract_path, 'sha256': hashlib.sha256(live_contract_raw).hexdigest().upper()}
+result['livePreparation'] = json.loads(live_contract_raw)
+runtime_path = base + 'live-preparation-device-10-2-0/runtime.json'
+runtime_raw = subprocess.check_output(['git', 'show', args.reverse_commit + ':' + runtime_path], cwd=args.reverse_root)
+result['sources']['livePreparationRuntime'] = {'path': runtime_path, 'sha256': hashlib.sha256(runtime_raw).hexdigest().upper()}
+switch = next(row for row in json.loads(runtime_raw)['targets'] if row['spriteName'] == 'icon_switch')
+assert not switch['resolvedSprite'] and not switch['hasDrawCall']
+assert not switch['atlas']['hasSwitch'] and switch['atlas']['replacement'] is None
+words = json.loads(wording_raw)
+result['wording'].update({key: words[key] for key in (
+    'word_liveStart', 'button_practiceLive_start', 'button_screen_soloLiveDeckSelect_live',
+    'button_screen_soloLiveDeckSelect_practice', 'dialog_demoPlaySelect_title', 'dialog_demoPlaySelect_message',
+    'dialog_demoPlaySelect_caution', 'word_demoPlay', 'balloon_demoPlayOn_text', 'button_demoPlaySetting_text',
+    'word_autoLive', 'word_on', 'word_off', 'header_mainTitle_freeLive',
+    'header_mainTitle_freeLivePracticeMode')})
+
 target.write_text(json.dumps(result, ensure_ascii=False, separators=(',', ':')) + '\n', encoding='utf-8')
 print(f"Selected {len(result['prefabs'])} component groups from source panels")
