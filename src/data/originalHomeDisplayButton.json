@@ -1,0 +1,110 @@
+{
+  "source": "prefabs/screen/home",
+  "image": "button_viewmode_edit",
+  "width": 56,
+  "height": 56,
+  "anchor": "top-left",
+  "center": {
+    "x": 44.0,
+    "y": 156.0
+  },
+  "clickSEType": 1,
+  "enableDoubleTap": 0,
+  "longPressJudgementTime": 0.5,
+  "button": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 68
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 1,
+      "m_PathID": 6183
+    },
+    "m_Name": "",
+    "tweenTarget": {
+      "m_FileID": 0,
+      "m_PathID": 68
+    },
+    "hover": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+    },
+    "pressed": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+    },
+    "disabledColor": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+    },
+    "duration": 0.20000000298023224,
+    "dragHighlight": 0,
+    "hoverSprite": "",
+    "pressedSprite": "",
+    "disabledSprite": "",
+    "hoverSprite2D": {
+      "m_FileID": 0,
+      "m_PathID": 0
+    },
+    "pressedSprite2D": {
+      "m_FileID": 0,
+      "m_PathID": 0
+    },
+    "disabledSprite2D": {
+      "m_FileID": 0,
+      "m_PathID": 0
+    },
+    "pixelSnap": 0,
+    "onClick": [],
+    "pressedSpriteElement": {
+      "widget": {
+        "m_FileID": 0,
+        "m_PathID": 332
+      },
+      "color": {
+        "r": 1.0,
+        "g": 1.0,
+        "b": 1.0,
+        "a": 0.5
+      }
+    },
+    "disableSpriteElement": {
+      "widget": {
+        "m_FileID": 0,
+        "m_PathID": 332
+      },
+      "color": {
+        "r": 0.0,
+        "g": 0.0,
+        "b": 0.0,
+        "a": 0.5
+      }
+    },
+    "contentSprite": {
+      "m_FileID": 0,
+      "m_PathID": 0
+    },
+    "initializeTemplateColorPattern": 0,
+    "initializeTemplateHeight": 0,
+    "initializeTemplateWidth": 0,
+    "isInitializeTemplateLabel": 1,
+    "clickSEType": 1,
+    "longPressJudgementTime": 0.5,
+    "onStartLongPressEventList": [],
+    "onLongPressEventList": [],
+    "onReleaseLongPressEventList": [],
+    "enableDoubleTap": 0,
+    "atlas": {
+      "m_FileID": 0,
+      "m_PathID": 0
+    },
+    "additionalParts": []
+  }
+}

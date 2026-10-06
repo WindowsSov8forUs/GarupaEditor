@@ -1,6 +1,7 @@
 import { localizeSimulatorText, simulatorTextFonts } from "../../scene/presentationLocalization";
 import { isSerializedTouchRelease } from "../../../components/SerializedButtonInput";
-import { Container, NineSliceSprite, RenderLayer, Sprite, Text, TilingSprite, type Texture } from "pixi.js";
+import { Container, NineSliceSprite, RenderLayer, Sprite, Text, TilingSprite, Texture } from "pixi.js";
+import { createDisplayImageMask, displayImageFit } from "../../../components/displayImageFit";
 import headerProfile from "../../../data/simulator/resultHeaderProfile.json";
 import labelLayouts from "../../../data/simulator/resultLabelLayoutProfile.json";
 import { fitNguiWidgetText, type OriginalLabelLayout } from "./hud/nguiTextLayout";
@@ -121,12 +122,13 @@ export class PixiResultScene {
   private readonly rewardButtons: PixiResultNavigationButtons;
   private readonly practiceReplay: PixiResultNavigationButtons | null;
   private rewardVisible = false;
+  private displayMaskTexture: Texture | null = null;
 
   constructor(private readonly layout: OriginalSurfaceLayout, result: SimulatorResultRecord,
     presentation: Pick<PreparedSessionPresentation, "song" | "difficulty">, backgroundTexture: Texture,
     font: string, texture: (atlas: string, key: string) => Texture,
     border: (atlas: string, key: string) => Readonly<{ left: number; right: number; top: number; bottom: number }>,
-    stageLight: Texture, particleTexture: (name: string) => Texture) {
+    stageLight: Texture, particleTexture: (name: string) => Texture, private readonly displayTexture: Texture | null = null) {
     const scale = layout.ui.screenToSafeChildScale;
     const resources = { font, texture, border };
     this.isAutoLive = result.isAutoLive;
@@ -147,6 +149,19 @@ export class PixiResultScene {
     background.width = mediaProfile.background.widgetWidth * layout.ui.pixelsPerAuthoredUnit;
     background.height = mediaProfile.background.widgetHeight * layout.ui.pixelsPerAuthoredUnit;
     this.root.addChild(background, this.graph);
+    if (displayTexture !== null) {
+      // The requested local image replaces character art only on the judgment page.
+      const fit = displayImageFit(displayTexture.width, displayTexture.height, 600, 600);
+      const image = new Sprite({ texture: displayTexture });
+      image.scale.set(fit.scale); image.position.set(-640 + fit.x, -260 + fit.y);
+      // Pixi's sprite mask consumes red * alpha. Keep alpha opaque and encode
+      // coverage in red so the shared feather is not multiplied by itself.
+      this.displayMaskTexture = Texture.from(createDisplayImageMask(fit, "red"));
+      const mask = new Sprite({ texture: this.displayMaskTexture, width: fit.width, height: fit.height });
+      mask.position.set(-640, -260);
+      this.graph.addChild(image, mask);
+      image.mask = mask;
+    }
     this.root.addChild(this.drawOrder);
     this.graph.visible = false;
     this.drawOrder.visible = false;
@@ -356,6 +371,8 @@ export class PixiResultScene {
     this.clearPage?.dispose(); this.rank.dispose(); this.difficulty.dispose(); this.headerExtras.dispose();
     this.rewardButtons.dispose(); this.practiceReplay?.dispose();
     this.exitButton.clear(); this.skipPresses.clear(); this.drawOrder.detachAll(); this.headerOrder.detachAll(); this.root.destroy({ children: true });
+    this.displayTexture?.destroy(true);
+    this.displayMaskTexture?.destroy(true);
   }
 
   private applyEntry(): void {

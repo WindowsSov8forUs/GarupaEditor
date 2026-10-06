@@ -82,6 +82,16 @@
       "sha256": "D47ACA1208262590624AA3E946BEBF8264613596CEC0C7902A11F142574D4C4B"
     },
     {
+      "path": "game/button-viewmode-edit.png",
+      "byteLength": 1487,
+      "sha256": "E4958DF377E9B6B5B8B8479F1B479E2E756AA1062212AA69C8855E43920D2F27"
+    },
+    {
+      "path": "game/default-display-card-1703.png",
+      "byteLength": 205511,
+      "sha256": "A2F91B398C3D4D32C093CCCA62F7EE16C52E2601F5BEF3CFAC7DC510D34A6AB2"
+    },
+    {
       "path": "game/field-band-logos/001-logoS.png",
       "byteLength": 6348,
       "sha256": "7B9C6BEA4B727B42D428412318B9E8C365D3692EAB0553F637206B34D8CEDC6F"
@@ -200,6 +210,11 @@
       "path": "game/menu-background/bg-text-editor.png",
       "byteLength": 21329,
       "sha256": "98F117862687115AF415B6255A543B5B4CC5E7671FEA335E79DB62887A9302FE"
+    },
+    {
+      "path": "game/menu-background/bg-text-home.png",
+      "byteLength": 14207,
+      "sha256": "74F0307C60D25BC1400670469EA3A3C9D0FE75AA06B2F8BB77F34A9A3A19F9B2"
     },
     {
       "path": "game/menu-background/bg-text-live.png",
@@ -630,6 +645,11 @@
       "path": "game/sound/rhythm-adjust/short2.wav",
       "byteLength": 529244,
       "sha256": "83212AE80CCB42938B156516DF05F46DB7984327E752AB52A959DE2BF7696962"
+    },
+    {
+      "path": "icon-chart-editor.png",
+      "byteLength": 422388,
+      "sha256": "319BFC0133088C6C45CEA761EB5F5CEE355F53B10697B0817BFEFBAC3A09332E"
     },
     {
       "path": "icons/apply-action.svg",

@@ -399,7 +399,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     }));
   }
 
-  createResultScene(result: SimulatorResultRecord, presentation: PreparedSessionPresentation): SimulatorResult<PixiResultScene> {
+  async createResultScene(result: SimulatorResultRecord, presentation: PreparedSessionPresentation): Promise<SimulatorResult<PixiResultScene>> {
     const font = this.decodedFonts.get(CURRENT_SCORE_HUD_BINDINGS.rankLabelFontLogicalAssetId);
     const judge = this.profile?.assets.find(asset => asset.role === "judge-atlas")?.logicalAssetId;
     if (font === undefined || judge === undefined || this.surfaceLayout === null || this.profile === null) {
@@ -426,7 +426,26 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       if (texture === undefined) throw new Error(`Result particle texture is absent: ${name}`);
       return texture;
     };
-    return ok(new PixiResultScene(this.surfaceLayout, result, presentation, background, font.family, lookup, border, stageLight, particleTexture));
+    let displayTexture: Texture | null = null;
+    const generation = this.textureGeneration;
+    if (presentation.displayImage !== null) {
+      const image = presentation.displayImage;
+      const decoded = await this.decoder.decodePng({
+        logicalAssetId: image.logicalId, role: "startup-ui", byteLength: image.byteLength,
+        sha256: image.sha256, mime: image.mime, width: image.width, height: image.height,
+        textureSettings: { scaleMode: "linear", wrapModeU: "clamp", wrapModeV: "clamp", mipmap: "off", premultiplyAlpha: false, blendMode: "normal" },
+        atlasRows: [], materialRole: "hud", animationRole: "none", provenance: "current-external-portable",
+      }, image.bytes);
+      if (decoded.status !== "ok") return decoded;
+      displayTexture = decoded.value;
+      if (generation !== this.textureGeneration) {
+        displayTexture.destroy(true);
+        return reject("render.result.renderer-unavailable", "Result preparation was cancelled while decoding its display image.");
+      }
+    }
+    try {
+      return ok(new PixiResultScene(this.surfaceLayout, result, presentation, background, font.family, lookup, border, stageLight, particleTexture, displayTexture));
+    } catch (error) { displayTexture?.destroy(true); throw error; }
   }
 
   createInGameControlOverlay(

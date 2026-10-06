@@ -11,6 +11,7 @@ import songDetailSource from "../../data/originalSongDetailProfile.json";
 import { songHasSpecialNotes } from "../songNoteStatistics";
 import { SIMULATOR_PRE_ADAPTATION_DEFAULTS, type SimulatorModeSelection } from "../../app/simulator/preAdaptationContract";
 import { OriginalPageSwitch } from "../OriginalPageSwitch";
+import { LiveSelectionPage } from "../LiveSelectionPage";
 import { DownloadProgressModal } from "../DownloadProgressModal";
 import { OverlayDialogModal } from "../OverlayDialogModal";
 import { SkinSettingsModal } from "../SkinSettingsModal";
@@ -334,6 +335,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   const bestdoriAuthBusy = useRef(false);
   const [isBestdoriLoginOpen, setIsBestdoriLoginOpen] = useState(false);
   const [livePreparationOpen, setLivePreparationOpen] = useState(false);
+  const [liveSelectionOpen, setLiveSelectionOpen] = useState(false);
   const [backgroundPage, setBackgroundPage] = useState<string | null>(null);
   const [preparationSettingsOpen, setPreparationSettingsOpen] = useState(false);
   const preparationInputs = useRef<Record<SimulatorModeSelection["sessionMode"], SimulatorModeSelection["inputMode"]>>({
@@ -1233,7 +1235,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     <OriginalUiSoundProvider volumePercent={appOptionSettings.simulatorSettings.systemSeVolumePercent}
       masterPercent={appOptionSettings.simulatorSettings.masterVolumePercent} onError={vm.setStatusMessage}>
     <OriginalMenuBackground type={backgroundPage === "live" ? (preparationMode.sessionMode === "rehearsal" ? 2 : 1)
-      : backgroundPage === "song" ? 257 : "editor"} onError={vm.setStatusMessage} />
+      : backgroundPage === "song" ? 257 : backgroundPage === "entrance" ? "home" : "editor"} onError={vm.setStatusMessage} />
     <main className={`app-shell ${mobileRuntime ? "is-mobile-runtime" : ""}`}
       data-ui-layout={uiViewport.stacked ? "stacked" : "columns"}
       >
@@ -1256,18 +1258,22 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         }}
       />
 
-      <OriginalPageSwitch open={isMetadataEditorOpen || livePreparationOpen}
+      <OriginalPageSwitch open={isMetadataEditorOpen || livePreparationOpen || liveSelectionOpen}
         onPageShown={setBackgroundPage}
-        pageId={livePreparationOpen ? "live" : "song"} section={livePreparationOpen ? "演出" : "歌曲"}
+        onWorkspaceBack={() => setLiveSelectionOpen(true)}
+        showPageBack={isMetadataEditorOpen || livePreparationOpen}
+        pageId={livePreparationOpen ? "live" : isMetadataEditorOpen ? "song" : "entrance"}
+        section={livePreparationOpen ? "演出" : isMetadataEditorOpen ? "歌曲" : "首页"}
         title={livePreparationOpen ? songDetailSource.wording[preparationMode.sessionMode === "rehearsal"
-          ? "header_mainTitle_freeLivePracticeMode" : "header_mainTitle_freeLive"] : "歌曲信息"}
+          ? "header_mainTitle_freeLivePracticeMode" : "header_mainTitle_freeLive"] : isMetadataEditorOpen ? "歌曲信息" : "选择功能"}
         onOpenMenu={openAppSettings} menuOpen={isAppSettingsOpen}
         onBack={() => { setIsMetadataEditorOpen(false); setLivePreparationOpen(false); }} page={livePreparationOpen ?
       <LivePreparationPage metadata={metadata} mode={preparationMode} onModeChange={changePreparationMode}
         mvEnabled={playbackMvMode} hasMv={!!chartMediaSources.mv}
         hasSpecialNotes={songHasSpecialNotes(notes, vm.slideChains)}
         onMvChange={setPlaybackMvMode} onSettings={() => setPreparationSettingsOpen(true)}
-        resourcesReady={vm.settingsResourcesReady} onStart={openSimulatorWindow} /> : <SongInformationPage
+        resourcesReady={vm.settingsResourcesReady} onStart={openSimulatorWindow} /> : !isMetadataEditorOpen ?
+      <LiveSelectionPage onFreeLive={() => setLiveSelectionOpen(false)} /> : <SongInformationPage
         audioDurationSec={audioDurationSec}
         noteCount={visibleNoteCount}
         notes={notes}

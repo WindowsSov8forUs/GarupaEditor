@@ -7,7 +7,7 @@ import {
 } from "./startupPresentationContract";
 
 export interface PreparedPresentationImage {
-  readonly role: "jacket" | "stage-backdrop";
+  readonly role: "jacket" | "stage-backdrop" | "display-image";
   readonly slot: number | null;
   readonly logicalId: string;
   readonly sha256: string;
@@ -23,6 +23,7 @@ export interface PreparedSessionPresentation {
   readonly difficulty: SimulatorPresentationPackage["difficulty"];
   readonly jacket: PreparedPresentationImage;
   readonly stageBackdrop: PreparedPresentationImage;
+  readonly displayImage: PreparedPresentationImage | null;
   readonly sdCharacters: readonly [];
 }
 
@@ -33,12 +34,16 @@ export async function deriveSessionPresentation(
   if (jacket.status === "rejected") return jacket;
   const backdrop = deriveImage("stage-backdrop", null, presentation.stage.backdropPng, null, null);
   if (backdrop.status === "rejected") return backdrop;
+  const displayImage = presentation.displayImagePng == null ? null
+    : deriveImage("display-image", null, presentation.displayImagePng, null, null);
+  if (displayImage?.status === "rejected") return displayImage;
   const sdCharacters = Object.freeze([]) as readonly [];
   return accepted(Object.freeze({
     song: presentation.song,
     difficulty: presentation.difficulty,
     jacket: jacket.value,
     stageBackdrop: backdrop.value,
+    displayImage: displayImage?.value ?? null,
     sdCharacters,
   }));
 }

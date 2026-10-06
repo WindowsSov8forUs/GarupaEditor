@@ -20,17 +20,17 @@ const leftPrefab = { ...source.prefab, nodes,
   components: source.prefab.components.filter(item => nodes.some(node => node.id === item.node)) };
 
 /** LeftTop and TopRightMenu share the host safe-area anchors; child offsets stay authored. */
-export function OriginalPageHeader({ section, title, onBack, menuOpen, onOpenMenu }: {
-  section: string; title: string; onBack?: () => void; menuOpen: boolean; onOpenMenu(): void;
+export function OriginalPageHeader({ section, title, onBack, showBack = true, menuOpen, onOpenMenu }: {
+  section: string; title: string; onBack?: () => void; showBack?: boolean; menuOpen: boolean; onOpenMenu(): void;
 }) {
   const { scale, safeInsets } = useUiViewport();
   const model = useMemo(() => new OriginalPrefabModel(leftPrefab, {
     nodes: {
       [source.nodeAt("LeftTop/screenInfo/tutorialButton").id]: { active: false },
-      [source.nodeAt("LeftTop/buttonMoveBack").id]: { active: true },
+      [source.nodeAt("LeftTop/buttonMoveBack").id]: { active: showBack },
     },
     components: { 135: { mText: section }, 139: { mText: title } },
-  }), [section, title]);
+  }), [section, title, showBack]);
   return <header className="original-page-header" style={{ height: safeInsets.top + headerHeight * scale }}>
     <div className="original-page-header-left"
       style={{ left: safeInsets.left, top: safeInsets.top }}>

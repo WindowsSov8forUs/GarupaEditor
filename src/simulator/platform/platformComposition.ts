@@ -577,7 +577,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
           const total = renderer.resultPreparationWorkCount + 1;
           const prepared = await renderer.prepareResultResources(completed => loading.report(completed, total));
           if (prepared.status !== "ok") return prepared;
-          const scene = renderer.createResultScene(record, presentation.value);
+          const scene = await renderer.createResultScene(record, presentation.value);
           if (scene.status !== "ok") return scene;
           try { await loading.report(total - 1, total); }
           catch (error) { scene.value.dispose(); throw error; }

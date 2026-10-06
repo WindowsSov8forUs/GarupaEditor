@@ -112,10 +112,10 @@ export interface WorkspaceMediaDescriptor extends ResourceDescriptor {
   readonly provenance: WorkspaceMediaProvenance;
 }
 
-/** Migration-only legacy descriptor. New production imports must create WorkspaceMediaDescriptor. */
+/** Chart media is migration-only here; application display images remain global user resources. */
 export interface UserResourceDescriptor extends GlobalResourceDescriptor {
   readonly origin: "user";
-  readonly purpose: UserMediaPurpose;
+  readonly purpose: UserMediaPurpose | "display-image";
   readonly fileName: string;
 }
 

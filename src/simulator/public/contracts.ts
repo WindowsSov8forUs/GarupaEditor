@@ -31,6 +31,8 @@ export interface SimulatorPresentationPackage {
     readonly level: number;
   };
   readonly jacketPng: SimulatorPresentationPng;
+  /** User-selected Home illustration, also shown beside judgment results. */
+  readonly displayImagePng?: SimulatorPresentationPng | null;
   readonly stage: {
     readonly backdropPng: SimulatorPresentationPng;
     /** Optional independent presentation score; not inferred from playable notes. */

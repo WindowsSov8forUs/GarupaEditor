@@ -1,6 +1,8 @@
 import type { ResourceRef } from "./contracts";
 
 export const APPLICATION_RESOURCE_SLOTS = Object.freeze([
+  "ui.home.display-button",
+  "ui.home.default-display-image",
   "ui.icon.apply-action",
   "ui.icon.back-arrow",
   "ui.icon.clear-action",
@@ -22,6 +24,7 @@ export const APPLICATION_RESOURCE_SLOTS = Object.freeze([
   "ui.font.chart-ui-primary",
   "ui.font.chart-ui-fallback",
   "ui.default-cover",
+  "ui.live-selection.chart-editor",
   "ui.application-background",
   "ui.application-background.normal",
   "ui.application-background.normal-fast",
@@ -31,6 +34,7 @@ export const APPLICATION_RESOURCE_SLOTS = Object.freeze([
   "ui.application-background.rehearsal-text",
   "ui.application-background.text",
   "ui.application-background.editor-text",
+  "ui.application-background.home-text",
   "ui.application-background.fast",
   "ui.application-background.slow",
   "ui.loading-background",

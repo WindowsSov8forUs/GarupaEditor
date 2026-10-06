@@ -107,6 +107,7 @@ export async function buildSimulatorLaunchDescriptor(
     [SIMULATOR_MEDIA_SLOTS.stage]: stage,
     ...(input.mvEnabled ? { [SIMULATOR_MEDIA_SLOTS.mv]: input.media.mv! } : {}),
   };
+  bindings[SIMULATOR_MEDIA_SLOTS.displayImage] = input.manager.getDisplayImageRef();
   const snapshot = await input.manager.createSnapshotFromRefs(Object.freeze(bindings));
   if (snapshot.status === "rejected") {
     throw new Error(`${snapshot.failure.capability}: ${snapshot.failure.boundary}`);
