@@ -7,9 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build && npm run resources:verify-production-assets",
     "preview": "vite preview",
-    "resources:builtin-manifest": "node scripts/build-builtin-resource-catalog.mjs",
     "resources:verify-production-assets": "node scripts/verify-builtin-production-assets.mjs",
-    "repository:hygiene:check": "python scripts/verify_host_path_policy.py --tree",
     "tauri": "tauri",
     "desktop:dev": "tauri dev",
     "desktop:build": "tauri build",
@@ -18,8 +16,7 @@
     "android:build": "tauri android build",
     "ios:init": "tauri ios init",
     "ios:dev": "tauri ios dev",
-    "ios:build": "tauri ios build",
-    "sprites:map": "node ./scripts/build-sprite-source-map.mjs"
+    "ios:build": "tauri ios build"
   },
   "dependencies": {
     "@tauri-apps/api": "2.11.0",
