@@ -55,6 +55,7 @@ export interface ChartSettings {
 }
 
 export interface EditorOptionSettings {
+  musicSelectionSource: "bestdori" | "ayachan" | "official";
   simulatorSettings: SimulatorMenuSettings;
   rhythmNoteSizePercent: number;
   rhythmNoteSpeed: number;
@@ -239,6 +240,7 @@ export const DEFAULT_SETTINGS: ChartSettings = {
 };
 
 export const DEFAULT_EDITOR_OPTION_SETTINGS: EditorOptionSettings = {
+  musicSelectionSource: "bestdori",
   simulatorSettings: DEFAULT_SIMULATOR_MENU_SETTINGS,
   rhythmNoteSizePercent: 100,
   rhythmNoteSpeed: 9.7,
@@ -844,7 +846,8 @@ export function sortNotes(notes: ChartNote[]): ChartNote[] {
     if (a.lane !== b.lane) {
       return a.lane - b.lane;
     }
-    return a.id.localeCompare(b.id);
+    // IDs identify edits; they must not decide same-position note ordering.
+    return 0;
   });
 }
 
@@ -925,6 +928,8 @@ export function normalizeEditorOptionSettings(
 
   return {
     simulatorSettings: normalizeSimulatorMenuSettings(input.simulatorSettings),
+    musicSelectionSource: input.musicSelectionSource === "official" || input.musicSelectionSource === "ayachan"
+      ? input.musicSelectionSource : "bestdori",
     rhythmNoteSizePercent,
     rhythmNoteSpeed,
     longLineBrightnessPercent,

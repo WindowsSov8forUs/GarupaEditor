@@ -1,12 +1,12 @@
+import { projectDraft, type ChartProject } from "../../project/chartProject";
+import { projectGarupaChart } from "../../project/projectChartAdapter";
 import type { SimulatorOriginalSkinSettings } from "../../simulator/public/contracts";
-import type { ChartMetadata } from "../../chartCore";
 import type { ApplicationResourceManager } from "../../resources/applicationResourceManager";
 import {
   createResourceRef,
   type ResourceConsumerLease,
   type ResourceRef,
 } from "../../resources/contracts";
-import type { ChartMediaResources } from "../../resources/selections";
 import { buildSimulatorGarupaChart } from "./chartAdapter";
 import { buildSimulatorPreAdaptedConfig, type SimulatorModeSelection } from "./preAdaptationContract";
 import {
@@ -29,9 +29,7 @@ export interface BuildSimulatorLaunchDescriptorInput extends SimulatorModeSelect
 
   readonly requestId: string;
   readonly manager: ApplicationResourceManager;
-  readonly chartJson: string;
-  readonly media: ChartMediaResources;
-  readonly metadata: ChartMetadata;
+  readonly project: ChartProject;
   readonly mirror: boolean;
   readonly mvEnabled: boolean;
   readonly fps: 60 | 120;
@@ -57,14 +55,16 @@ export interface PreparedSimulatorLaunchDescriptor {
 export async function buildSimulatorLaunchDescriptor(
   input: BuildSimulatorLaunchDescriptorInput,
 ): Promise<PreparedSimulatorLaunchDescriptor> {
-  if (input.media.bgm === null) throw new Error("Simulator requires one selected BGM resource.");
-  const title = strictText(input.metadata.title, "song title");
-  const bandName = strictText(input.metadata.artist, "artist/band name");
-  const level = strictPositiveInteger(input.metadata.difficultyLevel, "difficulty level");
-  const mvDelay = strictInt32(input.metadata.mvOffsetMs, "MV delay");
+  const media = projectDraft(input.project).mediaRefs;
+  const metadata = input.project.metadata;
+  if (media.bgm === null) throw new Error("Simulator requires one selected BGM resource.");
+  const title = strictText(metadata.title, "song title");
+  const bandName = strictText(metadata.artist, "artist/band name");
+  const level = strictPositiveInteger(metadata.difficultyLevel, "difficulty level");
+  const mvDelay = strictInt32(metadata.mvOffsetMs, "MV delay");
   const width = strictPositiveInteger(input.requestedWindowWidth, "window width");
   const height = strictPositiveInteger(input.requestedWindowHeight, "window height");
-  const chart = buildSimulatorGarupaChart(input.chartJson, input.mirror);
+  const chart = buildSimulatorGarupaChart(JSON.stringify(projectGarupaChart(input.project)), input.mirror);
   const config = buildSimulatorPreAdaptedConfig({
     sessionMode: input.sessionMode, inputMode: input.inputMode,
     judgementAdjustValue: input.judgementAdjustValue,
@@ -89,8 +89,8 @@ export async function buildSimulatorLaunchDescriptor(
     bgmGainPercent: input.bgmGainPercent,
     seGainPercent: input.seGainPercent,
   });
-  const cover = input.media.cover ?? requireRef("builtin/ui/default-cover");
-  let stage = input.media.stageBackdrop;
+  const cover = media.cover ?? requireRef("builtin/ui/default-cover");
+  let stage = media.stageBackdrop;
   if (stage === null) {
     const refreshed = await input.manager.prepareCatalog("bestdori");
     if (refreshed.status === "rejected") {
@@ -98,14 +98,14 @@ export async function buildSimulatorLaunchDescriptor(
     }
     stage = requireRef("bestdori/jp/ingameskin/bgskin/skin00");
   }
-  if (input.mvEnabled && input.media.mv === null) {
+  if (input.mvEnabled && media.mv === null) {
     throw new Error("Simulator MV mode requires one explicit video resource.");
   }
   const bindings: Record<string, ResourceRef> = {
-    [SIMULATOR_MEDIA_SLOTS.bgm]: input.media.bgm,
+    [SIMULATOR_MEDIA_SLOTS.bgm]: media.bgm,
     [SIMULATOR_MEDIA_SLOTS.jacket]: cover,
     [SIMULATOR_MEDIA_SLOTS.stage]: stage,
-    ...(input.mvEnabled ? { [SIMULATOR_MEDIA_SLOTS.mv]: input.media.mv! } : {}),
+    ...(input.mvEnabled ? { [SIMULATOR_MEDIA_SLOTS.mv]: media.mv! } : {}),
   };
   bindings[SIMULATOR_MEDIA_SLOTS.displayImage] = input.manager.getDisplayImageRef();
   const snapshot = await input.manager.createSnapshotFromRefs(Object.freeze(bindings));
@@ -121,7 +121,7 @@ export async function buildSimulatorLaunchDescriptor(
     requestId: input.requestId,
     mediaSnapshotId: snapshot.value.snapshotId,
     chartJson: JSON.stringify(chart),
-    isFullLength: input.metadata.isFullLength === true,
+    isFullLength: metadata.isFullLength === true,
     presentation: Object.freeze({
       song: Object.freeze({
         title,
@@ -130,7 +130,7 @@ export async function buildSimulatorLaunchDescriptor(
         composer: null,
         arranger: null,
       }),
-      difficulty: Object.freeze({ type: input.metadata.difficulty, level }),
+      difficulty: Object.freeze({ type: metadata.difficulty, level }),
       mvEnabled: input.mvEnabled,
       mvMusicStartDelayMilliseconds: mvDelay,
     }),

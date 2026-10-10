@@ -1,3 +1,6 @@
+import { useChartProjectFiles } from "./hooks/useChartProjectFiles";
+import { projectDraft, type ChartProject, type ChartProjectDraft } from "../project/chartProject";
+import { captureChartProject, rememberProjectMedia } from "../project/projectResources";
 import { downloadBytes } from "../services/download";
 import { appLog } from "../logging/applicationLogger";
 
@@ -487,6 +490,12 @@ function routeStatusMessage(rawMessage: string): StatusMessageRoute {
     return { channel: "dialog", tone: "error", message: `会话缓存保存失败：\n${detail}` };
   }
 
+  // Failures from new operations must not depend on adding another prefix above.
+  // Evaluate before success/interaction suppression so partial-success messages
+  // containing a failure are not silently discarded either.
+  if (/失败|异常|错误/.test(message)) {
+    return { channel: "dialog", tone: "error", message };
+  }
   if (STATUS_MESSAGE_IGNORE_EXACT.has(message)) {
     return { channel: "ignore" };
   }
@@ -523,6 +532,8 @@ function ChartEditorController() {
   const copyActionIcon = useApplicationResourceUrl("ui.icon.copy-action");
   const pasteActionIcon = useApplicationResourceUrl("ui.icon.paste-action");
   const mirrorActionIcon = useApplicationResourceUrl("ui.icon.mirror-action");
+  const [projectId, setProjectId] = useState<string>(() => crypto.randomUUID());
+  const skipProjectWidthAdjustmentRef = useRef(false);
   const [metadata, setMetadataState] = useState<ChartMetadata>(DEFAULT_METADATA);
   const [chartMediaResources, setChartMediaResources] = useState<ChartMediaResources>(() => Object.freeze({
     bgm: null,
@@ -832,6 +843,7 @@ function ChartEditorController() {
   }, [pushUndoSnapshotIfNeeded, resolveStateAction]);
 
   useEffect(() => {
+    if (skipProjectWidthAdjustmentRef.current) { skipProjectWidthAdjustmentRef.current = false; return; }
     if (!isHabahiroEnabled || slideChains.length === 0) {
       return;
     }
@@ -3023,6 +3035,23 @@ function ChartEditorController() {
     setSelectedLongLineSegmentId,
   });
 
+  const project = useMemo<ChartProjectDraft>(() => ({ projectId, metadata,
+    chart: { settings, notes, slideChains, bpmEvents, timingGroups }, mediaRefs: chartMediaResources,
+    audioFileName, audioDurationSec,
+  }), [projectId, metadata, settings, notes, slideChains, bpmEvents, timingGroups, chartMediaResources, audioFileName, audioDurationSec]);
+  const restoreProject = useCallback((loaded: ChartProject) => {
+    const next = projectDraft(loaded);
+    rememberProjectMedia(resourceManager, loaded);
+    skipProjectWidthAdjustmentRef.current = true;
+    setProjectId(next.projectId);
+    setMetadataState(next.metadata); setSettingsState(next.chart.settings);
+    setNotesState(next.chart.notes); setSlideChainsState(next.chart.slideChains);
+    setBpmEventsState(next.chart.bpmEvents); setTimingGroupsState(next.chart.timingGroups);
+    setChartMediaResources(next.mediaRefs); setAudioFileName(next.audioFileName); setAudioDurationSec(next.audioDurationSec);
+    setToolBpmValue(next.metadata.bpm); clearAllSelections();
+    undoStackRef.current = []; redoStackRef.current = []; setUndoVersion(v => v + 1);
+  }, [resourceManager, clearAllSelections]);
+
   const {
     garupaChartJsonText,
     undoLastNote,
@@ -3048,6 +3077,8 @@ function ChartEditorController() {
     applyImportJsonText,
     applyImportOfficialChart,
     applyImportCommunityChart,
+    loadChartForPlay,
+    loadOfficialChart,
     applyUploadCommunityChart,
     applyUploadNotGarupaServerChart,
     applyUploadTestServerChart,
@@ -3074,6 +3105,11 @@ function ChartEditorController() {
     applyBestdoriSkinSelection,
     downloadProgress,
   } = useEditorIoAndShortcuts({
+    project,
+    onNewProject: (preserveForPlay = false) => {
+      if (preserveForPlay) skipProjectWidthAdjustmentRef.current = true;
+      setProjectId(crypto.randomUUID());
+    },
     metadata,
     appOptionSettings,
     settings,
@@ -3156,7 +3192,11 @@ function ChartEditorController() {
     copyCurrentSelectionByShortcut,
     pasteAtMousePositionByShortcut,
   });
+  const projectFiles = useChartProjectFiles(resourceManager, project, loaded => {
+    restoreProject(loaded); closeImportJsonModal();
+  }, setStatusMessage);
   const settingsResourcesReady = useEditorSessionCache({
+    project, restoreProject,
     metadata,
     settings,
     appOptionSettings,
@@ -5861,9 +5901,7 @@ function ChartEditorController() {
         sessionMode: mode.sessionMode, inputMode: mode.inputMode,
         requestId,
         manager: resourceManager,
-        chartJson: garupaChartJsonText,
-        media: chartMediaResources,
-        metadata,
+        project: await captureChartProject(resourceManager, project),
         mirror: appOptionSettings.mirrorEnabled,
         mvEnabled: mode.sessionMode === "live" && playbackMvMode && chartMediaResources.mv !== null,
         fps: playbackFps === 120 ? 120 : 60,
@@ -5918,7 +5956,7 @@ function ChartEditorController() {
     appOptionSettings.rhythmNoteSpeed,
     appOptionSettings.simultaneousLineEnabled,
     chartMediaResources,
-    garupaChartJsonText,
+    project,
     metadata,
     noteSeVolumeScale,
     playbackFps,
@@ -5962,6 +6000,8 @@ function ChartEditorController() {
         openStaticRenderWindow,
         openSimulatorWindow,
         garupaChartJsonText,
+        projectFiles,
+        openOverlayDialog,
         isImportJsonModalOpen,
         importJsonModalLevel,
         importJsonText,
@@ -5981,6 +6021,8 @@ function ChartEditorController() {
         applyImportJsonText,
         applyImportOfficialChart,
         applyImportCommunityChart,
+    loadChartForPlay,
+        loadOfficialChart,
         applyUploadCommunityChart,
         applyUploadNotGarupaServerChart,
         applyUploadTestServerChart,
@@ -6239,6 +6281,8 @@ function ChartEditorController() {
         skinAssets,
         applyWindowPreset,
         applyAppOptionSettings,
+        setMusicSelectionSource: (musicSelectionSource: EditorOptionSettings["musicSelectionSource"]) =>
+          setAppOptionSettings(value => ({ ...value, musicSelectionSource })),
         applyBestdoriSkinSelection,
         downloadProgress,
         playbackRuntimeLineRef,

@@ -20,8 +20,9 @@ export interface OriginalRadioBinding {
   index: number; onChange?: (index: number) => void; disabled?: boolean;
   disabledOptions?: readonly number[];
   labelWidth?: number; labelHeight?: number; renderOption?: (index: number) => ReactNode;
-  fontSize?: number; maxLineCount?: number; labelOffset?: { x: number; y: number };
-  optionLayouts?: Readonly<Record<number, { labelWidth?: number; labelHeight?: number; offsetX?: number }>>;
+  fontSize?: number; labelSpacingX?: number; maxLineCount?: number; labelOffset?: { x: number; y: number };
+  optionLayouts?: Readonly<Record<number, { labelWidth?: number; labelHeight?: number; offsetX?: number; labelOffset?: { x: number; y: number };
+    fontSize?: number; labelSpacingX?: number; labelSpacingY?: number }>>;
   labelNaturalSize?: { width: boolean; height: boolean };
 }
 export interface OriginalSliderBinding {
@@ -226,8 +227,9 @@ function RadioGroupView({ model, component, binding, beforeClick }: { model: Ori
       const label = RADIO_MODEL.components.get(14)!;
       const labelNode = RADIO_MODEL.nodes.get(label.node)!;
       const layout = binding?.optionLayouts?.[index];
+      const labelOffset = layout?.labelOffset ?? binding?.labelOffset;
       const labelWidth = layout?.labelWidth ?? binding?.labelWidth ?? label.data.mWidth;
-      const fontSize = binding?.fontSize ?? label.data.mFontSize;
+      const fontSize = layout?.fontSize ?? binding?.fontSize ?? label.data.mFontSize;
       const maxLineCount = binding?.maxLineCount ?? label.data.mMaxLineCount;
       // AdjustCollider consumes the same label's printed size, not a second font fitter.
       const printedWidth = printedWidths[index] ?? 0;
@@ -240,12 +242,14 @@ function RadioGroupView({ model, component, binding, beforeClick }: { model: Ori
           x: x + RADIO_ROOT.position.x * start.scaleX, y: y + RADIO_ROOT.position.y * start.scaleY,
           scaleX: RADIO_ROOT.scale.x * start.scaleX, scaleY: RADIO_ROOT.scale.y * start.scaleY,
         }, [check.node]: { active: checked }, [label.node]: {
-          x: labelNode.position.x + (binding?.labelOffset?.x ?? 0),
-          y: labelNode.position.y + (binding?.labelOffset?.y ?? 0),
+          x: labelNode.position.x + (labelOffset?.x ?? 0),
+          y: labelNode.position.y + (labelOffset?.y ?? 0),
         } },
         components: {
           14: { mText: text, mWidth: labelWidth, mHeight: layout?.labelHeight ?? binding?.labelHeight ?? label.data.mHeight,
-            mFontSize: fontSize, mMaxLineCount: maxLineCount },
+            mFontSize: fontSize, mMaxLineCount: maxLineCount,
+            mSpacingX: layout?.labelSpacingX ?? binding?.labelSpacingX ?? label.data.mSpacingX,
+            mSpacingY: layout?.labelSpacingY ?? label.data.mSpacingY },
           9: { m_Size: { x: printedWidth + 50, y: 50 }, m_Offset: { x: printedWidth / 2, y: 0 } },
         },
       });

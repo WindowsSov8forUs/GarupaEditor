@@ -1,0 +1,6 @@
+.music-filter-drawer-projection { position: fixed; right: 0; top: 0; z-index: 100; overflow: hidden; pointer-events: none; }
+.music-filter-drawer { position: absolute; right: 0; top: 0; transform-origin: top right; transition: transform .15s linear; pointer-events: auto; isolation: isolate; }
+.music-filter-drawer-scroll { position: absolute; left: 23px; width: 610px; overflow-x: hidden; overflow-y: auto; scrollbar-width: none; overscroll-behavior: contain; mask-image: linear-gradient(transparent, black 6px, black calc(100% - 6px), transparent); }
+.music-filter-drawer-scroll::-webkit-scrollbar { display: none; }
+.music-filter-drawer-content { position: relative; width: 610px; user-select: none; }
+.music-filter-drawer-content input, .music-filter-drawer-content textarea { user-select: text; }

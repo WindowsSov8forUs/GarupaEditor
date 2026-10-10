@@ -1,0 +1,15 @@
+.music-selection-page { position: absolute; inset: 0; overflow: clip; isolation: isolate; }
+.music-selection-selector { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.music-selection-folder { position: absolute; width: 0; height: 0; }
+.music-selection-background { position: absolute; width: 0; height: 0; pointer-events: none; }
+.music-selection-carousel { position: absolute; top: 0; bottom: 0;
+  touch-action: none; user-select: none; outline: none; }
+.music-selection-range { position: absolute; left: 0; width: 380px; overflow: clip; }
+.music-selection-cell { position: absolute; left: 0; width: 380px; height: 56px; cursor: pointer; }
+.music-selection-cell > *, .music-selection-current > * { pointer-events: none; }
+.music-selection-current { position: absolute; width: 0; height: 0; cursor: pointer; }
+.music-selection-current::after { content: ""; position: absolute; left: -251px; top: -48px; width: 394px; height: 96px; }
+.music-selection-scrollbar { position: absolute; width: 24px; touch-action: none; user-select: none; }
+.music-selection-info { position: absolute; right: 0; top: var(--ui-page-window-center-y); width: 0; height: 0; }
+
+.music-selection-upper-mask { position: absolute; width: 0; height: 0; pointer-events: none; }

@@ -2,6 +2,16 @@
   "storageSchema": 1,
   "entries": [
     {
+      "path": "game/icon-import-chart.png",
+      "byteLength": 610071,
+      "sha256": "70EAA36ADEBCB1501A3D2A744C0F43780FD09599DA2096A4C50FCE75794EE6CC"
+    },
+    {
+      "path": "game/icon-search-chart.png",
+      "byteLength": 517970,
+      "sha256": "CD3253FAF1DB6205D6E1EF3B1C43381BD334D15A40E01E75C97934977AD92234"
+    },
+    {
       "path": "default-cover.png",
       "byteLength": 14086,
       "sha256": "9395BE5EF1E67A523D45709361C4429435DABCA76BD3534F8AB4C4CCACB52797"
@@ -135,6 +145,11 @@
       "path": "game/fonts/sgm/rank-label-font.ttf",
       "byteLength": 4304904,
       "sha256": "949356BBFEA78FB5BC3BA1610E1C64235FCCB9FD9A6F166A996715706FBFCE56"
+    },
+    {
+      "path": "game/icon-play-chart.png",
+      "byteLength": 2711,
+      "sha256": "D2613797A52ACF460A950F23C61963F7E99291A104077638EE143DDA03F3B484"
     },
     {
       "path": "game/loading/background.png",
@@ -632,6 +647,16 @@
       "sha256": "11B98D3A6CB52F1600BFFF8FC36D293FEDEF576726A79A1F4A75E0047052ADB1"
     },
     {
+      "path": "game/sound/live-menu-se/SE_UI_DIF_CHANGE.wav",
+      "byteLength": 38640,
+      "sha256": "F79C9D4E3FF524D1385EB2A63EEF3A637976D007473A4471F48475EC3ECD0EF1"
+    },
+    {
+      "path": "game/sound/live-menu-se/SE_UI_DRUM_SCROLLING.wav",
+      "byteLength": 18096,
+      "sha256": "92B43B93BC0A219A61CF676C6DF4900991405EFF1A1C08945B45F8B973CF6B9B"
+    },
+    {
       "path": "game/sound/result/after_live.mp3",
       "byteLength": 942516,
       "sha256": "043B6250F4078E0ADDFE5F3175BB2F8A8EBE58957B566D210FAE59C34570AA2A"
@@ -648,8 +673,8 @@
     },
     {
       "path": "icon-chart-editor.png",
-      "byteLength": 422388,
-      "sha256": "319BFC0133088C6C45CEA761EB5F5CEE355F53B10697B0817BFEFBAC3A09332E"
+      "byteLength": 524379,
+      "sha256": "FCB985651509615B5F46023EA85006509C41A92F71F7EEB139C83000AB645AC3"
     },
     {
       "path": "icons/apply-action.svg",

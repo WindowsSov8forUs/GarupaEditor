@@ -190,7 +190,7 @@ export type ResourceResult<T> =
   | { readonly status: "accepted"; readonly value: T }
   | { readonly status: "rejected"; readonly failure: ResourceFailure };
 
-const RESOURCE_ID_PATTERN = /^(?:builtin|bestdori|workspace|user)\/[A-Za-z0-9._~!$&'()*+,;=:@%/-]+$/;
+const RESOURCE_ID_PATTERN = /^(?:builtin|bestdori|official-music|workspace|user)\/[A-Za-z0-9._~!$&'()*+,;=:@%/-]+$/;
 const SNAPSHOT_ID_PATTERN = /^snapshot\/[A-Za-z0-9_-]+$/;
 const LEASE_ID_PATTERN = /^lease\/[A-Za-z0-9_-]+$/;
 const SHA256_PATTERN = /^[0-9A-F]{64}$/;

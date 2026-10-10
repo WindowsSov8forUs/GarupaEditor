@@ -3,10 +3,13 @@ import { Component, type ErrorInfo, type ReactNode } from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import { UiViewportRoot } from "./components/UiViewport";
+import { OriginalLoadingIndicators } from "./components/OriginalLoadingIndicators";
 import "./App.css";
 import { ApplicationResourceProvider } from "./resources/applicationResourceContext";
 import { bootstrapApplicationResources } from "./resources/applicationResources";
 import { preloadSkinResources } from "./resources/preloadSkinResources";
+import { bootstrapOfficialMusic } from "./services/officialMusicLibrary";
+import { originalLoading } from "./components/originalLoadingState";
 import { SimulatorLoadingBoundary } from "./app/simulator/SimulatorLoadingBoundary";
 import { isTauri } from "@tauri-apps/api/core";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
@@ -96,12 +99,19 @@ void bootstrapApplicationResources(simulatorWindow ? async (manager) => {
   });
   await showSimulatorWindow();
 } : undefined).then(async (resources) => {
+  if (resources.status === "accepted" && !simulatorWindow) {
+    renderApplication(<ApplicationResourceProvider manager={resources.value}><OriginalLoadingIndicators /></ApplicationResourceProvider>);
+    const loading = originalLoading.hold("network", {});
+    try { await bootstrapOfficialMusic(resources.value, loading.progress); }
+    finally { loading.release(); }
+  }
   finishBootstrap(resources.status === "rejected" ? resources.failure : undefined);
   renderApplication(
     <AppErrorBoundary>
       {resources.status === "accepted" ? (
         <ApplicationResourceProvider manager={resources.value}>
           {simulatorWindow ? <SimulatorLoadingBoundary><App /></SimulatorLoadingBoundary> : <App />}
+          {!simulatorWindow && <OriginalLoadingIndicators />}
         </ApplicationResourceProvider>
       ) : (
         <main className="ui-fallback-page">

@@ -1,4 +1,5 @@
-.original-page-switch { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; gap: calc(12px * var(--ui-scale, 1)); }
+/* Prefab depths belong to the page; they must not overtake sibling modal layers. */
+.original-page-switch { position: relative; isolation: isolate; flex: 1; min-height: 0; display: flex; flex-direction: column; gap: calc(12px * var(--ui-scale, 1)); }
 .original-page-body { position: relative; flex: 1; min-height: 0; }
 .editor-retained-page { height: 100%; display: flex; flex-direction: column; gap: calc(12px * var(--ui-scale, 1)); }
 .original-detail-page { position: absolute; top: 0; bottom: 0;

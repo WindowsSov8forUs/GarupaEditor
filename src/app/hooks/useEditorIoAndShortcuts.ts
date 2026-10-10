@@ -1,3 +1,7 @@
+import { availableOfficialMedia } from "../../services/officialMusicSources";
+import { getOfficialMusicLibrary, type OfficialDifficulty } from "../../services/officialMusicLibrary";
+import { detectUserMediaType } from "../../resources/userMediaFormat";
+import { projectGarupaChart } from "../../project/projectChartAdapter";
 import { userFacingErrorMessage } from "../../services/downloadError";
 import { ResourceFailureError } from "../../resources/contracts";
 import { appLog, startOperation } from "../../logging/applicationLogger";
@@ -33,13 +37,7 @@ import {
 import {
   convertBestdoriV2ToGarupaChartJson,
   convertGarupaChartJsonToBestdoriV2,
-  type GarupaChartJson,
-  type GarupaChartJsonBpmItem,
   type GarupaChartJsonDirection,
-  type GarupaChartJsonSlideConnection,
-  type GarupaChartJsonSlideItem,
-  type GarupaChartJsonSvItem,
-  type GarupaChartJsonTopLevelNote,
 } from "../../chart";
 import {
   isChartUsingExGarupa,
@@ -53,6 +51,7 @@ import {
 import { applyHabahiroSlideWidths } from "../habahiroSlideWidth";
 import {
   fetchBestdoriCommunityPostDetails,
+  fetchTestServerChart, fetchTestServerMedia,
   fetchBestdoriOfficialChartImportPayload,
   resolveBestdoriCommunitySongResourceUrls,
   type BestdoriPostTag,
@@ -107,6 +106,7 @@ const COMMUNITY_POST_DIFF_TO_METADATA_DIFFICULTY: Readonly<Record<number, ChartM
   4: "SPECIAL",
 };
 const DOWNLOAD_PROGRESS_EVENT_NAME = "download-progress";
+type DownloadProgressPresentation = "panel" | { progress(ratio: number): void };
 
 type DownloadProgressPayload = {
   operationId?: string;
@@ -153,6 +153,8 @@ function requireBestdoriRef(
 
 export function useEditorIoAndShortcuts(params: any) {
   const {
+    project,
+    onNewProject,
     metadata,
     settings,
     appOptionSettings,
@@ -160,10 +162,6 @@ export function useEditorIoAndShortcuts(params: any) {
     setChartMediaResources,
     chartMediaLease,
     skinSelection,
-    bpmEvents,
-    svEvents,
-    slideChains,
-    notes,
     sortBpmEvents,
     sortSvEvents,
     sortNotes,
@@ -173,7 +171,6 @@ export function useEditorIoAndShortcuts(params: any) {
     setNotes,
     setSlideChains,
     setMetadata,
-    createId,
     setBpmEvents,
     setTimingGroups,
     setSvEvents,
@@ -181,7 +178,6 @@ export function useEditorIoAndShortcuts(params: any) {
     setSingleSelectedNote,
     clearSelectedBpmEvents,
     setSelectedBpmEventId,
-    toFinite,
     normalizeBaseBpmForWrite,
     normalizeEventBpmForWrite,
     normalizeTimingGroup,
@@ -244,18 +240,6 @@ export function useEditorIoAndShortcuts(params: any) {
     if (applied !== null) void applied.dispose();
   }, []);
 
-  const toBeatValue = (value: unknown): number => Number(toFinite(value, 0).toFixed(6));
-  const toLaneValue = (value: unknown): number => Number(toFinite(value, 0).toFixed(6));
-  const toBpmValue = (value: unknown): number => Number(toFinite(value, metadata.bpm).toFixed(6));
-  const toSvValue = (value: unknown): number => Number(toFinite(value, 1).toFixed(6));
-  const toTimingGroupValue = (value: unknown): string => normalizeTimingGroup(value, GLOBAL_TIMING_GROUP_ID);
-  const toOptionalTimingGroupValue = (value: unknown): string | undefined => {
-    const normalized = toTimingGroupValue(value);
-    return normalized === GLOBAL_TIMING_GROUP_ID ? undefined : normalized;
-  };
-  const toRhythmWidthValue = (value: unknown): number => Math.max(1, Math.round(toFinite(value, 1)));
-  const toDirectionalWidthValue = (value: unknown): number => Math.max(1, Math.round(toFinite(value, 1)));
-
   const parseFiniteNumber = (value: unknown, label: string): number => {
     const numeric = Number(value);
     if (!Number.isFinite(numeric)) {
@@ -300,82 +284,6 @@ export function useEditorIoAndShortcuts(params: any) {
     return shifted < 0 ? 0 : shifted;
   };
 
-  const mapDirectionFromInternalType = (type: ChartNote["type"]): GarupaChartJsonDirection | null => {
-    if (type === "directional_flick_left") {
-      return "Left";
-    }
-    if (type === "directional_flick_right") {
-      return "Right";
-    }
-    return null;
-  };
-
-  const mapTopLevelNoteToJson = (note: ChartNote): GarupaChartJsonTopLevelNote | null => {
-    if (note.type === "single") {
-      return {
-        type: "Single",
-        beat: toBeatValue(note.beat),
-        lane: toLaneValue(note.lane),
-        width: toRhythmWidthValue(note.width),
-        timingGroup: toOptionalTimingGroupValue(note.timingGroup),
-      };
-    }
-    if (note.type === "flick") {
-      return {
-        type: "Flick",
-        beat: toBeatValue(note.beat),
-        lane: toLaneValue(note.lane),
-        width: toRhythmWidthValue(note.width),
-        timingGroup: toOptionalTimingGroupValue(note.timingGroup),
-      };
-    }
-    if (note.type === "skill") {
-      return {
-        type: "Skill",
-        beat: toBeatValue(note.beat),
-        lane: toLaneValue(note.lane),
-        width: toRhythmWidthValue(note.width),
-        timingGroup: toOptionalTimingGroupValue(note.timingGroup),
-      };
-    }
-    const direction = mapDirectionFromInternalType(note.type);
-    if (direction) {
-      return {
-        type: "Directional",
-        beat: toBeatValue(note.beat),
-        lane: toLaneValue(note.lane),
-        width: toDirectionalWidthValue(note.width),
-        direction,
-        timingGroup: toOptionalTimingGroupValue(note.timingGroup),
-      };
-    }
-    return null;
-  };
-
-  const mapSlideConnectionToJson = (note: ChartNote): GarupaChartJsonSlideConnection | null => {
-    if (note.type === "hidden") {
-      return {
-        type: "Hidden",
-        beat: toBeatValue(note.beat),
-        lane: toLaneValue(note.lane),
-        width: toRhythmWidthValue(note.width),
-        timingGroup: toOptionalTimingGroupValue(note.timingGroup),
-      };
-    }
-    const topLevel = mapTopLevelNoteToJson(note);
-    return topLevel ? (topLevel as GarupaChartJsonSlideConnection) : null;
-  };
-
-  const buildExportItemKey = (
-    item: GarupaChartJsonSlideConnection | GarupaChartJsonTopLevelNote,
-  ): string => {
-    const timingGroup = toTimingGroupValue((item as { timingGroup?: string }).timingGroup);
-    if (item.type === "Directional") {
-      return buildJsonNoteKey("Directional", item.beat, item.lane, item.width, item.direction, timingGroup);
-    }
-    return buildJsonNoteKey(item.type, item.beat, item.lane, item.width, undefined, timingGroup);
-  };
-
   const buildJsonNoteKey = (
     type: "Single" | "Flick" | "Skill" | "Hidden" | "Directional",
     beat: number,
@@ -414,7 +322,7 @@ export function useEditorIoAndShortcuts(params: any) {
 
       return {
         note: {
-          id: createId(),
+          id: `import-${label}`,
           type: rawDirection === "Left" ? "directional_flick_left" : "directional_flick_right",
           beat,
           lane,
@@ -451,7 +359,7 @@ export function useEditorIoAndShortcuts(params: any) {
 
     return {
       note: {
-        id: createId(),
+        id: `import-${label}`,
         type: internalType,
           beat,
           lane,
@@ -462,66 +370,7 @@ export function useEditorIoAndShortcuts(params: any) {
     };
   };
 
-  const garupaChartJson = useMemo<GarupaChartJson>(() => {
-    const sortedNotes = sortNotes(notes as ChartNote[]) as ChartNote[];
-    const noteById = new Map(sortedNotes.map((note) => [note.id, note] as const));
-    const normalizedSlideChains = ((slideChains as Array<{ noteIds: string[]; timingGroup?: string }>) ?? [])
-      .map((chain) => {
-        const timingGroup = toTimingGroupValue(chain.timingGroup);
-        const mappedNotes = chain.noteIds.flatMap((id) => {
-          const note = noteById.get(id);
-          const connection = note ? mapSlideConnectionToJson({ ...note, timingGroup }) : null;
-          return connection === null ? [] : [{ id, connection }];
-        });
-        return { timingGroup, mappedNotes };
-      })
-      .filter((chain) => chain.mappedNotes.length >= 2);
-    const slideNoteIdSet = new Set(
-      normalizedSlideChains.flatMap((chain) => chain.mappedNotes.map(({ id }) => id)),
-    );
-
-    const bpmItems: GarupaChartJsonBpmItem[] = [
-      { type: "BPM", beat: 0, value: toBpmValue(metadata.bpm) },
-      ...(sortBpmEvents(bpmEvents as ChartBpmEvent[]) as ChartBpmEvent[])
-        .filter((event: ChartBpmEvent) => !approxEq(event.beat, 0))
-        .map((event: ChartBpmEvent) => ({
-          type: "BPM" as const,
-          beat: toBeatValue(event.beat),
-          value: toBpmValue(event.bpm),
-        })),
-    ];
-
-    const svItems: GarupaChartJsonSvItem[] = (sortSvEvents(svEvents as ChartSvEvent[]) as ChartSvEvent[]).map(
-      (event: ChartSvEvent) => ({
-        type: "SV",
-        beat: toBeatValue(event.beat),
-        value: toSvValue(event.value),
-        timingGroup: toTimingGroupValue(event.timingGroup),
-      }),
-    );
-
-    const slideConnectionKeySet = new Set<string>();
-    const slideItems: GarupaChartJsonSlideItem[] = normalizedSlideChains.map((chain) => {
-      const connections = chain.mappedNotes.map(({ connection }) => connection);
-      for (const connection of connections) {
-        if (connection.type !== "Hidden") slideConnectionKeySet.add(buildExportItemKey(connection));
-      }
-      return {
-        type: "Slide",
-        connections,
-        timingGroup: toOptionalTimingGroupValue(chain.timingGroup),
-      };
-    });
-
-    const topLevelItems: GarupaChartJsonTopLevelNote[] = sortedNotes
-      .filter((note) => note.type !== "hidden" && !slideNoteIdSet.has(note.id))
-      .map((note) => mapTopLevelNoteToJson(note))
-      .filter((item): item is GarupaChartJsonTopLevelNote => item !== null)
-      .filter((item) => !slideConnectionKeySet.has(buildExportItemKey(item)));
-
-    return [...bpmItems, ...svItems, ...topLevelItems, ...slideItems];
-  }, [approxEq, bpmEvents, metadata.bpm, notes, slideChains, sortBpmEvents, sortNotes, sortSvEvents, svEvents]);
-
+  const garupaChartJson = useMemo(() => projectGarupaChart(project), [project.chart, project.metadata]);
   const garupaChartJsonText = useMemo(() => JSON.stringify(garupaChartJson), [garupaChartJson]);
   const [isImportJsonModalOpen, setIsImportJsonModalOpen] = useState(false);
   const [importJsonModalLevel, setImportJsonModalLevel] = useState<ImportJsonModalLevel>("chart");
@@ -543,6 +392,8 @@ export function useEditorIoAndShortcuts(params: any) {
     logs: [],
   });
   const currentDownloadOperationIdRef = useRef<string | null>(null);
+  const externalDownloadProgressIdRef = useRef<string | null>(null);
+  const externalDownloadProgressRef = useRef<((ratio: number) => void) | null>(null);
   const downloadScopeMapRef = useRef<Map<string, DownloadScopeProgressState>>(new Map());
   const downloadLogRef = useRef<string[]>([]);
   const downloadProgressHideTimerRef = useRef<number | null>(null);
@@ -575,11 +426,14 @@ export function useEditorIoAndShortcuts(params: any) {
     }, delayMs);
   };
 
-  const startDownloadProgress = (operationId: string, message: string) => {
+  const startDownloadProgress = (operationId: string, message: string, presentation: DownloadProgressPresentation = "panel") => {
     clearDownloadProgressHideTimer();
     currentDownloadOperationIdRef.current = operationId;
     downloadScopeMapRef.current = new Map();
     downloadLogRef.current = [message];
+    externalDownloadProgressIdRef.current = presentation !== "panel" ? operationId : null;
+    externalDownloadProgressRef.current = presentation !== "panel" ? presentation.progress : null;
+    if (presentation !== "panel") { hideDownloadProgress(); presentation.progress(0); return; }
     setDownloadProgress({
       visible: true,
       blocking: true,
@@ -590,6 +444,10 @@ export function useEditorIoAndShortcuts(params: any) {
   };
 
   const completeDownloadProgress = (message: string, delayMs = 420) => {
+    if (currentDownloadOperationIdRef.current !== null &&
+      externalDownloadProgressIdRef.current === currentDownloadOperationIdRef.current) {
+      return; // The caller completes/releases its indicator after the operation result.
+    }
     const nextLogs = [...downloadLogRef.current, message];
     const compactLogs = nextLogs.slice(-2);
     downloadLogRef.current = compactLogs;
@@ -619,7 +477,9 @@ export function useEditorIoAndShortcuts(params: any) {
             return;
           }
 
+          // Late completion events must not reopen the panel after page navigation.
           const currentOperationId = currentDownloadOperationIdRef.current;
+          if (!currentOperationId && payload.operationId === externalDownloadProgressIdRef.current) return;
           if (currentOperationId && payload.operationId !== currentOperationId) {
             return;
           }
@@ -662,6 +522,9 @@ export function useEditorIoAndShortcuts(params: any) {
           );
           const overallRatio = weightedTotal > 0 ? weightedProgress / weightedTotal : 0;
           const percent = Math.max(0, Math.min(100, Math.round(overallRatio * 100)));
+          if (currentOperationId && externalDownloadProgressIdRef.current === currentOperationId) {
+            externalDownloadProgressRef.current?.(overallRatio); return;
+          }
 
           const message =
             typeof payload.message === "string" && payload.message.trim().length > 0
@@ -1012,7 +875,7 @@ export function useEditorIoAndShortcuts(params: any) {
     setImportJsonModalLevel("bestdori-v2");
   };
 
-  const applyParsedGarupaChartJson = (parsed: unknown): AppliedGarupaChartJsonSummary => {
+  const applyParsedGarupaChartJson = (parsed: unknown, preserveForPlay = false): AppliedGarupaChartJsonSummary => {
     if (!Array.isArray(parsed)) {
       throw new Error("Chart JSON top-level must be an array.");
     }
@@ -1075,7 +938,7 @@ export function useEditorIoAndShortcuts(params: any) {
         });
 
         nextSlideChains.push({
-          id: `slide-${itemIndex}-${createId()}`,
+          id: `import-slide-${itemIndex}`,
           noteIds,
           timingGroup: chainTimingGroup,
         });
@@ -1182,8 +1045,8 @@ export function useEditorIoAndShortcuts(params: any) {
       });
     }
     const nextBpmEvents = sortBpmEvents(
-      Array.from(dedupedBpmByBeat.values()).map((item) => ({
-        id: createId(),
+      Array.from(dedupedBpmByBeat.values()).map((item, index) => ({
+        id: `import-bpm-${index}`,
         beat: item.beat,
         bpm: item.bpm,
       } as ChartBpmEvent)),
@@ -1196,6 +1059,7 @@ export function useEditorIoAndShortcuts(params: any) {
     for (const item of shiftedSvItems) {
       const normalized = normalizeSvEvent(
         {
+          id: `import-sv-${item.sourceIndex}`,
           beat: item.beat,
           value: item.value,
           timingGroup: item.timingGroup,
@@ -1211,9 +1075,9 @@ export function useEditorIoAndShortcuts(params: any) {
     }
     const nextSvEvents = sortSvEvents(Array.from(dedupedSvByGroupBeat.values()));
 
-    const shouldRegressExGarupaOnImport = appOptionSettings.exGarupaEnabled === false;
-    const shouldRegressSpRhythmOnImport = appOptionSettings.spRhythmNoteEnabled === false;
-    const shouldRegressHabahiroOnImport = appOptionSettings.habahiro === false;
+    const shouldRegressExGarupaOnImport = !preserveForPlay && appOptionSettings.exGarupaEnabled === false;
+    const shouldRegressSpRhythmOnImport = !preserveForPlay && appOptionSettings.spRhythmNoteEnabled === false;
+    const shouldRegressHabahiroOnImport = !preserveForPlay && appOptionSettings.habahiro === false;
     const nextChartState = { notes: nextNotes, slideChains: nextSlideChains, svEvents: nextSvEvents };
     let regressedChartState: ChartStateLike = nextChartState;
     let regressedExGarupa = false;
@@ -1234,11 +1098,12 @@ export function useEditorIoAndShortcuts(params: any) {
     const importedSlideChains = regressedChartState.slideChains;
     const importedSvEvents = regressedChartState.svEvents ?? nextSvEvents;
     const importedNotes = sortNotes(
-      appOptionSettings.habahiro
+      !preserveForPlay && appOptionSettings.habahiro
         ? applyHabahiroSlideWidths(regressedChartState.notes, importedSlideChains)
         : regressedChartState.notes,
     );
 
+    onNewProject(preserveForPlay);
     setMetadata(nextMetadata);
     setNotes(importedNotes);
     setSlideChains(importedSlideChains);
@@ -1340,6 +1205,9 @@ export function useEditorIoAndShortcuts(params: any) {
   };
 
   const pushBlockingProgress = (operationId: string, percent: number, message: string) => {
+    if (externalDownloadProgressIdRef.current === operationId) {
+      externalDownloadProgressRef.current?.(Math.max(0, Math.min(99, percent)) / 100); return;
+    }
     if (currentDownloadOperationIdRef.current !== operationId) {
       return;
     }
@@ -1374,9 +1242,9 @@ export function useEditorIoAndShortcuts(params: any) {
     });
   };
 
-  const applyImportOfficialChart = async () => {
+  const loadOfficialChart = async (requested?: { id: string; difficulty: OfficialDifficulty; preserveForPlay: boolean; progress: (ratio: number) => void }) => {
     appLog("info", "editor.action", { action: "applyImportOfficialChart" });
-    const chartIdText = importOfficialChartId.trim();
+    const chartIdText = (requested?.id ?? importOfficialChartId).trim();
     if (!/^\d+$/.test(chartIdText)) {
       setStatusMessage("官方谱面导入失败：ID 必须为正整数。");
       return;
@@ -1387,15 +1255,20 @@ export function useEditorIoAndShortcuts(params: any) {
       return;
     }
 
-    const difficulty = importOfficialChartDifficulty;
+    const difficulty = requested?.difficulty ?? importOfficialChartDifficulty;
     const importOperationId = `official-chart-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
     const pushImportProgress = (percent: number, message: string) =>
       pushBlockingProgress(importOperationId, percent, message);
 
-    startDownloadProgress(importOperationId, "正在获取官方谱面数据…");
+    startDownloadProgress(importOperationId, "正在获取官方谱面数据…", requested ? { progress: requested.progress } : "panel");
     try {
       pushImportProgress(15, "正在请求官方谱面与歌曲信息…");
-      const payload = await fetchBestdoriOfficialChartImportPayload(chartId, OFFICIAL_CHART_DIFFICULTY_TO_API[difficulty]);
+      const snapshot = requested ? getOfficialMusicLibrary() : null;
+      const song = snapshot?.songs.find(song => song.id === chartId);
+      if (requested && (!song || !song.available.includes(difficulty) || !snapshot?.metadata)) throw new Error("所选官方谱面不在本次启动曲库内");
+      const payload = await fetchBestdoriOfficialChartImportPayload(chartId, OFFICIAL_CHART_DIFFICULTY_TO_API[difficulty],
+        song && snapshot?.metadata ? { songInfo: song.info, bands: snapshot.metadata.bands, server: song.server } : undefined);
+      if (song) { payload.metadata.title = song.title; payload.metadata.artist = song.artist; }
       pushImportProgress(42, "正在转换谱面结构…");
       const converted = convertBestdoriV2ToGarupaChartJson(payload.chart);
       const hasVisibleNote = hasVisiblePlayableNote(converted);
@@ -1403,15 +1276,32 @@ export function useEditorIoAndShortcuts(params: any) {
         throw new Error("官方谱面解析成功，但未解析到可见音符。");
       }
       pushImportProgress(58, "正在准备当前工程媒体…");
-      const bgmRef = await materializeBestdoriMediaInWorkspace({
-        server: payload.resources.server,
-        purpose: "bgm",
-        nativeId: payload.resources.audioLogicalPath,
-        logicalPath: payload.resources.audioLogicalPath,
-        title: payload.audioFileName,
-        url: payload.resources.audioUrl,
-      });
-      const coverRef = await materializeBestdoriMediaInWorkspace({
+      const bgmRef = await (async () => {
+        const candidates = song && snapshot?.metadata?.sourceMedia
+          ? snapshot.metadata.sourceMedia.audio[song.info.bgmId] ?? []
+          : [{ server: payload.resources.server, logicalPath: payload.resources.audioLogicalPath, url: payload.resources.audioUrl }];
+        const failures: string[] = [];
+        for (const candidate of availableOfficialMedia(candidates)) {
+          try {
+            return await materializeBestdoriMediaInWorkspace({ server: candidate.server, purpose: "bgm",
+              nativeId: candidate.logicalPath, logicalPath: candidate.logicalPath,
+              title: payload.audioFileName, url: candidate.url });
+          } catch (error) {
+            failures.push(`${candidate.server}: ${userFacingErrorMessage(error)}`);
+            appLog("warn", "official.audio-source-failed", { chartId, server: candidate.server, error });
+          }
+        }
+        throw new Error(failures.length ? `官方音频下载失败：${failures.join("；")}` : "官方音频未收录在本次启动资源目录中");
+      })();
+      const coverRef = requested
+        ? await (async () => {
+            if (!song || !snapshot?.lease) throw new Error("官方封面未在启动时下载完成");
+            const bytes = await snapshot.lease.readBytes(song.jacketSlot, "payload");
+            const result = await resourceManager.importWorkspaceMedia({ purpose: "cover", fileName: `${song.id}-jacket.png`, mediaType: "image/png", bytes });
+            if (result.status === "rejected") throw new ResourceFailureError(result.failure);
+            return result.value.ref;
+          })()
+        : await materializeBestdoriMediaInWorkspace({
         server: payload.resources.server,
         purpose: "cover",
         nativeId: payload.resources.jacketLogicalPath,
@@ -1430,7 +1320,7 @@ export function useEditorIoAndShortcuts(params: any) {
             url: payload.resources.mvUrl,
           });
       pushImportProgress(82, "正在应用谱面与工程媒体…");
-      const summary = applyParsedGarupaChartJson(converted);
+      const summary = applyParsedGarupaChartJson(converted, requested?.preserveForPlay ?? false);
       setChartMediaResources((current: typeof chartMediaResources) => Object.freeze({
         ...current,
         bgm: bgmRef,
@@ -1458,11 +1348,13 @@ export function useEditorIoAndShortcuts(params: any) {
       completeDownloadProgress("官方谱面导入完成。");
       setImportJsonModalLevel("chart");
       setIsImportJsonModalOpen(false);
+      return true;
     } catch (error) {
       await resourceManager.reconcileCurrentChartMedia(chartMediaResources);
       const message = userFacingErrorMessage(error);
       completeDownloadProgress(`官方谱面导入失败：${message}`, 900);
       setStatusMessage(`官方谱面导入失败：${message}`);
+      return false;
     } finally {
       if (currentDownloadOperationIdRef.current === importOperationId) {
         currentDownloadOperationIdRef.current = null;
@@ -1471,17 +1363,20 @@ export function useEditorIoAndShortcuts(params: any) {
     }
   };
 
-  const applyImportCommunityChart = async () => {
+  const applyImportOfficialChart = () => loadOfficialChart();
+
+  const applyImportCommunityChart = async (requestedId?: string, preserveForPlay = false,
+    presentation: DownloadProgressPresentation = "panel"): Promise<boolean> => {
     appLog("info", "editor.action", { action: "applyImportCommunityChart" });
-    const postIdText = importCommunityPostId.trim();
+    const postIdText = (requestedId ?? importCommunityPostId).trim();
     if (!/^\d+$/.test(postIdText)) {
       setStatusMessage("社区谱面导入失败：谱面 ID 必须为正整数。");
-      return;
+      return false;
     }
     const postId = Number.parseInt(postIdText, 10);
-    if (!Number.isFinite(postId) || postId < 1) {
+    if (!Number.isSafeInteger(postId) || postId < 1) {
       setStatusMessage("社区谱面导入失败：谱面 ID 必须为正整数。");
-      return;
+      return false;
     }
 
     const importOperationId = `community-chart-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -1510,7 +1405,7 @@ export function useEditorIoAndShortcuts(params: any) {
     const pushImportProgress = (percent: number, message: string) =>
       pushBlockingProgress(importOperationId, percent, message);
 
-    startDownloadProgress(importOperationId, "正在获取社区谱面数据…");
+    startDownloadProgress(importOperationId, "正在获取社区谱面数据…", presentation);
     try {
       pushImportProgress(12, "正在请求社区帖子详情…");
       const details = await fetchBestdoriCommunityPostDetails(postId);
@@ -1565,12 +1460,13 @@ export function useEditorIoAndShortcuts(params: any) {
             url: coverUrl,
           });
       pushImportProgress(82, "正在应用谱面与工程媒体…");
-      const summary = applyParsedGarupaChartJson(converted);
+      const summary = applyParsedGarupaChartJson(converted, preserveForPlay);
       setChartMediaResources((current: typeof chartMediaResources) => Object.freeze({
         ...current,
         bgm: bgmRef,
         cover: coverRef,
         mv: null,
+        stageBackdrop: null,
       }));
       setAudioFileName(bgmRef === null ? "" : resolveFileNameFromUrl(audioUrl, `community-post-${postId}.mp3`));
       setAudioDurationSec(0);
@@ -1597,15 +1493,62 @@ export function useEditorIoAndShortcuts(params: any) {
       completeDownloadProgress("社区谱面导入完成。");
       setImportJsonModalLevel("chart");
       setIsImportJsonModalOpen(false);
+      return true;
     } catch (error) {
       await resourceManager.reconcileCurrentChartMedia(chartMediaResources);
       const message = userFacingErrorMessage(error);
       completeDownloadProgress(`社区谱面导入失败：${message}`, 900);
       setStatusMessage(`社区谱面导入失败：${message}`);
+      return false;
     } finally {
       if (currentDownloadOperationIdRef.current === importOperationId) {
         currentDownloadOperationIdRef.current = null;
         downloadScopeMapRef.current = new Map();
+      }
+    }
+  };
+
+  const loadChartForPlay = async (source: "bestdori" | "test", id: string,
+    presentation: DownloadProgressPresentation = "panel"): Promise<boolean> => {
+    if (source === "bestdori") return applyImportCommunityChart(id, true, presentation);
+    const operationId = `test-chart-${Date.now()}`;
+    const finish = startOperation("project.load-test-chart", { id });
+    startDownloadProgress(operationId, "正在获取测试服谱面…", presentation);
+    try {
+      const { chart, item } = await fetchTestServerChart(id.trim());
+      const converted = convertBestdoriV2ToGarupaChartJson(chart);
+      if (!hasVisiblePlayableNote(converted)) throw new Error("测试服谱面没有可游玩的音符");
+      const media = async (purpose: "bgm" | "cover") => {
+        const url = item[purpose]?.url;
+        if (typeof url !== "string" || !url) {
+          if (purpose === "bgm") throw new Error("测试服谱面缺少歌曲音频");
+          return null;
+        }
+        pushBlockingProgress(operationId, purpose === "bgm" ? 40 : 70, purpose === "bgm" ? "正在下载音频…" : "正在下载封面…");
+        const bytes = await fetchTestServerMedia(url);
+        const mediaType = detectUserMediaType(bytes);
+        if (!mediaType) throw new Error(`测试服 ${purpose} 返回了不支持的媒体格式`);
+        const installed = await resourceManager.importWorkspaceMedia({purpose, bytes,
+          fileName: `test-${id}-${purpose}`, mediaType});
+        if (installed.status === "rejected") throw new ResourceFailureError(installed.failure);
+        return installed.value.ref;
+      };
+      const bgm = await media("bgm"), cover = await media("cover");
+      const summary = applyParsedGarupaChartJson(converted, true);
+      setChartMediaResources(Object.freeze({ bgm, cover, mv: null, stageBackdrop: null }));
+      setAudioFileName(`test-${id}-bgm`); setAudioDurationSec(0);
+      setMetadata((current: ChartMetadata) => ({...current, title: resolveTrimmedString(item.title),
+        artist: "", charter: "", isFullLength: false, difficulty: "EXPERT",
+        difficultyLevel: Number.isFinite(item.rating) ? String(item.rating) : "", offsetMs: 0, mvOffsetMs: 0}));
+      applyChartImportStatus(`已加载测试服谱面 ${id}`, summary);
+      completeDownloadProgress("测试服谱面加载完成。"); finish(); return true;
+    } catch (error) {
+      const message = userFacingErrorMessage(error); finish(error);
+      completeDownloadProgress(`测试服谱面加载失败：${message}`, 900);
+      setStatusMessage(`测试服谱面加载失败：${message}`); return false;
+    } finally {
+      if (currentDownloadOperationIdRef.current === operationId) {
+        currentDownloadOperationIdRef.current = null; downloadScopeMapRef.current = new Map();
       }
     }
   };
@@ -2221,6 +2164,8 @@ export function useEditorIoAndShortcuts(params: any) {
     applyImportJsonText,
     applyImportOfficialChart,
     applyImportCommunityChart,
+    loadChartForPlay,
+    loadOfficialChart,
     applyUploadCommunityChart,
     applyUploadNotGarupaServerChart,
     applyUploadTestServerChart,

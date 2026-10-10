@@ -12,6 +12,7 @@ import { songHasSpecialNotes } from "../songNoteStatistics";
 import { SIMULATOR_PRE_ADAPTATION_DEFAULTS, type SimulatorModeSelection } from "../../app/simulator/preAdaptationContract";
 import { OriginalPageSwitch } from "../OriginalPageSwitch";
 import { LiveSelectionPage } from "../LiveSelectionPage";
+import { MusicSelectionPage } from "../MusicSelectionPage";
 import { DownloadProgressModal } from "../DownloadProgressModal";
 import { OverlayDialogModal } from "../OverlayDialogModal";
 import { SkinSettingsModal } from "../SkinSettingsModal";
@@ -20,9 +21,10 @@ import { isMobileRuntime } from "../../app/mobileRuntime";
 import { SidebarPanel } from "./SidebarPanel";
 import { TimelineStrip } from "./TimelineStrip";
 import { useUiViewport } from "../useUiViewport";
+import type { useEditorIoAndShortcuts } from "../../app/hooks/useEditorIoAndShortcuts";
 
 type ChartEditorLayoutProps = {
-  vm: any;
+  vm: Record<string, any> & Pick<ReturnType<typeof useEditorIoAndShortcuts>, "loadOfficialChart">;
 };
 
 const CANVAS_INTERACTION_OVERSCAN_PX = 240;
@@ -336,6 +338,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   const [isBestdoriLoginOpen, setIsBestdoriLoginOpen] = useState(false);
   const [livePreparationOpen, setLivePreparationOpen] = useState(false);
   const [liveSelectionOpen, setLiveSelectionOpen] = useState(false);
+  const [musicSelectionOpen, setMusicSelectionOpen] = useState(false);
   const [backgroundPage, setBackgroundPage] = useState<string | null>(null);
   const [preparationSettingsOpen, setPreparationSettingsOpen] = useState(false);
   const preparationInputs = useRef<Record<SimulatorModeSelection["sessionMode"], SimulatorModeSelection["inputMode"]>>({
@@ -421,7 +424,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       setStatusMessage("Bestdori 登录成功。");
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      setBestdoriLoginErrorMessage(message);
       setStatusMessage(`Bestdori 登录失败：${message}`);
     } finally {
       bestdoriAuthBusy.current = false;
@@ -442,7 +444,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       setBestdoriLoginPasswordInput("");
       setStatusMessage("已退出 Bestdori 账号。");
     } catch (error) {
-      setBestdoriLoginErrorMessage(error instanceof Error ? error.message : String(error));
+      setStatusMessage(`Bestdori 退出登录失败：${error instanceof Error ? error.message : String(error)}`);
     } finally {
       bestdoriAuthBusy.current = false;
       setBestdoriLoginSubmitting(false);
@@ -1233,9 +1235,9 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
 
   return (
     <OriginalUiSoundProvider volumePercent={appOptionSettings.simulatorSettings.systemSeVolumePercent}
-      masterPercent={appOptionSettings.simulatorSettings.masterVolumePercent} onError={vm.setStatusMessage}>
+      masterPercent={appOptionSettings.simulatorSettings.masterVolumePercent} onError={message => vm.setStatusMessage(`界面音效失败：${message}`)}>
     <OriginalMenuBackground type={backgroundPage === "live" ? (preparationMode.sessionMode === "rehearsal" ? 2 : 1)
-      : backgroundPage === "song" ? 257 : backgroundPage === "entrance" ? "home" : "editor"} onError={vm.setStatusMessage} />
+      : backgroundPage === "search" ? 1 : backgroundPage === "song" ? 257 : backgroundPage === "entrance" ? "home" : "editor"} onError={vm.setStatusMessage} />
     <main className={`app-shell ${mobileRuntime ? "is-mobile-runtime" : ""}`}
       data-ui-layout={uiViewport.stacked ? "stacked" : "columns"}
       >
@@ -1258,22 +1260,41 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         }}
       />
 
-      <OriginalPageSwitch open={isMetadataEditorOpen || livePreparationOpen || liveSelectionOpen}
+      <OriginalPageSwitch open={isMetadataEditorOpen || livePreparationOpen || liveSelectionOpen || musicSelectionOpen}
         onPageShown={setBackgroundPage}
         onWorkspaceBack={() => setLiveSelectionOpen(true)}
-        showPageBack={isMetadataEditorOpen || livePreparationOpen}
-        pageId={livePreparationOpen ? "live" : isMetadataEditorOpen ? "song" : "entrance"}
-        section={livePreparationOpen ? "演出" : isMetadataEditorOpen ? "歌曲" : "首页"}
+        showPageBack={isMetadataEditorOpen || livePreparationOpen || musicSelectionOpen}
+        pageId={livePreparationOpen ? "live" : isMetadataEditorOpen ? "song" : musicSelectionOpen ? "search" : "entrance"}
+        section={livePreparationOpen ? "演出" : isMetadataEditorOpen ? "歌曲" : musicSelectionOpen ? "演出" : "首页"}
         title={livePreparationOpen ? songDetailSource.wording[preparationMode.sessionMode === "rehearsal"
-          ? "header_mainTitle_freeLivePracticeMode" : "header_mainTitle_freeLive"] : isMetadataEditorOpen ? "歌曲信息" : "选择功能"}
+          ? "header_mainTitle_freeLivePracticeMode" : "header_mainTitle_freeLive"] : isMetadataEditorOpen ? "歌曲信息" : musicSelectionOpen ? "谱面搜索" : "选择功能"}
         onOpenMenu={openAppSettings} menuOpen={isAppSettingsOpen}
-        onBack={() => { setIsMetadataEditorOpen(false); setLivePreparationOpen(false); }} page={livePreparationOpen ?
+        onBack={() => {
+          if (isMetadataEditorOpen || livePreparationOpen) { setIsMetadataEditorOpen(false); setLivePreparationOpen(false); }
+          else setMusicSelectionOpen(false);
+        }} page={livePreparationOpen ?
       <LivePreparationPage metadata={metadata} mode={preparationMode} onModeChange={changePreparationMode}
         mvEnabled={playbackMvMode} hasMv={!!chartMediaSources.mv}
         hasSpecialNotes={songHasSpecialNotes(notes, vm.slideChains)}
         onMvChange={setPlaybackMvMode} onSettings={() => setPreparationSettingsOpen(true)}
-        resourcesReady={vm.settingsResourcesReady} onStart={openSimulatorWindow} /> : !isMetadataEditorOpen ?
-      <LiveSelectionPage onFreeLive={() => setLiveSelectionOpen(false)} /> : <SongInformationPage
+        resourcesReady={vm.settingsResourcesReady} onStart={openSimulatorWindow} /> : !isMetadataEditorOpen && musicSelectionOpen ?
+      <MusicSelectionPage source={appOptionSettings.musicSelectionSource} onSourceChange={vm.setMusicSelectionSource}
+        onResourceWarning={vm.setStatusMessage} previewVolume={appOptionSettings.simulatorSettings.systemBgmVolumePercent * appOptionSettings.simulatorSettings.masterVolumePercent / 10000} onLoad={(source, id, progress, destination, difficulty) => source === "official"
+        ? vm.loadOfficialChart({ id, difficulty: difficulty!, preserveForPlay: destination === "play", progress }).then(Boolean) : destination === "editor" && source === "bestdori"
+        ? vm.applyImportCommunityChart(id, false, { progress }) : vm.loadChartForPlay(source, id, { progress })}
+        onReady={destination => {
+          if (destination === "play") setLivePreparationOpen(true);
+          else {
+            setMusicSelectionOpen(false); setLiveSelectionOpen(false);
+            setLivePreparationOpen(false); setIsMetadataEditorOpen(false);
+          }
+        }} /> : !isMetadataEditorOpen ?
+      <LiveSelectionPage onFreeLive={() => setLiveSelectionOpen(false)}
+        onImportProject={() => vm.projectFiles.choose(() => {
+          setMusicSelectionOpen(false); setLiveSelectionOpen(false);
+          setLivePreparationOpen(false); setIsMetadataEditorOpen(false);
+        }, () => vm.openOverlayDialog({ tone: "info", message: "未选择项目文件" }))}
+        onSearchCharts={() => setMusicSelectionOpen(true)} /> : <SongInformationPage
         audioDurationSec={audioDurationSec}
         noteCount={visibleNoteCount}
         notes={notes}
@@ -2070,7 +2091,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         onLivePreparation={() => { setIsAppSettingsOpen(false); setIsMetadataEditorOpen(false); setLivePreparationOpen(true); }}
         optionsOpen={preparationSettingsOpen} onOptionsClose={() => setPreparationSettingsOpen(false)}
         resourcesReady={vm.settingsResourcesReady}
-        onSettingsError={vm.setStatusMessage}
+        onSettingsError={message => vm.setStatusMessage(`设置操作失败：${message}`)}
         onImport={openImportJsonModal} onExport={downloadJson} onPreview={openStaticRenderWindow}
         onSimulator={openSimulatorWindow} onSkinLibrary={openSkinSettings} onAccount={openBestdoriLoginModal}
         open={isAppSettingsOpen}
@@ -2190,7 +2211,10 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         onApplySkinSelection={() => void applyBestdoriSkinSelection(pendingSkinSelection, true)}
       />
 
+      <input ref={vm.projectFiles.input} type="file" accept=".gcp" hidden onChange={vm.projectFiles.open} />
       <ExportJsonModal
+        onSaveProject={() => void vm.projectFiles.save()}
+        projectBusy={vm.projectFiles.busy}
         open={isExportJsonModalOpen}
         jsonText={garupaChartJsonText}
         uploadCommunityPostContent={uploadCommunityPostContent}
@@ -2206,6 +2230,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       />
 
       <ImportJsonModal
+        onOpenProject={() => vm.projectFiles.choose()}
+        projectBusy={vm.projectFiles.busy}
         open={isImportJsonModalOpen}
         level={importJsonModalLevel}
         chartJsonText={importJsonText}

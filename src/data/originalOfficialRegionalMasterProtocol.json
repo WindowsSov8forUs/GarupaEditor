@@ -1,0 +1,44 @@
+{
+  "jp": {
+    "clientVersion": "10.2.0",
+    "apiBase": "https://api.garupa.jp/api/",
+    "codec": {
+      "key": "mikumikulukaluka",
+      "iv": "lukalukamikumiku"
+    }
+  },
+  "cn": {
+    "clientVersion": "10.1.3",
+    "apiBase": "https://l3-prod-all-bd.bilibiligame.net/api/",
+    "platformId": "2",
+    "channelId": "1",
+    "codec": {
+      "key": "wakakabiliwakaka",
+      "iv": "biliwakakawohaha"
+    },
+    "evidence": "a163c9054ae03ad6c9397ee8185a60860d47b013"
+  },
+  "tw": {
+    "clientVersion": "10.1.0",
+    "apiBase": "https://v1010-bd.mobimon.com.tw/api/",
+    "codec": {
+      "key": "mikumikulukaluka",
+      "iv": "lukalukamikumiku"
+    },
+    "evidence": "9a31c9d064d241e60a5ee2ec439f99fb49adc568"
+  },
+  "en": {
+    "clientVersion": "9.4.0",
+    "apiBase": "https://api.app-bang-dream-gbp.com/api/",
+    "codec": {
+      "key": "RXzFAC87WR28eNcP",
+      "iv": "hrk0k7knXlit3S_y"
+    },
+    "omitSchemaFields": {
+      "MasterCollaboOriginalMusicPage": [
+        "14"
+      ]
+    },
+    "evidence": "9a31c9d064d241e60a5ee2ec439f99fb49adc568"
+  }
+}

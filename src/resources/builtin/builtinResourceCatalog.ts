@@ -2,6 +2,9 @@ import homeBackgroundTextUrl from "../../assets/game/menu-background/bg-text-hom
 import homeDisplayButtonUrl from "../../assets/game/button-viewmode-edit.png?url&no-inline";
 import defaultDisplayImageUrl from "../../assets/game/default-display-card-1703.png?url&no-inline";
 import chartEditorIconUrl from "../../assets/icon-chart-editor.png?url&no-inline";
+import playChartIconUrl from "../../assets/game/icon-play-chart.png?url&no-inline";
+import importChartIconUrl from "../../assets/game/icon-import-chart.png?url&no-inline";
+import searchChartIconUrl from "../../assets/game/icon-search-chart.png?url&no-inline";
 import menuBackground0Url from "../../assets/game/menu-background/normal-normalBG.png?url&no-inline";
 import menuBackground1Url from "../../assets/game/menu-background/normal-bg_object_big.png?url&no-inline";
 import menuBackground2Url from "../../assets/game/menu-background/normal-bg_object_small.png?url&no-inline";
@@ -233,6 +236,24 @@ const DEFINITIONS: readonly BuiltinDefinition[] = Object.freeze([
     path: "game/default-display-card-1703.png",
     title: "户山香澄「开始打工了！」特训后透明立绘",
     kind: "image", mediaType: "image/png", url: defaultDisplayImageUrl,
+  }),
+  Object.freeze({
+    slot: "ui.live-selection.play-chart",
+    id: "builtin/ui/live-selection/play-chart",
+    path: "game/icon-play-chart.png",
+    title: "Play chart icon extracted from original live button", kind: "image", mediaType: "image/png", url: playChartIconUrl,
+  }),
+  Object.freeze({
+    slot: "ui.live-selection.import-chart",
+    id: "builtin/ui/live-selection/import-chart",
+    path: "game/icon-import-chart.png",
+    title: "谱面导入图标", kind: "image", mediaType: "image/png", url: importChartIconUrl,
+  }),
+  Object.freeze({
+    slot: "ui.live-selection.search-chart",
+    id: "builtin/ui/live-selection/search-chart",
+    path: "game/icon-search-chart.png",
+    title: "谱面搜索图标", kind: "image", mediaType: "image/png", url: searchChartIconUrl,
   }),
   Object.freeze({
     slot: "ui.live-selection.chart-editor",

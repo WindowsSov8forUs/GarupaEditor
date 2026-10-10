@@ -7,6 +7,8 @@ import resultParticle2Url from "../../assets/game/prefabs/bms/result/Tex_parSet_
 import comboNumberUrl from "../../assets/game/atlas/bms/ui/iconcombonumber/combo-number.png?url&no-inline";
 import decide1Url from "../../assets/game/sound/common-se/decide_1.mp3?url&no-inline";
 import cancelUiUrl from "../../assets/game/sound/common-se/cancel.mp3?url&no-inline";
+import drumScrollingUrl from "../../assets/game/sound/live-menu-se/SE_UI_DRUM_SCROLLING.wav?url&no-inline";
+import difficultyChangeUrl from "../../assets/game/sound/live-menu-se/SE_UI_DIF_CHANGE.wav?url&no-inline";
 import rhythmAdjustShortUrl from "../../assets/game/sound/rhythm-adjust/short.wav?url&no-inline";
 import rhythmAdjustLongUrl from "../../assets/game/sound/rhythm-adjust/short2.wav?url&no-inline";
 import rhythmGameAdditiveUrl from "../../assets/game/atlas/bms/ui/rhythmgameui/rhythm-game-additive.png?url&no-inline";
@@ -194,6 +196,10 @@ const DEFINITIONS: readonly SimulatorBuiltinResourceDefinition[] = Object.freeze
   resource("sound/rhythm-adjust", "Original rhythm adjustment cues", "package", [
     file("game/sound/rhythm-adjust/short.wav", "short.wav", "audio/wav", rhythmAdjustShortUrl),
     file("game/sound/rhythm-adjust/short2.wav", "short2.wav", "audio/wav", rhythmAdjustLongUrl),
+  ]),
+  resource("sound/live-menu-se", "Original LiveMenu UI sound", "package", [
+    file("game/sound/live-menu-se/SE_UI_DIF_CHANGE.wav", "SE_UI_DIF_CHANGE.wav", "audio/wav", difficultyChangeUrl),
+    file("game/sound/live-menu-se/SE_UI_DRUM_SCROLLING.wav", "SE_UI_DRUM_SCROLLING.wav", "audio/wav", drumScrollingUrl),
   ]),
   resource("prefabs/bms/rhythmgamegauge/score", "Score gauge portable resources", "package", [
     file("game/prefabs/bms/rhythmgamegauge/score/high-rank-kira.png", "high-rank-kira.png", "image/png", highRankKiraUrl),

@@ -1,10 +1,11 @@
-﻿import { loggedInvoke as invoke } from "../../logging/applicationLogger";
+import { PROJECT_FORMAT, canonicalJson, readChartProject } from "../../project/chartProject";
+import { captureChartProject } from "../../project/projectResources";
+import { loggedInvoke as invoke } from "../../logging/applicationLogger";
 import { useEffect, useRef, useState } from "react";
 import {
   GLOBAL_TIMING_GROUP_ID,
   buildTimingGroupsFromSvEvents,
   ensureTimingGroups,
-  flattenTimingGroups,
   type ChartTimingGroupMap,
   ChartBpmEvent,
   ChartMetadata,
@@ -134,6 +135,7 @@ function normalizeOptionalText(value: unknown): string | null {
 
 export function useEditorSessionCache(params: any) {
   const {
+    project, restoreProject,
     metadata,
     settings,
     appOptionSettings,
@@ -197,6 +199,10 @@ export function useEditorSessionCache(params: any) {
   const resourceManager = useApplicationResourceManager();
 
   const [didRestoreAttemptFinish, setDidRestoreAttemptFinish] = useState(false);
+  const latestProjectRef = useRef(project);
+  latestProjectRef.current = project;
+  const blockedRestoreProjectIdRef = useRef<string | null>(null);
+  const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const lastSavedChartFingerprintRef = useRef<string | null>(null);
   const lastSavedSettingsFingerprintRef = useRef<string | null>(null);
   const migratedLegacyMediaRefsRef = useRef<readonly ResourceRef[]>(Object.freeze([]));
@@ -329,6 +335,13 @@ export function useEditorSessionCache(params: any) {
           if (!isRecord(parsedUnknown)) {
             throw new Error("chart cache JSON root must be an object");
           }
+          if (parsedUnknown.format === PROJECT_FORMAT) {
+            const restored = await readChartProject(loadedChart.chartJson);
+            if (cancelled) return;
+            restoreProject(restored);
+            restoredChart = true;
+          } else {
+            if (parsedUnknown.schemaVersion !== 1) throw new Error("不支持的旧谱面缓存版本");
           const snapshot = parsedUnknown as Partial<ChartSnapshotV1>;
           const nextSettings = normalizeSettings(
             isRecord(snapshot.settings) ? (snapshot.settings as Partial<ChartSettings>) : {},
@@ -450,27 +463,18 @@ export function useEditorSessionCache(params: any) {
             ? ensureTimingGroups(snapshot.timingGroups)
             : buildTimingGroupsFromSvEvents(sortedNormalizedSvEvents);
 
-          setSettings(nextSettings);
-          setMetadata(nextMetadata);
           const restoredNotes = restoredAppOptionSettings.habahiro
             ? applyHabahiroSlideWidths(nextNotes, nextSlideChains)
             : nextNotes;
-          setNotes(restoredNotes);
-          setSlideChains(nextSlideChains);
-          setBpmEvents(sortedNormalizedBpmEvents);
-          setTimingGroups(restoredTimingGroups);
-          setToolBpmValue(nextMetadata.bpm);
 
           const restoredAudioDuration = Number(snapshot.audioDurationSec);
           const safeAudioDuration =
             Number.isFinite(restoredAudioDuration) && restoredAudioDuration > 0
               ? Number(restoredAudioDuration.toFixed(6))
               : 0;
-          setAudioDurationSec(safeAudioDuration);
 
           const restoredAudioFileName =
             normalizeOptionalText(loadedChart.audioFileName) ?? normalizeOptionalText(snapshot.audioFileName) ?? "";
-          setAudioFileName(restoredAudioFileName);
 
           let restoredMedia = parseChartMediaResources(loadedChart.resourceRefs);
           const loadedResourceSchema = Number(loadedChart.resourceRefsSchemaVersion);
@@ -499,7 +503,8 @@ export function useEditorSessionCache(params: any) {
                 mediaType: loadedAudioMimeType,
                 bytes: decodeBase64ToBytes(loadedAudioBase64),
               });
-              if (imported.status === "accepted") bgm = imported.value.ref;
+              if (imported.status === "rejected") throw new Error(`${imported.failure.capability}: ${imported.failure.boundary}`);
+              bgm = imported.value.ref;
             }
             const rawMetadata: Record<string, unknown> = isRecord(snapshot.metadata)
               ? snapshot.metadata as Record<string, unknown>
@@ -514,7 +519,8 @@ export function useEditorSessionCache(params: any) {
                 mediaType: restoredCoverParsed.mimeType,
                 bytes: decodeBase64ToBytes(restoredCoverParsed.base64Data),
               });
-              if (imported.status === "accepted") cover = imported.value.ref;
+              if (imported.status === "rejected") throw new Error(`${imported.failure.capability}: ${imported.failure.boundary}`);
+              cover = imported.value.ref;
             }
             const restoredMvParsed = parseDataUrl(
               loadedMvDataUrl ?? normalizeOptionalText(rawMetadata.mvDataUrl),
@@ -526,7 +532,8 @@ export function useEditorSessionCache(params: any) {
                 mediaType: restoredMvParsed.mimeType,
                 bytes: decodeBase64ToBytes(restoredMvParsed.base64Data),
               });
-              if (imported.status === "accepted") mv = imported.value.ref;
+              if (imported.status === "rejected") throw new Error(`${imported.failure.capability}: ${imported.failure.boundary}`);
+              mv = imported.value.ref;
             }
             restoredMedia = Object.freeze({ bgm, cover, mv, stageBackdrop: null });
           }
@@ -534,6 +541,15 @@ export function useEditorSessionCache(params: any) {
           if (reconciled.status === "rejected") {
             throw new Error(`${reconciled.failure.capability}: ${reconciled.failure.boundary}`);
           }
+          setSettings(nextSettings);
+          setMetadata(nextMetadata);
+          setNotes(restoredNotes);
+          setSlideChains(nextSlideChains);
+          setBpmEvents(sortedNormalizedBpmEvents);
+          setTimingGroups(restoredTimingGroups);
+          setToolBpmValue(nextMetadata.bpm);
+          setAudioDurationSec(safeAudioDuration);
+          setAudioFileName(restoredAudioFileName);
           setChartMediaResources(restoredMedia);
 
           const restoredMetadataForChartCache = nextMetadata;
@@ -549,6 +565,7 @@ export function useEditorSessionCache(params: any) {
             audioDurationSec: safeAudioDuration,
           } as Omit<ChartSnapshotV1, "savedAt">);
           restoredChart = true;
+          }
         }
 
         if (restoredChart) {
@@ -573,7 +590,8 @@ export function useEditorSessionCache(params: any) {
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        setStatusMessage(`会话缓存恢复失败：${message}`);
+        blockedRestoreProjectIdRef.current = project.projectId;
+        setStatusMessage(`会话缓存恢复失败：${message}。原缓存已保留，打开或导入项目后恢复自动保存。`);
       } finally {
         if (!cancelled) {
           setDidRestoreAttemptFinish(true);
@@ -587,53 +605,23 @@ export function useEditorSessionCache(params: any) {
   }, []);
 
   useEffect(() => {
-    if (!didRestoreAttemptFinish) {
+    if (!didRestoreAttemptFinish || blockedRestoreProjectIdRef.current === project.projectId) {
       return;
     }
 
     const timer = window.setTimeout(() => {
-      void (async () => {
+      saveQueueRef.current = saveQueueRef.current.then(async () => {
         try {
-          const metadataForChart = normalizeMetadata(metadata);
-          const safeAudioDuration =
-            Number.isFinite(audioDurationSec) && audioDurationSec > 0 ? Number(audioDurationSec.toFixed(6)) : 0;
-          const chartCore: Omit<ChartSnapshotV1, "savedAt"> = {
-            schemaVersion: SESSION_SCHEMA_VERSION,
-            metadata: metadataForChart,
-            settings,
-            notes,
-            slideChains,
-            bpmEvents,
-            timingGroups: ensureTimingGroups(timingGroups),
-            audioFileName,
-            audioDurationSec: safeAudioDuration,
-          };
-          if (lastSavedChartFingerprintRef.current === null) {
-            const defaultMetadata = normalizeMetadata({});
-            const defaultSettings = normalizeSettings({});
-            const metadataIsDefault = JSON.stringify(metadataForChart) === JSON.stringify(defaultMetadata);
-            const settingsIsDefault = JSON.stringify(settings) === JSON.stringify(defaultSettings);
-            const hasAnyChartData = notes.length > 0 || slideChains.length > 0 || bpmEvents.length > 0 || flattenTimingGroups(timingGroups).length > 0;
-            const hasAnyMediaData = Object.values(chartMediaResources).some((reference) => reference !== null)
-              || (typeof audioFileName === "string" && audioFileName.trim().length > 0)
-              || safeAudioDuration > 0;
-            if (!hasAnyChartData && !hasAnyMediaData && metadataIsDefault && settingsIsDefault) return;
-          }
-          const fingerprint = JSON.stringify({ chartCore, chartMediaResources });
+          if (latestProjectRef.current !== project) return;
+          const fingerprint = canonicalJson(project);
           if (lastSavedChartFingerprintRef.current === fingerprint) return;
-          const chartJson = JSON.stringify({ ...chartCore, savedAt: new Date().toISOString() });
-          await invoke("save_editor_chart_cache", {
-            payload: {
-              chartJson,
-              resourceRefs: chartMediaResources,
-              cover: null,
-              audio: null,
-              mv: null,
-              coverCleared: true,
-              audioCleared: true,
-              mvCleared: true,
-            },
-          });
+          const captured = await captureChartProject(resourceManager, project);
+          if (latestProjectRef.current !== project) return;
+          await invoke("save_editor_chart_cache", { payload: {
+            chartJson: canonicalJson(captured), resourceRefs: null,
+            cover: null, audio: null, mv: null, coverCleared: false, audioCleared: false, mvCleared: false,
+          } });
+          if (latestProjectRef.current !== project) return;
           const reconciled = await resourceManager.reconcileCurrentChartMedia(chartMediaResources);
           if (reconciled.status === "rejected") {
             throw new Error(`${reconciled.failure.capability}: ${reconciled.failure.boundary}`);
@@ -656,13 +644,14 @@ export function useEditorSessionCache(params: any) {
           const message = error instanceof Error ? error.message : String(error);
           setStatusMessage(`谱面缓存保存失败：${message}`);
         }
-      })();
+      });
     }, SESSION_AUTOSAVE_DELAY_MS);
 
     return () => {
       window.clearTimeout(timer);
     };
   }, [
+    project,
     audioDurationSec,
     audioFileName,
     bpmEvents,
