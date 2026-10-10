@@ -7,6 +7,8 @@ const OFFICIAL_DIFFICULTIES = ["EASY", "NORMAL", "HARD", "EXPERT", "SPECIAL"] as
 type OfficialChartDifficulty = (typeof OFFICIAL_DIFFICULTIES)[number];
 
 type ImportJsonModalProps = {
+  onOpenProject: () => void;
+  projectBusy: boolean;
   open: boolean;
   level: ImportModalLevel;
   chartJsonText: string;
@@ -76,6 +78,8 @@ export function ImportJsonModal(props: ImportJsonModalProps) {
         <div className="transfer-body">
           {tab === "chart-code" && (
             <div className="transfer-page">
+              <OriginalFormTitle text="完整谱面项目" />
+              <OriginalButton onClick={props.onOpenProject} disabled={props.projectBusy}>打开谱面项目</OriginalButton>
               <OriginalFormTitle text="谱面代码" />
               <div className="export-json-field">
                 <OriginalFormInput multiline

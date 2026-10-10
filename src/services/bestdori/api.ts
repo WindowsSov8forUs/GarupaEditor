@@ -137,6 +137,7 @@ export interface BestdoriSongMusicVideo {
 }
 
 export interface BestdoriSongInfo {
+  musicDataType?: string;
   bgmId: string;
   bgmFile: string;
   tag: string;
@@ -626,10 +627,10 @@ function resolveBestdoriSongServerIndex(songInfo: BestdoriSongInfo): BestdoriSon
   throw new Error("unable to resolve song server from song info");
 }
 
-function normalizeBestdoriAssetSegment(value: unknown, label: string): string {
+function normalizeBestdoriAssetSegment(value: unknown, label: string, allowSpaces = false): string {
   if (typeof value !== "string") throw new Error(`${label} is unavailable`);
   const normalized = value.trim();
-  if (!/^[A-Za-z0-9._-]+$/.test(normalized) || normalized === "." || normalized === "..") {
+  if (!(allowSpaces ? /^[A-Za-z0-9._ -]+$/ : /^[A-Za-z0-9._-]+$/).test(normalized) || normalized === "." || normalized === "..") {
     throw new Error(`${label} is not a safe provider-native asset segment`);
   }
   return normalized;
@@ -1208,6 +1209,19 @@ export function buildBestdoriCommunityChartPostPayload(
   return payload;
 }
 
+export interface BestdoriCommunityListResponse {
+  result: boolean; count: number; posts: (BestdoriPostInfo & { id: number })[]; code?: string;
+}
+/** Public read-only search; transport and host policy stay shared with other Bestdori calls. */
+export async function searchBestdoriCommunityCharts(search: string, order: "TIME_DESC" | "TIME_ASC", offset: number): Promise<BestdoriCommunityListResponse> {
+  const response = await requestBestdoriPostJson<BestdoriCommunityListResponse>(
+    BESTDORI_ROOT + "/api/post/list", "bestdori community chart search",
+    { search, categoryName: "SELF_POST", categoryId: "chart", tags: [], order, limit: 50, offset });
+  if (!response.result || !Array.isArray(response.posts) || !Number.isFinite(response.count))
+    throw new Error("Bestdori 谱面搜索失败：" + (response.code ?? "响应无效"));
+  return response;
+}
+
 export async function fetchBestdoriCommunityPostDetails(postId: number): Promise<BestdoriPostDetailResponse> {
   const normalizedPostId = normalizeBestdoriPostId(postId);
   const endpoint = `https://bestdori.com/api/post/details?id=${normalizedPostId}`;
@@ -1270,8 +1284,8 @@ export async function resolveBestdoriCommunitySongResourceUrls(
   };
 }
 
-export function isBestdoriFullLengthSong(songInfo: Pick<BestdoriSongInfo, "tag">): boolean {
-  return songInfo.tag === "full";
+export function isBestdoriFullLengthSong(songInfo: Pick<BestdoriSongInfo, "tag" | "musicDataType">): boolean {
+  return songInfo.musicDataType !== undefined ? songInfo.musicDataType === "full" : songInfo.tag === "full";
 }
 
 export function resolveBestdoriSongServerName(songInfo: BestdoriSongInfo): BestdoriSongServerName {
@@ -1292,7 +1306,7 @@ export function buildBestdoriSongAudioUrl(_songId: number, songInfo: BestdoriSon
 
 export function buildBestdoriSongJacketLogicalPath(songId: number, songInfo: BestdoriSongInfo): string {
   const normalizedSongId = normalizeBestdoriSongId(songId);
-  const jacketImage = normalizeBestdoriAssetSegment(resolveBestdoriSongJacketImageName(songInfo), "song jacket image");
+  const jacketImage = normalizeBestdoriAssetSegment(resolveBestdoriSongJacketImageName(songInfo), "song jacket image", true);
   const jacketFolder = `musicjacket${resolveBestdoriSongJacketFolderIndex(normalizedSongId)}`;
   return `musicjacket/${jacketFolder}/assets-star-forassetbundle-startapp-musicjacket-${jacketFolder}-${jacketImage}-jacket.png`;
 }
@@ -1301,7 +1315,7 @@ export function buildBestdoriSongJacketUrl(songId: number, songInfo: BestdoriSon
   const server = resolveBestdoriSongServerName(songInfo);
   const logicalPath = buildBestdoriSongJacketLogicalPath(songId, songInfo);
   const [root, folder, file] = logicalPath.split("/") as [string, string, string];
-  return `${BESTDORI_ASSETS_ROOT}/${server}/${root}/${folder}_rip/${file}`;
+  return `${BESTDORI_ASSETS_ROOT}/${server}/${root}/${folder}_rip/${encodeURIComponent(file)}`;
 }
 
 export function buildBestdoriSongMovieResources(songInfo: BestdoriSongInfo): readonly BestdoriSongMovieResource[] {
@@ -1331,15 +1345,16 @@ export function buildBestdoriSongMvUrl(songInfo: BestdoriSongInfo): string | nul
 
 export async function fetchBestdoriSongResourceUrls(
   songId: number,
-  options?: { songInfo?: BestdoriSongInfo },
+  options?: { songInfo?: BestdoriSongInfo; server?: BestdoriSongServerName },
 ): Promise<BestdoriSongResourceUrls> {
   const songInfo = options?.songInfo ?? (await fetchBestdoriSongInfo(songId));
-  const server = resolveBestdoriSongServerName(songInfo);
-  const audioUrl = buildBestdoriSongAudioUrl(songId, songInfo);
+  const server = options?.server ?? resolveBestdoriSongServerName(songInfo);
+  const fromServer = (url: string) => url.replace(/\/assets\/(jp|cn|tw|en|kr)\//, `/assets/${server}/`);
+  const audioUrl = fromServer(buildBestdoriSongAudioUrl(songId, songInfo));
   const audioLogicalPath = buildBestdoriSongAudioLogicalPath(songInfo);
-  const jacketUrl = buildBestdoriSongJacketUrl(songId, songInfo);
+  const jacketUrl = fromServer(buildBestdoriSongJacketUrl(songId, songInfo));
   const jacketLogicalPath = buildBestdoriSongJacketLogicalPath(songId, songInfo);
-  const movies = buildBestdoriSongMovieResources(songInfo);
+  const movies = buildBestdoriSongMovieResources(songInfo).map(movie => ({ ...movie, url: fromServer(movie.url) }));
   const selectedMovie = movies.length === 0 ? null : movies[movies.length - 1]!;
   return {
     server,
@@ -1356,6 +1371,7 @@ export async function fetchBestdoriSongResourceUrls(
 export async function fetchBestdoriOfficialChartImportPayload(
   chartId: number,
   difficulty: BestdoriOfficialChartDifficulty,
+  snapshot?: { songInfo: BestdoriSongInfo; bands: BestdoriBandsAll1; server?: BestdoriSongServerName },
 ): Promise<BestdoriOfficialChartImportPayload> {
   const normalizedChartId = normalizeBestdoriSongId(chartId);
   const normalizedDifficulty = normalizeBestdoriOfficialChartDifficulty(difficulty);
@@ -1369,7 +1385,7 @@ export async function fetchBestdoriOfficialChartImportPayload(
 
   let songInfo: BestdoriSongInfo;
   try {
-    songInfo = await fetchBestdoriSongInfo(normalizedChartId);
+    songInfo = snapshot?.songInfo ?? await fetchBestdoriSongInfo(normalizedChartId);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`歌曲信息获取失败：${message}`);
@@ -1377,13 +1393,13 @@ export async function fetchBestdoriOfficialChartImportPayload(
 
   let bands: BestdoriBandsAll1;
   try {
-    bands = await fetchBestdoriBandsAll1();
+    bands = snapshot?.bands ?? await fetchBestdoriBandsAll1();
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`乐队信息获取失败：${message}`);
   }
 
-  const resources = await fetchBestdoriSongResourceUrls(normalizedChartId, { songInfo });
+  const resources = await fetchBestdoriSongResourceUrls(normalizedChartId, { songInfo, server: snapshot?.server });
   const metadataDifficulty = BESTDORI_CHART_DIFFICULTY_TO_METADATA[normalizedDifficulty];
   return {
     chartId: normalizedChartId,
@@ -1404,4 +1420,38 @@ export async function fetchBestdoriOfficialChartImportPayload(
     },
     audioFileName: resolveBestdoriSongAudioFileName(normalizedChartId, songInfo),
   };
+}
+
+/** Test-server URLs use the server root (including /test), as in its Sonolus resources. */
+export function resolveTestServerResourceUrl(value: string): string {
+  const url = new URL(/^https?:\/\//i.test(value) ? value : `${SONOLUS_TEST_SERVER_ROOT}/${value.replace(/^\/+/, "")}`);
+  if (url.protocol !== "https:" || !["sonolus.ayachan.fun", "chengdu.sov8.cn", "notgarupa.sov8.cn"].includes(url.hostname))
+    throw new Error("测试服资源地址不属于已支持的资源源");
+  return url.href;
+}
+export async function fetchTestServerChart(id: string): Promise<{chart: unknown[]; item: Record<string, any>}> {
+  if (!/^[A-Za-z0-9_-]+$/.test(id)) throw new Error("测试服谱面 ID 格式无效");
+  const endpoint = `${SONOLUS_TEST_LEVELS_ENDPOINT}/${encodeURIComponent(id)}`;
+  const detail = await requestBestdoriJson<{item?: Record<string, any>}>(endpoint, "test server level", {hostScope:"sonolus"});
+  if (!detail.item || typeof detail.item !== "object") throw new Error("测试服谱面不存在或已过期");
+  const chart = await requestBestdoriJson<unknown>(`${endpoint}/bdv2.json`, "test server chart", {hostScope:"sonolus"});
+  if (!Array.isArray(chart)) throw new Error("测试服未返回有效的 Bestdori v2 谱面");
+  return {chart, item:detail.item};
+}
+export interface AyachanLevelItem {
+  name: string; title: string; artists: string; author: string; rating: number;
+  cover?: { url: string; hash: string }; bgm?: { url: string }; data?: { url: string };
+}
+export async function fetchAyachanLevelList(page: number, id: string): Promise<{ pageCount: number; items: AyachanLevelItem[] }> {
+  const query = new URLSearchParams({ page: String(page) });
+  if (id.trim()) query.set("keywords", id.trim());
+  const result = await requestBestdoriJson<{pageCount: number; items: AyachanLevelItem[]}>(
+    `${SONOLUS_TEST_LEVELS_ENDPOINT}/list?${query}`, "Ayachan level list", { hostScope: "sonolus" });
+  if (!Number.isInteger(result.pageCount) || result.pageCount < 0 || !Array.isArray(result.items))
+    throw new Error("Ayachan 返回了无效的谱面列表");
+  return result;
+}
+export async function fetchTestServerMedia(url: string): Promise<Uint8Array> {
+  const encoded = await requestBestdoriBinaryBase64(resolveTestServerResourceUrl(url), "test server media", {hostScope:"sonolus"});
+  return new Uint8Array(decodeBase64ToArrayBuffer(encoded));
 }

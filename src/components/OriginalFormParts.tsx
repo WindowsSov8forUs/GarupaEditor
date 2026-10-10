@@ -191,15 +191,18 @@ export function OriginalFormNote({ text }: { text: string }) {
 }
 
 export const ORIGINAL_DIFFICULTIES = ["EASY", "NORMAL", "HARD", "EXPERT", "SPECIAL"] as const;
-export function OriginalDifficultySelect({ value, onChange, layout, children }: {
-  value: typeof ORIGINAL_DIFFICULTIES[number]; onChange(value: typeof ORIGINAL_DIFFICULTIES[number]): void;
+export function OriginalDifficultySelect({ value, onChange, layout, children, available, readOnly = false }: {
+  value: typeof ORIGINAL_DIFFICULTIES[number] | null; onChange(value: typeof ORIGINAL_DIFFICULTIES[number]): void;
+  available?: readonly typeof ORIGINAL_DIFFICULTIES[number][];
+  readOnly?: boolean;
   layout?: { width: number; height: number; positions: readonly { x: number; y: number }[] };
   children?: ReactNode;
 }) {
-  return <div className="original-difficulty-select" role="radiogroup" aria-label="难度"
+  return <div className="original-difficulty-select" role={readOnly ? "img" : "radiogroup"} aria-label={readOnly ? value === null ? "未提供难易度分类" : `谱面难度：${value}` : "难度"}
     style={layout ? { position: "relative", width: layout.width, height: layout.height } : undefined}>
     {children}
     {ORIGINAL_DIFFICULTIES.map((difficulty, index) => {
+      if (available && !available.includes(difficulty)) return null;
       const prefix = formProfile.difficulty.prefixes[difficulty.toLowerCase() as keyof typeof formProfile.difficulty.prefixes];
       const sprite = prefix + (value === difficulty ? "on" : "off");
       const model = new OriginalPrefabModel(formPrefabs.difficultybutton!, {
@@ -210,7 +213,7 @@ export function OriginalDifficultySelect({ value, onChange, layout, children }: 
         position: "absolute", left: layout.positions[index].x - 51, top: layout.positions[index].y - 51,
       } : undefined}>
         <div className="original-prefab-origin" style={{ left: 51, top: 51 }}>
-          <OriginalPrefabView model={model} bindings={{ buttons: { 10: { label: difficulty,
+          <OriginalPrefabView model={model} bindings={{ omit: readOnly ? new Set([10]) : undefined, buttons: { 10: { label: difficulty,
             role: "radio", selected: value === difficulty, navigationIndex: index, action: () => onChange(difficulty) } } }} />
         </div>
       </div>;

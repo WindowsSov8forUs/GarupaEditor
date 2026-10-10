@@ -7,6 +7,7 @@ import { normalizeSourcePng } from "../resources/normalizeImagePng";
 import { OriginalButton } from "./OriginalUi";
 import { useUiViewport } from "./useUiViewport";
 import { CoverDisplayImage } from "./CoverDisplayImage";
+import { OverlayDialogModal } from "./OverlayDialogModal";
 
 /** Original Home edit sprite, mounted at the mode-change button's LeftTop anchor.
  * Source: home-display-button-10-1-4, 99aa7841d08ce4032500c42048a3dbf8ffb3c715.
@@ -83,7 +84,7 @@ export function HomeDisplayImage() {
         top: `calc(${originY} + ${top + button.center.y - button.height / 2}px)`, width: button.width, height: button.height }} />
     <input ref={input} type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden disabled={busy}
       onChange={event => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ""; void replace(file); }} />
-    {error && <p role="alert" style={{ position: "absolute", left: `calc(${originX} + ${left + 16}px)`,
-      top: `calc(${originY} + ${top + 190}px)`, maxWidth: imageWidth, color: "#c40037", background: "#fff", padding: 8 }}>{error}</p>}
+    <OverlayDialogModal dialog={error ? { tone: "error", message: error } : null}
+      onConfirm={() => setError(null)} onCancel={() => setError(null)} />
   </>;
 }

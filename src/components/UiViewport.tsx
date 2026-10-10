@@ -23,7 +23,7 @@ export function UiViewportRoot({ children }: { children: ReactNode }) {
 }
 
 /** A page receives its actual allocated region in design units, with one projection. */
-export function UiPageViewport({ children }: { children: ReactNode }) {
+export function UiPageViewport({ children, fullWindow = false }: { children: ReactNode; fullWindow?: boolean }) {
   const host = useRef<HTMLDivElement>(null);
   const { scale, width: windowWidth, height: windowHeight } = useUiViewport();
   const [size, setSize] = useState({ width: 0, height: 0, left: 0, top: 0 });
@@ -40,9 +40,12 @@ export function UiPageViewport({ children }: { children: ReactNode }) {
     return () => observer.disconnect();
   }, [scale, windowWidth, windowHeight]);
   return <div ref={host} className="ui-page-viewport">
-    <div className="ui-page-design ui-design-scale" style={{ width: size.width / scale, height: size.height / scale,
-      "--ui-page-window-center-x": `${(windowWidth / 2 - size.left) / scale}px`,
-      "--ui-page-window-center-y": `${(windowHeight / 2 - size.top) / scale}px`,
+    <div className="ui-page-design ui-design-scale" style={{
+      ...(fullWindow ? { position: "absolute", left: -size.left / scale, top: -size.top / scale } : {}),
+      width: (fullWindow ? windowWidth : size.width) / scale,
+      height: (fullWindow ? windowHeight : size.height) / scale,
+      "--ui-page-window-center-x": `${(windowWidth / 2 - (fullWindow ? 0 : size.left)) / scale}px`,
+      "--ui-page-window-center-y": `${(windowHeight / 2 - (fullWindow ? 0 : size.top)) / scale}px`,
     } as CSSProperties}>
       {children}
     </div>

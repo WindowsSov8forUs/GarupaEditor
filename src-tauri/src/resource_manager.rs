@@ -646,6 +646,24 @@ pub fn resource_reconcile_workspace_media(
         let record = read_workspace_record(&workspace, &resource_id)?;
         verify_workspace_record(&root, &record)?;
     }
+    // Retain both published project revisions: the backup must remain recoverable
+    // even when the editor has already selected new media or another project.
+    let session = crate::resolve_session_cache_root(&app)?;
+    for name in [crate::CHART_CACHE_FILE_NAME, crate::CHART_CACHE_BACKUP_FILE_NAME] {
+        if let Ok(text) = fs::read_to_string(session.join(name)) {
+            if let Ok(document) = serde_json::from_str::<Value>(&text) {
+                if document.get("format").and_then(Value::as_str) == Some("GarupaEditor.ChartProject") {
+                    if let Some(media) = document.get("media").and_then(Value::as_object) {
+                        for entry in media.values() {
+                            if let Some(id) = entry.pointer("/ref/id").and_then(Value::as_str) {
+                                if id.starts_with("workspace/current/chart-media/") { retained.insert(id.to_string()); }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
     let previous = read_workspace_index(&workspace)?;
     let mut resource_ids: Vec<String> = retained.into_iter().collect();
     resource_ids.sort();
@@ -1909,6 +1927,7 @@ fn normalize_resource_id(value: &str) -> Result<String, String> {
     let trimmed = value.trim();
     let valid_prefix = trimmed.starts_with("builtin/")
         || trimmed.starts_with("bestdori/")
+        || trimmed.starts_with("official-music/")
         || trimmed.starts_with("workspace/")
         || trimmed.starts_with("user/");
     if !valid_prefix || trimmed.contains("//") || trimmed.len() > 1024 {

@@ -7,6 +7,8 @@ import resultParticle2Url from "../../assets/game/prefabs/bms/result/Tex_parSet_
 import comboNumberUrl from "../../assets/game/atlas/bms/ui/iconcombonumber/combo-number.png?url&no-inline";
 import decide1Url from "../../assets/game/sound/common-se/decide_1.mp3?url&no-inline";
 import cancelUiUrl from "../../assets/game/sound/common-se/cancel.mp3?url&no-inline";
+import drumScrollingUrl from "../../assets/game/sound/live-menu-se/SE_UI_DRUM_SCROLLING.wav?url&no-inline";
+import difficultyChangeUrl from "../../assets/game/sound/live-menu-se/SE_UI_DIF_CHANGE.wav?url&no-inline";
 import rhythmAdjustShortUrl from "../../assets/game/sound/rhythm-adjust/short.wav?url&no-inline";
 import rhythmAdjustLongUrl from "../../assets/game/sound/rhythm-adjust/short2.wav?url&no-inline";
 import rhythmGameAdditiveUrl from "../../assets/game/atlas/bms/ui/rhythmgameui/rhythm-game-additive.png?url&no-inline";
@@ -195,6 +197,10 @@ const DEFINITIONS: readonly SimulatorBuiltinResourceDefinition[] = Object.freeze
     file("game/sound/rhythm-adjust/short.wav", "short.wav", "audio/wav", rhythmAdjustShortUrl),
     file("game/sound/rhythm-adjust/short2.wav", "short2.wav", "audio/wav", rhythmAdjustLongUrl),
   ]),
+  resource("sound/live-menu-se", "Original LiveMenu UI sound", "package", [
+    file("game/sound/live-menu-se/SE_UI_DIF_CHANGE.wav", "SE_UI_DIF_CHANGE.wav", "audio/wav", difficultyChangeUrl),
+    file("game/sound/live-menu-se/SE_UI_DRUM_SCROLLING.wav", "SE_UI_DRUM_SCROLLING.wav", "audio/wav", drumScrollingUrl),
+  ]),
   resource("prefabs/bms/rhythmgamegauge/score", "Score gauge portable resources", "package", [
     file("game/prefabs/bms/rhythmgamegauge/score/high-rank-kira.png", "high-rank-kira.png", "image/png", highRankKiraUrl),
     file("game/prefabs/bms/rhythmgamegauge/score/high-rank-long-star.png", "high-rank-long-star.png", "image/png", highRankLongStarUrl),
@@ -244,7 +250,9 @@ const DEFINITIONS: readonly SimulatorBuiltinResourceDefinition[] = Object.freeze
 const MANIFEST = new Map(
   (manifestJson.entries as readonly SimulatorBuiltinManifestEntry[]).map((entry) => [entry.path, entry]),
 );
-const REFS = new Map<string, ResourceRef>();
+// References are stable catalog identities. Registration belongs to the manager;
+// a second module-local registry is lost during hot updates while it stays alive.
+const LOGICAL_RESOURCES = new Set(DEFINITIONS.map(definition => definition.logicalResource));
 
 export async function registerSimulatorBuiltinResources(
   manager: ApplicationResourceManager,
@@ -273,21 +281,18 @@ export async function registerSimulatorBuiltinResources(
       }),
     });
     if (registered.status === "rejected") return registered;
-    REFS.set(definition.logicalResource, registered.value.ref);
   }
   return resourceAccepted(undefined);
 }
 
 export function simulatorBuiltinResourceRef(logicalResource: string): ResourceResult<ResourceRef> {
-  const existing = REFS.get(logicalResource);
-  if (existing !== undefined) return resourceAccepted(existing);
   const reference = createResourceRef(`builtin/game/${logicalResource}`);
-  return reference.status === "rejected"
+  return reference.status === "rejected" || LOGICAL_RESOURCES.has(logicalResource)
     ? reference
     : resourceRejected(
         "resource-unavailable",
         "resources.builtin.simulator-logical-resource-unregistered",
-        "The requested Simulator common logical resource was not registered by application bootstrap.",
+        `模拟器内置资源目录未定义：${logicalResource}`,
       );
 }
 

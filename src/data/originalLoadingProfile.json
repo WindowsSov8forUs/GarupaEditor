@@ -1,0 +1,6952 @@
+{
+  "sourceCommit": "ac533d14bc233d87883f281fe90dd935821d1d66",
+  "prefabs": {
+    "networkindicator": {
+      "resource": "prefabs/screen/networkindicator",
+      "nodes": [
+        {
+          "id": 274,
+          "transformId": 1018,
+          "name": "NetworkIndicator",
+          "path": "NetworkIndicator",
+          "parent": null,
+          "position": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": -0.0,
+            "y": -0.0,
+            "z": -0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 289,
+          "transformId": 1019,
+          "name": "ComponentRoot",
+          "path": "NetworkIndicator/ComponentRoot",
+          "parent": 274,
+          "position": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 287,
+          "transformId": 1020,
+          "name": "BottomRight",
+          "path": "NetworkIndicator/ComponentRoot/BottomRight",
+          "parent": 289,
+          "position": {
+            "x": 667.0,
+            "y": -500.0,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 391,
+          "transformId": 1101,
+          "name": "Panel",
+          "path": "NetworkIndicator/ComponentRoot/BottomRight/Panel",
+          "parent": 287,
+          "position": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 363,
+          "transformId": 1140,
+          "name": "BG",
+          "path": "NetworkIndicator/ComponentRoot/BottomRight/Panel/BG",
+          "parent": 391,
+          "position": {
+            "x": -228.0,
+            "y": 24.0,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": -0.0,
+            "y": -0.0,
+            "z": -0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 888,
+          "transformId": 1580,
+          "name": "Line",
+          "path": "NetworkIndicator/ComponentRoot/BottomRight/Panel/BG/Line",
+          "parent": 363,
+          "position": {
+            "x": 0.0,
+            "y": -2.0,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": -0.0,
+            "y": -0.0,
+            "z": -0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 265,
+          "transformId": 1016,
+          "name": "progresses",
+          "path": "NetworkIndicator/ComponentRoot/BottomRight/Panel/BG/progresses",
+          "parent": 363,
+          "position": {
+            "x": 0.0,
+            "y": 26.299999237060547,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": -0.0,
+            "y": -0.0,
+            "z": -0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 275,
+          "transformId": 1029,
+          "name": "OneProgress",
+          "path": "NetworkIndicator/ComponentRoot/BottomRight/Panel/BG/progresses/OneProgress",
+          "parent": 265,
+          "position": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 0.5,
+            "y": 0.5,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": -0.0,
+            "y": -0.0,
+            "z": -0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 286,
+          "transformId": 1011,
+          "name": "Background",
+          "path": "NetworkIndicator/ComponentRoot/BottomRight/Panel/BG/progresses/OneProgress/Background",
+          "parent": 275,
+          "position": {
+            "x": 0.0001271565561182797,
+            "y": -7.2479248046875e-05,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": -0.0,
+            "y": -0.0,
+            "z": -0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 284,
+          "transformId": 1026,
+          "name": "Foreground",
+          "path": "NetworkIndicator/ComponentRoot/BottomRight/Panel/BG/progresses/OneProgress/Foreground",
+          "parent": 275,
+          "position": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": -0.0,
+            "y": -0.0,
+            "z": -0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 276,
+          "transformId": 1030,
+          "name": "NetworkNotice",
+          "path": "NetworkIndicator/ComponentRoot/BottomRight/Panel/BG/NetworkNotice",
+          "parent": 363,
+          "position": {
+            "x": -163.89999389648438,
+            "y": 64.0,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": -0.0,
+            "y": -0.0,
+            "z": -0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 873,
+          "transformId": 1689,
+          "name": "AnimIcon",
+          "path": "NetworkIndicator/ComponentRoot/BottomRight/Panel/BG/NetworkNotice/AnimIcon",
+          "parent": 276,
+          "position": {
+            "x": -1.2999999523162842,
+            "y": -12.5,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 0.8014499545097351,
+            "y": 0.8014499545097351,
+            "z": 1.000349998474121
+          },
+          "rotation": {
+            "x": -0.0,
+            "y": -0.0,
+            "z": -0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 816,
+          "transformId": 1526,
+          "name": "Onpu",
+          "path": "NetworkIndicator/ComponentRoot/BottomRight/Panel/BG/NetworkNotice/AnimIcon/Onpu",
+          "parent": 873,
+          "position": {
+            "x": 8.800000190734863,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 854,
+          "transformId": 1726,
+          "name": "KiraParent",
+          "path": "NetworkIndicator/ComponentRoot/BottomRight/Panel/BG/NetworkNotice/AnimIcon/KiraParent",
+          "parent": 873,
+          "position": {
+            "x": -1.7000000476837158,
+            "y": -1.399999976158142,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 439,
+          "transformId": 1650,
+          "name": "kira",
+          "path": "NetworkIndicator/ComponentRoot/BottomRight/Panel/BG/NetworkNotice/AnimIcon/KiraParent/kira",
+          "parent": 854,
+          "position": {
+            "x": 32.099998474121094,
+            "y": 10.100000381469727,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 429,
+          "transformId": 1613,
+          "name": "kira (1)",
+          "path": "NetworkIndicator/ComponentRoot/BottomRight/Panel/BG/NetworkNotice/AnimIcon/KiraParent/kira (1)",
+          "parent": 854,
+          "position": {
+            "x": -18.0,
+            "y": 41.099998474121094,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": -0.2588190734386444,
+            "w": 0.9659258723258972
+          },
+          "active": true
+        },
+        {
+          "id": 706,
+          "transformId": 1647,
+          "name": "kira (2)",
+          "path": "NetworkIndicator/ComponentRoot/BottomRight/Panel/BG/NetworkNotice/AnimIcon/KiraParent/kira (2)",
+          "parent": 854,
+          "position": {
+            "x": -30.0,
+            "y": 5.0,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.2588190734386444,
+            "w": 0.9659258723258972
+          },
+          "active": false
+        },
+        {
+          "id": 901,
+          "transformId": 1745,
+          "name": "Shadow",
+          "path": "NetworkIndicator/ComponentRoot/BottomRight/Panel/BG/NetworkNotice/AnimIcon/Shadow",
+          "parent": 873,
+          "position": {
+            "x": 1.0,
+            "y": -0.6000000238418579,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 271,
+          "transformId": 1023,
+          "name": "NowLoading",
+          "path": "NetworkIndicator/ComponentRoot/BottomRight/Panel/BG/NetworkNotice/NowLoading",
+          "parent": 276,
+          "position": {
+            "x": 173.3000030517578,
+            "y": 4.900000095367432,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": -0.0,
+            "y": -0.0,
+            "z": -0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 281,
+          "transformId": 1012,
+          "name": "DotLabel",
+          "path": "NetworkIndicator/ComponentRoot/BottomRight/Panel/BG/NetworkNotice/DotLabel",
+          "parent": 276,
+          "position": {
+            "x": 313.1000061035156,
+            "y": 4.699999809265137,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": -0.0,
+            "y": -0.0,
+            "z": -0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 272,
+          "transformId": 1021,
+          "name": "notice1",
+          "path": "NetworkIndicator/ComponentRoot/BottomRight/Panel/BG/notice1",
+          "parent": 363,
+          "position": {
+            "x": -31.20001220703125,
+            "y": 35.20000076293945,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": -0.0,
+            "y": -0.0,
+            "z": -0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 268,
+          "transformId": 1022,
+          "name": "notice2",
+          "path": "NetworkIndicator/ComponentRoot/BottomRight/Panel/BG/notice2",
+          "parent": 363,
+          "position": {
+            "x": -31.20001220703125,
+            "y": 3.4000000953674316,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": -0.0,
+            "y": -0.0,
+            "z": -0.0,
+            "w": 1.0
+          },
+          "active": true
+        }
+      ],
+      "components": [
+        {
+          "id": 1789,
+          "node": 275,
+          "kind": "UISlider",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 275
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 3046
+            },
+            "m_Name": "",
+            "thumb": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "mBG": {
+              "m_FileID": 0,
+              "m_PathID": 1800
+            },
+            "mFG": {
+              "m_FileID": 0,
+              "m_PathID": 1803
+            },
+            "mValue": 1.0,
+            "mFill": 0,
+            "numberOfSteps": 0,
+            "onChange": [],
+            "foreground": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "rawValue": 1.0,
+            "direction": 2,
+            "mInverted": 0
+          }
+        },
+        {
+          "id": 1790,
+          "node": 271,
+          "kind": "UISprite",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 271
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 822
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mPivot": 4,
+            "mWidth": 272,
+            "mHeight": 31,
+            "mDepth": 11,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 0,
+            "aspectRatio": 8.77419376373291,
+            "mType": 0,
+            "mFillDirection": 4,
+            "mFillAmount": 1.0,
+            "mInvert": 0,
+            "mFlip": 0,
+            "mApplyGradient": 0,
+            "mGradientTop": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mGradientBottom": {
+              "r": 0.699999988079071,
+              "g": 0.699999988079071,
+              "b": 0.699999988079071,
+              "a": 1.0
+            },
+            "centerType": 1,
+            "leftType": 1,
+            "rightType": 1,
+            "bottomType": 1,
+            "topType": 1,
+            "mAtlas": {
+              "m_FileID": 0,
+              "m_PathID": 1796
+            },
+            "mSpriteName": "nowloading",
+            "mFixedAspect": 0,
+            "mFillCenter": 1
+          }
+        },
+        {
+          "id": 1800,
+          "node": 286,
+          "kind": "UISprite",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 286
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 822
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 0.7735849022865295,
+              "g": 0.7735849022865295,
+              "b": 0.7735849022865295,
+              "a": 1.0
+            },
+            "mPivot": 4,
+            "mWidth": 700,
+            "mHeight": 24,
+            "mDepth": 11,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 0,
+            "aspectRatio": 29.16666603088379,
+            "mType": 1,
+            "mFillDirection": 4,
+            "mFillAmount": 1.0,
+            "mInvert": 0,
+            "mFlip": 0,
+            "mApplyGradient": 0,
+            "mGradientTop": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mGradientBottom": {
+              "r": 0.699999988079071,
+              "g": 0.699999988079071,
+              "b": 0.699999988079071,
+              "a": 1.0
+            },
+            "centerType": 1,
+            "leftType": 1,
+            "rightType": 1,
+            "bottomType": 1,
+            "topType": 1,
+            "mAtlas": {
+              "m_FileID": 0,
+              "m_PathID": 1796
+            },
+            "mSpriteName": "label_round_h24",
+            "mFixedAspect": 0,
+            "mFillCenter": 1
+          }
+        },
+        {
+          "id": 1802,
+          "node": 281,
+          "kind": "UILabel",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 281
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 6527
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 1.0,
+              "g": 0.23137255012989044,
+              "b": 0.4470588266849518,
+              "a": 1.0
+            },
+            "mPivot": 3,
+            "mWidth": 200,
+            "mHeight": 50,
+            "mDepth": 13,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 0,
+            "aspectRatio": 4.0,
+            "keepCrispWhenShrunk": 1,
+            "mTrueTypeFont": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "mFont": {
+              "m_FileID": 0,
+              "m_PathID": 1799
+            },
+            "mText": "...",
+            "mFontSize": 39,
+            "mFontStyle": 0,
+            "mAlignment": 0,
+            "mEncoding": 1,
+            "mMaxLineCount": 0,
+            "mEffectStyle": 0,
+            "mEffectColor": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mSymbols": 1,
+            "mEffectDistance": {
+              "x": 2.0,
+              "y": 2.0
+            },
+            "mOverflow": 0,
+            "mApplyGradient": 0,
+            "mGradientTop": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mGradientBottom": {
+              "r": 0.699999988079071,
+              "g": 0.699999988079071,
+              "b": 0.699999988079071,
+              "a": 1.0
+            },
+            "mSpacingX": 0,
+            "mSpacingY": 0,
+            "mUseFloatSpacing": 0,
+            "mFloatSpacingX": 0.0,
+            "mFloatSpacingY": 0.0,
+            "mOverflowEllipsis": 0,
+            "mOverflowWidth": 0,
+            "mOverflowHeight": 0,
+            "mModifier": 0,
+            "mSymbolDepth": 0,
+            "mShrinkToFit": 0,
+            "mMaxLineWidth": 0,
+            "mMaxLineHeight": 0,
+            "mLineWidth": 0.0,
+            "mMultiline": 1
+          }
+        },
+        {
+          "id": 1803,
+          "node": 284,
+          "kind": "UISprite",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 284
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 822
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 1.0,
+              "g": 0.23137255012989044,
+              "b": 0.4470588266849518,
+              "a": 1.0
+            },
+            "mPivot": 4,
+            "mWidth": 700,
+            "mHeight": 24,
+            "mDepth": 12,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 0,
+            "aspectRatio": 29.16666603088379,
+            "mType": 1,
+            "mFillDirection": 4,
+            "mFillAmount": 1.0,
+            "mInvert": 0,
+            "mFlip": 0,
+            "mApplyGradient": 0,
+            "mGradientTop": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mGradientBottom": {
+              "r": 0.699999988079071,
+              "g": 0.699999988079071,
+              "b": 0.699999988079071,
+              "a": 1.0
+            },
+            "centerType": 1,
+            "leftType": 1,
+            "rightType": 1,
+            "bottomType": 1,
+            "topType": 1,
+            "mAtlas": {
+              "m_FileID": 0,
+              "m_PathID": 1796
+            },
+            "mSpriteName": "label_round_h24",
+            "mFixedAspect": 0,
+            "mFillCenter": 1
+          }
+        },
+        {
+          "id": 1805,
+          "node": 274,
+          "kind": "ScreenLayerNetworkIndicator",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 274
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 2055
+            },
+            "m_Name": "",
+            "downloadProgressParentObj": {
+              "m_FileID": 0,
+              "m_PathID": 265
+            },
+            "oneProgress": {
+              "m_FileID": 0,
+              "m_PathID": 1789
+            },
+            "noticeLabel": {
+              "m_FileID": 0,
+              "m_PathID": 1802
+            },
+            "noticeOnlyPosition": {
+              "m_FileID": 0,
+              "m_PathID": 1021
+            },
+            "noticeAndDLPosition": {
+              "m_FileID": 0,
+              "m_PathID": 1022
+            },
+            "backGroundObject": {
+              "m_FileID": 0,
+              "m_PathID": 1950
+            },
+            "noticeObject": {
+              "m_FileID": 0,
+              "m_PathID": 276
+            },
+            "indicatorAnchor": {
+              "m_FileID": 0,
+              "m_PathID": 1870
+            }
+          }
+        },
+        {
+          "id": 1870,
+          "node": 287,
+          "kind": "StarUIAnchor",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 287
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 6970
+            },
+            "m_Name": "",
+            "widget": {
+              "m_FileID": 0,
+              "m_PathID": 1940
+            },
+            "horizonalAnchor": 3,
+            "verticalAnchor": 3,
+            "enableOnValidate": 1
+          }
+        },
+        {
+          "id": 1934,
+          "node": 391,
+          "kind": "UIPanel",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 391
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 4845
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "showInPanelTool": 1,
+            "generateNormals": 0,
+            "generateUV2": 0,
+            "shadowMode": 0,
+            "widgetsAreStatic": 0,
+            "cullWhileDragging": 1,
+            "alwaysOnScreen": 0,
+            "anchorOffset": 0,
+            "softBorderPadding": 1,
+            "renderQueue": 0,
+            "startingRenderQueue": 3000,
+            "mClipTexture": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "mAlpha": 1.0,
+            "mAlphaProp": "",
+            "mClipping": 0,
+            "mClipRange": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 300.0,
+              "w": 200.0
+            },
+            "mClipSoftness": {
+              "x": 4.0,
+              "y": 4.0
+            },
+            "mDepth": 47,
+            "mSortingOrder": 0,
+            "mSortingLayerName": "",
+            "mClipOffset": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "useSortingOrder": 0
+          }
+        },
+        {
+          "id": 1940,
+          "node": 287,
+          "kind": "UIWidget",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 287
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 3750
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mPivot": 4,
+            "mWidth": 2,
+            "mHeight": 2,
+            "mDepth": 0,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 0,
+            "aspectRatio": 1.0
+          }
+        },
+        {
+          "id": 1950,
+          "node": 363,
+          "kind": "UISprite",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 363
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 822
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mPivot": 7,
+            "mWidth": 394,
+            "mHeight": 100,
+            "mDepth": 10,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 0,
+            "aspectRatio": 3.940000057220459,
+            "mType": 1,
+            "mFillDirection": 4,
+            "mFillAmount": 1.0,
+            "mInvert": 0,
+            "mFlip": 0,
+            "mApplyGradient": 0,
+            "mGradientTop": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mGradientBottom": {
+              "r": 0.699999988079071,
+              "g": 0.699999988079071,
+              "b": 0.699999988079071,
+              "a": 1.0
+            },
+            "centerType": 1,
+            "leftType": 1,
+            "rightType": 1,
+            "bottomType": 1,
+            "topType": 1,
+            "mAtlas": {
+              "m_FileID": 0,
+              "m_PathID": 1796
+            },
+            "mSpriteName": "label_r10_white",
+            "mFixedAspect": 0,
+            "mFillCenter": 1
+          }
+        },
+        {
+          "id": 2026,
+          "node": 816,
+          "kind": "UISprite",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 816
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 822
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mPivot": 7,
+            "mWidth": 50,
+            "mHeight": 50,
+            "mDepth": 13,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 1,
+            "aspectRatio": 1.0,
+            "mType": 0,
+            "mFillDirection": 4,
+            "mFillAmount": 1.0,
+            "mInvert": 0,
+            "mFlip": 0,
+            "mApplyGradient": 0,
+            "mGradientTop": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mGradientBottom": {
+              "r": 0.699999988079071,
+              "g": 0.699999988079071,
+              "b": 0.699999988079071,
+              "a": 1.0
+            },
+            "centerType": 1,
+            "leftType": 1,
+            "rightType": 1,
+            "bottomType": 1,
+            "topType": 1,
+            "mAtlas": {
+              "m_FileID": 0,
+              "m_PathID": 1796
+            },
+            "mSpriteName": "icon_guitar",
+            "mFixedAspect": 0,
+            "mFillCenter": 1
+          }
+        },
+        {
+          "id": 2032,
+          "node": 439,
+          "kind": "TweenScale",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 439
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 3330
+            },
+            "m_Name": "",
+            "method": 0,
+            "style": 2,
+            "animationCurve": {
+              "m_Curve": [
+                {
+                  "time": 0.0,
+                  "value": 0.0,
+                  "inSlope": 2.0,
+                  "outSlope": 2.0,
+                  "weightedMode": 0,
+                  "inWeight": 0.3333333432674408,
+                  "outWeight": 0.3333333432674408
+                },
+                {
+                  "time": 1.0,
+                  "value": 1.0,
+                  "inSlope": 0.0,
+                  "outSlope": 0.0,
+                  "weightedMode": 0,
+                  "inWeight": 0.3333333432674408,
+                  "outWeight": 0.3333333432674408
+                }
+              ],
+              "m_PreInfinity": 2,
+              "m_PostInfinity": 2,
+              "m_RotationOrder": 4
+            },
+            "ignoreTimeScale": 1,
+            "delay": 0.5,
+            "delayAffects": 2,
+            "duration": 0.5,
+            "steeperCurves": 0,
+            "tweenGroup": 0,
+            "useFixedUpdate": 0,
+            "onFinished": [],
+            "eventReceiver": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "callWhenFinished": "",
+            "from": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 1.0
+            },
+            "to": {
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            },
+            "updateTable": 0
+          }
+        },
+        {
+          "id": 2056,
+          "node": 706,
+          "kind": "TweenScale",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 706
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 3330
+            },
+            "m_Name": "",
+            "method": 0,
+            "style": 2,
+            "animationCurve": {
+              "m_Curve": [
+                {
+                  "time": 0.0,
+                  "value": 0.0,
+                  "inSlope": 2.0,
+                  "outSlope": 2.0,
+                  "weightedMode": 0,
+                  "inWeight": 0.3333333432674408,
+                  "outWeight": 0.3333333432674408
+                },
+                {
+                  "time": 1.0,
+                  "value": 1.0,
+                  "inSlope": 0.0,
+                  "outSlope": 0.0,
+                  "weightedMode": 0,
+                  "inWeight": 0.3333333432674408,
+                  "outWeight": 0.3333333432674408
+                }
+              ],
+              "m_PreInfinity": 2,
+              "m_PostInfinity": 2,
+              "m_RotationOrder": 4
+            },
+            "ignoreTimeScale": 1,
+            "delay": 0.5,
+            "delayAffects": 2,
+            "duration": 0.5,
+            "steeperCurves": 0,
+            "tweenGroup": 0,
+            "useFixedUpdate": 0,
+            "onFinished": [],
+            "eventReceiver": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "callWhenFinished": "",
+            "from": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 1.0
+            },
+            "to": {
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            },
+            "updateTable": 0
+          }
+        },
+        {
+          "id": 2140,
+          "node": 429,
+          "kind": "UISprite",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 429
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 822
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mPivot": 4,
+            "mWidth": 25,
+            "mHeight": 28,
+            "mDepth": 14,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 1,
+            "aspectRatio": 0.8863636255264282,
+            "mType": 0,
+            "mFillDirection": 4,
+            "mFillAmount": 1.0,
+            "mInvert": 0,
+            "mFlip": 0,
+            "mApplyGradient": 0,
+            "mGradientTop": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mGradientBottom": {
+              "r": 0.699999988079071,
+              "g": 0.699999988079071,
+              "b": 0.699999988079071,
+              "a": 1.0
+            },
+            "centerType": 1,
+            "leftType": 1,
+            "rightType": 1,
+            "bottomType": 1,
+            "topType": 1,
+            "mAtlas": {
+              "m_FileID": 0,
+              "m_PathID": 1796
+            },
+            "mSpriteName": "icon_onpu2",
+            "mFixedAspect": 0,
+            "mFillCenter": 1
+          }
+        },
+        {
+          "id": 2260,
+          "node": 901,
+          "kind": "UISprite",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 901
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 822
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 0.3764705955982208
+            },
+            "mPivot": 4,
+            "mWidth": 30,
+            "mHeight": 12,
+            "mDepth": 12,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 0,
+            "aspectRatio": 2.5,
+            "mType": 0,
+            "mFillDirection": 4,
+            "mFillAmount": 1.0,
+            "mInvert": 0,
+            "mFlip": 0,
+            "mApplyGradient": 0,
+            "mGradientTop": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mGradientBottom": {
+              "r": 0.699999988079071,
+              "g": 0.699999988079071,
+              "b": 0.699999988079071,
+              "a": 1.0
+            },
+            "centerType": 1,
+            "leftType": 1,
+            "rightType": 1,
+            "bottomType": 1,
+            "topType": 1,
+            "mAtlas": {
+              "m_FileID": 0,
+              "m_PathID": 1796
+            },
+            "mSpriteName": "onpu_shadow",
+            "mFixedAspect": 0,
+            "mFillCenter": 1
+          }
+        },
+        {
+          "id": 2300,
+          "node": 816,
+          "kind": "TweenScale",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 816
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 3330
+            },
+            "m_Name": "",
+            "method": 0,
+            "style": 2,
+            "animationCurve": {
+              "m_Curve": [
+                {
+                  "time": 0.0,
+                  "value": 0.0,
+                  "inSlope": 2.0,
+                  "outSlope": 2.0,
+                  "weightedMode": 0,
+                  "inWeight": 0.3333333432674408,
+                  "outWeight": 0.3333333432674408
+                },
+                {
+                  "time": 1.0,
+                  "value": 1.0,
+                  "inSlope": 0.0,
+                  "outSlope": 0.0,
+                  "weightedMode": 0,
+                  "inWeight": 0.3333333432674408,
+                  "outWeight": 0.3333333432674408
+                }
+              ],
+              "m_PreInfinity": 2,
+              "m_PostInfinity": 2,
+              "m_RotationOrder": 4
+            },
+            "ignoreTimeScale": 1,
+            "delay": 0.0,
+            "delayAffects": 2,
+            "duration": 0.4000000059604645,
+            "steeperCurves": 0,
+            "tweenGroup": 0,
+            "useFixedUpdate": 0,
+            "onFinished": [],
+            "eventReceiver": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "callWhenFinished": "",
+            "from": {
+              "x": 1.100000023841858,
+              "y": 0.800000011920929,
+              "z": 1.0
+            },
+            "to": {
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            },
+            "updateTable": 0
+          }
+        },
+        {
+          "id": 2355,
+          "node": 816,
+          "kind": "TweenPosition",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 816
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 1769
+            },
+            "m_Name": "",
+            "method": 0,
+            "style": 2,
+            "animationCurve": {
+              "m_Curve": [
+                {
+                  "time": 0.0,
+                  "value": 0.0,
+                  "inSlope": 2.0,
+                  "outSlope": 2.0,
+                  "weightedMode": 0,
+                  "inWeight": 0.3333333432674408,
+                  "outWeight": 0.3333333432674408
+                },
+                {
+                  "time": 1.0,
+                  "value": 1.0,
+                  "inSlope": 0.0,
+                  "outSlope": 0.0,
+                  "weightedMode": 0,
+                  "inWeight": 0.3333333432674408,
+                  "outWeight": 0.3333333432674408
+                }
+              ],
+              "m_PreInfinity": 2,
+              "m_PostInfinity": 2,
+              "m_RotationOrder": 4
+            },
+            "ignoreTimeScale": 1,
+            "delay": 0.0,
+            "delayAffects": 2,
+            "duration": 0.4000000059604645,
+            "steeperCurves": 0,
+            "tweenGroup": 0,
+            "useFixedUpdate": 0,
+            "onFinished": [],
+            "eventReceiver": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "callWhenFinished": "",
+            "from": {
+              "x": 8.800000190734863,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "to": {
+              "x": 8.800000190734863,
+              "y": 5.0,
+              "z": 0.0
+            },
+            "worldSpace": 0
+          }
+        },
+        {
+          "id": 2372,
+          "node": 439,
+          "kind": "UISprite",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 439
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 822
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mPivot": 4,
+            "mWidth": 25,
+            "mHeight": 28,
+            "mDepth": 14,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 1,
+            "aspectRatio": 0.8974359035491943,
+            "mType": 0,
+            "mFillDirection": 4,
+            "mFillAmount": 1.0,
+            "mInvert": 0,
+            "mFlip": 0,
+            "mApplyGradient": 0,
+            "mGradientTop": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mGradientBottom": {
+              "r": 0.699999988079071,
+              "g": 0.699999988079071,
+              "b": 0.699999988079071,
+              "a": 1.0
+            },
+            "centerType": 1,
+            "leftType": 1,
+            "rightType": 1,
+            "bottomType": 1,
+            "topType": 1,
+            "mAtlas": {
+              "m_FileID": 0,
+              "m_PathID": 1796
+            },
+            "mSpriteName": "icon_onpu1",
+            "mFixedAspect": 0,
+            "mFillCenter": 1
+          }
+        },
+        {
+          "id": 2388,
+          "node": 888,
+          "kind": "UISprite",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 888
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 822
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 1140
+              },
+              "relative": 0.0,
+              "absolute": -2
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 1140
+              },
+              "relative": 1.0,
+              "absolute": 2
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 1140
+              },
+              "relative": 0.0,
+              "absolute": -2
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 1140
+              },
+              "relative": 1.0,
+              "absolute": 2
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 0.698113203048706,
+              "g": 0.698113203048706,
+              "b": 0.698113203048706,
+              "a": 1.0
+            },
+            "mPivot": 7,
+            "mWidth": 398,
+            "mHeight": 104,
+            "mDepth": 9,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 0,
+            "aspectRatio": 3.826923131942749,
+            "mType": 1,
+            "mFillDirection": 4,
+            "mFillAmount": 1.0,
+            "mInvert": 0,
+            "mFlip": 0,
+            "mApplyGradient": 0,
+            "mGradientTop": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mGradientBottom": {
+              "r": 0.699999988079071,
+              "g": 0.699999988079071,
+              "b": 0.699999988079071,
+              "a": 1.0
+            },
+            "centerType": 1,
+            "leftType": 1,
+            "rightType": 1,
+            "bottomType": 1,
+            "topType": 1,
+            "mAtlas": {
+              "m_FileID": 0,
+              "m_PathID": 1796
+            },
+            "mSpriteName": "label_r10_white",
+            "mFixedAspect": 0,
+            "mFillCenter": 1
+          }
+        },
+        {
+          "id": 2402,
+          "node": 429,
+          "kind": "TweenScale",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 429
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 3330
+            },
+            "m_Name": "",
+            "method": 0,
+            "style": 2,
+            "animationCurve": {
+              "m_Curve": [
+                {
+                  "time": 0.0,
+                  "value": 0.0,
+                  "inSlope": 2.0,
+                  "outSlope": 2.0,
+                  "weightedMode": 0,
+                  "inWeight": 0.3333333432674408,
+                  "outWeight": 0.3333333432674408
+                },
+                {
+                  "time": 1.0,
+                  "value": 1.0,
+                  "inSlope": 0.0,
+                  "outSlope": 0.0,
+                  "weightedMode": 0,
+                  "inWeight": 0.3333333432674408,
+                  "outWeight": 0.3333333432674408
+                }
+              ],
+              "m_PreInfinity": 2,
+              "m_PostInfinity": 2,
+              "m_RotationOrder": 4
+            },
+            "ignoreTimeScale": 1,
+            "delay": 0.0,
+            "delayAffects": 2,
+            "duration": 0.5,
+            "steeperCurves": 0,
+            "tweenGroup": 0,
+            "useFixedUpdate": 0,
+            "onFinished": [],
+            "eventReceiver": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "callWhenFinished": "",
+            "from": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 1.0
+            },
+            "to": {
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            },
+            "updateTable": 0
+          }
+        },
+        {
+          "id": 2479,
+          "node": 854,
+          "kind": "TweenPosition",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 854
+            },
+            "m_Enabled": 0,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 1769
+            },
+            "m_Name": "",
+            "method": 0,
+            "style": 2,
+            "animationCurve": {
+              "m_Curve": [
+                {
+                  "time": 0.0,
+                  "value": 0.0,
+                  "inSlope": 2.0,
+                  "outSlope": 2.0,
+                  "weightedMode": 0,
+                  "inWeight": 0.3333333432674408,
+                  "outWeight": 0.3333333432674408
+                },
+                {
+                  "time": 1.0,
+                  "value": 1.0,
+                  "inSlope": 0.0,
+                  "outSlope": 0.0,
+                  "weightedMode": 0,
+                  "inWeight": 0.3333333432674408,
+                  "outWeight": 0.3333333432674408
+                }
+              ],
+              "m_PreInfinity": 2,
+              "m_PostInfinity": 2,
+              "m_RotationOrder": 4
+            },
+            "ignoreTimeScale": 1,
+            "delay": 0.0,
+            "delayAffects": 2,
+            "duration": 0.4000000059604645,
+            "steeperCurves": 0,
+            "tweenGroup": 0,
+            "useFixedUpdate": 0,
+            "onFinished": [],
+            "eventReceiver": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "callWhenFinished": "",
+            "from": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "to": {
+              "x": 0.0,
+              "y": 10.0,
+              "z": 0.0
+            },
+            "worldSpace": 0
+          }
+        },
+        {
+          "id": 2495,
+          "node": 901,
+          "kind": "TweenScale",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 901
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 3330
+            },
+            "m_Name": "",
+            "method": 0,
+            "style": 2,
+            "animationCurve": {
+              "m_Curve": [
+                {
+                  "time": 0.0,
+                  "value": 0.0,
+                  "inSlope": 2.0,
+                  "outSlope": 2.0,
+                  "weightedMode": 0,
+                  "inWeight": 0.3333333432674408,
+                  "outWeight": 0.3333333432674408
+                },
+                {
+                  "time": 1.0,
+                  "value": 1.0,
+                  "inSlope": 0.0,
+                  "outSlope": 0.0,
+                  "weightedMode": 0,
+                  "inWeight": 0.3333333432674408,
+                  "outWeight": 0.3333333432674408
+                }
+              ],
+              "m_PreInfinity": 2,
+              "m_PostInfinity": 2,
+              "m_RotationOrder": 4
+            },
+            "ignoreTimeScale": 1,
+            "delay": 0.0,
+            "delayAffects": 2,
+            "duration": 0.4000000059604645,
+            "steeperCurves": 0,
+            "tweenGroup": 0,
+            "useFixedUpdate": 0,
+            "onFinished": [],
+            "eventReceiver": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "callWhenFinished": "",
+            "from": {
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            },
+            "to": {
+              "x": 0.8500000238418579,
+              "y": 0.8500000238418579,
+              "z": 1.0
+            },
+            "updateTable": 0
+          }
+        },
+        {
+          "id": 2506,
+          "node": 706,
+          "kind": "UISprite",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 706
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 822
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 1.0,
+              "g": 0.23137256503105164,
+              "b": 0.4549019932746887,
+              "a": 1.0
+            },
+            "mPivot": 4,
+            "mWidth": 12,
+            "mHeight": 13,
+            "mDepth": 14,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 1,
+            "aspectRatio": 0.8974359035491943,
+            "mType": 0,
+            "mFillDirection": 4,
+            "mFillAmount": 1.0,
+            "mInvert": 0,
+            "mFlip": 0,
+            "mApplyGradient": 0,
+            "mGradientTop": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mGradientBottom": {
+              "r": 0.699999988079071,
+              "g": 0.699999988079071,
+              "b": 0.699999988079071,
+              "a": 1.0
+            },
+            "centerType": 1,
+            "leftType": 1,
+            "rightType": 1,
+            "bottomType": 1,
+            "topType": 1,
+            "mAtlas": {
+              "m_FileID": 0,
+              "m_PathID": 1796
+            },
+            "mSpriteName": "icon_onpu1",
+            "mFixedAspect": 0,
+            "mFillCenter": 1
+          }
+        }
+      ]
+    },
+    "transmitting": {
+      "resource": "prefabs/screen/transmitting",
+      "nodes": [
+        {
+          "id": 6,
+          "transformId": 40,
+          "name": "Transmitting",
+          "path": "Transmitting",
+          "parent": null,
+          "position": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": -0.0,
+            "y": -0.0,
+            "z": -0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 7,
+          "transformId": 42,
+          "name": "ComponentRoot",
+          "path": "Transmitting/ComponentRoot",
+          "parent": 6,
+          "position": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 10,
+          "transformId": 50,
+          "name": "NowLoading",
+          "path": "Transmitting/ComponentRoot/NowLoading",
+          "parent": 7,
+          "position": {
+            "x": -23.0,
+            "y": -12.0,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 0.699999988079071,
+            "y": 0.699999988079071,
+            "z": 0.699999988079071
+          },
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "w": 1.0
+          },
+          "active": false
+        },
+        {
+          "id": 9,
+          "transformId": 44,
+          "name": "01",
+          "path": "Transmitting/ComponentRoot/NowLoading/01",
+          "parent": 10,
+          "position": {
+            "x": -126.30000305175781,
+            "y": 1.4898653030395508,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 8,
+          "transformId": 49,
+          "name": "02",
+          "path": "Transmitting/ComponentRoot/NowLoading/02",
+          "parent": 10,
+          "position": {
+            "x": -84.40000915527344,
+            "y": -5.400000095367432,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 18,
+          "transformId": 55,
+          "name": "03",
+          "path": "Transmitting/ComponentRoot/NowLoading/03",
+          "parent": 10,
+          "position": {
+            "x": -40.29999923706055,
+            "y": -5.099999904632568,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 2,
+          "transformId": 51,
+          "name": "04",
+          "path": "Transmitting/ComponentRoot/NowLoading/04",
+          "parent": 10,
+          "position": {
+            "x": 17.0,
+            "y": -5.099999904632568,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 3,
+          "transformId": 45,
+          "name": "05",
+          "path": "Transmitting/ComponentRoot/NowLoading/05",
+          "parent": 10,
+          "position": {
+            "x": 55.900001525878906,
+            "y": -5.131288528442383,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 12,
+          "transformId": 38,
+          "name": "06",
+          "path": "Transmitting/ComponentRoot/NowLoading/06",
+          "parent": 10,
+          "position": {
+            "x": 93.69999694824219,
+            "y": -4.699999809265137,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 19,
+          "transformId": 52,
+          "name": "07",
+          "path": "Transmitting/ComponentRoot/NowLoading/07",
+          "parent": 10,
+          "position": {
+            "x": 130.6999969482422,
+            "y": -4.699999809265137,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 4,
+          "transformId": 46,
+          "name": "08",
+          "path": "Transmitting/ComponentRoot/NowLoading/08",
+          "parent": 10,
+          "position": {
+            "x": 154.0,
+            "y": -4.400000095367432,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 11,
+          "transformId": 54,
+          "name": "09",
+          "path": "Transmitting/ComponentRoot/NowLoading/09",
+          "parent": 10,
+          "position": {
+            "x": 177.60000610351562,
+            "y": -4.400000095367432,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 17,
+          "transformId": 56,
+          "name": "10",
+          "path": "Transmitting/ComponentRoot/NowLoading/10",
+          "parent": 10,
+          "position": {
+            "x": 216.5,
+            "y": -4.400000095367432,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 1,
+          "transformId": 53,
+          "name": "11",
+          "path": "Transmitting/ComponentRoot/NowLoading/11",
+          "parent": 10,
+          "position": {
+            "x": 243.3000030517578,
+            "y": -4.699999809265137,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 13,
+          "transformId": 47,
+          "name": "12",
+          "path": "Transmitting/ComponentRoot/NowLoading/12",
+          "parent": 10,
+          "position": {
+            "x": 254.60000610351562,
+            "y": -4.699999809265137,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 5,
+          "transformId": 43,
+          "name": "13",
+          "path": "Transmitting/ComponentRoot/NowLoading/13",
+          "parent": 10,
+          "position": {
+            "x": 265.8999938964844,
+            "y": -4.400000095367432,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 15,
+          "transformId": 48,
+          "name": "Star",
+          "path": "Transmitting/ComponentRoot/NowLoading/Star",
+          "parent": 10,
+          "position": {
+            "x": -202.0,
+            "y": -2.0,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 0.7976176738739014,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 16,
+          "transformId": 41,
+          "name": "TransmittingMessage",
+          "path": "Transmitting/ComponentRoot/TransmittingMessage",
+          "parent": 7,
+          "position": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 14,
+          "transformId": 39,
+          "name": "Grayout",
+          "path": "Transmitting/ComponentRoot/TransmittingMessage/Grayout",
+          "parent": 16,
+          "position": {
+            "x": 0.0,
+            "y": 2.0,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 22,
+          "transformId": 73,
+          "name": "BottomRight (1)",
+          "path": "Transmitting/ComponentRoot/TransmittingMessage/BottomRight (1)",
+          "parent": 16,
+          "position": {
+            "x": 667.0,
+            "y": -444.0,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": -0.0,
+            "y": -0.0,
+            "z": -0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 28,
+          "transformId": 71,
+          "name": "BG",
+          "path": "Transmitting/ComponentRoot/TransmittingMessage/BottomRight (1)/BG",
+          "parent": 22,
+          "position": {
+            "x": -228.0,
+            "y": 24.0,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": -0.0,
+            "y": -0.0,
+            "z": -0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 30,
+          "transformId": 59,
+          "name": "progresses",
+          "path": "Transmitting/ComponentRoot/TransmittingMessage/BottomRight (1)/BG/progresses",
+          "parent": 28,
+          "position": {
+            "x": 0.0,
+            "y": 26.299999237060547,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": -0.0,
+            "y": -0.0,
+            "z": -0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 27,
+          "transformId": 60,
+          "name": "OneProgress",
+          "path": "Transmitting/ComponentRoot/TransmittingMessage/BottomRight (1)/BG/progresses/OneProgress",
+          "parent": 30,
+          "position": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 0.7200000286102295,
+            "y": 0.6000000238418579,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": -0.0,
+            "y": -0.0,
+            "z": -0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 29,
+          "transformId": 57,
+          "name": "Background",
+          "path": "Transmitting/ComponentRoot/TransmittingMessage/BottomRight (1)/BG/progresses/OneProgress/Background",
+          "parent": 27,
+          "position": {
+            "x": 0.0001271565561182797,
+            "y": -7.2479248046875e-05,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": -0.0,
+            "y": -0.0,
+            "z": -0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 23,
+          "transformId": 74,
+          "name": "Foreground",
+          "path": "Transmitting/ComponentRoot/TransmittingMessage/BottomRight (1)/BG/progresses/OneProgress/Foreground",
+          "parent": 27,
+          "position": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": -0.0,
+            "y": -0.0,
+            "z": -0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 32,
+          "transformId": 58,
+          "name": "NetworkNotice",
+          "path": "Transmitting/ComponentRoot/TransmittingMessage/BottomRight (1)/BG/NetworkNotice",
+          "parent": 28,
+          "position": {
+            "x": -163.89999389648438,
+            "y": 64.0,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": -0.0,
+            "y": -0.0,
+            "z": -0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 36,
+          "transformId": 64,
+          "name": "AnimIcon",
+          "path": "Transmitting/ComponentRoot/TransmittingMessage/BottomRight (1)/BG/NetworkNotice/AnimIcon",
+          "parent": 32,
+          "position": {
+            "x": 1.2000000476837158,
+            "y": -10.199999809265137,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 0.800000011920929,
+            "y": 0.800000011920929,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": -0.0,
+            "y": -0.0,
+            "z": -0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 21,
+          "transformId": 69,
+          "name": "Onpu",
+          "path": "Transmitting/ComponentRoot/TransmittingMessage/BottomRight (1)/BG/NetworkNotice/AnimIcon/Onpu",
+          "parent": 36,
+          "position": {
+            "x": 9.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 33,
+          "transformId": 61,
+          "name": "KiraParent",
+          "path": "Transmitting/ComponentRoot/TransmittingMessage/BottomRight (1)/BG/NetworkNotice/AnimIcon/KiraParent",
+          "parent": 36,
+          "position": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 34,
+          "transformId": 63,
+          "name": "kira",
+          "path": "Transmitting/ComponentRoot/TransmittingMessage/BottomRight (1)/BG/NetworkNotice/AnimIcon/KiraParent/kira",
+          "parent": 33,
+          "position": {
+            "x": 9.000030517578125,
+            "y": 61.600006103515625,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 25,
+          "transformId": 66,
+          "name": "kira (1)",
+          "path": "Transmitting/ComponentRoot/TransmittingMessage/BottomRight (1)/BG/NetworkNotice/AnimIcon/KiraParent/kira (1)",
+          "parent": 33,
+          "position": {
+            "x": 25.399993896484375,
+            "y": 52.5,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 31,
+          "transformId": 70,
+          "name": "kira (2)",
+          "path": "Transmitting/ComponentRoot/TransmittingMessage/BottomRight (1)/BG/NetworkNotice/AnimIcon/KiraParent/kira (2)",
+          "parent": 33,
+          "position": {
+            "x": -11.100006103515625,
+            "y": 30.600006103515625,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 35,
+          "transformId": 62,
+          "name": "Shadow",
+          "path": "Transmitting/ComponentRoot/TransmittingMessage/BottomRight (1)/BG/NetworkNotice/AnimIcon/Shadow",
+          "parent": 36,
+          "position": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 20,
+          "transformId": 68,
+          "name": "NowLoading",
+          "path": "Transmitting/ComponentRoot/TransmittingMessage/BottomRight (1)/BG/NetworkNotice/NowLoading",
+          "parent": 32,
+          "position": {
+            "x": 173.3000030517578,
+            "y": 6.0,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": -0.0,
+            "y": -0.0,
+            "z": -0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 26,
+          "transformId": 67,
+          "name": "DotLabel",
+          "path": "Transmitting/ComponentRoot/TransmittingMessage/BottomRight (1)/BG/NetworkNotice/DotLabel",
+          "parent": 32,
+          "position": {
+            "x": 313.1000061035156,
+            "y": 4.699999809265137,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": -0.0,
+            "y": -0.0,
+            "z": -0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 24,
+          "transformId": 65,
+          "name": "notice1",
+          "path": "Transmitting/ComponentRoot/TransmittingMessage/BottomRight (1)/BG/notice1",
+          "parent": 28,
+          "position": {
+            "x": -31.20001220703125,
+            "y": 35.20000076293945,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": -0.0,
+            "y": -0.0,
+            "z": -0.0,
+            "w": 1.0
+          },
+          "active": true
+        },
+        {
+          "id": 37,
+          "transformId": 72,
+          "name": "notice2",
+          "path": "Transmitting/ComponentRoot/TransmittingMessage/BottomRight (1)/BG/notice2",
+          "parent": 28,
+          "position": {
+            "x": -31.20001220703125,
+            "y": 3.4000000953674316,
+            "z": 0.0
+          },
+          "scale": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "rotation": {
+            "x": -0.0,
+            "y": -0.0,
+            "z": -0.0,
+            "w": 1.0
+          },
+          "active": true
+        }
+      ],
+      "components": [
+        {
+          "id": 75,
+          "node": 14,
+          "kind": "BoxCollider2D",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 14
+            },
+            "m_Enabled": 1,
+            "m_Density": 1.0,
+            "m_Material": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "m_IncludeLayers": {
+              "m_Bits": 0
+            },
+            "m_ExcludeLayers": {
+              "m_Bits": 0
+            },
+            "m_LayerOverridePriority": 0,
+            "m_ForceSendLayers": {
+              "m_Bits": 4294967295
+            },
+            "m_ForceReceiveLayers": {
+              "m_Bits": 4294967295
+            },
+            "m_ContactCaptureLayers": {
+              "m_Bits": 4294967295
+            },
+            "m_CallbackLayers": {
+              "m_Bits": 4294967295
+            },
+            "m_IsTrigger": false,
+            "m_UsedByEffector": false,
+            "m_UsedByComposite": false,
+            "m_Offset": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "m_SpriteTilingProperty": {
+              "border": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0,
+                "w": 0.0
+              },
+              "pivot": {
+                "x": 0.0,
+                "y": 0.0
+              },
+              "oldSize": {
+                "x": 0.0,
+                "y": 0.0
+              },
+              "newSize": {
+                "x": 0.0,
+                "y": 0.0
+              },
+              "adaptiveTilingThreshold": 0.0,
+              "drawMode": 0,
+              "adaptiveTiling": false
+            },
+            "m_AutoTiling": false,
+            "m_Size": {
+              "x": 3000.0,
+              "y": 3000.0
+            },
+            "m_EdgeRadius": 0.0
+          }
+        },
+        {
+          "id": 76,
+          "node": 10,
+          "kind": "Animator",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 10
+            },
+            "m_Enabled": 1,
+            "m_Avatar": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "m_Controller": {
+              "m_FileID": 2,
+              "m_PathID": 1
+            },
+            "m_CullingMode": 0,
+            "m_UpdateMode": 0,
+            "m_ApplyRootMotion": false,
+            "m_LinearVelocityBlending": false,
+            "m_StabilizeFeet": false,
+            "m_HasTransformHierarchy": true,
+            "m_AllowConstantClipSamplingOptimization": true,
+            "m_KeepAnimatorStateOnDisable": false,
+            "m_WriteDefaultValuesOnDisable": false
+          }
+        },
+        {
+          "id": 77,
+          "node": 17,
+          "kind": "UILabel",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 17
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 6527
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mPivot": 4,
+            "mWidth": 346,
+            "mHeight": 64,
+            "mDepth": 18,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 0,
+            "aspectRatio": 5.40625,
+            "keepCrispWhenShrunk": 1,
+            "mTrueTypeFont": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "mFont": {
+              "m_FileID": 3,
+              "m_PathID": 1799
+            },
+            "mText": "g",
+            "mFontSize": 64,
+            "mFontStyle": 0,
+            "mAlignment": 0,
+            "mEncoding": 1,
+            "mMaxLineCount": 0,
+            "mEffectStyle": 0,
+            "mEffectColor": {
+              "r": 0.0,
+              "g": 0.0,
+              "b": 0.0,
+              "a": 1.0
+            },
+            "mSymbols": 1,
+            "mEffectDistance": {
+              "x": 1.0,
+              "y": 1.0
+            },
+            "mOverflow": 0,
+            "mApplyGradient": 0,
+            "mGradientTop": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mGradientBottom": {
+              "r": 0.699999988079071,
+              "g": 0.699999988079071,
+              "b": 0.699999988079071,
+              "a": 1.0
+            },
+            "mSpacingX": 0,
+            "mSpacingY": 0,
+            "mUseFloatSpacing": 0,
+            "mFloatSpacingX": 0.0,
+            "mFloatSpacingY": 0.0,
+            "mOverflowEllipsis": 0,
+            "mOverflowWidth": 0,
+            "mOverflowHeight": 0,
+            "mModifier": 0,
+            "mSymbolDepth": 0,
+            "mShrinkToFit": 0,
+            "mMaxLineWidth": 0,
+            "mMaxLineHeight": 0,
+            "mLineWidth": 0.0,
+            "mMultiline": 1
+          }
+        },
+        {
+          "id": 78,
+          "node": 8,
+          "kind": "UILabel",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 8
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 6527
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mPivot": 4,
+            "mWidth": 346,
+            "mHeight": 64,
+            "mDepth": 18,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 0,
+            "aspectRatio": 5.40625,
+            "keepCrispWhenShrunk": 1,
+            "mTrueTypeFont": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "mFont": {
+              "m_FileID": 3,
+              "m_PathID": 1799
+            },
+            "mText": "o",
+            "mFontSize": 64,
+            "mFontStyle": 0,
+            "mAlignment": 0,
+            "mEncoding": 1,
+            "mMaxLineCount": 0,
+            "mEffectStyle": 0,
+            "mEffectColor": {
+              "r": 0.0,
+              "g": 0.0,
+              "b": 0.0,
+              "a": 1.0
+            },
+            "mSymbols": 1,
+            "mEffectDistance": {
+              "x": 1.0,
+              "y": 1.0
+            },
+            "mOverflow": 0,
+            "mApplyGradient": 0,
+            "mGradientTop": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mGradientBottom": {
+              "r": 0.699999988079071,
+              "g": 0.699999988079071,
+              "b": 0.699999988079071,
+              "a": 1.0
+            },
+            "mSpacingX": 0,
+            "mSpacingY": 0,
+            "mUseFloatSpacing": 0,
+            "mFloatSpacingX": 0.0,
+            "mFloatSpacingY": 0.0,
+            "mOverflowEllipsis": 0,
+            "mOverflowWidth": 0,
+            "mOverflowHeight": 0,
+            "mModifier": 0,
+            "mSymbolDepth": 0,
+            "mShrinkToFit": 0,
+            "mMaxLineWidth": 0,
+            "mMaxLineHeight": 0,
+            "mLineWidth": 0.0,
+            "mMultiline": 1
+          }
+        },
+        {
+          "id": 79,
+          "node": 6,
+          "kind": "ScreenLayerTransmitting",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 6
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 511
+            },
+            "m_Name": "",
+            "downloadProgressParentObj": {
+              "m_FileID": 0,
+              "m_PathID": 30
+            },
+            "oneProgress": {
+              "m_FileID": 0,
+              "m_PathID": 99
+            },
+            "noticeLabel": {
+              "m_FileID": 0,
+              "m_PathID": 94
+            },
+            "noticeOnlyPosition": {
+              "m_FileID": 0,
+              "m_PathID": 65
+            },
+            "noticeAndDLPosition": {
+              "m_FileID": 0,
+              "m_PathID": 72
+            },
+            "backGroundObject": {
+              "m_FileID": 0,
+              "m_PathID": 102
+            },
+            "noticeObject": {
+              "m_FileID": 0,
+              "m_PathID": 32
+            },
+            "indicatorAnchor": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            }
+          }
+        },
+        {
+          "id": 80,
+          "node": 15,
+          "kind": "UISprite",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 15
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 822
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mPivot": 4,
+            "mWidth": 72,
+            "mHeight": 72,
+            "mDepth": 18,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 0,
+            "aspectRatio": 1.0,
+            "mType": 0,
+            "mFillDirection": 4,
+            "mFillAmount": 1.0,
+            "mInvert": 0,
+            "mFlip": 0,
+            "mApplyGradient": 0,
+            "mGradientTop": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mGradientBottom": {
+              "r": 0.699999988079071,
+              "g": 0.699999988079071,
+              "b": 0.699999988079071,
+              "a": 1.0
+            },
+            "centerType": 1,
+            "leftType": 1,
+            "rightType": 1,
+            "bottomType": 1,
+            "topType": 1,
+            "mAtlas": {
+              "m_FileID": 3,
+              "m_PathID": 1796
+            },
+            "mSpriteName": "star",
+            "mFixedAspect": 0,
+            "mFillCenter": 1
+          }
+        },
+        {
+          "id": 81,
+          "node": 1,
+          "kind": "UILabel",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 1
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 6527
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mPivot": 4,
+            "mWidth": 346,
+            "mHeight": 64,
+            "mDepth": 18,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 0,
+            "aspectRatio": 5.40625,
+            "keepCrispWhenShrunk": 1,
+            "mTrueTypeFont": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "mFont": {
+              "m_FileID": 3,
+              "m_PathID": 1799
+            },
+            "mText": ".",
+            "mFontSize": 64,
+            "mFontStyle": 0,
+            "mAlignment": 0,
+            "mEncoding": 1,
+            "mMaxLineCount": 0,
+            "mEffectStyle": 0,
+            "mEffectColor": {
+              "r": 0.0,
+              "g": 0.0,
+              "b": 0.0,
+              "a": 1.0
+            },
+            "mSymbols": 1,
+            "mEffectDistance": {
+              "x": 1.0,
+              "y": 1.0
+            },
+            "mOverflow": 0,
+            "mApplyGradient": 0,
+            "mGradientTop": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mGradientBottom": {
+              "r": 0.699999988079071,
+              "g": 0.699999988079071,
+              "b": 0.699999988079071,
+              "a": 1.0
+            },
+            "mSpacingX": 0,
+            "mSpacingY": 0,
+            "mUseFloatSpacing": 0,
+            "mFloatSpacingX": 0.0,
+            "mFloatSpacingY": 0.0,
+            "mOverflowEllipsis": 0,
+            "mOverflowWidth": 0,
+            "mOverflowHeight": 0,
+            "mModifier": 0,
+            "mSymbolDepth": 0,
+            "mShrinkToFit": 0,
+            "mMaxLineWidth": 0,
+            "mMaxLineHeight": 0,
+            "mLineWidth": 0.0,
+            "mMultiline": 1
+          }
+        },
+        {
+          "id": 82,
+          "node": 19,
+          "kind": "UILabel",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 19
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 6527
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mPivot": 4,
+            "mWidth": 346,
+            "mHeight": 64,
+            "mDepth": 18,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 0,
+            "aspectRatio": 5.40625,
+            "keepCrispWhenShrunk": 1,
+            "mTrueTypeFont": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "mFont": {
+              "m_FileID": 3,
+              "m_PathID": 1799
+            },
+            "mText": "d",
+            "mFontSize": 64,
+            "mFontStyle": 0,
+            "mAlignment": 0,
+            "mEncoding": 1,
+            "mMaxLineCount": 0,
+            "mEffectStyle": 0,
+            "mEffectColor": {
+              "r": 0.0,
+              "g": 0.0,
+              "b": 0.0,
+              "a": 1.0
+            },
+            "mSymbols": 1,
+            "mEffectDistance": {
+              "x": 1.0,
+              "y": 1.0
+            },
+            "mOverflow": 0,
+            "mApplyGradient": 0,
+            "mGradientTop": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mGradientBottom": {
+              "r": 0.699999988079071,
+              "g": 0.699999988079071,
+              "b": 0.699999988079071,
+              "a": 1.0
+            },
+            "mSpacingX": 0,
+            "mSpacingY": 0,
+            "mUseFloatSpacing": 0,
+            "mFloatSpacingX": 0.0,
+            "mFloatSpacingY": 0.0,
+            "mOverflowEllipsis": 0,
+            "mOverflowWidth": 0,
+            "mOverflowHeight": 0,
+            "mModifier": 0,
+            "mSymbolDepth": 0,
+            "mShrinkToFit": 0,
+            "mMaxLineWidth": 0,
+            "mMaxLineHeight": 0,
+            "mLineWidth": 0.0,
+            "mMultiline": 1
+          }
+        },
+        {
+          "id": 83,
+          "node": 2,
+          "kind": "UILabel",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 2
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 6527
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mPivot": 4,
+            "mWidth": 346,
+            "mHeight": 64,
+            "mDepth": 18,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 0,
+            "aspectRatio": 5.40625,
+            "keepCrispWhenShrunk": 1,
+            "mTrueTypeFont": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "mFont": {
+              "m_FileID": 3,
+              "m_PathID": 1799
+            },
+            "mText": "L",
+            "mFontSize": 64,
+            "mFontStyle": 0,
+            "mAlignment": 0,
+            "mEncoding": 1,
+            "mMaxLineCount": 0,
+            "mEffectStyle": 0,
+            "mEffectColor": {
+              "r": 0.0,
+              "g": 0.0,
+              "b": 0.0,
+              "a": 1.0
+            },
+            "mSymbols": 1,
+            "mEffectDistance": {
+              "x": 1.0,
+              "y": 1.0
+            },
+            "mOverflow": 0,
+            "mApplyGradient": 0,
+            "mGradientTop": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mGradientBottom": {
+              "r": 0.699999988079071,
+              "g": 0.699999988079071,
+              "b": 0.699999988079071,
+              "a": 1.0
+            },
+            "mSpacingX": 0,
+            "mSpacingY": 0,
+            "mUseFloatSpacing": 0,
+            "mFloatSpacingX": 0.0,
+            "mFloatSpacingY": 0.0,
+            "mOverflowEllipsis": 0,
+            "mOverflowWidth": 0,
+            "mOverflowHeight": 0,
+            "mModifier": 0,
+            "mSymbolDepth": 0,
+            "mShrinkToFit": 0,
+            "mMaxLineWidth": 0,
+            "mMaxLineHeight": 0,
+            "mLineWidth": 0.0,
+            "mMultiline": 1
+          }
+        },
+        {
+          "id": 84,
+          "node": 14,
+          "kind": "UISprite",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 14
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 822
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": -1
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 2
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": -1
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 2
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 0.0,
+              "g": 0.0,
+              "b": 0.0,
+              "a": 0.19607843458652496
+            },
+            "mPivot": 4,
+            "mWidth": 773,
+            "mHeight": 581,
+            "mDepth": 15,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 0,
+            "aspectRatio": 1.4977577924728394,
+            "mType": 1,
+            "mFillDirection": 4,
+            "mFillAmount": 1.0,
+            "mInvert": 0,
+            "mFlip": 0,
+            "mApplyGradient": 0,
+            "mGradientTop": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mGradientBottom": {
+              "r": 0.699999988079071,
+              "g": 0.699999988079071,
+              "b": 0.699999988079071,
+              "a": 1.0
+            },
+            "centerType": 1,
+            "leftType": 1,
+            "rightType": 1,
+            "bottomType": 1,
+            "topType": 1,
+            "mAtlas": {
+              "m_FileID": 3,
+              "m_PathID": 1796
+            },
+            "mSpriteName": "fill",
+            "mFixedAspect": 0,
+            "mFillCenter": 1
+          }
+        },
+        {
+          "id": 85,
+          "node": 9,
+          "kind": "UILabel",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 9
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 6527
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mPivot": 4,
+            "mWidth": 346,
+            "mHeight": 64,
+            "mDepth": 18,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 0,
+            "aspectRatio": 5.40625,
+            "keepCrispWhenShrunk": 1,
+            "mTrueTypeFont": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "mFont": {
+              "m_FileID": 3,
+              "m_PathID": 1799
+            },
+            "mText": "N",
+            "mFontSize": 64,
+            "mFontStyle": 0,
+            "mAlignment": 0,
+            "mEncoding": 1,
+            "mMaxLineCount": 0,
+            "mEffectStyle": 0,
+            "mEffectColor": {
+              "r": 0.0,
+              "g": 0.0,
+              "b": 0.0,
+              "a": 1.0
+            },
+            "mSymbols": 1,
+            "mEffectDistance": {
+              "x": 1.0,
+              "y": 1.0
+            },
+            "mOverflow": 0,
+            "mApplyGradient": 0,
+            "mGradientTop": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mGradientBottom": {
+              "r": 0.699999988079071,
+              "g": 0.699999988079071,
+              "b": 0.699999988079071,
+              "a": 1.0
+            },
+            "mSpacingX": 0,
+            "mSpacingY": 0,
+            "mUseFloatSpacing": 0,
+            "mFloatSpacingX": 0.0,
+            "mFloatSpacingY": 0.0,
+            "mOverflowEllipsis": 0,
+            "mOverflowWidth": 0,
+            "mOverflowHeight": 0,
+            "mModifier": 0,
+            "mSymbolDepth": 0,
+            "mShrinkToFit": 0,
+            "mMaxLineWidth": 0,
+            "mMaxLineHeight": 0,
+            "mLineWidth": 0.0,
+            "mMultiline": 1
+          }
+        },
+        {
+          "id": 86,
+          "node": 3,
+          "kind": "UILabel",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 3
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 6527
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mPivot": 4,
+            "mWidth": 346,
+            "mHeight": 64,
+            "mDepth": 18,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 0,
+            "aspectRatio": 5.40625,
+            "keepCrispWhenShrunk": 1,
+            "mTrueTypeFont": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "mFont": {
+              "m_FileID": 3,
+              "m_PathID": 1799
+            },
+            "mText": "o",
+            "mFontSize": 64,
+            "mFontStyle": 0,
+            "mAlignment": 0,
+            "mEncoding": 1,
+            "mMaxLineCount": 0,
+            "mEffectStyle": 0,
+            "mEffectColor": {
+              "r": 0.0,
+              "g": 0.0,
+              "b": 0.0,
+              "a": 1.0
+            },
+            "mSymbols": 1,
+            "mEffectDistance": {
+              "x": 1.0,
+              "y": 1.0
+            },
+            "mOverflow": 0,
+            "mApplyGradient": 0,
+            "mGradientTop": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mGradientBottom": {
+              "r": 0.699999988079071,
+              "g": 0.699999988079071,
+              "b": 0.699999988079071,
+              "a": 1.0
+            },
+            "mSpacingX": 0,
+            "mSpacingY": 0,
+            "mUseFloatSpacing": 0,
+            "mFloatSpacingX": 0.0,
+            "mFloatSpacingY": 0.0,
+            "mOverflowEllipsis": 0,
+            "mOverflowWidth": 0,
+            "mOverflowHeight": 0,
+            "mModifier": 0,
+            "mSymbolDepth": 0,
+            "mShrinkToFit": 0,
+            "mMaxLineWidth": 0,
+            "mMaxLineHeight": 0,
+            "mLineWidth": 0.0,
+            "mMultiline": 1
+          }
+        },
+        {
+          "id": 87,
+          "node": 11,
+          "kind": "UILabel",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 11
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 6527
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mPivot": 4,
+            "mWidth": 346,
+            "mHeight": 64,
+            "mDepth": 18,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 0,
+            "aspectRatio": 5.40625,
+            "keepCrispWhenShrunk": 1,
+            "mTrueTypeFont": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "mFont": {
+              "m_FileID": 3,
+              "m_PathID": 1799
+            },
+            "mText": "n",
+            "mFontSize": 64,
+            "mFontStyle": 0,
+            "mAlignment": 0,
+            "mEncoding": 1,
+            "mMaxLineCount": 0,
+            "mEffectStyle": 0,
+            "mEffectColor": {
+              "r": 0.0,
+              "g": 0.0,
+              "b": 0.0,
+              "a": 1.0
+            },
+            "mSymbols": 1,
+            "mEffectDistance": {
+              "x": 1.0,
+              "y": 1.0
+            },
+            "mOverflow": 0,
+            "mApplyGradient": 0,
+            "mGradientTop": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mGradientBottom": {
+              "r": 0.699999988079071,
+              "g": 0.699999988079071,
+              "b": 0.699999988079071,
+              "a": 1.0
+            },
+            "mSpacingX": 0,
+            "mSpacingY": 0,
+            "mUseFloatSpacing": 0,
+            "mFloatSpacingX": 0.0,
+            "mFloatSpacingY": 0.0,
+            "mOverflowEllipsis": 0,
+            "mOverflowWidth": 0,
+            "mOverflowHeight": 0,
+            "mModifier": 0,
+            "mSymbolDepth": 0,
+            "mShrinkToFit": 0,
+            "mMaxLineWidth": 0,
+            "mMaxLineHeight": 0,
+            "mLineWidth": 0.0,
+            "mMultiline": 1
+          }
+        },
+        {
+          "id": 88,
+          "node": 13,
+          "kind": "UILabel",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 13
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 6527
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mPivot": 4,
+            "mWidth": 346,
+            "mHeight": 64,
+            "mDepth": 18,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 0,
+            "aspectRatio": 5.40625,
+            "keepCrispWhenShrunk": 1,
+            "mTrueTypeFont": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "mFont": {
+              "m_FileID": 3,
+              "m_PathID": 1799
+            },
+            "mText": ".",
+            "mFontSize": 64,
+            "mFontStyle": 0,
+            "mAlignment": 0,
+            "mEncoding": 1,
+            "mMaxLineCount": 0,
+            "mEffectStyle": 0,
+            "mEffectColor": {
+              "r": 0.0,
+              "g": 0.0,
+              "b": 0.0,
+              "a": 1.0
+            },
+            "mSymbols": 1,
+            "mEffectDistance": {
+              "x": 1.0,
+              "y": 1.0
+            },
+            "mOverflow": 0,
+            "mApplyGradient": 0,
+            "mGradientTop": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mGradientBottom": {
+              "r": 0.699999988079071,
+              "g": 0.699999988079071,
+              "b": 0.699999988079071,
+              "a": 1.0
+            },
+            "mSpacingX": 0,
+            "mSpacingY": 0,
+            "mUseFloatSpacing": 0,
+            "mFloatSpacingX": 0.0,
+            "mFloatSpacingY": 0.0,
+            "mOverflowEllipsis": 0,
+            "mOverflowWidth": 0,
+            "mOverflowHeight": 0,
+            "mModifier": 0,
+            "mSymbolDepth": 0,
+            "mShrinkToFit": 0,
+            "mMaxLineWidth": 0,
+            "mMaxLineHeight": 0,
+            "mLineWidth": 0.0,
+            "mMultiline": 1
+          }
+        },
+        {
+          "id": 89,
+          "node": 18,
+          "kind": "UILabel",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 18
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 6527
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mPivot": 4,
+            "mWidth": 346,
+            "mHeight": 64,
+            "mDepth": 18,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 0,
+            "aspectRatio": 5.40625,
+            "keepCrispWhenShrunk": 1,
+            "mTrueTypeFont": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "mFont": {
+              "m_FileID": 3,
+              "m_PathID": 1799
+            },
+            "mText": "w",
+            "mFontSize": 64,
+            "mFontStyle": 0,
+            "mAlignment": 0,
+            "mEncoding": 1,
+            "mMaxLineCount": 0,
+            "mEffectStyle": 0,
+            "mEffectColor": {
+              "r": 0.0,
+              "g": 0.0,
+              "b": 0.0,
+              "a": 1.0
+            },
+            "mSymbols": 1,
+            "mEffectDistance": {
+              "x": 1.0,
+              "y": 1.0
+            },
+            "mOverflow": 0,
+            "mApplyGradient": 0,
+            "mGradientTop": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mGradientBottom": {
+              "r": 0.699999988079071,
+              "g": 0.699999988079071,
+              "b": 0.699999988079071,
+              "a": 1.0
+            },
+            "mSpacingX": 0,
+            "mSpacingY": 0,
+            "mUseFloatSpacing": 0,
+            "mFloatSpacingX": 0.0,
+            "mFloatSpacingY": 0.0,
+            "mOverflowEllipsis": 0,
+            "mOverflowWidth": 0,
+            "mOverflowHeight": 0,
+            "mModifier": 0,
+            "mSymbolDepth": 0,
+            "mShrinkToFit": 0,
+            "mMaxLineWidth": 0,
+            "mMaxLineHeight": 0,
+            "mLineWidth": 0.0,
+            "mMultiline": 1
+          }
+        },
+        {
+          "id": 90,
+          "node": 12,
+          "kind": "UILabel",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 12
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 6527
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mPivot": 4,
+            "mWidth": 346,
+            "mHeight": 64,
+            "mDepth": 18,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 0,
+            "aspectRatio": 5.40625,
+            "keepCrispWhenShrunk": 1,
+            "mTrueTypeFont": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "mFont": {
+              "m_FileID": 3,
+              "m_PathID": 1799
+            },
+            "mText": "a",
+            "mFontSize": 64,
+            "mFontStyle": 0,
+            "mAlignment": 0,
+            "mEncoding": 1,
+            "mMaxLineCount": 0,
+            "mEffectStyle": 0,
+            "mEffectColor": {
+              "r": 0.0,
+              "g": 0.0,
+              "b": 0.0,
+              "a": 1.0
+            },
+            "mSymbols": 1,
+            "mEffectDistance": {
+              "x": 1.0,
+              "y": 1.0
+            },
+            "mOverflow": 0,
+            "mApplyGradient": 0,
+            "mGradientTop": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mGradientBottom": {
+              "r": 0.699999988079071,
+              "g": 0.699999988079071,
+              "b": 0.699999988079071,
+              "a": 1.0
+            },
+            "mSpacingX": 0,
+            "mSpacingY": 0,
+            "mUseFloatSpacing": 0,
+            "mFloatSpacingX": 0.0,
+            "mFloatSpacingY": 0.0,
+            "mOverflowEllipsis": 0,
+            "mOverflowWidth": 0,
+            "mOverflowHeight": 0,
+            "mModifier": 0,
+            "mSymbolDepth": 0,
+            "mShrinkToFit": 0,
+            "mMaxLineWidth": 0,
+            "mMaxLineHeight": 0,
+            "mLineWidth": 0.0,
+            "mMultiline": 1
+          }
+        },
+        {
+          "id": 91,
+          "node": 5,
+          "kind": "UILabel",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 5
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 6527
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mPivot": 4,
+            "mWidth": 346,
+            "mHeight": 64,
+            "mDepth": 18,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 0,
+            "aspectRatio": 5.40625,
+            "keepCrispWhenShrunk": 1,
+            "mTrueTypeFont": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "mFont": {
+              "m_FileID": 3,
+              "m_PathID": 1799
+            },
+            "mText": ".",
+            "mFontSize": 64,
+            "mFontStyle": 0,
+            "mAlignment": 0,
+            "mEncoding": 1,
+            "mMaxLineCount": 0,
+            "mEffectStyle": 0,
+            "mEffectColor": {
+              "r": 0.0,
+              "g": 0.0,
+              "b": 0.0,
+              "a": 1.0
+            },
+            "mSymbols": 1,
+            "mEffectDistance": {
+              "x": 1.0,
+              "y": 1.0
+            },
+            "mOverflow": 0,
+            "mApplyGradient": 0,
+            "mGradientTop": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mGradientBottom": {
+              "r": 0.699999988079071,
+              "g": 0.699999988079071,
+              "b": 0.699999988079071,
+              "a": 1.0
+            },
+            "mSpacingX": 0,
+            "mSpacingY": 0,
+            "mUseFloatSpacing": 0,
+            "mFloatSpacingX": 0.0,
+            "mFloatSpacingY": 0.0,
+            "mOverflowEllipsis": 0,
+            "mOverflowWidth": 0,
+            "mOverflowHeight": 0,
+            "mModifier": 0,
+            "mSymbolDepth": 0,
+            "mShrinkToFit": 0,
+            "mMaxLineWidth": 0,
+            "mMaxLineHeight": 0,
+            "mLineWidth": 0.0,
+            "mMultiline": 1
+          }
+        },
+        {
+          "id": 92,
+          "node": 4,
+          "kind": "UILabel",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 4
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 6527
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mPivot": 4,
+            "mWidth": 346,
+            "mHeight": 64,
+            "mDepth": 18,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 0,
+            "aspectRatio": 5.40625,
+            "keepCrispWhenShrunk": 1,
+            "mTrueTypeFont": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "mFont": {
+              "m_FileID": 3,
+              "m_PathID": 1799
+            },
+            "mText": "i",
+            "mFontSize": 64,
+            "mFontStyle": 0,
+            "mAlignment": 0,
+            "mEncoding": 1,
+            "mMaxLineCount": 0,
+            "mEffectStyle": 0,
+            "mEffectColor": {
+              "r": 0.0,
+              "g": 0.0,
+              "b": 0.0,
+              "a": 1.0
+            },
+            "mSymbols": 1,
+            "mEffectDistance": {
+              "x": 1.0,
+              "y": 1.0
+            },
+            "mOverflow": 0,
+            "mApplyGradient": 0,
+            "mGradientTop": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mGradientBottom": {
+              "r": 0.699999988079071,
+              "g": 0.699999988079071,
+              "b": 0.699999988079071,
+              "a": 1.0
+            },
+            "mSpacingX": 0,
+            "mSpacingY": 0,
+            "mUseFloatSpacing": 0,
+            "mFloatSpacingX": 0.0,
+            "mFloatSpacingY": 0.0,
+            "mOverflowEllipsis": 0,
+            "mOverflowWidth": 0,
+            "mOverflowHeight": 0,
+            "mModifier": 0,
+            "mSymbolDepth": 0,
+            "mShrinkToFit": 0,
+            "mMaxLineWidth": 0,
+            "mMaxLineHeight": 0,
+            "mLineWidth": 0.0,
+            "mMultiline": 1
+          }
+        },
+        {
+          "id": 93,
+          "node": 21,
+          "kind": "UISprite",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 21
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 822
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mPivot": 7,
+            "mWidth": 46,
+            "mHeight": 50,
+            "mDepth": 13,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 0,
+            "aspectRatio": 0.9200000166893005,
+            "mType": 0,
+            "mFillDirection": 4,
+            "mFillAmount": 1.0,
+            "mInvert": 0,
+            "mFlip": 0,
+            "mApplyGradient": 0,
+            "mGradientTop": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mGradientBottom": {
+              "r": 0.699999988079071,
+              "g": 0.699999988079071,
+              "b": 0.699999988079071,
+              "a": 1.0
+            },
+            "centerType": 1,
+            "leftType": 1,
+            "rightType": 1,
+            "bottomType": 1,
+            "topType": 1,
+            "mAtlas": {
+              "m_FileID": 3,
+              "m_PathID": 1796
+            },
+            "mSpriteName": "icon_onpu",
+            "mFixedAspect": 0,
+            "mFillCenter": 1
+          }
+        },
+        {
+          "id": 94,
+          "node": 26,
+          "kind": "UILabel",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 26
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 6527
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 1.0,
+              "g": 0.23137255012989044,
+              "b": 0.4470588266849518,
+              "a": 1.0
+            },
+            "mPivot": 3,
+            "mWidth": 200,
+            "mHeight": 50,
+            "mDepth": 13,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 0,
+            "aspectRatio": 4.0,
+            "keepCrispWhenShrunk": 1,
+            "mTrueTypeFont": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "mFont": {
+              "m_FileID": 3,
+              "m_PathID": 1799
+            },
+            "mText": "...",
+            "mFontSize": 39,
+            "mFontStyle": 0,
+            "mAlignment": 0,
+            "mEncoding": 1,
+            "mMaxLineCount": 0,
+            "mEffectStyle": 2,
+            "mEffectColor": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mSymbols": 1,
+            "mEffectDistance": {
+              "x": 2.0,
+              "y": 2.0
+            },
+            "mOverflow": 0,
+            "mApplyGradient": 0,
+            "mGradientTop": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mGradientBottom": {
+              "r": 0.699999988079071,
+              "g": 0.699999988079071,
+              "b": 0.699999988079071,
+              "a": 1.0
+            },
+            "mSpacingX": 0,
+            "mSpacingY": 0,
+            "mUseFloatSpacing": 0,
+            "mFloatSpacingX": 0.0,
+            "mFloatSpacingY": 0.0,
+            "mOverflowEllipsis": 0,
+            "mOverflowWidth": 0,
+            "mOverflowHeight": 0,
+            "mModifier": 0,
+            "mSymbolDepth": 0,
+            "mShrinkToFit": 0,
+            "mMaxLineWidth": 0,
+            "mMaxLineHeight": 0,
+            "mLineWidth": 0.0,
+            "mMultiline": 1
+          }
+        },
+        {
+          "id": 95,
+          "node": 20,
+          "kind": "UISprite",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 20
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 822
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mPivot": 4,
+            "mWidth": 274,
+            "mHeight": 33,
+            "mDepth": 11,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 0,
+            "aspectRatio": 8.303030014038086,
+            "mType": 0,
+            "mFillDirection": 4,
+            "mFillAmount": 1.0,
+            "mInvert": 0,
+            "mFlip": 0,
+            "mApplyGradient": 0,
+            "mGradientTop": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mGradientBottom": {
+              "r": 0.699999988079071,
+              "g": 0.699999988079071,
+              "b": 0.699999988079071,
+              "a": 1.0
+            },
+            "centerType": 1,
+            "leftType": 1,
+            "rightType": 1,
+            "bottomType": 1,
+            "topType": 1,
+            "mAtlas": {
+              "m_FileID": 3,
+              "m_PathID": 1796
+            },
+            "mSpriteName": "nowloading",
+            "mFixedAspect": 0,
+            "mFillCenter": 1
+          }
+        },
+        {
+          "id": 96,
+          "node": 35,
+          "kind": "UISprite",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 35
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 822
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mPivot": 4,
+            "mWidth": 30,
+            "mHeight": 12,
+            "mDepth": 12,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 0,
+            "aspectRatio": 2.5,
+            "mType": 0,
+            "mFillDirection": 4,
+            "mFillAmount": 1.0,
+            "mInvert": 0,
+            "mFlip": 0,
+            "mApplyGradient": 0,
+            "mGradientTop": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mGradientBottom": {
+              "r": 0.699999988079071,
+              "g": 0.699999988079071,
+              "b": 0.699999988079071,
+              "a": 1.0
+            },
+            "centerType": 1,
+            "leftType": 1,
+            "rightType": 1,
+            "bottomType": 1,
+            "topType": 1,
+            "mAtlas": {
+              "m_FileID": 3,
+              "m_PathID": 1796
+            },
+            "mSpriteName": "onpu_shadow",
+            "mFixedAspect": 0,
+            "mFillCenter": 1
+          }
+        },
+        {
+          "id": 97,
+          "node": 23,
+          "kind": "UISprite",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 23
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 822
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 1.0,
+              "g": 0.23137255012989044,
+              "b": 0.4470588266849518,
+              "a": 1.0
+            },
+            "mPivot": 4,
+            "mWidth": 500,
+            "mHeight": 48,
+            "mDepth": 12,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 0,
+            "aspectRatio": 10.416666984558105,
+            "mType": 1,
+            "mFillDirection": 4,
+            "mFillAmount": 1.0,
+            "mInvert": 0,
+            "mFlip": 0,
+            "mApplyGradient": 0,
+            "mGradientTop": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mGradientBottom": {
+              "r": 0.699999988079071,
+              "g": 0.699999988079071,
+              "b": 0.699999988079071,
+              "a": 1.0
+            },
+            "centerType": 1,
+            "leftType": 1,
+            "rightType": 1,
+            "bottomType": 1,
+            "topType": 1,
+            "mAtlas": {
+              "m_FileID": 3,
+              "m_PathID": 1796
+            },
+            "mSpriteName": "bg_base_r12",
+            "mFixedAspect": 0,
+            "mFillCenter": 1
+          }
+        },
+        {
+          "id": 98,
+          "node": 22,
+          "kind": "UIPanel",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 22
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 4845
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "showInPanelTool": 1,
+            "generateNormals": 0,
+            "generateUV2": 0,
+            "shadowMode": 0,
+            "widgetsAreStatic": 0,
+            "cullWhileDragging": 1,
+            "alwaysOnScreen": 0,
+            "anchorOffset": 0,
+            "softBorderPadding": 1,
+            "renderQueue": 0,
+            "startingRenderQueue": 3003,
+            "mClipTexture": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "mAlpha": 1.0,
+            "mAlphaProp": "",
+            "mClipping": 0,
+            "mClipRange": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 300.0,
+              "w": 200.0
+            },
+            "mClipSoftness": {
+              "x": 4.0,
+              "y": 4.0
+            },
+            "mDepth": 47,
+            "mSortingOrder": 0,
+            "mSortingLayerName": "",
+            "mClipOffset": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "useSortingOrder": 0
+          }
+        },
+        {
+          "id": 99,
+          "node": 27,
+          "kind": "UISlider",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 27
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 3046
+            },
+            "m_Name": "",
+            "thumb": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "mBG": {
+              "m_FileID": 0,
+              "m_PathID": 106
+            },
+            "mFG": {
+              "m_FileID": 0,
+              "m_PathID": 97
+            },
+            "mValue": 1.0,
+            "mFill": 0,
+            "numberOfSteps": 0,
+            "onChange": [],
+            "foreground": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "rawValue": 1.0,
+            "direction": 2,
+            "mInverted": 0
+          }
+        },
+        {
+          "id": 100,
+          "node": 31,
+          "kind": "TweenScale",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 31
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 3330
+            },
+            "m_Name": "",
+            "method": 0,
+            "style": 2,
+            "animationCurve": {
+              "m_Curve": [
+                {
+                  "time": 0.0,
+                  "value": 0.0,
+                  "inSlope": 2.0,
+                  "outSlope": 2.0,
+                  "weightedMode": 0,
+                  "inWeight": 0.3333333432674408,
+                  "outWeight": 0.3333333432674408
+                },
+                {
+                  "time": 1.0,
+                  "value": 1.0,
+                  "inSlope": 0.0,
+                  "outSlope": 0.0,
+                  "weightedMode": 0,
+                  "inWeight": 0.3333333432674408,
+                  "outWeight": 0.3333333432674408
+                }
+              ],
+              "m_PreInfinity": 2,
+              "m_PostInfinity": 2,
+              "m_RotationOrder": 4
+            },
+            "ignoreTimeScale": 1,
+            "delay": 0.5,
+            "delayAffects": 2,
+            "duration": 0.5,
+            "steeperCurves": 0,
+            "tweenGroup": 0,
+            "useFixedUpdate": 0,
+            "onFinished": [],
+            "eventReceiver": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "callWhenFinished": "",
+            "from": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 1.0
+            },
+            "to": {
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            },
+            "updateTable": 0
+          }
+        },
+        {
+          "id": 101,
+          "node": 25,
+          "kind": "TweenScale",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 25
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 3330
+            },
+            "m_Name": "",
+            "method": 0,
+            "style": 2,
+            "animationCurve": {
+              "m_Curve": [
+                {
+                  "time": 0.0,
+                  "value": 0.0,
+                  "inSlope": 2.0,
+                  "outSlope": 2.0,
+                  "weightedMode": 0,
+                  "inWeight": 0.3333333432674408,
+                  "outWeight": 0.3333333432674408
+                },
+                {
+                  "time": 1.0,
+                  "value": 1.0,
+                  "inSlope": 0.0,
+                  "outSlope": 0.0,
+                  "weightedMode": 0,
+                  "inWeight": 0.3333333432674408,
+                  "outWeight": 0.3333333432674408
+                }
+              ],
+              "m_PreInfinity": 2,
+              "m_PostInfinity": 2,
+              "m_RotationOrder": 4
+            },
+            "ignoreTimeScale": 1,
+            "delay": 0.20000000298023224,
+            "delayAffects": 2,
+            "duration": 0.5,
+            "steeperCurves": 0,
+            "tweenGroup": 0,
+            "useFixedUpdate": 0,
+            "onFinished": [],
+            "eventReceiver": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "callWhenFinished": "",
+            "from": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 1.0
+            },
+            "to": {
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            },
+            "updateTable": 0
+          }
+        },
+        {
+          "id": 102,
+          "node": 28,
+          "kind": "UISprite",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 28
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 822
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mPivot": 7,
+            "mWidth": 394,
+            "mHeight": 100,
+            "mDepth": 10,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 0,
+            "aspectRatio": 3.940000057220459,
+            "mType": 1,
+            "mFillDirection": 4,
+            "mFillAmount": 1.0,
+            "mInvert": 0,
+            "mFlip": 0,
+            "mApplyGradient": 0,
+            "mGradientTop": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mGradientBottom": {
+              "r": 0.699999988079071,
+              "g": 0.699999988079071,
+              "b": 0.699999988079071,
+              "a": 1.0
+            },
+            "centerType": 1,
+            "leftType": 1,
+            "rightType": 1,
+            "bottomType": 1,
+            "topType": 1,
+            "mAtlas": {
+              "m_FileID": 3,
+              "m_PathID": 1796
+            },
+            "mSpriteName": "bg_base_r6_inside_black",
+            "mFixedAspect": 0,
+            "mFillCenter": 1
+          }
+        },
+        {
+          "id": 103,
+          "node": 33,
+          "kind": "TweenPosition",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 33
+            },
+            "m_Enabled": 0,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 1769
+            },
+            "m_Name": "",
+            "method": 0,
+            "style": 2,
+            "animationCurve": {
+              "m_Curve": [
+                {
+                  "time": 0.0,
+                  "value": 0.0,
+                  "inSlope": 2.0,
+                  "outSlope": 2.0,
+                  "weightedMode": 0,
+                  "inWeight": 0.3333333432674408,
+                  "outWeight": 0.3333333432674408
+                },
+                {
+                  "time": 1.0,
+                  "value": 1.0,
+                  "inSlope": 0.0,
+                  "outSlope": 0.0,
+                  "weightedMode": 0,
+                  "inWeight": 0.3333333432674408,
+                  "outWeight": 0.3333333432674408
+                }
+              ],
+              "m_PreInfinity": 2,
+              "m_PostInfinity": 2,
+              "m_RotationOrder": 4
+            },
+            "ignoreTimeScale": 1,
+            "delay": 0.0,
+            "delayAffects": 2,
+            "duration": 0.4000000059604645,
+            "steeperCurves": 0,
+            "tweenGroup": 0,
+            "useFixedUpdate": 0,
+            "onFinished": [],
+            "eventReceiver": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "callWhenFinished": "",
+            "from": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "to": {
+              "x": 0.0,
+              "y": 10.0,
+              "z": 0.0
+            },
+            "worldSpace": 0
+          }
+        },
+        {
+          "id": 104,
+          "node": 25,
+          "kind": "UISprite",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 25
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 822
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mPivot": 4,
+            "mWidth": 20,
+            "mHeight": 22,
+            "mDepth": 14,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 0,
+            "aspectRatio": 0.9090909361839294,
+            "mType": 0,
+            "mFillDirection": 4,
+            "mFillAmount": 1.0,
+            "mInvert": 0,
+            "mFlip": 0,
+            "mApplyGradient": 0,
+            "mGradientTop": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mGradientBottom": {
+              "r": 0.699999988079071,
+              "g": 0.699999988079071,
+              "b": 0.699999988079071,
+              "a": 1.0
+            },
+            "centerType": 1,
+            "leftType": 1,
+            "rightType": 1,
+            "bottomType": 1,
+            "topType": 1,
+            "mAtlas": {
+              "m_FileID": 3,
+              "m_PathID": 1796
+            },
+            "mSpriteName": "icon_kira",
+            "mFixedAspect": 0,
+            "mFillCenter": 1
+          }
+        },
+        {
+          "id": 105,
+          "node": 22,
+          "kind": "CameraAnchor",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 22
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 315
+            },
+            "m_Name": "",
+            "refCamera": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "horizonal": 2,
+            "vertical": 2,
+            "runOnlyOnce": 1,
+            "isNGUI": 1,
+            "relativeOffset": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "pixelOffset": {
+              "x": 0.0,
+              "y": 0.0
+            },
+            "enableOnValidate": 1
+          }
+        },
+        {
+          "id": 106,
+          "node": 29,
+          "kind": "UISprite",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 29
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 822
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mPivot": 4,
+            "mWidth": 500,
+            "mHeight": 48,
+            "mDepth": 11,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 0,
+            "aspectRatio": 10.416666984558105,
+            "mType": 1,
+            "mFillDirection": 4,
+            "mFillAmount": 1.0,
+            "mInvert": 0,
+            "mFlip": 0,
+            "mApplyGradient": 0,
+            "mGradientTop": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mGradientBottom": {
+              "r": 0.699999988079071,
+              "g": 0.699999988079071,
+              "b": 0.699999988079071,
+              "a": 1.0
+            },
+            "centerType": 1,
+            "leftType": 1,
+            "rightType": 1,
+            "bottomType": 1,
+            "topType": 1,
+            "mAtlas": {
+              "m_FileID": 3,
+              "m_PathID": 1796
+            },
+            "mSpriteName": "bg_base_r12",
+            "mFixedAspect": 0,
+            "mFillCenter": 1
+          }
+        },
+        {
+          "id": 107,
+          "node": 31,
+          "kind": "UISprite",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 31
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 822
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mPivot": 4,
+            "mWidth": 20,
+            "mHeight": 22,
+            "mDepth": 14,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 0,
+            "aspectRatio": 0.9090909361839294,
+            "mType": 0,
+            "mFillDirection": 4,
+            "mFillAmount": 1.0,
+            "mInvert": 0,
+            "mFlip": 0,
+            "mApplyGradient": 0,
+            "mGradientTop": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mGradientBottom": {
+              "r": 0.699999988079071,
+              "g": 0.699999988079071,
+              "b": 0.699999988079071,
+              "a": 1.0
+            },
+            "centerType": 1,
+            "leftType": 1,
+            "rightType": 1,
+            "bottomType": 1,
+            "topType": 1,
+            "mAtlas": {
+              "m_FileID": 3,
+              "m_PathID": 1796
+            },
+            "mSpriteName": "icon_kira",
+            "mFixedAspect": 0,
+            "mFillCenter": 1
+          }
+        },
+        {
+          "id": 108,
+          "node": 34,
+          "kind": "UISprite",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 34
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 822
+            },
+            "m_Name": "",
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.0,
+              "absolute": 0
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 0
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mPivot": 4,
+            "mWidth": 20,
+            "mHeight": 22,
+            "mDepth": 14,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 0,
+            "aspectRatio": 0.9090909361839294,
+            "mType": 0,
+            "mFillDirection": 4,
+            "mFillAmount": 1.0,
+            "mInvert": 0,
+            "mFlip": 0,
+            "mApplyGradient": 0,
+            "mGradientTop": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mGradientBottom": {
+              "r": 0.699999988079071,
+              "g": 0.699999988079071,
+              "b": 0.699999988079071,
+              "a": 1.0
+            },
+            "centerType": 1,
+            "leftType": 1,
+            "rightType": 1,
+            "bottomType": 1,
+            "topType": 1,
+            "mAtlas": {
+              "m_FileID": 3,
+              "m_PathID": 1796
+            },
+            "mSpriteName": "icon_kira",
+            "mFixedAspect": 0,
+            "mFillCenter": 1
+          }
+        },
+        {
+          "id": 109,
+          "node": 21,
+          "kind": "TweenScale",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 21
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 3330
+            },
+            "m_Name": "",
+            "method": 0,
+            "style": 2,
+            "animationCurve": {
+              "m_Curve": [
+                {
+                  "time": 0.0,
+                  "value": 0.0,
+                  "inSlope": 2.0,
+                  "outSlope": 2.0,
+                  "weightedMode": 0,
+                  "inWeight": 0.3333333432674408,
+                  "outWeight": 0.3333333432674408
+                },
+                {
+                  "time": 1.0,
+                  "value": 1.0,
+                  "inSlope": 0.0,
+                  "outSlope": 0.0,
+                  "weightedMode": 0,
+                  "inWeight": 0.3333333432674408,
+                  "outWeight": 0.3333333432674408
+                }
+              ],
+              "m_PreInfinity": 2,
+              "m_PostInfinity": 2,
+              "m_RotationOrder": 4
+            },
+            "ignoreTimeScale": 1,
+            "delay": 0.0,
+            "delayAffects": 2,
+            "duration": 0.4000000059604645,
+            "steeperCurves": 0,
+            "tweenGroup": 0,
+            "useFixedUpdate": 0,
+            "onFinished": [],
+            "eventReceiver": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "callWhenFinished": "",
+            "from": {
+              "x": 1.100000023841858,
+              "y": 0.800000011920929,
+              "z": 1.0
+            },
+            "to": {
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            },
+            "updateTable": 0
+          }
+        },
+        {
+          "id": 110,
+          "node": 21,
+          "kind": "TweenPosition",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 21
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 1769
+            },
+            "m_Name": "",
+            "method": 0,
+            "style": 2,
+            "animationCurve": {
+              "m_Curve": [
+                {
+                  "time": 0.0,
+                  "value": 0.0,
+                  "inSlope": 2.0,
+                  "outSlope": 2.0,
+                  "weightedMode": 0,
+                  "inWeight": 0.3333333432674408,
+                  "outWeight": 0.3333333432674408
+                },
+                {
+                  "time": 1.0,
+                  "value": 1.0,
+                  "inSlope": 0.0,
+                  "outSlope": 0.0,
+                  "weightedMode": 0,
+                  "inWeight": 0.3333333432674408,
+                  "outWeight": 0.3333333432674408
+                }
+              ],
+              "m_PreInfinity": 2,
+              "m_PostInfinity": 2,
+              "m_RotationOrder": 4
+            },
+            "ignoreTimeScale": 1,
+            "delay": 0.0,
+            "delayAffects": 2,
+            "duration": 0.4000000059604645,
+            "steeperCurves": 0,
+            "tweenGroup": 0,
+            "useFixedUpdate": 0,
+            "onFinished": [],
+            "eventReceiver": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "callWhenFinished": "",
+            "from": {
+              "x": 8.800000190734863,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "to": {
+              "x": 8.800000190734863,
+              "y": 10.0,
+              "z": 0.0
+            },
+            "worldSpace": 0
+          }
+        },
+        {
+          "id": 111,
+          "node": 35,
+          "kind": "TweenScale",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 35
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 3330
+            },
+            "m_Name": "",
+            "method": 0,
+            "style": 2,
+            "animationCurve": {
+              "m_Curve": [
+                {
+                  "time": 0.0,
+                  "value": 0.0,
+                  "inSlope": 2.0,
+                  "outSlope": 2.0,
+                  "weightedMode": 0,
+                  "inWeight": 0.3333333432674408,
+                  "outWeight": 0.3333333432674408
+                },
+                {
+                  "time": 1.0,
+                  "value": 1.0,
+                  "inSlope": 0.0,
+                  "outSlope": 0.0,
+                  "weightedMode": 0,
+                  "inWeight": 0.3333333432674408,
+                  "outWeight": 0.3333333432674408
+                }
+              ],
+              "m_PreInfinity": 2,
+              "m_PostInfinity": 2,
+              "m_RotationOrder": 4
+            },
+            "ignoreTimeScale": 1,
+            "delay": 0.0,
+            "delayAffects": 2,
+            "duration": 0.4000000059604645,
+            "steeperCurves": 0,
+            "tweenGroup": 0,
+            "useFixedUpdate": 0,
+            "onFinished": [],
+            "eventReceiver": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "callWhenFinished": "",
+            "from": {
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            },
+            "to": {
+              "x": 0.8500000238418579,
+              "y": 0.8500000238418579,
+              "z": 1.0
+            },
+            "updateTable": 0
+          }
+        },
+        {
+          "id": 112,
+          "node": 14,
+          "kind": "CameraAnchorSetting",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 14
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 1019
+            },
+            "m_Name": "",
+            "targetWidget": {
+              "m_FileID": 0,
+              "m_PathID": 84
+            },
+            "anchorBaseLeft": 1,
+            "relativeLeft": 0.0,
+            "absoluteLeft": -1,
+            "anchorBaseRight": 3,
+            "relativeRight": 0.0,
+            "absoluteRight": 2,
+            "anchorBaseBottom": 3,
+            "relativeBottom": 0.0,
+            "absoluteBottom": -1,
+            "anchorBaseTop": 1,
+            "relativeTop": 0.0,
+            "absoluteTop": 2
+          }
+        },
+        {
+          "id": 113,
+          "node": 34,
+          "kind": "TweenScale",
+          "data": {
+            "m_GameObject": {
+              "m_FileID": 0,
+              "m_PathID": 34
+            },
+            "m_Enabled": 1,
+            "m_Script": {
+              "m_FileID": 1,
+              "m_PathID": 3330
+            },
+            "m_Name": "",
+            "method": 0,
+            "style": 2,
+            "animationCurve": {
+              "m_Curve": [
+                {
+                  "time": 0.0,
+                  "value": 0.0,
+                  "inSlope": 2.0,
+                  "outSlope": 2.0,
+                  "weightedMode": 0,
+                  "inWeight": 0.3333333432674408,
+                  "outWeight": 0.3333333432674408
+                },
+                {
+                  "time": 1.0,
+                  "value": 1.0,
+                  "inSlope": 0.0,
+                  "outSlope": 0.0,
+                  "weightedMode": 0,
+                  "inWeight": 0.3333333432674408,
+                  "outWeight": 0.3333333432674408
+                }
+              ],
+              "m_PreInfinity": 2,
+              "m_PostInfinity": 2,
+              "m_RotationOrder": 4
+            },
+            "ignoreTimeScale": 1,
+            "delay": 0.0,
+            "delayAffects": 2,
+            "duration": 0.5,
+            "steeperCurves": 0,
+            "tweenGroup": 0,
+            "useFixedUpdate": 0,
+            "onFinished": [],
+            "eventReceiver": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "callWhenFinished": "",
+            "from": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 1.0
+            },
+            "to": {
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            },
+            "updateTable": 0
+          }
+        }
+      ]
+    }
+  }
+}

@@ -7,10 +7,14 @@ import {
 } from "../services/bestdori/api";
 import { OriginalFormTitle, OriginalFormSubtitle, OriginalFormNote, OriginalFormInput, OriginalFormButton as OriginalButton } from "./OriginalFormParts";
 import { isMobileRuntime } from "../app/mobileRuntime";
+import { OverlayDialogModal } from "./OverlayDialogModal";
+import { appLog } from "../logging/applicationLogger";
 
 type ExportModalTab = "chart-code" | "upload-server" | "upload" | "upload-test";
 
 type ExportJsonModalProps = {
+  onSaveProject: () => void;
+  projectBusy: boolean;
   open: boolean;
   jsonText: string;
   uploadCommunityPostContent: string;
@@ -26,6 +30,7 @@ type ExportJsonModalProps = {
 };
 
 export function ExportJsonModal({
+  onSaveProject, projectBusy,
   open,
   jsonText,
   uploadCommunityPostContent,
@@ -46,6 +51,7 @@ export function ExportJsonModal({
   const [tagCandidates, setTagCandidates] = useState<BestdoriPostTagSearchEntry[]>([]);
   const [isTagCandidatesLoading, setIsTagCandidatesLoading] = useState(false);
   const [tagCandidatesError, setTagCandidatesError] = useState("");
+  const [errorDialog, setErrorDialog] = useState("");
   const tagSearchSeqRef = useRef(0);
   const mobileReadOnly = isMobileRuntime();
 
@@ -79,6 +85,7 @@ export function ExportJsonModal({
       setTagPickerKeyword("");
       setTagCandidates([]);
       setTagCandidatesError("");
+      setErrorDialog("");
       setIsTagCandidatesLoading(false);
     }
   }, [open]);
@@ -97,6 +104,7 @@ export function ExportJsonModal({
     tagSearchSeqRef.current = currentSeq;
     setIsTagCandidatesLoading(true);
     setTagCandidatesError("");
+    setErrorDialog("");
     const timer = window.setTimeout(() => {
       void (async () => {
         try {
@@ -115,8 +123,10 @@ export function ExportJsonModal({
             return;
           }
           const message = error instanceof Error ? error.message : String(error);
+          appLog("error", "export.tag-search-failed", { error });
           setTagCandidates([]);
           setTagCandidatesError(message);
+          setErrorDialog(`标签搜索失败：${message}`);
         } finally {
           if (tagSearchSeqRef.current === currentSeq) {
             setIsTagCandidatesLoading(false);
@@ -126,6 +136,8 @@ export function ExportJsonModal({
     }, 160);
     return () => {
       window.clearTimeout(timer);
+      // Closing the picker or changing its query invalidates in-flight results.
+      if (tagSearchSeqRef.current === currentSeq) tagSearchSeqRef.current++;
     };
   }, [open, isTagPickerOpen, tagPickerType, tagPickerKeyword]);
 
@@ -178,6 +190,8 @@ export function ExportJsonModal({
         <div className="transfer-body">
           {tab === "chart-code" && (
             <div className="transfer-page">
+              <OriginalFormTitle text="完整谱面项目" />
+              <OriginalButton onClick={onSaveProject} disabled={projectBusy}>保存完整项目</OriginalButton>
               <OriginalFormTitle text="谱面代码" />
               <div className="export-json-field">
                 <OriginalFormInput multiline
@@ -281,9 +295,6 @@ export function ExportJsonModal({
                     {isTagCandidatesLoading && (
                       <OriginalFormNote text="正在搜索…" />
                     )}
-                    {!isTagCandidatesLoading && tagCandidatesError && (
-                      <OriginalFormNote text={tagCandidatesError} />
-                    )}
                     {!isTagCandidatesLoading && !tagCandidatesError && tagCandidates.length <= 0 && (
                       <OriginalFormNote text="暂无匹配标签" />
                     )}
@@ -313,6 +324,8 @@ export function ExportJsonModal({
               </div>
             </div>
       </OriginalTransferDialog>
+      <OverlayDialogModal dialog={open && isTagPickerOpen && errorDialog ? { tone: "error", message: errorDialog } : null}
+        onConfirm={() => setErrorDialog("")} onCancel={() => setErrorDialog("")} />
     </>
   );
 }

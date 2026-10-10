@@ -76,11 +76,17 @@ function readSprite(url: string, atlas: OriginalAtlas, name: string, scale = 1, 
     const rasterize = (source: HTMLImageElement): string => {
       const row = chineseRows[atlas].get(name) ?? rows[atlas].find(value => value.exactKey === name);
       if (!row) throw new Error(`Original UI sprite is not evidenced: ${atlas}/${name}`);
+      const explicitSize = width !== undefined && height !== undefined;
+      // CSS border-image also discards a zero-width inner slice. Give that
+      // fixed-UV sample one source texel without changing the authored borders.
+      const expandX = !explicitSize && row.width === row.borderLeft + row.borderRight ? 1 : 0;
+      const expandY = !explicitSize && row.height === row.borderTop + row.borderBottom ? 1 : 0;
       const canvas = document.createElement("canvas");
-      canvas.width = Math.max(1, Math.round((width ?? row.width) * ratio)); canvas.height = Math.max(1, Math.round((height ?? row.height) * ratio));
+      canvas.width = Math.max(1, Math.round((width ?? row.width + expandX) * ratio)); canvas.height = Math.max(1, Math.round((height ?? row.height + expandY) * ratio));
       const context = canvas.getContext("2d");
       if (!context) throw new Error("Original UI needs a 2D atlas adapter.");
-      if (width !== undefined && height !== undefined) drawNineSlice(context, source, row, canvas.width, canvas.height, scale * ratio, scaleY * ratio, fillCenter);
+      if (explicitSize) drawNineSlice(context, source, row, canvas.width, canvas.height, scale * ratio, scaleY * ratio, fillCenter);
+      else if (expandX || expandY) drawNineSlice(context, source, row, canvas.width, canvas.height, 1, 1, fillCenter);
       else context.drawImage(source, row.x, row.y, row.width, row.height, 0, 0, row.width, row.height);
       return canvas.toDataURL();
     };
@@ -196,13 +202,34 @@ function drawNineSlice(context: CanvasRenderingContext2D, image: HTMLImageElemen
   const horizontal = scale, vertical = scaleY;
   const targetX = [0, Math.round(row.borderLeft * horizontal), width - Math.round(row.borderRight * horizontal), width];
   const targetY = [0, Math.round(row.borderTop * vertical), height - Math.round(row.borderBottom * vertical), height];
+  let constantUvSlice: HTMLCanvasElement | undefined;
   for (let y = 0; y < 3; y += 1) for (let x = 0; x < 3; x += 1) {
     // UIBasicSprite.SlicedFill (0x303e744): Invisible center skips the middle quad.
     if (!fillCenter && x === 1 && y === 1) continue;
     const sw = sourceX[x + 1]! - sourceX[x]!, sh = sourceY[y + 1]! - sourceY[y]!;
     const dw = targetX[x + 1]! - targetX[x]!, dh = targetY[y + 1]! - targetY[y]!;
-    if (sw === 0 || sh === 0 || dw <= 0 || dh <= 0) continue;
-    if (sw > 0 && sh > 0) {
+    if (dw <= 0 || dh <= 0) continue;
+    if (sw === 0 || sh === 0) {
+      // A zero UV interval is still a non-empty SlicedFill quad. Sample its
+      // fixed coordinate into one texel before stretching, since drawImage
+      // discards a zero-size source rectangle. Center the sample on the UV
+      // boundary (between texel centers), retaining the atlas's linear filter.
+      constantUvSlice ??= document.createElement("canvas");
+      constantUvSlice.width = Math.max(1, Math.abs(sw));
+      constantUvSlice.height = Math.max(1, Math.abs(sh));
+      const sample = constantUvSlice.getContext("2d");
+      if (!sample) throw new Error("Original UI needs a 2D atlas adapter.");
+      sample.drawImage(image,
+        row.x + Math.min(sourceX[x]!, sourceX[x + 1]!) - (sw === 0 ? 0.5 : 0),
+        row.y + Math.min(sourceY[y]!, sourceY[y + 1]!) - (sh === 0 ? 0.5 : 0),
+        constantUvSlice.width, constantUvSlice.height,
+        0, 0, constantUvSlice.width, constantUvSlice.height);
+      context.save();
+      context.translate(targetX[x]! + (sw < 0 ? dw : 0), targetY[y]! + (sh < 0 ? dh : 0));
+      context.scale(sw < 0 ? -1 : 1, sh < 0 ? -1 : 1);
+      context.drawImage(constantUvSlice, 0, 0, dw, dh);
+      context.restore();
+    } else if (sw > 0 && sh > 0) {
       context.drawImage(image, row.x + sourceX[x]!, row.y + sourceY[y]!, sw, sh,
         targetX[x]!, targetY[y]!, dw, dh);
     } else {

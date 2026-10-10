@@ -1,0 +1,23 @@
+{
+  "sourceCommit": "4ead59988c5d2e250319063f5b0308a3daed7c7b",
+  "version": "CN 9.4.4 (105)",
+  "difficulty": { "labelWidth": 126, "labelHeight": 50, "maxLineCount": 0, "fontSize": 20, "labelSpacingX": 1, "labelOffset": { "x": -8, "y": -3 } },
+  "extension": {
+    "labelWidth": 90, "labelHeight": 80, "maxLineCount": 0,
+    "optionLayouts": {
+      "0": { "labelOffset": { "x": -8, "y": -2 }, "fontSize": 20, "labelSpacingX": 1, "labelSpacingY": 0 },
+      "1": { "labelOffset": { "x": -9, "y": -1 }, "fontSize": 19, "labelSpacingX": 0, "labelSpacingY": 0 },
+      "2": { "labelOffset": { "x": -11, "y": -1 }, "fontSize": 20, "labelSpacingX": 1, "labelSpacingY": 0 },
+      "3": { "labelOffset": { "x": -9, "y": -1 }, "fontSize": 18, "labelSpacingX": 1, "labelSpacingY": 0 },
+      "4": { "labelOffset": { "x": -8, "y": -1 }, "fontSize": 19, "labelSpacingX": 0, "labelSpacingY": 1 }
+    }
+  },
+  "sort": {
+    "labelWidth": 126, "labelHeight": 80, "maxLineCount": 0, "fontSize": 20, "labelSpacingX": 1,
+    "optionLayouts": {
+      "0": { "labelOffset": { "x": -8, "y": -1 } }, "1": { "labelOffset": { "x": -7, "y": 0 } },
+      "2": { "labelOffset": { "x": -6, "y": 0 } }, "3": { "labelOffset": { "x": -8, "y": -1 } },
+      "4": { "labelOffset": { "x": -7, "y": 0 } }, "5": { "labelOffset": { "x": -6, "y": 0 } }
+    }
+  }
+}

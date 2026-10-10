@@ -1,0 +1,683 @@
+{
+  "clientVersion": "10.2.0",
+  "codec": {
+    "cipher": "AES-128-CBC",
+    "key": "mikumikulukaluka",
+    "iv": "lukalukamikumiku",
+    "padding": "ISO10126",
+    "application": "encrypted protobuf",
+    "master": "encrypted bzip2 protobuf"
+  },
+  "schema": {
+    "SuiteMasterGetResponse": {
+      "1": {
+        "type": "MasterMusicListGetResponse",
+        "name": "masterMusicList"
+      },
+      "2": {
+        "type": "MasterMusicDifficultyListGetResponse",
+        "name": "masterMusicDifficultyList"
+      },
+      "16": {
+        "type": "MasterBandMap",
+        "name": "masterBandMap"
+      },
+      "109": {
+        "type": "MasterMusicVideoListMap",
+        "name": "masterMusicVideoListMap"
+      },
+      "95": {
+        "type": "MasterMusicJacketMap",
+        "name": "masterMusicJacketMap"
+      },
+      "408": {
+        "type": "MasterCollaboOriginalMusicPageList",
+        "name": "masterCollaboOriginalMusicPageList"
+      },
+      "2004": {
+        "type": "MasterMusicVideo3dMap",
+        "name": "masterMusicVideo3dMap"
+      },
+      "2036": {
+        "type": "MasterMusicVideo3dIdListMap",
+        "name": "masterMusicVideo3dIdListMap"
+      },
+      "2045": {
+        "type": "MasterMusicLargeCategoryDataMap",
+        "name": "masterMusicLargeCategoryDataMap"
+      },
+      "2046": {
+        "type": "MasterMusicMediumCategoryDataMap",
+        "name": "masterMusicMediumCategoryDataMap"
+      },
+      "2047": {
+        "type": "MasterMusicCategoryInfoMap",
+        "name": "masterMusicCategoryInfoMap"
+      },
+      "2048": {
+        "type": "MasterMusicCategoryInfoTargets",
+        "name": "masterMusicCategoryInfoTargets"
+      },
+      "2049": {
+        "type": "MasterMusicCategorySetMap",
+        "name": "masterMusicCategorySetMap"
+      }
+    },
+    "MasterMusicCategorySetMap": {
+      "1": {
+        "type": "Dictionary<uint, MasterMusicCategorySet>",
+        "name": "entries"
+      }
+    },
+    "MasterMusicCategorySet": {
+      "1": {
+        "type": "uint",
+        "name": "id"
+      },
+      "2": {
+        "type": "uint[]",
+        "name": "musicCategoryInfoIdList"
+      }
+    },
+    "MasterMusicCategoryInfoTargets": {
+      "1": {
+        "type": "uint[]",
+        "name": "musicCategoryIdList"
+      },
+      "2": {
+        "type": "uint[]",
+        "name": "shopCategoryIdList"
+      }
+    },
+    "MasterMusicCategoryInfoMap": {
+      "1": {
+        "type": "Dictionary<uint, MasterMusicCategoryInfo>",
+        "name": "entries"
+      }
+    },
+    "MasterMusicCategoryInfo": {
+      "1": {
+        "type": "uint",
+        "name": "id"
+      },
+      "2": {
+        "type": "string",
+        "name": "targetType"
+      },
+      "3": {
+        "type": "uint",
+        "name": "largeCategoryId"
+      },
+      "4": {
+        "type": "uint",
+        "name": "mediumCategoryId"
+      }
+    },
+    "MasterMusicMediumCategoryDataMap": {
+      "1": {
+        "type": "Dictionary<uint, MasterMusicMediumCategoryData>",
+        "name": "entries"
+      }
+    },
+    "MasterMusicMediumCategoryData": {
+      "1": {
+        "type": "uint",
+        "name": "id"
+      },
+      "2": {
+        "type": "uint",
+        "name": "seq"
+      },
+      "3": {
+        "type": "string",
+        "name": "category"
+      },
+      "4": {
+        "type": "string",
+        "name": "categoryName"
+      }
+    },
+    "MasterMusicLargeCategoryDataMap": {
+      "1": {
+        "type": "Dictionary<uint, MasterMusicLargeCategoryData>",
+        "name": "entries"
+      }
+    },
+    "MasterMusicLargeCategoryData": {
+      "1": {
+        "type": "uint",
+        "name": "id"
+      },
+      "2": {
+        "type": "uint",
+        "name": "seq"
+      },
+      "3": {
+        "type": "string",
+        "name": "category"
+      },
+      "4": {
+        "type": "string",
+        "name": "categoryName"
+      },
+      "5": {
+        "type": "string",
+        "name": "categoryColor"
+      },
+      "6": {
+        "type": "string",
+        "name": "mediumCategoryColor"
+      }
+    },
+    "MasterMusicVideo3dIdListMap": {
+      "1": {
+        "type": "Dictionary<uint, MasterMusicVideo3dIdList>",
+        "name": "entries"
+      }
+    },
+    "MasterMusicVideo3dIdList": {
+      "1": {
+        "type": "uint[]",
+        "name": "entries"
+      }
+    },
+    "MasterMusicVideo3dMap": {
+      "1": {
+        "type": "Dictionary<uint, MasterMusicVideo3d>",
+        "name": "entries"
+      }
+    },
+    "MasterMusicVideo3d": {
+      "1": {
+        "type": "uint",
+        "name": "musicVideo3dId"
+      },
+      "2": {
+        "type": "uint",
+        "name": "musicId"
+      },
+      "3": {
+        "type": "uint",
+        "name": "seq"
+      },
+      "4": {
+        "type": "string",
+        "name": "typeName"
+      },
+      "6": {
+        "type": "ulong",
+        "name": "startAt"
+      },
+      "7": {
+        "type": "ulong",
+        "name": "endAt"
+      },
+      "8": {
+        "type": "uint",
+        "name": "originalMember1"
+      },
+      "9": {
+        "type": "uint",
+        "name": "originalMember2"
+      },
+      "10": {
+        "type": "uint",
+        "name": "originalMember3"
+      },
+      "11": {
+        "type": "uint",
+        "name": "originalMember4"
+      },
+      "12": {
+        "type": "uint",
+        "name": "originalMember5"
+      },
+      "14": {
+        "type": "uint",
+        "name": "member1Position"
+      },
+      "15": {
+        "type": "uint",
+        "name": "member2Position"
+      },
+      "16": {
+        "type": "uint",
+        "name": "member3Position"
+      },
+      "17": {
+        "type": "uint",
+        "name": "member4Position"
+      },
+      "18": {
+        "type": "uint",
+        "name": "member5Position"
+      },
+      "19": {
+        "type": "string",
+        "name": "backgroundAssetBundleName"
+      },
+      "20": {
+        "type": "uint",
+        "name": "backgroundColorId"
+      }
+    },
+    "MasterCollaboOriginalMusicPageList": {
+      "1": {
+        "type": "MasterCollaboOriginalMusicPage[]",
+        "name": "entries"
+      }
+    },
+    "MasterCollaboOriginalMusicPage": {
+      "1": {
+        "type": "uint",
+        "name": "collaboOriginalPageId"
+      },
+      "2": {
+        "type": "string",
+        "name": "assetBundleName"
+      },
+      "3": {
+        "type": "string",
+        "name": "ruleSlideBundleName"
+      },
+      "4": {
+        "type": "string",
+        "name": "url"
+      },
+      "5": {
+        "type": "uint[]",
+        "name": "musicIdList"
+      },
+      "6": {
+        "type": "ulong",
+        "name": "publishedAt"
+      },
+      "7": {
+        "type": "ulong",
+        "name": "closedAt"
+      },
+      "8": {
+        "type": "string",
+        "name": "description"
+      },
+      "9": {
+        "type": "string",
+        "name": "shortDescription"
+      },
+      "10": {
+        "type": "string",
+        "name": "label"
+      },
+      "11": {
+        "type": "string",
+        "name": "labelColor"
+      },
+      "12": {
+        "type": "string",
+        "name": "backgroundName"
+      },
+      "13": {
+        "type": "string",
+        "name": "animationName"
+      },
+      "14": {
+        "type": "bool",
+        "name": "isDisplaySpecialDifficulty"
+      }
+    },
+    "MasterMusicJacketMap": {
+      "1": {
+        "type": "Dictionary<uint, MasterMusicJacketList>",
+        "name": "entries"
+      }
+    },
+    "MasterMusicJacketList": {
+      "1": {
+        "type": "MasterMusicJacket[]",
+        "name": "entries"
+      }
+    },
+    "MasterMusicJacket": {
+      "1": {
+        "type": "uint",
+        "name": "musicJacketId"
+      },
+      "2": {
+        "type": "uint",
+        "name": "musicId"
+      },
+      "3": {
+        "type": "uint",
+        "name": "seq"
+      },
+      "4": {
+        "type": "string",
+        "name": "jacketImage"
+      },
+      "5": {
+        "type": "ulong",
+        "name": "startAt"
+      }
+    },
+    "MasterMusicVideoListMap": {
+      "1": {
+        "type": "Dictionary<uint, MasterMusicVideoList>",
+        "name": "entries"
+      }
+    },
+    "MasterMusicVideoList": {
+      "1": {
+        "type": "MasterMusicVideo[]",
+        "name": "entries"
+      }
+    },
+    "MasterMusicVideo": {
+      "1": {
+        "type": "uint",
+        "name": "musicId"
+      },
+      "2": {
+        "type": "string",
+        "name": "assetBundleName"
+      },
+      "3": {
+        "type": "ulong",
+        "name": "startAt"
+      },
+      "4": {
+        "type": "ulong",
+        "name": "endAt"
+      },
+      "5": {
+        "type": "int",
+        "name": "musicStartDelayMilliseconds"
+      },
+      "6": {
+        "type": "uint",
+        "name": "seq"
+      },
+      "7": {
+        "type": "string",
+        "name": "title"
+      },
+      "8": {
+        "type": "string",
+        "name": "thumbAssetBundleName"
+      },
+      "9": {
+        "type": "string",
+        "name": "description"
+      }
+    },
+    "MasterBandMap": {
+      "1": {
+        "type": "Dictionary<uint, MasterBand>",
+        "name": "entries"
+      }
+    },
+    "MasterBand": {
+      "1": {
+        "type": "uint",
+        "name": "bandId"
+      },
+      "2": {
+        "type": "string",
+        "name": "bandName"
+      },
+      "3": {
+        "type": "uint",
+        "name": "resourceId"
+      },
+      "4": {
+        "type": "string",
+        "name": "color"
+      },
+      "10": {
+        "type": "uint",
+        "name": "seq"
+      },
+      "11": {
+        "type": "string",
+        "name": "bandType"
+      },
+      "13": {
+        "type": "string",
+        "name": "phonetic"
+      }
+    },
+    "MasterMusicDifficultyListGetResponse": {
+      "1": {
+        "type": "MasterMusicDifficultyGetResponse[]",
+        "name": "entries"
+      }
+    },
+    "MasterMusicDifficultyGetResponse": {
+      "1": {
+        "type": "uint",
+        "name": "musicId"
+      },
+      "2": {
+        "type": "string",
+        "name": "difficulty"
+      },
+      "3": {
+        "type": "uint",
+        "name": "playLevel"
+      },
+      "5": {
+        "type": "uint",
+        "name": "notesQuantity"
+      },
+      "6": {
+        "type": "uint",
+        "name": "scoreS"
+      },
+      "7": {
+        "type": "uint",
+        "name": "scoreA"
+      },
+      "8": {
+        "type": "uint",
+        "name": "scoreB"
+      },
+      "9": {
+        "type": "uint",
+        "name": "scoreC"
+      },
+      "10": {
+        "type": "uint",
+        "name": "scoreSS"
+      },
+      "11": {
+        "type": "ulong",
+        "name": "publishedAt"
+      },
+      "12": {
+        "type": "bool",
+        "name": "enableSpecialNotes"
+      },
+      "13": {
+        "type": "Nullable<uint>",
+        "name": "scoreLevel"
+      }
+    },
+    "MasterMultiLiveScore": {
+      "1": {
+        "type": "uint",
+        "name": "musicId"
+      },
+      "2": {
+        "type": "string",
+        "name": "musicDifficulty"
+      },
+      "3": {
+        "type": "uint",
+        "name": "multiLiveDifficultyId"
+      },
+      "4": {
+        "type": "uint",
+        "name": "scoreS"
+      },
+      "5": {
+        "type": "uint",
+        "name": "scoreA"
+      },
+      "6": {
+        "type": "uint",
+        "name": "scoreB"
+      },
+      "7": {
+        "type": "uint",
+        "name": "scoreC"
+      },
+      "8": {
+        "type": "string",
+        "name": "multiLiveDifficultyType"
+      },
+      "9": {
+        "type": "uint",
+        "name": "scoreSS"
+      },
+      "10": {
+        "type": "uint",
+        "name": "scoreSSS"
+      }
+    },
+    "MasterMusicListGetResponse": {
+      "1": {
+        "type": "MasterMusicGetResponse[]",
+        "name": "entries"
+      }
+    },
+    "MasterMusicGetResponse": {
+      "1": {
+        "type": "uint",
+        "name": "musicId"
+      },
+      "2": {
+        "type": "string",
+        "name": "musicTitle"
+      },
+      "3": {
+        "type": "string",
+        "name": "bgmId"
+      },
+      "4": {
+        "type": "string",
+        "name": "bgmFile"
+      },
+      "5": {
+        "type": "string",
+        "name": "lyricist"
+      },
+      "6": {
+        "type": "string",
+        "name": "composer"
+      },
+      "7": {
+        "type": "string",
+        "name": "tag"
+      },
+      "8": {
+        "type": "string",
+        "name": "description"
+      },
+      "9": {
+        "type": "string",
+        "name": "arranger"
+      },
+      "10": {
+        "type": "string",
+        "name": "ruby"
+      },
+      "11": {
+        "type": "uint",
+        "name": "bandId"
+      },
+      "12": {
+        "type": "string",
+        "name": "howToGet"
+      },
+      "14": {
+        "type": "string",
+        "name": "jacketImage"
+      },
+      "15": {
+        "type": "uint",
+        "name": "seq"
+      },
+      "16": {
+        "type": "ulong",
+        "name": "publishedAt"
+      },
+      "17": {
+        "type": "ulong",
+        "name": "closedAt"
+      },
+      "18": {
+        "type": "string",
+        "name": "transitionMethod"
+      },
+      "19": {
+        "type": "uint",
+        "name": "transitionId"
+      },
+      "20": {
+        "type": "string",
+        "name": "phonetic"
+      },
+      "21": {
+        "type": "string",
+        "name": "musicDataType"
+      },
+      "22": {
+        "type": "uint",
+        "name": "categorySetId"
+      }
+    },
+    "MasterMusicAchievement": {
+      "1": {
+        "type": "uint",
+        "name": "musicId"
+      },
+      "2": {
+        "type": "string",
+        "name": "achievementType"
+      },
+      "3": {
+        "type": "string",
+        "name": "rewardType"
+      },
+      "4": {
+        "type": "uint",
+        "name": "rewardId"
+      },
+      "5": {
+        "type": "uint",
+        "name": "quantity"
+      }
+    },
+    "AppGetResponse": {
+      "1": {
+        "type": "string",
+        "name": "clientVersion"
+      },
+      "2": {
+        "type": "string",
+        "name": "dataVersion"
+      },
+      "3": {
+        "type": "string",
+        "name": "appStatus"
+      },
+      "4": {
+        "type": "string",
+        "name": "clientStatus"
+      },
+      "10": {
+        "type": "string",
+        "name": "masterDataVersion"
+      }
+    }
+  }
+}

@@ -1,5 +1,6 @@
 import { OriginalButton } from "./OriginalUi";
 import { StandardValueModal } from "./StandardModal";
+import { createPortal } from "react-dom";
 
 export type OverlayDialogTone = "info" | "warning" | "error";
 
@@ -25,7 +26,9 @@ export function OverlayDialogModal({
   onConfirm,
   onCancel,
 }: OverlayDialogModalProps) {
-  return (
+  // Callers may live inside a scaled page or another dialog. Mount at the
+  // window root so the error mask cannot inherit their transform or clipping.
+  return createPortal(
     <StandardValueModal
       value={dialog}
       title={(renderedDialog) => OVERLAY_DIALOG_TITLES[renderedDialog.tone]}
@@ -51,6 +54,7 @@ export function OverlayDialogModal({
           </>
         );
       }}
-    </StandardValueModal>
+    </StandardValueModal>,
+    document.body,
   );
 }

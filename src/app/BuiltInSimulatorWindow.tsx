@@ -33,6 +33,7 @@ import {
   setMobileSimulatorImmersive,
 } from "./mobileRuntime";
 import "../App.css";
+import { OverlayDialogModal } from "../components/OverlayDialogModal";
 
 const INITIAL_LAUNCH_STATE: BrowserSimulatorLaunchState = Object.freeze({
   phase: "waiting-descriptor",
@@ -268,15 +269,8 @@ function renderOverlay(
   if (state.phase === "rejected" || failure !== null) {
     return (
       <section style={backdropStyle}>
-        <div style={preparationPanelStyle}>
-          <p style={{ ...preparationTextStyle, color: "#a21e42" }}>
-            Simulator启动失败：{failure?.capability ?? "app.simulator.unknown"}
-          </p>
-          <p style={{ ...preparationTextStyle, fontSize: 14 }}>{failure?.boundary ?? "未知平台故障"}</p>
-          <button type="button" className="simulator-mobile-back-button" onClick={onLeave} style={returnButtonStyle}>
-            返回编辑器
-          </button>
-        </div>
+        <OverlayDialogModal dialog={{ tone: "error", message: `Simulator启动失败：${failure?.capability ?? "app.simulator.unknown"}\n${failure?.boundary ?? "未知平台故障"}\n确认后返回编辑器。` }}
+          onConfirm={onLeave} onCancel={onLeave} />
       </section>
     );
   }
@@ -297,15 +291,5 @@ const preparationOverlayStyle = Object.freeze({
   color: "#505050",
   zIndex: 20,
 } as const);
-const preparationPanelStyle = Object.freeze({ textAlign: "center", maxWidth: 640, padding: 24 } as const);
 const preparationTextStyle = Object.freeze({ margin: "0 0 16px", textAlign: "center" } as const);
-const returnButtonStyle = Object.freeze({
-  appearance: "none",
-  border: "1px solid rgba(255,255,255,.55)",
-  borderRadius: 4,
-  background: "rgba(5,14,24,.8)",
-  color: "white",
-  padding: "8px 16px",
-  cursor: "pointer",
-} as const);
 export default BuiltInSimulatorWindow;

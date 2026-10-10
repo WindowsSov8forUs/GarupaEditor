@@ -11,6 +11,7 @@ use tauri::{Emitter, Manager};
 
 mod application_log;
 mod download;
+mod official_music;
 mod resource_manager;
 use resource_manager::{resource_read_skin_thumbnail, resource_write_skin_thumbnail, resource_install_display_image};
 use resource_manager::{
@@ -832,10 +833,8 @@ fn write_text_with_backup(
     fs::write(temp_path, text)
         .map_err(|error| format!("write session temp file failed: {error}"))?;
 
-    if path.exists() {
-        remove_file_if_exists(path)?;
-    }
-
+    fs::OpenOptions::new().write(true).open(temp_path).and_then(|file| file.sync_all())
+        .map_err(|error| format!("flush session temp file failed: {error}"))?;
     fs::rename(temp_path, path).map_err(|error| format!("replace session file failed: {error}"))?;
     Ok(())
 }
@@ -1723,7 +1722,7 @@ fn save_editor_chart_cache(
         mv_cleared,
     } = payload;
 
-    serde_json::from_str::<serde_json::Value>(&chart_json)
+    let document = serde_json::from_str::<serde_json::Value>(&chart_json)
         .map_err(|error| format!("chart json invalid: {error}"))?;
 
     let root = resolve_session_cache_root(&app)?;
@@ -1738,6 +1737,11 @@ fn save_editor_chart_cache(
         &chart_temp_path,
         &chart_json,
     )?;
+
+    // A project publishes chart and media references in this single atomic document.
+    if document.get("format").and_then(|v| v.as_str()) == Some("GarupaEditor.ChartProject") {
+        return Ok(());
+    }
 
     let refs_path = resources_root.join(CHART_RESOURCE_REFS_META_NAME);
     if let Some(resource_refs) = resource_refs {
@@ -1855,6 +1859,16 @@ fn load_editor_chart_cache(app: tauri::AppHandle) -> Result<Option<LoadedEditorC
             }));
         }
     };
+
+    if serde_json::from_str::<serde_json::Value>(&chart_json).ok()
+        .and_then(|v| v.get("format").and_then(|f| f.as_str()).map(str::to_owned))
+        .as_deref() == Some("GarupaEditor.ChartProject") {
+        return Ok(Some(LoadedEditorChartCache {
+            chart_json, resource_refs: None, resource_refs_schema_version: None,
+            cover_data_url: None, audio_base64: None, audio_mime_type: None,
+            audio_file_name: None, mv_data_url: None, mv_file_name: None,
+        }));
+    }
 
     let resources_root = resolve_chart_resources_root(&root)?;
     let refs_path = resources_root.join(CHART_RESOURCE_REFS_META_NAME);
@@ -2047,6 +2061,36 @@ fn load_editor_settings_cache(app: tauri::AppHandle) -> Result<Option<String>, S
 }
 
 #[tauri::command]
+async fn save_chart_project_via_dialog(request: tauri::ipc::Request<'_>) -> Result<Option<String>, String> {
+    let bytes = match request.body() {
+        tauri::ipc::InvokeBody::Raw(bytes) => bytes.clone(),
+        _ => return Err("project export requires binary data".to_string()),
+    };
+    #[cfg(mobile)]
+    { let _ = bytes; Err("desktop file dialog is not available on mobile".to_string()) }
+    #[cfg(not(mobile))]
+    tauri::async_runtime::spawn_blocking(move || {
+        use std::io::Write;
+        if !bytes.starts_with(b"PK\x03\x04") { return Err("project archive is not a ZIP file".to_string()); }
+        let Some(path) = rfd::FileDialog::new().add_filter("GarupaEditor Project", &["gcp"])
+            .set_file_name("chart.gcp").save_file() else { return Ok(None); };
+        let path = ensure_extension(path, "gcp");
+        ensure_parent_directory(&path)?;
+        let stamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_err(|e| e.to_string())?.as_nanos();
+        let temp = path.with_extension(format!("gcp.{stamp}.tmp"));
+        let result = (|| -> Result<(), String> {
+            let mut file = fs::OpenOptions::new().write(true).create_new(true).open(&temp).map_err(|e| e.to_string())?;
+            file.write_all(&bytes).and_then(|_| file.sync_all()).map_err(|e| e.to_string())?;
+            drop(file);
+            fs::rename(&temp, &path).map_err(|e| e.to_string())
+        })();
+        if result.is_err() { let _ = fs::remove_file(&temp); }
+        result?;
+        Ok(Some(path.to_string_lossy().to_string()))
+    }).await.map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
 #[cfg(not(mobile))]
 fn save_chart_json_via_dialog(
     default_file_name: String,
@@ -2166,6 +2210,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             application_log::application_log_batch,
+            official_music::official_music_request,
             bestdori_login,
             bestdori_get_me,
             bestdori_logout,
@@ -2182,6 +2227,7 @@ pub fn run() {
             save_editor_settings_cache,
             load_editor_settings_cache,
             save_chart_json_via_dialog,
+            save_chart_project_via_dialog,
             save_chart_png_via_dialog,
             share_file,
             resource_initialize,

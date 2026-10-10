@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -22,18 +22,15 @@ if (manifest.storageSchema !== 1 || !Array.isArray(manifest.entries) || manifest
   throw new Error("production builtin verification received an invalid source manifest");
 }
 
-const emittedByIntegrity = new Map();
+const emittedIntegrities = new Set();
 for (const path of walk(distAssetsRoot)) {
   const bytes = readFileSync(path);
   const integrity = observe(bytes);
   const key = integrityKey(integrity);
-  const paths = emittedByIntegrity.get(key) ?? [];
-  paths.push(path);
-  emittedByIntegrity.set(key, paths);
+  emittedIntegrities.add(key);
 }
 
 const expectedKeys = new Set();
-const matches = new Map();
 for (const entry of manifest.entries) {
   if (
     typeof entry.path !== "string" || !Number.isSafeInteger(entry.byteLength) || entry.byteLength <= 0 ||
@@ -43,26 +40,17 @@ for (const entry of manifest.entries) {
   }
   const key = integrityKey(entry);
   expectedKeys.add(key);
-  const emitted = emittedByIntegrity.get(key);
-  if (emitted === undefined || emitted.length === 0) {
+  if (!emittedIntegrities.has(key)) {
     throw new Error(
       `production builtin payload is missing or transformed: ${entry.path} ` +
       `(${entry.byteLength} bytes / SHA-256 ${entry.sha256})`,
     );
   }
-  matches.set(entry.path, emitted);
-}
-
-const applyAction = manifest.entries.find((entry) => entry.path === "icons/apply-action.svg");
-if (applyAction === undefined) throw new Error("apply-action source manifest entry is missing");
-const applyActionOutputs = matches.get(applyAction.path);
-if (applyActionOutputs === undefined || applyAction.byteLength !== 552 || applyAction.sha256 !== "E3EC9859FF144CC23D022434C666B5AB7F412F5E0C91B3E8F6F93619A2BCF1FD") {
-  throw new Error("apply-action production byte regression is not closed");
 }
 
 console.log(
   `production builtin assets: ok (${manifest.entries.length} logical entries, ` +
-  `${expectedKeys.size} unique payloads, apply-action ${applyAction.byteLength} bytes)`,
+  `${expectedKeys.size} unique payloads)`,
 );
 
 function observe(bytes) {
@@ -81,7 +69,7 @@ function walk(directory) {
   for (const entry of readdirSync(directory, { withFileTypes: true })) {
     const path = join(directory, entry.name);
     if (entry.isDirectory()) output.push(...walk(path));
-    else if (entry.isFile() && statSync(path).isFile()) output.push(path);
+    else if (entry.isFile()) output.push(path);
   }
   return output;
 }

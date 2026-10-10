@@ -2,8 +2,12 @@
 .original-page-header-left, .original-page-header-menu { position: absolute; }
 /* The persistent Header owns window-edge layout independently of page content. */
 .original-page-header-host {
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
   flex-shrink: 0;
   margin-top: calc(-1 * max(var(--editor-space), var(--ui-safe-top)));
   margin-left: calc(-1 * max(var(--editor-space), var(--ui-safe-left)));
   margin-right: calc(-1 * max(var(--editor-space), var(--ui-safe-right)));
 }
+.original-page-header-host button { pointer-events: auto; }
