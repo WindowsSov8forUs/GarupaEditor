@@ -244,7 +244,9 @@ const DEFINITIONS: readonly SimulatorBuiltinResourceDefinition[] = Object.freeze
 const MANIFEST = new Map(
   (manifestJson.entries as readonly SimulatorBuiltinManifestEntry[]).map((entry) => [entry.path, entry]),
 );
-const REFS = new Map<string, ResourceRef>();
+// References are stable catalog identities. Registration belongs to the manager;
+// a second module-local registry is lost during hot updates while it stays alive.
+const LOGICAL_RESOURCES = new Set(DEFINITIONS.map(definition => definition.logicalResource));
 
 export async function registerSimulatorBuiltinResources(
   manager: ApplicationResourceManager,
@@ -273,21 +275,18 @@ export async function registerSimulatorBuiltinResources(
       }),
     });
     if (registered.status === "rejected") return registered;
-    REFS.set(definition.logicalResource, registered.value.ref);
   }
   return resourceAccepted(undefined);
 }
 
 export function simulatorBuiltinResourceRef(logicalResource: string): ResourceResult<ResourceRef> {
-  const existing = REFS.get(logicalResource);
-  if (existing !== undefined) return resourceAccepted(existing);
   const reference = createResourceRef(`builtin/game/${logicalResource}`);
-  return reference.status === "rejected"
+  return reference.status === "rejected" || LOGICAL_RESOURCES.has(logicalResource)
     ? reference
     : resourceRejected(
         "resource-unavailable",
         "resources.builtin.simulator-logical-resource-unregistered",
-        "The requested Simulator common logical resource was not registered by application bootstrap.",
+        `模拟器内置资源目录未定义：${logicalResource}`,
       );
 }
 
