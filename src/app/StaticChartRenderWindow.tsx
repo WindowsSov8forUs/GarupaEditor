@@ -756,6 +756,12 @@ export default function StaticChartRenderWindow() {
   const [appliedSkinResources, setAppliedSkinResources] = useState<AppliedSkinResources | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [overlayDialog, setOverlayDialog] = useState<OverlayDialogState | null>(null);
+  useEffect(() => {
+    if (errorMessage) {
+      setOverlayDialog({ tone: "error", message: errorMessage });
+      setLoadingProgress(previous => ({ ...previous, visible: false, blocking: false }));
+    }
+  }, [errorMessage]);
   const [loadingProgress, setLoadingProgress] = useState<PreviewLoadingState>({
     visible: true,
     blocking: true,
@@ -1444,7 +1450,7 @@ export default function StaticChartRenderWindow() {
           </div>
         ) : (
           <div className="static-render-placeholder">
-            {errorMessage || "等待预览数据…"}
+            {errorMessage ? "预览不可用，请返回编辑器后重试。" : "等待预览数据…"}
           </div>
         )}
       </section>
