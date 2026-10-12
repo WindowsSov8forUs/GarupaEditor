@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useApplicationResourceManager } from "../resources/applicationResourceContext";
 import { CURRENT_SPECIAL_SKINS } from "../simulator/public/settings";
-import { loadCollaborationSkinThumbnail } from "../skins/collaborationSkinThumbnailResource";
+import { loadCollaborationSkinThumbnail } from "../skin/thumbnails/collaborationSkinThumbnailResource";
 
 export function useCollaborationSkinThumbnails(enabled: boolean, onError?: (message: string) => void) {
   const manager = useApplicationResourceManager(), report = useRef(onError); report.current = onError;
