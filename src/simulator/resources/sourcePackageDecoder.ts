@@ -1,5 +1,6 @@
 import particleCatalogJson from "../../data/simulator/currentParticleSemanticCatalog.json";
 import renderCatalogJson from "../../data/simulator/currentRenderSemanticCatalog.json";
+import mainlandCatalogJson from "../../data/simulator/mainlandSkinSemanticCatalog.json";
 import {
   CURRENT_HABAHIRO_SEMANTIC_PROFILE,
   HABAHIRO_FLASH_SPRITE_NAMES,
@@ -42,8 +43,26 @@ interface ParticleSemanticResource {
 
 const SHA256_PATTERN = /^[0-9A-F]{64}$/;
 
-const renderCatalog = parseRenderCatalog(renderCatalogJson);
-const particleCatalog = parseParticleCatalog(particleCatalogJson);
+const renderCatalog = parseRenderCatalog({ ...renderCatalogJson,
+  resources: { ...renderCatalogJson.resources, ...mainlandCatalogJson.render.resources },
+});
+const particleCatalog = parseParticleCatalog({ ...particleCatalogJson,
+  resources: { ...particleCatalogJson.resources, ...mainlandCatalogJson.particle.resources },
+  profiles: { ...particleCatalogJson.profiles, ...mainlandCatalogJson.particle.profiles },
+  moduleProfiles: mergeModuleProfiles(particleCatalogJson.moduleProfiles, mainlandCatalogJson.particle.moduleProfiles),
+  rendererProfiles: { ...particleCatalogJson.rendererProfiles, ...mainlandCatalogJson.particle.rendererProfiles },
+  meshProfiles: { ...particleCatalogJson.meshProfiles, ...mainlandCatalogJson.particle.meshProfiles },
+});
+
+function mergeModuleProfiles(
+  base: Readonly<Record<string, unknown>>, supplement: Readonly<Record<string, unknown>>,
+): Record<string, unknown> {
+  const output = { ...base };
+  for (const [name, rows] of Object.entries(supplement)) {
+    output[name] = { ...(base[name] as Record<string, unknown>), ...(rows as Record<string, unknown>) };
+  }
+  return output;
+}
 
 export type PreparedSourceAudioPackage = Pick<PreparedSkinSourcePackage, "logicalResource" | "profile" | "files">;
 

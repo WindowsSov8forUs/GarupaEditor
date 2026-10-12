@@ -9,3 +9,6 @@
 .original-page-content { padding-inline: var(--ui-safe-left) var(--ui-safe-right); display: flex; flex-direction: column; flex: 1; min-width: 0; min-height: 0; }
 .original-page-input-cover { position: absolute; inset: 0; z-index: 10; }
 .original-detail-page:focus { outline: none; }
+
+/* Descendants may set visibility explicitly; a staged page must still never paint. */
+.original-detail-page[aria-hidden="true"], .editor-retained-page[aria-hidden="true"] { opacity: 0 !important; }

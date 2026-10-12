@@ -1,3 +1,4 @@
+import { usePresentationAssets } from "./usePresentationAssets";
 import { useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
 import { SerializedDialogMotion, SerializedSettingsDialogMotion } from "./SerializedDialogMotion";
 
@@ -12,12 +13,13 @@ export function useModalTransition(open: boolean, motionKind: DialogMotion = "sc
   const [mounted, setMounted] = useState(open);
   const [shown, setShown] = useState(false);
   const transitionRef = useRef<HTMLDivElement>(null);
+  const assetsReady = usePresentationAssets(transitionRef, open, open || mounted);
   useLayoutEffect(() => {
     const model = motion.current;
     let started = 0;
     setShown(false);
     if (open) setMounted(true);
-    if (open && holdEnter) return;
+    if (open && (holdEnter || !assetsReady)) return;
     if (motionKind === "none") { setMounted(open); setShown(open); return; }
     let frame = 0;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -41,13 +43,14 @@ export function useModalTransition(open: boolean, motionKind: DialogMotion = "sc
     };
     frame = requestAnimationFrame(begin);
     return () => cancelAnimationFrame(frame);
-  }, [open, motionKind, holdEnter]);
+  }, [open, motionKind, holdEnter, assetsReady]);
   return {
     mounted: open || mounted,
     phase: open ? "enter" : "exit",
     shown: open && shown,
     transitionRef,
     transitionStyle: {
+      visibility: open && (!assetsReady || holdEnter) ? "hidden" : undefined,
       "--original-dialog-scale": motionKind === "none" ? 1 : motion.current.scale,
       "--original-dialog-alpha": motionKind === "none" ? (open ? 0.5 : 0) : motion.current.alpha,
       "--original-dialog-x": "x" in motion.current ? motion.current.x : 0,

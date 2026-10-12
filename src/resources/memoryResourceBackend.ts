@@ -73,8 +73,7 @@ export class MemoryApplicationResourceBackend implements ApplicationResourceBack
     if (entry === undefined) {
       return unavailable("resources.memory.record-unavailable");
     }
-    const verified = await verifyStored(entry);
-    return verified.status === "rejected" ? verified : resourceAccepted(entry.record);
+    return resourceAccepted(entry.record);
   }
 
   async installBuiltinResource(
@@ -155,8 +154,6 @@ export class MemoryApplicationResourceBackend implements ApplicationResourceBack
       if (stored === undefined || stored.record.descriptor.origin !== "workspace") {
         return unavailable("resources.memory.workspace-reconcile-record-unavailable");
       }
-      const verified = await verifyStored(stored);
-      if (verified.status === "rejected") return verified;
       retained.add(ref.id);
     }
     for (const [id, stored] of this.records) {
@@ -221,8 +218,6 @@ export class MemoryApplicationResourceBackend implements ApplicationResourceBack
       copiedSlots[slot] = Object.freeze({ id: ref.id });
       const stored = this.records.get(ref.id);
       if (stored === undefined) return unavailable("resources.memory.snapshot-resource-unavailable");
-      const verified = await verifyStored(stored);
-      if (verified.status === "rejected") return verified;
       filesBySlot[slot] = stored.record.files;
       revisions[slot] = stored.record.revision;
       bytesBySlot.set(slot, new Map(Array.from(

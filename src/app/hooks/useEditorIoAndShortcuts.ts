@@ -1,3 +1,4 @@
+import { downloadActivity } from "../../services/downloadActivity";
 import { availableOfficialMedia } from "../../services/officialMusicSources";
 import { getOfficialMusicLibrary, type OfficialDifficulty } from "../../services/officialMusicLibrary";
 import { detectUserMediaType } from "../../resources/userMediaFormat";
@@ -205,7 +206,6 @@ export function useEditorIoAndShortcuts(params: any) {
     setIsSkinApplying,
     formatTypeLabel,
     setSkinSelection,
-    didInitSkinRef,
     approxEq,
     selectedNoteIds,
     selectedBpmEventIds,
@@ -397,6 +397,8 @@ export function useEditorIoAndShortcuts(params: any) {
   const downloadScopeMapRef = useRef<Map<string, DownloadScopeProgressState>>(new Map());
   const downloadLogRef = useRef<string[]>([]);
   const downloadProgressHideTimerRef = useRef<number | null>(null);
+  const downloadPreparationRef = useRef<(() => void) | null>(null);
+  useEffect(() => () => { downloadPreparationRef.current?.(); downloadPreparationRef.current = null; }, []);
 
   const getExportFileName = (): string => {
     const baseName = sanitizeFileName(metadata.title);
@@ -428,6 +430,9 @@ export function useEditorIoAndShortcuts(params: any) {
 
   const startDownloadProgress = (operationId: string, message: string, presentation: DownloadProgressPresentation = "panel") => {
     clearDownloadProgressHideTimer();
+    const releasePrevious = downloadPreparationRef.current;
+    downloadPreparationRef.current = downloadActivity.prepare();
+    releasePrevious?.();
     currentDownloadOperationIdRef.current = operationId;
     downloadScopeMapRef.current = new Map();
     downloadLogRef.current = [message];
@@ -444,6 +449,8 @@ export function useEditorIoAndShortcuts(params: any) {
   };
 
   const completeDownloadProgress = (message: string, delayMs = 420) => {
+    downloadPreparationRef.current?.();
+    downloadPreparationRef.current = null;
     if (currentDownloadOperationIdRef.current !== null &&
       externalDownloadProgressIdRef.current === currentDownloadOperationIdRef.current) {
       return; // The caller completes/releases its indicator after the operation result.
@@ -558,6 +565,8 @@ export function useEditorIoAndShortcuts(params: any) {
         void unlisten();
       }
       if (disposed) {
+        downloadPreparationRef.current?.();
+        downloadPreparationRef.current = null;
         currentDownloadOperationIdRef.current = null;
         downloadScopeMapRef.current = new Map();
         downloadLogRef.current = [];
@@ -1357,6 +1366,8 @@ export function useEditorIoAndShortcuts(params: any) {
       return false;
     } finally {
       if (currentDownloadOperationIdRef.current === importOperationId) {
+        downloadPreparationRef.current?.();
+        downloadPreparationRef.current = null;
         currentDownloadOperationIdRef.current = null;
         downloadScopeMapRef.current = new Map();
       }
@@ -1502,6 +1513,8 @@ export function useEditorIoAndShortcuts(params: any) {
       return false;
     } finally {
       if (currentDownloadOperationIdRef.current === importOperationId) {
+        downloadPreparationRef.current?.();
+        downloadPreparationRef.current = null;
         currentDownloadOperationIdRef.current = null;
         downloadScopeMapRef.current = new Map();
       }
@@ -1548,6 +1561,8 @@ export function useEditorIoAndShortcuts(params: any) {
       setStatusMessage(`测试服谱面加载失败：${message}`); return false;
     } finally {
       if (currentDownloadOperationIdRef.current === operationId) {
+        downloadPreparationRef.current?.();
+        downloadPreparationRef.current = null;
         currentDownloadOperationIdRef.current = null; downloadScopeMapRef.current = new Map();
       }
     }
@@ -1621,6 +1636,8 @@ export function useEditorIoAndShortcuts(params: any) {
       }
     } finally {
       if (currentDownloadOperationIdRef.current === uploadOperationId) {
+        downloadPreparationRef.current?.();
+        downloadPreparationRef.current = null;
         currentDownloadOperationIdRef.current = null;
         downloadScopeMapRef.current = new Map();
       }
@@ -1695,6 +1712,8 @@ export function useEditorIoAndShortcuts(params: any) {
       }
     } finally {
       if (currentDownloadOperationIdRef.current === uploadOperationId) {
+        downloadPreparationRef.current?.();
+        downloadPreparationRef.current = null;
         currentDownloadOperationIdRef.current = null;
         downloadScopeMapRef.current = new Map();
       }
@@ -1763,6 +1782,8 @@ export function useEditorIoAndShortcuts(params: any) {
       }
     } finally {
       if (currentDownloadOperationIdRef.current === uploadOperationId) {
+        downloadPreparationRef.current?.();
+        downloadPreparationRef.current = null;
         currentDownloadOperationIdRef.current = null;
         downloadScopeMapRef.current = new Map();
       }
@@ -2028,7 +2049,7 @@ export function useEditorIoAndShortcuts(params: any) {
     );
 
     try {
-      const catalog = await resourceManager.refreshCatalog("bestdori");
+      const catalog = await resourceManager.prepareCatalog("bestdori");
       if (catalog.status === "rejected") {
         throw new ResourceFailureError(catalog.failure);
       }
@@ -2124,6 +2145,8 @@ export function useEditorIoAndShortcuts(params: any) {
     } finally {
       if (skinApplySeqRef.current === sequence) {
         setIsSkinApplying(false);
+        downloadPreparationRef.current?.();
+        downloadPreparationRef.current = null;
         currentDownloadOperationIdRef.current = null;
         downloadScopeMapRef.current = new Map();
       }
@@ -2134,13 +2157,7 @@ export function useEditorIoAndShortcuts(params: any) {
     applyBestdoriSkinSelectionRef.current = applyBestdoriSkinSelection;
   }, [applyBestdoriSkinSelection, applyBestdoriSkinSelectionRef]);
 
-  useEffect(() => {
-    if (didInitSkinRef.current) {
-      return;
-    }
-    didInitSkinRef.current = true;
-    void applyBestdoriSkinSelection(skinSelection, false);
-  }, [applyBestdoriSkinSelection, didInitSkinRef, skinSelection]);
+
 
   return {
     garupaChartJson,

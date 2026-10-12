@@ -1,5 +1,6 @@
 import { CURRENT_SPECIAL_SKINS } from "../simulator/public/settings";
 import { createResourceRef } from "./contracts";
+import builtinSources from "../data/simulator/originalSkinBuiltinSources.json";
 
 // Provider routing belongs at the resource boundary. All skin algorithms keep
 // consuming the same original logical paths, including mixed normal/special sets.
@@ -25,5 +26,9 @@ for (const row of CURRENT_SPECIAL_SKINS) {
 }
 
 export function originalSkinResourceRef(logicalResource: string, defaultServer = "jp") {
-  return createResourceRef(`bestdori/${sources.get(logicalResource) ?? defaultServer}/${logicalResource}`);
+  const source = `${sources.get(logicalResource) ?? defaultServer}/${logicalResource}`;
+  // Exact source catalog entries supply official packages absent from the mirror.
+  // Keep provider selection shared by preload, preview and live assembly.
+  const builtin = (builtinSources as Readonly<Record<string, string>>)[source];
+  return createResourceRef(builtin ?? `bestdori/${source}`);
 }

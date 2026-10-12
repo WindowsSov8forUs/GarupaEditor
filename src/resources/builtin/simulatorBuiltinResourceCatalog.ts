@@ -1,3 +1,13 @@
+import normal0Url from "../../assets/game/portable/skins/cn/normal/Default-ParticleSystem.png?url&no-inline";
+import normal1Url from "../../assets/game/portable/skins/cn/normal/dependency-2621970490209455388-tex_parSet_1.png?url&no-inline";
+import normal2Url from "../../assets/game/portable/skins/cn/normal/effect_circle.png?url&no-inline";
+import normal3Url from "../../assets/game/portable/skins/cn/normal/source.asset?url&no-inline";
+import normal4Url from "../../assets/game/portable/skins/cn/normal/source.bundle?url&no-inline";
+import light0Url from "../../assets/game/portable/skins/cn/light/Default-ParticleSystem.png?url&no-inline";
+import light1Url from "../../assets/game/portable/skins/cn/light/dependency-8966196757431654492-tex_parSet_1.png?url&no-inline";
+import light2Url from "../../assets/game/portable/skins/cn/light/effect_circle.png?url&no-inline";
+import light3Url from "../../assets/game/portable/skins/cn/light/source.asset?url&no-inline";
+import light4Url from "../../assets/game/portable/skins/cn/light/source.bundle?url&no-inline";
 import suddenLineUrl from "../../assets/game/prefabs/bms/sudden/sudden-line.png?url&no-inline";
 import stageDarkCoverUrl from "../../assets/game/prefabs/bms/stage/stage-dark-cover.png?url&no-inline";
 import resultBannerUrl from "../../assets/game/prefabs/bms/result/result-banner.png?url&no-inline";
@@ -116,6 +126,20 @@ interface SimulatorBuiltinResourceDefinition {
 }
 
 const DEFINITIONS: readonly SimulatorBuiltinResourceDefinition[] = Object.freeze([
+  resource("ingameskin/tapeffect/directionalflickskin10001normal", "Original mainland directional effect (normal)", "package", [
+    file("game/portable/skins/cn/normal/Default-ParticleSystem.png", "Default-ParticleSystem.png", "image/png", normal0Url),
+    file("game/portable/skins/cn/normal/dependency-2621970490209455388-tex_parSet_1.png", "dependency-2621970490209455388-tex_parSet_1.png", "image/png", normal1Url),
+    file("game/portable/skins/cn/normal/effect_circle.png", "effect_circle.png", "image/png", normal2Url),
+    file("game/portable/skins/cn/normal/source.asset", "source.asset", "application/json", normal3Url),
+    file("game/portable/skins/cn/normal/source.bundle", "source.bundle", "application/json", normal4Url)
+  ]),
+  resource("ingameskin/tapeffect/directionalflickskin10001light", "Original mainland directional effect (light)", "package", [
+    file("game/portable/skins/cn/light/Default-ParticleSystem.png", "Default-ParticleSystem.png", "image/png", light0Url),
+    file("game/portable/skins/cn/light/dependency-8966196757431654492-tex_parSet_1.png", "dependency-8966196757431654492-tex_parSet_1.png", "image/png", light1Url),
+    file("game/portable/skins/cn/light/effect_circle.png", "effect_circle.png", "image/png", light2Url),
+    file("game/portable/skins/cn/light/source.asset", "source.asset", "application/json", light3Url),
+    file("game/portable/skins/cn/light/source.bundle", "source.bundle", "application/json", light4Url)
+  ]),
   resource("prefabs/bms/sudden", "Original Sudden appearance line", "image", [
     file("game/prefabs/bms/sudden/sudden-line.png", "sudden-line.png", "image/png", suddenLineUrl),
   ]),

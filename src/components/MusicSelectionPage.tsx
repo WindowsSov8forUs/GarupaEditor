@@ -1,3 +1,6 @@
+import { usePreparationPending } from "./PagePreparation";
+import { useContext } from "react";
+import { OriginalPageVisible } from "./OriginalPrefabView";
 import { OfficialMusicFolders } from "./OfficialMusicFolders";
 import { useOfficialMusicPreview } from "./useOfficialMusicPreview";
 import { getOfficialMusicLibrary, type OfficialDifficulty } from "../services/officialMusicLibrary";
@@ -99,6 +102,8 @@ const MusicInformation = memo(function MusicInformation({ entry, jacket, onConfi
   jacket: ReturnType<typeof useMusicJacket>;
   entry: MusicSelectionEntry; onConfirm(): void; onImport(): void; busy: boolean; onDifficulty(value: OfficialDifficulty): void;
 }) {
+  const [charterSettled, setCharterSettled] = useState<number>();
+  usePreparationPending(entry.source !== "official" && entry.source !== "ayachan" && charterSettled !== entry.id);
   const [charter, setCharter] = useState<{ id: number; text: string }>();
   useEffect(() => {
     if (entry.source === "ayachan" || entry.source === "official") return;
@@ -106,7 +111,7 @@ const MusicInformation = memo(function MusicInformation({ entry, jacket, onConfi
     const loading = originalLoading.hold("network", {});
     void loadMusicSelectionCharter(entry.id).then(text => { if (active) setCharter({ id: entry.id, text }); }, failure => {
       appLog("warn", "music-selection.charter-load-failed", { id: entry.id, error: String(failure) });
-    }).finally(loading.release);
+    }).finally(() => { loading.release(); if (active) setCharterSettled(entry.id); });
     return () => { active = false; loading.release(); };
   }, [entry.id, entry.source]);
   const ayachan = entry.source === "ayachan";
@@ -405,6 +410,8 @@ export function MusicSelectionPage({ source, onSourceChange: setSource, onLoad, 
   const [ayachanSearch, setAyachanSearch] = useState<AyachanSearchState>({ entries: [], page: 0, hasMore: true, loading: false, error: "" });
   const ayachanSession = useMemo(() => new AyachanMusicSearch(setAyachanSearch), []);
   const search = source === "official" ? { entries: officialEntries, loading: false, error: officialLibrary.songs.length ? "" : officialLibrary.error } : source === "bestdori" ? bestdoriSearch : ayachanSearch;
+  const pageVisible = useContext(OriginalPageVisible);
+  usePreparationPending(search.loading || (search.entries.length > 0 && !jacketEntry), !pageVisible ? search.error : undefined);
   const entries = search.entries;
   const memoryKey = source === "official" && officialFilter.category !== 0 ? "official-other" : source;
   const remembered = selectionMemory.current[memoryKey];
@@ -430,9 +437,9 @@ export function MusicSelectionPage({ source, onSourceChange: setSource, onLoad, 
   useEffect(() => { if (search.loading) return originalLoading.hold("network", {}).release; }, [search.loading]);
   const [error, setError] = useState("");
   const [searchError, setSearchError] = useState("");
-  useEffect(() => { setSearchError(search.loading ? "" : search.error); }, [source, search.loading, search.error]);
+  useEffect(() => { setSearchError(!pageVisible || search.loading ? "" : search.error); }, [source, search.loading, search.error, pageVisible]);
   const [busy, setBusy] = useState(false);
-  useOfficialMusicPreview(source === "official" && entries.length ? previewSlot : null, previewVolume, busy,
+  useOfficialMusicPreview(pageVisible && source === "official" && entries.length ? previewSlot : null, previewVolume, busy,
     message => warning.current(message));
   const running = useRef(false), active = useRef(true);
   const releaseLoad = useRef<(() => void) | null>(null);

@@ -267,5 +267,5 @@ export function OriginalSkinPreview({ resources, animated, effects, speed, noteS
   }, [backgroundUrl]);
   useEffect(() => { controller.current?.update(); }, [resources.lane, resources.judge, resources.background, animated, effects, noteSize]);
   useEffect(() => { controller.current?.show(); }, [visible]);
-  return <div ref={host} className="original-prefab-texture" data-original-preview="source-note-motion" aria-busy={!prepared} />;
+  return <div ref={host} className="original-prefab-texture" data-original-preview="source-note-motion" data-original-surface-ready={prepared} aria-busy={!prepared} />;
 }

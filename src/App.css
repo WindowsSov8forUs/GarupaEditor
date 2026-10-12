@@ -145,7 +145,9 @@ textarea {
   box-shadow: none;
 }
 
-button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button) {
+/* Fallback artwork must yield to component classes, including pseudo-elements
+ * and interaction states. Exclusions carry no selector specificity. */
+button:where(:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button):not([data-input-only])) {
   --btn-frame-top-local: var(--btn-frame-top);
   --btn-frame-bottom-local: var(--btn-frame-bottom);
   --btn-frame-border-local: var(--btn-frame-border);
@@ -176,7 +178,7 @@ button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-li
     filter 120ms ease;
 }
 
-button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button)::before {
+button:where(:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button):not([data-input-only]))::before {
   content: "";
   position: absolute;
   inset: var(--btn-gap-local);
@@ -187,7 +189,7 @@ button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-li
   z-index: 0;
 }
 
-button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button) > * {
+button:where(:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button):not([data-input-only])) > * {
   position: relative;
   z-index: 1;
 }
@@ -198,13 +200,13 @@ button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-li
   justify-content: center;
 }
 
-button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button):hover:not(:disabled) {
+button:where(:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button):not([data-input-only])):hover:not(:disabled) {
   transform: none;
   border-color: rgba(141, 149, 161, 0.96);
   filter: brightness(1.02);
 }
 
-button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button):active:not(:disabled) {
+button:where(:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button):not([data-input-only])):active:not(:disabled) {
   transform: none;
   box-shadow:
     inset 0 1px 2px rgba(40, 46, 56, 0.18),
@@ -212,7 +214,7 @@ button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-li
   filter: brightness(0.98);
 }
 
-button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button):disabled {
+button:where(:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button):not([data-input-only])):disabled {
   opacity: 0.42;
   cursor: not-allowed;
   filter: saturate(0.72);
@@ -1484,7 +1486,7 @@ select.stepper-input {
   font-size: 0.86rem;
 }
 
-button.timing-group-create-button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button) {
+button.timing-group-create-button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button):not([data-input-only]) {
   --btn-frame-top-local: #f9fafc;
   --btn-frame-bottom-local: #f1f3f7;
   --btn-frame-border-local: #b9bec6;
@@ -1495,7 +1497,7 @@ button.timing-group-create-button:not(.original-button):not(.note-token):not(.bp
   color: #fff;
 }
 
-button.timing-group-create-button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button)::before {
+button.timing-group-create-button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button):not([data-input-only])::before {
   background: linear-gradient(180deg, rgb(255, 59, 113), rgb(255, 59, 113));
   border-color: rgba(255, 255, 255, 0.95);
 }
@@ -1526,7 +1528,7 @@ button.timing-group-create-button:not(.original-button):not(.note-token):not(.bp
   height: 155%;
 }
 
-button.apply-icon-button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button) {
+button.apply-icon-button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button):not([data-input-only]) {
   --btn-frame-top-local: #f9fafc;
   --btn-frame-bottom-local: #f1f3f7;
   --btn-frame-border-local: #b9bec6;
@@ -1547,7 +1549,7 @@ button.apply-icon-button:not(.original-button):not(.note-token):not(.bpm-label-b
   height: 170%;
 }
 
-button.apply-icon-button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button)::before {
+button.apply-icon-button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button):not([data-input-only])::before {
   background: linear-gradient(180deg, rgb(255, 59, 113), rgb(255, 59, 113));
   border-color: rgba(255, 255, 255, 0.95);
 }
@@ -2543,13 +2545,13 @@ button.apply-icon-button:not(.original-button):not(.note-token):not(.bpm-label-b
 }
 
 .app-settings-back-button,
-button.app-settings-apply-button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button),
+button.app-settings-apply-button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button):not([data-input-only]),
 .modal-actions > button:not(.original-button):not(.app-settings-back-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button) {
   min-width: 92px;
   min-height: 34px;
 }
 
-button.app-settings-apply-button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button),
+button.app-settings-apply-button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button):not([data-input-only]),
 .modal-actions > button:not(.original-button):not(.app-settings-back-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button) {
   --btn-frame-top-local: #f9fafc;
   --btn-frame-bottom-local: #f1f3f7;
@@ -2561,7 +2563,7 @@ button.app-settings-apply-button:not(.original-button):not(.note-token):not(.bpm
   color: #ffffff;
 }
 
-button.app-settings-apply-button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button)::before,
+button.app-settings-apply-button:not(.original-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button):not([data-input-only])::before,
 .modal-actions > button:not(.original-button):not(.app-settings-back-button):not(.note-token):not(.bpm-label-button):not(.bpm-line-button):not(.binary-choice):not(.top-tabs-button):not(.simulator-mobile-back-button)::before {
   background: linear-gradient(180deg, rgb(255, 59, 113), rgb(255, 59, 113));
   border-color: rgba(255, 255, 255, 0.95);

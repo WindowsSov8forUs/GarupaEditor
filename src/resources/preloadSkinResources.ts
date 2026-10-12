@@ -8,7 +8,8 @@ import { createResourceRef } from "./contracts";
 import { limitedSkinThumbnailDescriptor } from "./providers/bestdoriCatalogProvider";
 import { collaborationThumbnailSources, loadCollaborationSkinThumbnail } from "../skins/collaborationSkinThumbnailResource";
 
-const started = new WeakMap<ApplicationResourceManager, Promise<void>>();
+export interface SkinPreloadResult { readonly failures: readonly string[]; readonly unpublished: readonly string[] }
+const started = new WeakMap<ApplicationResourceManager, Promise<SkinPreloadResult>>();
 
 /** The complete selectable inventory, not every asset on every provider server. */
 export function skinResourceInventory(): readonly string[] {
@@ -45,17 +46,23 @@ export function skinResourceInventory(): readonly string[] {
   return [...resources];
 }
 
-/** Populate the existing persistent store without delaying editor startup. */
-export function preloadSkinResources(manager: ApplicationResourceManager): Promise<void> {
+/** Complete the selectable inventory before startup releases the loading screen. */
+export function preloadSkinResources(manager: ApplicationResourceManager,
+  progress: (completed: number, total: number) => void = () => {},
+): Promise<SkinPreloadResult> {
   let pending = started.get(manager);
   if (!pending) {
-    pending = preload(manager);
+    pending = preload(manager, progress).then(result => {
+      if (result.failures.length || result.unpublished.length) started.delete(manager);
+      return result;
+    }, error => { started.delete(manager); throw error; });
     started.set(manager, pending);
   }
   return pending;
 }
 
-async function preload(manager: ApplicationResourceManager): Promise<void> {
+async function preload(manager: ApplicationResourceManager,
+  progress: (completed: number, total: number) => void): Promise<SkinPreloadResult> {
   const catalog = await manager.prepareCatalog("bestdori");
   if (catalog.status === "rejected") throw new Error(catalog.failure.boundary);
   const refs = skinResourceInventory().map(logical => originalSkinResourceRef(logical));
@@ -65,27 +72,45 @@ async function preload(manager: ApplicationResourceManager): Promise<void> {
     if (registered.status === "rejected") throw new Error(registered.failure.boundary);
     refs.push(createResourceRef(descriptor.ref.id));
   }
-  const failures: string[] = [];
+  const failures: string[] = [], unpublished: string[] = [];
   const ready = new Set<string>(), attempted = new Set<string>();
   const thumbnails = CURRENT_SPECIAL_SKINS.filter(row => row.kind === "collabo" && row.selectable)
     .map(skin => ({ skin, refs: collaborationThumbnailSources(skin).refs }));
-  // One download at a time. Foreground consumers share pending installations;
-  // subsequent launches check installed records and fetch only missing packages.
-  for (const ref of refs) {
-    if (ref.status === "rejected") { failures.push(ref.failure.boundary); continue; }
-    try {
-      const result = await manager.ensureAvailable(ref.value);
-      if (result.status === "rejected") failures.push(`${ref.value.id}: ${result.failure.boundary}`);
-      else ready.add(ref.value.id);
-    } catch (cause) { failures.push(`${ref.value.id}: ${String(cause)}`); }
-    for (const { skin, refs } of thumbnails) {
-      const pair = JSON.stringify(refs);
-      if (attempted.has(pair) || !ready.has(refs.note.id) || !ready.has(refs.field.id)) continue;
+  // Keep package I/O bounded; thumbnail preparation must not serialize the
+  // remaining package checks behind image decoding and snapshot acquisition.
+  let completed = 0, cursor = 0;
+  const total = refs.length + thumbnails.length;
+  progress(0, total);
+  await Promise.all(Array.from({ length: 4 }, async () => {
+    while (cursor < refs.length) {
+      const ref = refs[cursor++]!;
+      if (ref.status === "rejected") {
+        failures.push(ref.failure.boundary);
+      } else {
+        try {
+          const result = await manager.ensureAvailable(ref.value);
+          if (result.status === "rejected") {
+            const details = `${ref.value.id}：${result.failure.userMessage ?? result.failure.boundary}`;
+            if (result.failure.capability === "resources.bestdori.package-not-published") unpublished.push(details);
+            else failures.push(details);
+          } else ready.add(ref.value.id);
+        } catch (cause) { failures.push(`${ref.value.id}: ${String(cause)}`); }
+      }
+      progress(++completed, total);
+    }
+  }));
+  // Rasterization stays sequential to avoid multiplying canvas memory usage.
+  for (const { skin, refs } of thumbnails) {
+    const pair = JSON.stringify(refs);
+    if (!attempted.has(pair) && ready.has(refs.note.id) && ready.has(refs.field.id)) {
       attempted.add(pair);
       try { await loadCollaborationSkinThumbnail(manager, skin); }
       catch (cause) { failures.push(`联动缩略图 ${skin.selectionId}: ${String(cause)}`); }
     }
-    await new Promise<void>(resolve => setTimeout(resolve, 0));
+    progress(++completed, total);
   }
+  failures.sort(); unpublished.sort();
   if (failures.length) console.warn("部分皮肤预下载未完成；其余资源已缓存，下次启动可补齐", failures);
+  if (unpublished.length) console.warn("资源站尚未提供的皮肤包，未发起下载", unpublished);
+  return { failures, unpublished };
 }

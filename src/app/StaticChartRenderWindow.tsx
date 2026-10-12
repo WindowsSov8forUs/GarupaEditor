@@ -1,3 +1,4 @@
+import { usePresentRoute } from "./RoutePresentation";
 import { appLog } from "../logging/applicationLogger";
 ﻿import { loggedInvoke as invoke } from "../logging/applicationLogger";
 import { emit } from "@tauri-apps/api/event";
@@ -747,6 +748,7 @@ function renderSegmentCanvas(args: {
 }
 
 export default function StaticChartRenderWindow() {
+  const present = usePresentRoute();
   const resourceManager = useApplicationResourceManager();
   const backArrowIcon = useApplicationResourceUrl("ui.icon.back-arrow");
   const imageExportIcon = useApplicationResourceUrl("ui.icon.image-export");
@@ -758,6 +760,7 @@ export default function StaticChartRenderWindow() {
   const [overlayDialog, setOverlayDialog] = useState<OverlayDialogState | null>(null);
   useEffect(() => {
     if (errorMessage) {
+      present();
       setOverlayDialog({ tone: "error", message: errorMessage });
       setLoadingProgress(previous => ({ ...previous, visible: false, blocking: false }));
     }
@@ -1157,6 +1160,7 @@ export default function StaticChartRenderWindow() {
     }
     didCompleteRenderRef.current = true;
     appLog("info", "static-render.ready", { segmentCount });
+    present();
     completeLoadingProgress("预览已就绪。");
   }, [allResourceImagesReady, appliedSkinResources, completeLoadingProgress, payload, segmentCount]);
 

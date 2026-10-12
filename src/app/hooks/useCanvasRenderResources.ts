@@ -10,6 +10,7 @@ export function useCanvasRenderResources(params: {
   const { enabled, skinAssets } = params;
   const imageMapRef = useRef<Map<string, ReadyImage>>(new Map());
   const [version, setVersion] = useState(0);
+  const [failedUrls, setFailedUrls] = useState<ReadonlySet<string>>(new Set());
 
   const allUrls = useMemo(() => {
     if (!skinAssets) {
@@ -79,6 +80,7 @@ export function useCanvasRenderResources(params: {
       };
       image.onerror = () => {
         image.__ready = false;
+        setFailedUrls(previous => new Set([...previous, url]));
         setVersion((value) => value + 1);
       };
       image.src = url;
@@ -105,6 +107,7 @@ export function useCanvasRenderResources(params: {
   return {
     getImage,
     isReady,
+    error: allUrls.some(url => failedUrls.has(url)) ? "编辑器音符图片解码失败。" : null,
     version,
   };
 }

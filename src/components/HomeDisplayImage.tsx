@@ -1,3 +1,4 @@
+import { usePreparationPending } from "./PagePreparation";
 import { useEffect, useRef, useState } from "react";
 import button from "../data/originalHomeDisplayButton.json";
 import { appLog } from "../logging/applicationLogger";
@@ -8,6 +9,7 @@ import { OriginalButton } from "./OriginalUi";
 import { useUiViewport } from "./useUiViewport";
 import { CoverDisplayImage } from "./CoverDisplayImage";
 import { OverlayDialogModal } from "./OverlayDialogModal";
+import { useStartupReadiness } from "../app/startupReadiness";
 
 /** Original Home edit sprite, mounted at the mode-change button's LeftTop anchor.
  * Source: home-display-button-10-1-4, 99aa7841d08ce4032500c42048a3dbf8ffb3c715.
@@ -21,6 +23,8 @@ export function HomeDisplayImage() {
   const [url, setUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  useStartupReadiness("home-image", url !== null, error);
+  usePreparationPending(url === null, error);
   const displayedLease = useRef<ResourceConsumerLease | null>(null);
   useEffect(() => () => { void displayedLease.current?.release(); displayedLease.current = null; }, []);
   useEffect(() => {
@@ -37,6 +41,7 @@ export function HomeDisplayImage() {
       const files = lease.listFiles("display");
       if (files.length !== 1) throw new Error("展示图片资源必须包含一张图片。");
       const image = await lease.openObjectUrl("display", files[0]!.logicalPath);
+      const decoded = new Image(); decoded.src = image; await decoded.decode();
       if (active) {
         const previous = displayedLease.current;
         displayedLease.current = lease;
