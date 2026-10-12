@@ -1,3 +1,5 @@
+import { readDownloadBody } from "../download";
+import { downloadActivity } from "../downloadActivity";
 import { downloadBytes } from "../download";
 import {
   decodeBase64ToArrayBuffer,
@@ -801,18 +803,22 @@ async function requestBestdoriPostJson<T>(
       hostScope: options?.hostScope ?? "bestdori",
     });
   }
-  const response = await fetch(normalizedEndpoint, {
-    method: "POST",
-    cache: "no-store",
-    headers: {
-      "Content-Type": "application/json;charset=UTF-8",
-    },
-    body: JSON.stringify(payload),
-  });
-  if (!response.ok) {
-    throw new Error(`${label} http status ${response.status}`);
-  }
-  return response.json() as Promise<T>;
+  const activity = new URL(normalizedEndpoint).pathname === "/api/post/list" ? downloadActivity.begin() : undefined;
+  try {
+    const response = await fetch(normalizedEndpoint, {
+      method: "POST",
+      cache: "no-store",
+      headers: {
+        "Content-Type": "application/json;charset=UTF-8",
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      throw new Error(`${label} http status ${response.status}`);
+    }
+    const bytes = await readDownloadBody(response, activity);
+    return JSON.parse(new TextDecoder().decode(bytes)) as T;
+  } finally { activity?.finish(); }
 }
 
 interface RequestBestdoriPostMultipartFileItem {

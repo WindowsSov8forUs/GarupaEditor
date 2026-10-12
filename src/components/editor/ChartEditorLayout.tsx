@@ -1,4 +1,5 @@
 import { OriginalMenuBackground } from "../OriginalMenuBackground";
+import { useIsStartingApplication, useStartupReadiness } from "../../app/startupReadiness";
 import { AppSettingsModal } from "../AppSettingsModal";
 import { OriginalUiSoundProvider } from "../OriginalUiSound";
 import { BestdoriLoginModal } from "../BestdoriLoginModal";
@@ -337,9 +338,11 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   const bestdoriAuthBusy = useRef(false);
   const [isBestdoriLoginOpen, setIsBestdoriLoginOpen] = useState(false);
   const [livePreparationOpen, setLivePreparationOpen] = useState(false);
-  const [liveSelectionOpen, setLiveSelectionOpen] = useState(false);
+  const startingApplication = useIsStartingApplication();
+  const [liveSelectionOpen, setLiveSelectionOpen] = useState(startingApplication);
   const [musicSelectionOpen, setMusicSelectionOpen] = useState(false);
   const [backgroundPage, setBackgroundPage] = useState<string | null>(null);
+  useStartupReadiness("home-page", backgroundPage === "entrance");
   const [preparationSettingsOpen, setPreparationSettingsOpen] = useState(false);
   const preparationInputs = useRef<Record<SimulatorModeSelection["sessionMode"], SimulatorModeSelection["inputMode"]>>({
     live: SIMULATOR_PRE_ADAPTATION_DEFAULTS.inputMode, rehearsal: SIMULATOR_PRE_ADAPTATION_DEFAULTS.inputMode,
@@ -1260,10 +1263,17 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         }}
       />
 
-      <OriginalPageSwitch open={isMetadataEditorOpen || livePreparationOpen || liveSelectionOpen || musicSelectionOpen}
+      <OriginalPageSwitch workspaceReady={vm.workspaceReady} open={isMetadataEditorOpen || livePreparationOpen || liveSelectionOpen || musicSelectionOpen}
         onPageShown={setBackgroundPage}
+        onRestorePage={(page, key) => {
+          setLivePreparationOpen(page === "live"); setIsMetadataEditorOpen(page === "song");
+          setMusicSelectionOpen(page === "search"); setLiveSelectionOpen(page !== null);
+          const source = key?.split(":")[1];
+          if (page === "search" && (source === "official" || source === "bestdori" || source === "ayachan")) vm.setMusicSelectionSource(source);
+        }}
         onWorkspaceBack={() => setLiveSelectionOpen(true)}
         showPageBack={isMetadataEditorOpen || livePreparationOpen || musicSelectionOpen}
+        pageKey={livePreparationOpen ? "live" : isMetadataEditorOpen ? "song" : musicSelectionOpen ? `search:${appOptionSettings.musicSelectionSource}` : "entrance"}
         pageId={livePreparationOpen ? "live" : isMetadataEditorOpen ? "song" : musicSelectionOpen ? "search" : "entrance"}
         section={livePreparationOpen ? "演出" : isMetadataEditorOpen ? "歌曲" : musicSelectionOpen ? "演出" : "首页"}
         title={livePreparationOpen ? songDetailSource.wording[preparationMode.sessionMode === "rehearsal"

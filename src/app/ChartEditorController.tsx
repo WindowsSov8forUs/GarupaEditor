@@ -1,3 +1,4 @@
+import { holdAuxiliaryPreparation } from "./RoutePresentation";
 import { useChartProjectFiles } from "./hooks/useChartProjectFiles";
 import { projectDraft, type ChartProject, type ChartProjectDraft } from "../project/chartProject";
 import { captureChartProject, rememberProjectMedia } from "../project/projectResources";
@@ -34,6 +35,7 @@ import {
 import { useBoardInteractionActions } from "./hooks/useBoardInteractionActions";
 import { useCanvasPlayfieldBackend } from "./hooks/useCanvasPlayfieldBackend";
 import { useCanvasRenderResources } from "./hooks/useCanvasRenderResources";
+import { useIsStartingApplication, useStartupReadiness } from "./startupReadiness";
 import { useEditorGeometry } from "./hooks/useEditorGeometry";
 import { useEditorIoAndShortcuts } from "./hooks/useEditorIoAndShortcuts";
 import { useEditorSessionCache } from "./hooks/useEditorSessionCache";
@@ -1228,7 +1230,7 @@ function ChartEditorController() {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      const refreshed = await resourceManager.refreshCatalog("bestdori");
+      const refreshed = await resourceManager.prepareCatalog("bestdori");
       if (refreshed.status === "rejected" || cancelled) {
         if (!cancelled) setBestdoriCatalogStatus("资源站目录不可用，且没有可用离线快照。");
         return;
@@ -1334,7 +1336,6 @@ function ChartEditorController() {
   const bestdoriV2ImportRef = useRef<HTMLInputElement | null>(null);
   const skinApplySeqRef = useRef(0);
   const simulatorHandoffLeasesRef = useRef<Map<string, ResourceConsumerLease>>(new Map());
-  const didInitSkinRef = useRef(false);
   const applyBestdoriSkinSelectionRef = useRef<any>(async () => {});
   const lastStandardRhythmSkinRef = useRef<Pick<SkinSelection, "rhythmType" | "rhythmRipName" | "rhythmServer"> | null>(null);
   const syncingHabahiroSkinRef = useRef(false);
@@ -3174,7 +3175,6 @@ function ChartEditorController() {
     setIsSkinApplying,
     formatTypeLabel,
     setSkinSelection,
-    didInitSkinRef,
     approxEq,
     selectedNoteIds,
     selectedBpmEventIds,
@@ -4990,6 +4990,24 @@ function ChartEditorController() {
     stopPlaybackBgmSource,
   ]);
 
+  const startingApplication = useIsStartingApplication();
+  const [startupAudio, setStartupAudio] = useState<{ key: string; error: string | null } | null>(null);
+  const startupSeSources = appliedSkinResources?.se ? Object.values(resolvePlaybackSeSources(appliedSkinResources.se)).filter((src): src is string => typeof src === "string" && src.length > 0) : [];
+  const startupAudioKey = JSON.stringify([audioObjectUrl, startupSeSources]);
+  useStartupReadiness("editor-audio", startupAudio?.key === startupAudioKey && startupAudio.error === null,
+    startupAudio?.key === startupAudioKey ? startupAudio.error : null);
+  useEffect(() => {
+    if (!startingApplication || !settingsResourcesReady || isSkinApplying || !appliedSkinResources) return;
+    let active = true;
+    void (async () => {
+      const se = await Promise.all(startupSeSources.map(decodePlaybackSeBuffer));
+      if (se.some(buffer => buffer === null)) throw new Error("编辑器音符音效解码失败。");
+      if (audioObjectUrl && !await decodePlaybackBgmBuffer(audioObjectUrl)) throw new Error("当前谱面 BGM 解码失败。");
+      if (active) setStartupAudio({ key: startupAudioKey, error: null });
+    })().catch(error => { if (active) setStartupAudio({ key: startupAudioKey, error: String(error) }); });
+    return () => { active = false; };
+  }, [startingApplication, settingsResourcesReady, isSkinApplying, appliedSkinResources, startupAudioKey, audioObjectUrl, decodePlaybackSeBuffer, decodePlaybackBgmBuffer]);
+
   useEffect(() => {
     if (!isExGarupaEnabled) {
       setIsTimingGroupPanelOpen(false);
@@ -5449,11 +5467,18 @@ function ChartEditorController() {
   const {
     getImage: getCanvasResourceImage,
     isReady: isCanvasResourceReady,
+    error: canvasResourceError,
     version: canvasResourceVersion,
   } = useCanvasRenderResources({
     enabled: isCanvasRenderBackend,
     skinAssets,
   });
+  const startupMediaReady = Object.entries(chartMediaResources).every(([key, ref]) =>
+    ref === null || Boolean(chartMediaLease.urls[key as keyof typeof chartMediaLease.urls]));
+  useStartupReadiness("editor", settingsResourcesReady && !isSkinApplying && isSkinReady
+    && (!isCanvasRenderBackend || isCanvasResourceReady) && startupMediaReady,
+    settingsResourcesReady && !isSkinApplying ? chartMediaLease.error ?? canvasResourceError
+      ?? (!isSkinReady ? "当前编辑器皮肤未准备完成，请重试资源加载。" : null) : null);
 
   const {
     renderLaneGuides,
@@ -5682,8 +5707,10 @@ function ChartEditorController() {
 
     const requestId = `static-render-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
     const windowLabel = requestId;
+    let releasePreparation: (() => void) | undefined;
     let readyUnlisten: UnlistenFn | null = null;
     let timeoutId: number | null = null;
+    let renderWindow: WebviewWindow | null = null;
     const clearReadySubscription = () => {
       if (readyUnlisten) {
         void readyUnlisten();
@@ -5696,6 +5723,7 @@ function ChartEditorController() {
     };
 
     try {
+      if (!isMobileRuntime()) releasePreparation = await holdAuxiliaryPreparation(requestId, message => { setStatusMessage(`预览窗口显示失败：${message}`); void renderWindow?.close(); });
       readyUnlisten = await listen<{ requestId?: string; label?: string }>(
         STATIC_RENDER_WINDOW_READY_EVENT,
         async (event) => {
@@ -5719,6 +5747,8 @@ function ChartEditorController() {
             const message = error instanceof Error ? error.message : String(error);
             updatePreviewLoadingProgress(100, `预览数据发送失败：${message}`, { blocking: false });
             hidePreviewLoadingProgress(900);
+            releasePreparation?.();
+            void renderWindow?.close();
             setStatusMessage(`预览窗口数据发送失败：${message}`);
           }
         },
@@ -5746,7 +5776,8 @@ function ChartEditorController() {
         return;
       }
 
-      const renderWindow = new WebviewWindow(windowLabel, {
+      renderWindow = new WebviewWindow(windowLabel, {
+        visible: false,
         title: `${metadata.title} - preview`,
         width: 1440,
         height: 900,
@@ -5761,6 +5792,7 @@ function ChartEditorController() {
         updatePreviewLoadingProgress(58, "预览窗口已创建，等待连接…");
       });
       renderWindow.once("tauri://error", (event) => {
+        releasePreparation?.();
         clearReadySubscription();
         const message = event?.payload
           ? JSON.stringify(event.payload)
@@ -5770,6 +5802,7 @@ function ChartEditorController() {
         setStatusMessage(`预览窗口创建失败：${message}`);
       });
       renderWindow.once("tauri://destroyed", () => {
+        releasePreparation?.();
         clearReadySubscription();
         hidePreviewLoadingProgress();
       });
@@ -5781,6 +5814,8 @@ function ChartEditorController() {
         clearReadySubscription();
         updatePreviewLoadingProgress(100, "预览窗口连接超时。", { blocking: false });
         hidePreviewLoadingProgress(900);
+        releasePreparation?.();
+        void renderWindow?.close();
         setStatusMessage("预览窗口握手超时，请重试。");
       }, 15000);
       setStatusMessage("预览窗口已打开。");
@@ -5789,6 +5824,8 @@ function ChartEditorController() {
       const message = error instanceof Error ? error.message : String(error);
       updatePreviewLoadingProgress(100, `预览启动失败：${message}`, { blocking: false });
       hidePreviewLoadingProgress(900);
+      releasePreparation?.();
+      void renderWindow?.close();
       setStatusMessage(`预览窗口启动失败：${message}`);
     }
   }, [
@@ -5808,6 +5845,7 @@ function ChartEditorController() {
 
   const openSimulatorWindow = useCallback(async (mode: SimulatorModeSelection = SIMULATOR_PRE_ADAPTATION_DEFAULTS) => {
     appLog("info", "editor.window.request", { kind: "openSimulatorWindow", sessionMode: mode.sessionMode, inputMode: mode.inputMode });
+    let releasePreparation: (() => void) | undefined;
     let readyUnlisten: UnlistenFn | null = null;
     let closedUnlisten: UnlistenFn | null = null;
     let timeoutId: number | null = null;
@@ -5833,6 +5871,7 @@ function ChartEditorController() {
       void lease.release();
     };
     const abandon = () => {
+      releasePreparation?.();
       abandoned = true;
       clearReadySubscription();
       clearClosedSubscription();
@@ -5873,6 +5912,7 @@ function ChartEditorController() {
         }
       });
       if (!isMobileRuntime()) {
+        releasePreparation = await holdAuxiliaryPreparation(requestId, fail);
         readyUnlisten = await listen<SimulatorWindowReadyPayload>(SIMULATOR_WINDOW_READY_EVENT, (event) => {
           const readyPayload = event.payload ?? {};
           if (abandoned || readyPayload.requestId !== requestId || typeof readyPayload.label !== "string") return;
@@ -5989,6 +6029,7 @@ function ChartEditorController() {
     <ChartEditorLayout
       vm={{
         settingsResourcesReady,
+        workspaceReady: settingsResourcesReady && !isSkinApplying && isSkinReady && (!isCanvasRenderBackend || isCanvasResourceReady) && startupMediaReady,
         jsonImportRef,
         bestdoriV2ImportRef,
         handleJsonImport,

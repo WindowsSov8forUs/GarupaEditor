@@ -1,3 +1,4 @@
+import { usePreparationPending } from "./PagePreparation";
 import { originalSkinResourceRef } from "../resources/originalSkinResourceRef";
 import { useEffect, useRef, useState } from "react";
 import { useApplicationResourceManager } from "../resources/applicationResourceContext";
@@ -23,8 +24,11 @@ export function useOriginalAnimatedSkinResources(recipe: ResolvedOriginalSkinRec
   const manager = useApplicationResourceManager(), report = useRef(onError); report.current = onError;
   const noteResource = recipe.note.logicalResource!, directionalResource = recipe.directional.noteLogicalResource;
   const key = `${noteResource}:${directionalResource}:${includeSlideAmong}`;
+  const [failure, setFailure] = useState<unknown>();
   const [result, setResult] = useState<OriginalAnimatedSkinResources | null>(null);
+  usePreparationPending(result?.key !== key, failure);
   useEffect(() => {
+    setFailure(undefined);
     let active = true, finished = false, lease: ResourceConsumerLease | null = null;
     const derived = new Set<string>();
     const release = () => {
@@ -88,6 +92,7 @@ export function useOriginalAnimatedSkinResources(recipe: ResolvedOriginalSkinRec
       if (active) setResult({ key, bodies, longNoteLine, flickTops, flickAnimations,
         slideAmong: includeSlideAmong ? take(note, "note_slide_among") : null });
     })().catch(error => {
+      if (active) setFailure(error);
       if (active) report.current?.(error instanceof Error ? error.message : String(error));
       release();
     }).finally(() => { finished = true; if (!active) release(); });

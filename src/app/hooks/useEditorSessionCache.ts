@@ -1,3 +1,5 @@
+import { loadEditorSettingsCache, saveEditorSettingsCache } from "../editorSettingsCache";
+import { useStartupReadiness } from "../startupReadiness";
 import { PROJECT_FORMAT, canonicalJson, readChartProject } from "../../project/chartProject";
 import { captureChartProject } from "../../project/projectResources";
 import { loggedInvoke as invoke } from "../../logging/applicationLogger";
@@ -199,6 +201,8 @@ export function useEditorSessionCache(params: any) {
   const resourceManager = useApplicationResourceManager();
 
   const [didRestoreAttemptFinish, setDidRestoreAttemptFinish] = useState(false);
+  const [startupRestoreError, setStartupRestoreError] = useState<string | null>(null);
+  useStartupReadiness("session", didRestoreAttemptFinish, startupRestoreError);
   const latestProjectRef = useRef(project);
   latestProjectRef.current = project;
   const blockedRestoreProjectIdRef = useRef<string | null>(null);
@@ -211,10 +215,12 @@ export function useEditorSessionCache(params: any) {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
+      let initialSkinSelection = skinSelection;
+      let persistInitialSkin = false;
       try {
         const [loadedChart, loadedSettingsJson] = await Promise.all([
           invoke<LoadedEditorChartCache | null>("load_editor_chart_cache"),
-          invoke<string | null>("load_editor_settings_cache"),
+          loadEditorSettingsCache(),
         ]);
         if (cancelled) {
           return;
@@ -311,7 +317,8 @@ export function useEditorSessionCache(params: any) {
             ? normalizeSkinSelection(snapshot.skinSelection as Record<string, unknown>)
             : skinSelection;
           if (typeof applyBestdoriSkinSelection === "function" && normalizedSkinSelection) {
-            void applyBestdoriSkinSelection(normalizedSkinSelection, true, false);
+            initialSkinSelection = normalizedSkinSelection;
+            persistInitialSkin = true;
           }
 
           lastSavedSettingsFingerprintRef.current = JSON.stringify({
@@ -591,9 +598,12 @@ export function useEditorSessionCache(params: any) {
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         blockedRestoreProjectIdRef.current = project.projectId;
+        if (!cancelled) setStartupRestoreError(`会话缓存恢复失败：${message}`);
         setStatusMessage(`会话缓存恢复失败：${message}。原缓存已保留，打开或导入项目后恢复自动保存。`);
       } finally {
         if (!cancelled) {
+          await applyBestdoriSkinSelection(initialSkinSelection, persistInitialSkin, false);
+          if (cancelled) return;
           setDidRestoreAttemptFinish(true);
         }
       }
@@ -712,9 +722,7 @@ export function useEditorSessionCache(params: any) {
             ...settingsCore,
             savedAt: new Date().toISOString(),
           });
-          await invoke("save_editor_settings_cache", {
-            settingsJson,
-          });
+          await saveEditorSettingsCache(settingsJson);
           lastSavedSettingsFingerprintRef.current = fingerprint;
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);

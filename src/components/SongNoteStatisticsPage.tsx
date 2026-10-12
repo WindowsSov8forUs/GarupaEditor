@@ -1,3 +1,5 @@
+import { usePreparationPending } from "./PagePreparation";
+import { useState } from "react";
 import { useEffect, useMemo, useRef } from "react";
 import type { EditorOptionSettings } from "../chartCore";
 import source from "../data/originalSongDetailProfile.json";
@@ -41,6 +43,9 @@ function NoteThumbnail({ resources, index, label, onError }: {
   resources: OriginalAnimatedSkinResources | null; index: number; label: string;
   onError(message: string): void;
 }) {
+  const [painted, setPainted] = useState<OriginalAnimatedSkinResources | null>(null);
+  const [failure, setFailure] = useState<unknown>();
+  usePreparationPending(!resources || painted !== resources, failure);
   const canvas = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const target = canvas.current!, context = target.getContext("2d")!;
@@ -99,7 +104,8 @@ function NoteThumbnail({ resources, index, label, onError }: {
         context.restore();
       });
       context.restore();
-    }).catch(error => { if (active) onError(`音符缩略图加载失败：${String(error)}`); });
+      if (active) setPainted(resources);
+    }).catch(error => { if (active) setFailure(error); if (active) onError(`音符缩略图加载失败：${String(error)}`); });
     return () => { active = false; };
   }, [resources, index, onError]);
   return <canvas ref={canvas} width={Math.round(thumbnail.width * 5)} height={Math.round(thumbnail.height * 5)} role="img" aria-label={label}

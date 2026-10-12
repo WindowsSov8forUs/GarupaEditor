@@ -1,5 +1,6 @@
+import { originalLoading } from "./originalLoadingState";
 import { appLog, startOperation } from "../logging/applicationLogger";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useOriginalUiSound } from "./OriginalUiSound";
 import type { EditorSettingsModalProps } from "./EditorSettingsModal";
 import { OriginalAuthoredDialog } from "./OriginalAuthoredDialog";
@@ -54,11 +55,15 @@ export function OriginalGameSettingsModal(props: Props) {
   const previewOptions = props.open && ready ? draft.options : props.optionSettings;
   const skin = previewOptions.simulatorSettings.skin;
   const recipe = useMemo(() => resolveOriginalPreviewSkin(skin), [skin]);
-  const previewResources = useOriginalSkinPreviewResources(recipe, props.onSettingsError);
-  const previewAnimated = useOriginalAnimatedSkinResources(recipe, props.onSettingsError);
-  const previewEffects = useOriginalPreviewParticleResources(skin, props.onSettingsError);
+  const [resourceError, setResourceError] = useState("");
+  const reportResourceError = useCallback((message: string) => {
+    setResourceError(message); current.current.onSettingsError?.(message);
+  }, []);
+  const previewResources = useOriginalSkinPreviewResources(recipe, reportResourceError);
+  const previewAnimated = useOriginalAnimatedSkinResources(recipe, reportResourceError);
+  const previewEffects = useOriginalPreviewParticleResources(skin, reportResourceError);
   const previewSound = useOriginalSkinSound(skin.judgeSE,
-    previewOptions.noteSeVolumePercent * previewOptions.simulatorSettings.masterVolumePercent / 10000, props.onSettingsError, "preview", recipe.tapSE.logicalResource!);
+    previewOptions.noteSeVolumePercent * previewOptions.simulatorSettings.masterVolumePercent / 10000, reportResourceError, "preview", recipe.tapSE.logicalResource!);
   useEffect(() => {
     if (props.open) {
       scrollStates.current.forEach(state => { state.value = 0; });
@@ -67,8 +72,21 @@ export function OriginalGameSettingsModal(props: Props) {
     else { skinRequest.current++; preparingRef.current = false; setPreparingSkin(false); setSpecialDialog(null); setSpecialDialogClosing(false);
       setReady(false); setGuide(null); setRhythmAdjust(false); visitedPages.current.clear(); }
   }, [props.open]);
+  const previewReady = !!previewResources.lane && !!previewResources.judge && Object.keys(previewResources.note).length > 0
+    && Object.keys(previewResources.directional).length > 0 && !!previewAnimated && !!previewEffects && previewSound.ready;
+  const [entered, setEntered] = useState(false);
+  useEffect(() => {
+    if (!props.open) { setEntered(false); return; }
+    if (previewReady) setEntered(true);
+    else if (resourceError && !entered) { current.current.onSettingsError?.(resourceError); current.current.onClose(); }
+  }, [props.open, previewReady, resourceError, entered]);
+  useEffect(() => {
+    if (props.open && !entered && !resourceError) return originalLoading.hold("network", {}).release;
+  }, [props.open, entered, resourceError]);
   const tab = draft.options.simulatorSettings.lastTab;
-  if (props.open && ready) visitedPages.current.add(tab);
+  // Prepare all retained settings pages before presenting the dialog so a first
+  // tab visit does not start image decoding or create its preview renderer.
+  if (props.open && ready) for (let index = 0; index < 4; index++) visitedPages.current.add(index);
   const pages = useMemo(() => Array.from({ length: 4 }, (_, index) =>
     buildOriginalSettingsPage(index, draft, setDraft, setGuide, () => setRhythmAdjust(true))), [draft]);
   const commitSpecial = (special: SelectedSpecialSkin) => {
@@ -156,7 +174,7 @@ export function OriginalGameSettingsModal(props: Props) {
     [shell.nodeAt("etc/specialSkinBalloon").id]: { active: false },
   } });
   const pageOrigin = shell.transform(shell.nodeAt("Pages/PageRoot").id);
-  return <><OriginalAuthoredDialog open={props.open && ready} model={model} bindings={{ buttons }}
+  return <><OriginalAuthoredDialog open={props.open && ready && entered} model={model} bindings={{ buttons }}
     motion="slide-left" busy={saving || preparingSkin} onClose={() => void save()}>
     {props.open && ready && <div className="original-prefab-origin" style={{ left: pageOrigin.x, top: -pageOrigin.y }}>
       {[...visitedPages.current].map(index => <OriginalPageVisible.Provider key={index} value={index === tab}>

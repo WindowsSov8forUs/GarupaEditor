@@ -1,5 +1,38 @@
+use std::collections::BTreeMap;
 use std::io::Write;
 use std::time::Duration;
+use std::sync::{Mutex, OnceLock};
+use tauri::Emitter;
+
+#[derive(Clone, serde::Serialize)]
+pub struct Transfer { received: u64, total: Option<u64> }
+#[derive(Clone, Default, serde::Serialize)]
+pub struct DownloadSnapshot { revision: u64, transfers: BTreeMap<u64, Transfer> }
+static ACTIVITY: Mutex<DownloadSnapshot> = Mutex::new(DownloadSnapshot { revision: 0, transfers: BTreeMap::new() });
+static APP: OnceLock<tauri::AppHandle> = OnceLock::new();
+pub fn initialize(app: tauri::AppHandle) { let _ = APP.set(app); }
+#[tauri::command]
+pub fn download_snapshot() -> DownloadSnapshot { ACTIVITY.lock().unwrap_or_else(|e| e.into_inner()).clone() }
+fn activity_change(change: impl FnOnce(&mut DownloadSnapshot)) {
+    let value = { let mut state = ACTIVITY.lock().unwrap_or_else(|e| e.into_inner());
+        change(&mut state); state.revision += 1; state.clone() };
+    if let Some(app) = APP.get() { let _ = app.emit("application-downloads", value); }
+}
+pub(super) struct ActiveTransfer { id: u64, last: std::time::Instant }
+impl ActiveTransfer {
+    pub(super) fn begin() -> Self {
+        static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
+        let id = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        activity_change(|s| { s.transfers.insert(id, Transfer { received: 0, total: None }); });
+        Self { id, last: std::time::Instant::now() }
+    }
+    pub(super) fn progress(&mut self, received: u64, total: Option<u64>) {
+        if received != 0 && Some(received) != total && self.last.elapsed() < Duration::from_millis(50) { return; }
+        self.last = std::time::Instant::now();
+        activity_change(|s| { s.transfers.insert(self.id, Transfer { received, total }); });
+    }
+}
+impl Drop for ActiveTransfer { fn drop(&mut self) { activity_change(|s| { s.transfers.remove(&self.id); }); } }
 
 const ATTEMPTS: usize = 3;
 
@@ -82,7 +115,9 @@ async fn receive<W: Write>(
     mut progress: impl FnMut(u64, Option<u64>),
     headers_only: bool,
 ) -> Result<W, DownloadError> {
+    let mut activity = ActiveTransfer::begin();
     for attempt in 1..=ATTEMPTS {
+        activity.progress(0, None);
         let result = async {
             let mut response = super::with_optional_cookie_header(client.get(url), cookie)
                 .send().await.map_err(DownloadError::network)?;
@@ -102,10 +137,12 @@ async fn receive<W: Write>(
             let total = response.content_length();
             let mut received = 0;
             progress(0, total);
+            activity.progress(0, total);
             while let Some(chunk) = response.chunk().await.map_err(DownloadError::network)? {
                 output.write_all(&chunk).map_err(DownloadError::local)?;
                 received += chunk.len() as u64;
                 progress(received, total);
+                activity.progress(received, total);
             }
             output.flush().map_err(DownloadError::local)?;
             Ok(output)

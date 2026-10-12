@@ -1,3 +1,4 @@
+import { useStartupReadiness } from "../app/startupReadiness";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import profile from "../data/originalMenuBackground.json";
 import { useApplicationResourceManager } from "../resources/applicationResourceContext";
@@ -53,6 +54,9 @@ export function OriginalMenuBackground({ type, onError }: {
     }
     return () => { disposed = true; };
   }, [resources]);
+  const allLoaded = Object.keys(backgrounds).every(key => loads[key as unknown as MenuBackgroundType] === true);
+  const loadError = Object.values(loads).find(value => typeof value === "string");
+  useStartupReadiness("background", allLoaded, typeof loadError === "string" ? loadError : undefined);
   const ready = loads[type] === true;
   const failure = loads[type];
   useEffect(() => {

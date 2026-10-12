@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useMemo, useRef, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useStartupReadiness } from "../app/startupReadiness";
 import { useApplicationResourceManager } from "../resources/applicationResourceContext";
 import type { ResourceConsumerLease } from "../resources/contracts";
 import { simulatorBuiltinResourceRef } from "../resources/builtin/simulatorBuiltinResourceCatalog";
@@ -26,6 +27,9 @@ export function OriginalUiSoundProvider({ volumePercent, masterPercent, onError,
   volumePercent: number; masterPercent: number; onError: (message: string) => void; children: ReactNode;
 }) {
   const manager = useApplicationResourceManager();
+  const [prepared, setPrepared] = useState(false);
+  const [prepareError, setPrepareError] = useState<string | null>(null);
+  useStartupReadiness("sound", prepared, prepareError);
   const live = useRef({ volumePercent, masterPercent, onError });
   live.current = { volumePercent, masterPercent, onError };
   const preview = useRef<number | null>(null);
@@ -110,10 +114,13 @@ export function OriginalUiSoundProvider({ volumePercent, masterPercent, onError,
         if (!active) return;
         buffers.set(name, await context.decodeAudioData(Uint8Array.from(bytes).buffer));
       }
-      if (active) loaded.current = buffers;
+      if (active) { loaded.current = buffers; setPrepared(true); }
     })().catch(error => {
       release();
-      if (active) live.current.onError(`UI SE: ${error instanceof Error ? error.message : String(error)}`);
+      if (active) {
+        const message = `UI SE: ${error instanceof Error ? error.message : String(error)}`;
+        setPrepareError(message); live.current.onError(message);
+      }
     }).finally(() => { finished = true; if (!active) release(); });
     return () => {
       active = false;

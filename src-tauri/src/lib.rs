@@ -1384,15 +1384,19 @@ async fn send_request_expect_json(
     request: reqwest::RequestBuilder,
     url: &str,
 ) -> Result<serde_json::Value, String> {
-    let response = request
+    let mut activity = url.split('?').next().is_some_and(|path| path.ends_with("/api/post/list")).then(download::ActiveTransfer::begin);
+    let mut response = request
         .send()
         .await
         .map_err(describe_request_error)?;
     let status = response.status();
-    let bytes = response
-        .bytes()
-        .await
-        .map_err(|error| format!("read body failed: {}", describe_request_error(error)))?;
+    let total = response.content_length();
+    if let Some(owner) = &mut activity { owner.progress(0, total); }
+    let mut bytes = Vec::new();
+    while let Some(chunk) = response.chunk().await.map_err(describe_request_error)? {
+        bytes.extend_from_slice(&chunk);
+        if let Some(owner) = &mut activity { owner.progress(bytes.len() as u64, total); }
+    }
     if !status.is_success() {
         return Err(build_http_status_error(status, url, &bytes));
     }
@@ -2202,6 +2206,7 @@ pub fn run() {
                 eprintln!("initialize application log failed: {error}");
             }
             application_log::initialize(&app_handle);
+            download::initialize(app_handle.clone());
             let state = app_handle.state::<BestdoriAuthState>();
             if let Err(error) = restore_bestdori_auth_state(&app_handle, state.inner()) {
                 application_log::record("warn", "auth.restore.failed", serde_json::json!({"error": error}));
@@ -2210,6 +2215,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             application_log::application_log_batch,
+            download::download_snapshot,
             official_music::official_music_request,
             bestdori_login,
             bestdori_get_me,

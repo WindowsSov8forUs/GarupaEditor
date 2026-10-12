@@ -28,7 +28,7 @@ function OriginalBackgroundSprite({ sprite, atlas = "menu", scale = 0.75, scaleY
 
 export function OriginalDialogFrame({ className = "", style, children, atlas = "common", ...props }: HTMLAttributes<HTMLElement> & { atlas?: OriginalAtlas }) {
   const surface = useOriginalSurface("bg_base_r12", 0.75, atlas);
-  return <section {...props} className={`original-dialog-frame ${className}`} style={{ ...surface,
+  return <section {...props} data-original-surface-ready={surface.visibility !== "hidden"} className={`original-dialog-frame ${className}`} style={{ ...surface,
     color: labelColor(ORIGINAL_DIALOG_COLORS.content), ...style }}>
     {children}
   </section>;
@@ -37,7 +37,7 @@ export function OriginalDialogFrame({ className = "", style, children, atlas = "
 export function OriginalDialogHeader({ children, atlas = "common" }: { children: ReactNode; atlas?: OriginalAtlas }) {
   const surface = useOriginalSurface("bg_header_dialog", 0.75, atlas);
   const header = ORIGINAL_DIALOG_HEADER, scale = 0.75;
-  return <header className="original-dialog-header" style={{ ...surface, height: header.height * scale,
+  return <header data-original-surface-ready={surface.visibility !== "hidden"} className="original-dialog-header" style={{ ...surface, height: header.height * scale,
     margin: `${header.top * scale}px ${header.marginX * scale}px 0` }}>
     <h3 style={{ paddingLeft: header.labelX * scale, transform: `translateY(${header.labelY * scale}px)`,
       color: labelColor(ORIGINAL_DIALOG_COLORS.title), fontSize: header.fontSize * scale,

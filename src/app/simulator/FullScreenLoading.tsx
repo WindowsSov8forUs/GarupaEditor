@@ -1,27 +1,20 @@
+import { decodeLoadingImage } from "../startupLoadingAssets";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { useUiViewport } from "../../components/useUiViewport";
 import { UiAuthoredSurface } from "../../components/UiViewport";
-import { useApplicationResourceUrl } from "../../resources/applicationResourceContext";
 import { originalLabelBaseline, roundLabelCoordinate } from "../../components/text/originalLabelMetrics";
 
-// ScreenLayerLoading / MenuAtlas, 10.1.4/230. With no account comic list,
-// ComicController selects comic_001. This is the file-list loading branch:
-// showLoadingGauge is called on entry, before any progress notification arrives.
-export function SimulatorLoadingScreen({ progress, onReady, ariaLabel = "加载演奏" }: {
-  readonly progress: number | null;
-  readonly onReady?: (error?: unknown) => void;
-  readonly ariaLabel?: string;
+export interface FullScreenLoadingSources {
+  background: string; frame: string; caption: string; pattern: string; label: string;
+  comic: string; guitar: string; onpu1: string; onpu2: string; shadow: string;
+}
+
+/** The same full-screen view can be shown before the resource store is open. */
+export function FullScreenLoading({ progress, onReady, ariaLabel = "加载程序", sources }: {
+  progress: number | null; onReady?: (error?: unknown) => void; ariaLabel?: string;
+  sources: FullScreenLoadingSources;
 }) {
-  const background = useApplicationResourceUrl("ui.loading-background");
-  const frame = useApplicationResourceUrl("ui.loading.frame");
-  const caption = useApplicationResourceUrl("ui.loading.caption");
-  const pattern = useApplicationResourceUrl("ui.loading.pattern");
-  const label = useApplicationResourceUrl("ui.loading.label");
-  const comic = useApplicationResourceUrl("ui.loading.comic");
-  const guitar = useApplicationResourceUrl("ui.loading.guitar");
-  const onpu1 = useApplicationResourceUrl("ui.loading.onpu1");
-  const onpu2 = useApplicationResourceUrl("ui.loading.onpu2");
-  const shadow = useApplicationResourceUrl("ui.loading.shadow");
+  const { background, frame, caption, pattern, label, comic, guitar, onpu1, onpu2, shadow } = sources;
   const viewport = useUiViewport();
   const [framesReady, setFramesReady] = useState<number | Error>(0);
   const markReady = useCallback((bit: number, error?: Error) => setFramesReady(current =>
@@ -32,28 +25,29 @@ export function SimulatorLoadingScreen({ progress, onReady, ariaLabel = "加载�
   const onCaptionReady = useCallback((error?: Error) => markReady(8, error), [markReady]);
   const onDotsReady = useCallback((error?: Error) => markReady(16, error), [markReady]);
   const onPercentReady = useCallback((error?: Error) => markReady(32, error), [markReady]);
+  const onCapsuleReady = useCallback((error?: Error) => markReady(64, error), [markReady]);
+  const [assetsReady, setAssetsReady] = useState(false);
   useEffect(() => {
-    if (onReady === undefined) return;
-    if (framesReady instanceof Error) { onReady(framesReady); return; }
-    if (framesReady !== 63) return;
     let cancelled = false;
+    setAssetsReady(false);
     const urls = [background, frame, caption, pattern, label, comic, guitar, onpu1, onpu2, shadow];
-    void Promise.all(urls.map(async (src) => {
-      const image = new Image();
-      image.src = src;
-      await image.decode();
-    })).then(() => document.fonts.ready).then(() => {
-      // The DOM has committed and its images are decoded. A hidden WebView may
-      // suspend RAF, so reveal it now instead of waiting for an invisible frame.
-      if (!cancelled) onReady();
-    }).catch((error: unknown) => { if (!cancelled) onReady(error); });
+    void Promise.all(urls.map(decodeLoadingImage)).then(() => document.fonts.ready).then(() => {
+      if (!cancelled) setAssetsReady(true);
+    }).catch((error: unknown) => {
+      if (!cancelled) markReady(0, error instanceof Error ? error : new Error(String(error)));
+    });
     return () => { cancelled = true; };
-  }, [onReady, framesReady, background, frame, caption, pattern, label, comic, guitar, onpu1, onpu2, shadow]);
+  }, [markReady, background, frame, caption, pattern, label, comic, guitar, onpu1, onpu2, shadow]);
+  const ready = assetsReady && framesReady === 127;
+  useEffect(() => {
+    if (framesReady instanceof Error) onReady?.(framesReady);
+    else if (ready) onReady?.();
+  }, [onReady, ready, framesReady]);
   if (framesReady instanceof Error && onReady === undefined) throw framesReady;
   const p = Math.min(1, Math.max(0, progress ?? 0));
   const comicY = 60;
   return <section aria-label={ariaLabel} style={{ position: "absolute", inset: 0, zIndex: 10,
-    overflow: "hidden" }}>
+    overflow: "hidden", opacity: ready ? 1 : 0 }}>
     {/* UITexture is Tiled: fill from the widget's bottom-left in texture-sized
         blocks, then scale the whole widget. Partial edge blocks retain their UVs. */}
     <div aria-hidden="true" style={{ position: "absolute", left: "50%", top: "50%", width: 1334, height: 1000,
@@ -65,7 +59,8 @@ export function SimulatorLoadingScreen({ progress, onReady, ariaLabel = "加载�
       <LoadingSlicedImage source={frame} width={680} height={460} border={14}
         style={at(0, comicY, 680, 460)} onReady={onFrameReady} />
       <div style={{ ...at(0, comicY - 173.6, 680, 109), background: `url("${pattern}") left bottom / 37px 109px repeat` }} />
-      <div style={{ ...at(0, comicY + 186, 640, 30), ...sliced(caption, "0 13 0 41", "0px 13px 0px 41px") }} />
+      <LoadingSlicedImage source={caption} width={640} height={30} border={CAPTION_BORDER}
+        sourceBorder={CAPTION_BORDER} style={at(0, comicY + 186, 640, 30)} onReady={onCapsuleReady} />
       <img src={comic} alt="" style={at(0, comicY - 30, 485, 352)} />
       <LoadingLabel x={-276 + 581 / 2} y={comicY + 190} width={581} height={56} fontSize={28}
         color="white" outline="#ff3b72" distance={2} outline8 onReady={onCaptionReady}
@@ -85,7 +80,7 @@ export function SimulatorLoadingScreen({ progress, onReady, ariaLabel = "加载�
             <LoadingIcon src={onpu2} x={-19.4} y={37.5} width={23} height={26} depth={14} from="scale(0)" to="scale(1)" duration={500} />
           </div>
         </div>
-        <div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.trunc(p * 100)}
+        <div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress === null ? undefined : Math.trunc(p * 100)}
           style={at(0, -278.4, 680, 14)}>
           <LoadingSlicedImage source={frame} width={680} height={14} border={7} tint="rgb(197.26415,197.26415,197.26415)"
             style={{ position: "absolute", inset: 0 }} onReady={onTrackReady} />
@@ -93,7 +88,7 @@ export function SimulatorLoadingScreen({ progress, onReady, ariaLabel = "加载�
             style={{ position: "absolute", left: 0, top: 0, visibility: p < 0.001 ? "hidden" : "visible" }} onReady={onFillReady} />
         </div>
         <LoadingLabel x={239} y={-242} width={200} height={77} fontSize={30} color="white"
-          outline="black" distance={1} right text={`${Math.trunc(p * 100)}%`} onReady={onPercentReady} />
+          outline="black" distance={1} right text={progress === null ? "" : `${Math.trunc(p * 100)}%`} onReady={onPercentReady} />
       </>
     </UiAuthoredSurface>
   </section>;
@@ -147,17 +142,20 @@ function LoadingLabel({ x, y, width, height, fontSize, color, outline, distance,
   </div>;
 }
 
-function LoadingSlicedImage({ source, width, height, border, tint, style, onReady }: {
-  source: string; width: number; height: number; border: number; tint?: string;
+type SliceBorder = readonly [left: number, right: number, top: number, bottom: number];
+const CAPTION_BORDER: SliceBorder = [41, 13, 0, 0];
+const FRAME_BORDER: SliceBorder = [14, 14, 14, 14];
+
+function LoadingSlicedImage({ source, width, height, border, sourceBorder = FRAME_BORDER, tint, style, onReady }: {
+  source: string; width: number; height: number; border: number | SliceBorder;
+  sourceBorder?: SliceBorder; tint?: string;
   style: CSSProperties; onReady?: (error?: Error) => void;
 }) {
   const canvas = useRef<HTMLCanvasElement | null>(null);
   const [decoded, setDecoded] = useState<HTMLImageElement | Error | null>(null);
   useEffect(() => {
     let cancelled = false;
-    const image = new Image();
-    image.src = source;
-    void image.decode().then(() => {
+    void decodeLoadingImage(source).then(image => {
       if (!cancelled) setDecoded(image);
     }).catch((error: unknown) => {
       if (!cancelled) setDecoded(error instanceof Error ? error : new Error(String(error)));
@@ -176,13 +174,15 @@ function LoadingSlicedImage({ source, width, height, border, tint, style, onRead
       const target = canvas.current!;
       const context = target.getContext("2d");
       if (context === null) throw new Error("Loading sliced image requires a 2D drawing context.");
-      // MenuAtlas bg_base_r12: source borders are 14; the gauge's authored
-      // parent scale of 0.5 makes its destination borders 7. Rasterize shared integer
-      // edges once, then let the host scale the complete image to its exact width.
-      const sourceX = [0, 14, image.naturalWidth - 14, image.naturalWidth];
-      const sourceY = [0, 14, image.naturalHeight - 14, image.naturalHeight];
-      const xEdges = [0, border, target.width - border, target.width];
-      const yEdges = [0, border, target.height - border, target.height];
+      // Rasterize every slice against shared integer edges, then scale the
+      // complete canvas. Separate CSS border-image slices can expose seams.
+      const [sl, sr, st, sb] = sourceBorder;
+      const [left, right, top, bottom] = typeof border === "number"
+        ? [border, border, border, border] : border;
+      const sourceX = [0, sl, image.naturalWidth - sr, image.naturalWidth];
+      const sourceY = [0, st, image.naturalHeight - sb, image.naturalHeight];
+      const xEdges = [0, left, target.width - right, target.width];
+      const yEdges = [0, top, target.height - bottom, target.height];
       context.globalCompositeOperation = "source-over";
       context.clearRect(0, 0, target.width, target.height);
       for (let row = 0; row < 3; row++) {
@@ -205,7 +205,7 @@ function LoadingSlicedImage({ source, width, height, border, tint, style, onRead
       if (onReady === undefined) throw error;
       onReady(error instanceof Error ? error : new Error(String(error)));
     }
-  }, [decoded, rasterWidth, height, border, tint, onReady]);
+  }, [decoded, rasterWidth, height, border, sourceBorder, tint, onReady]);
   return <canvas ref={canvas} width={rasterWidth} height={height} aria-hidden="true" style={{ ...style, width, height }} />;
 }
 
@@ -226,12 +226,6 @@ function LoadingIcon({ src, x, y, width, height, depth, from, to, duration, dela
   return <div ref={ref} style={{ position: "absolute", left: x, top: -y, width: 0, height: 0, zIndex: depth }}>
     <img src={src} alt="" style={{ position: "absolute", left: -width / 2, top: bottom ? -height : -height / 2, width, height }} />
   </div>;
-}
-
-function sliced(source: string, slices: string, widths: string): CSSProperties {
-  return { borderStyle: "solid", borderColor: "transparent", borderWidth: widths,
-    borderImageSource: `url("${source}")`, borderImageSlice: `${slices} fill`,
-    borderImageWidth: widths, boxSizing: "border-box" };
 }
 
 function at(x: number, y: number, width: number, height: number): CSSProperties {

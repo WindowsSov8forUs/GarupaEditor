@@ -1,3 +1,4 @@
+import { PreparedRoute } from "./app/RoutePresentation";
 import {
   Component,
   Suspense,
@@ -8,12 +9,22 @@ import {
   useMemo,
   useState,
 } from "react";
+import { StartupReadinessContext } from "./app/startupReadiness";
 import { isMobileRuntime } from "./app/mobileRuntime";
 import { SimulatorLoadingBoundary } from "./app/simulator/SimulatorLoadingBoundary";
 
 const ChartEditorController = lazy(() => import("./app/ChartEditorController"));
+let preparedEditor: typeof ChartEditorController | typeof import("./app/ChartEditorController").default;
 const StaticChartRenderWindow = lazy(() => import("./app/StaticChartRenderWindow"));
 const BuiltInSimulatorWindow = lazy(() => import("./app/BuiltInSimulatorWindow"));
+
+export async function preloadApplicationRoutes() {
+  await Promise.all([
+    import("./app/ChartEditorController").then(module => { preparedEditor = module.default; }),
+    import("./app/StaticChartRenderWindow"),
+    import("./app/BuiltInSimulatorWindow"),
+  ]);
+}
 
 type AppErrorBoundaryProps = {
   children: ReactNode;
@@ -26,6 +37,8 @@ type AppErrorBoundaryState = {
 };
 
 class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorBoundaryState> {
+  static contextType = StartupReadinessContext;
+  declare context: React.ContextType<typeof StartupReadinessContext>;
   state: AppErrorBoundaryState = {
     hasError: false,
     message: "",
@@ -40,6 +53,7 @@ class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorBoundary
 
   componentDidCatch(error: unknown, info: ErrorInfo) {
     console.error("Unhandled app render error:", error, info);
+    this.context?.report("editor", false, String(error));
   }
 
   private handleRecover = () => {
@@ -66,6 +80,7 @@ class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorBoundary
 }
 
 function App() {
+  const Editor = preparedEditor ?? ChartEditorController;
   const [appVersion, setAppVersion] = useState(0);
   const [hash, setHash] = useState(() =>
     typeof window !== "undefined" ? window.location.hash ?? "" : "",
@@ -83,11 +98,7 @@ function App() {
   const isStaticRenderRoute = useMemo(() => hash.startsWith("#static-render"), [hash]);
   const isSimulatorRoute = useMemo(() => hash.startsWith("#simulator"), [hash]);
 
-  const routeLoadingFallback = (
-    <main className="app-shell">
-      <section className="playfield-loading ui-design-scale">加载中...</section>
-    </main>
-  );
+  const routeLoadingFallback = null;
 
   if (!mobileRuntime && isStaticRenderRoute) {
     return (
@@ -108,16 +119,18 @@ function App() {
     <>
       <AppErrorBoundary key={appVersion} onRecover={() => setAppVersion((current) => current + 1)}>
         <Suspense fallback={routeLoadingFallback}>
-          <ChartEditorController />
+          <Editor />
         </Suspense>
       </AppErrorBoundary>
       {mobileRuntime && (isStaticRenderRoute || isSimulatorRoute) ? (
-        <div className="mobile-route-overlay" role="presentation">
+        <div className="mobile-route-overlay" role="presentation" style={{ background: "transparent", pointerEvents: "none" }}>
+          <PreparedRoute key={hash}>
           {isSimulatorRoute ? <SimulatorLoadingBoundary key={hash}>
             <Suspense fallback={null}><BuiltInSimulatorWindow /></Suspense>
           </SimulatorLoadingBoundary> : <Suspense fallback={routeLoadingFallback}>
             <StaticChartRenderWindow />
           </Suspense>}
+          </PreparedRoute>
         </div>
       ) : null}
     </>

@@ -209,7 +209,8 @@ class BrowserPixiGraphicsSurface implements SimulatorGraphicsSurface {
       }
     };
     this.preparation = owner;
-    frame = requestAnimationFrame(tick);
+    // Draw t=0 explicitly: a hidden native window may not dispatch RAF yet.
+    tick(performance.now());
     return owner;
   }
 
@@ -336,7 +337,8 @@ class BrowserRafScheduler implements SimulatorFrameScheduler {
         if (!this.stopped && generation === this.generation) this.frameId = requestAnimationFrame(tick);
       });
     };
-    this.frameId = requestAnimationFrame(tick);
+    // Build the first frame before revealing a newly-created native window.
+    tick(performance.now());
     return assemblyAccepted(Object.freeze({ stop: () => { if (generation === this.generation) this.dispose(); } }));
   }
 

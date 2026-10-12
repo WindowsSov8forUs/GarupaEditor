@@ -1,0 +1,11 @@
+{
+  "sourceCommit": "1fd5834b10cd384cba5671255e3ffc922213f877",
+  "component": "Root/Root_titlelogo/mainTitleLogoRoot/mainTitleLogoLoc/Root_titleLogo/Loc_titleLogo/spt_titleLogo",
+  "rect": {
+    "centerX": 3.1472363761367887,
+    "centerY": -176.29863788861417,
+    "width": 505.4263343811035,
+    "height": 191.33965456485748,
+    "space": "TitleLogoAnimRoot local; Unity y-up; scene parent transform applied separately"
+  }
+}

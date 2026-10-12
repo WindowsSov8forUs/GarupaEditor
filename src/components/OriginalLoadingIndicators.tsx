@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { startTransition, useEffect, useLayoutEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { OriginalPrefabView } from "./OriginalPrefabView";
 import { OriginalLoadingAnimation } from "./originalLoadingAnimation";
@@ -14,13 +14,16 @@ function Indicator({ kind, screen }: { kind: OriginalLoadingKind; screen: Origin
     let frame = 0, previous: number | undefined;
     const update = (now: number) => {
       animation.step(previous === undefined ? 0 : (now - previous) / 1000);
-      previous = now; setRevision(value => value + 1); frame = requestAnimationFrame(update);
+      previous = now;
+      // Decorative frames must yield to mounting the page they are waiting for.
+      startTransition(() => setRevision(value => value + 1));
+      frame = requestAnimationFrame(update);
     };
     frame = requestAnimationFrame(update);
     return () => cancelAnimationFrame(frame);
   }, [animation]);
-  const model = useMemo(() => animation.model(screen.progress), [animation, screen.progress, revision]);
-  return <div className="original-authored-viewport" data-original-loading={kind} role="status" aria-label={screen.progress === undefined ? "正在加载" : "正在下载"}
+  const model = useMemo(() => animation.model(kind === "network" ? undefined : screen.progress), [animation, kind, screen.progress, revision]);
+  return <div className="original-authored-viewport" data-original-loading={kind} role="status" aria-label={kind === "network" || screen.progress === undefined ? "正在加载" : "正在下载"}
     style={{ position: "fixed", right: viewport.safeInsets.right, bottom: viewport.safeInsets.bottom,
       width: 0, height: 0, transform: `scale(${viewport.scale})`, transformOrigin: "0 0", pointerEvents: "none" }}>
     <OriginalPrefabView model={model} />
@@ -51,7 +54,7 @@ function TransmittingInputBlock() {
 export function OriginalLoadingIndicators() {
   const state = useSyncExternalStore(originalLoading.subscribe, originalLoading.getSnapshot);
   if (!state.network && !state.transmitting) return null;
-  return createPortal(<div style={{ position: "fixed", inset: 0, zIndex: 10000, pointerEvents: "none" }}>
+  return createPortal(<div style={{ position: "fixed", inset: 0, zIndex: 10002, pointerEvents: "none" }}>
     {state.network && <Indicator key={`network-${state.network.generation}`} kind="network" screen={state.network} />}
     {state.transmitting && <div style={{ position: "absolute", inset: 0 }}>
       <TransmittingInputBlock />

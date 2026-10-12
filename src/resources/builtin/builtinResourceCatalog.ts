@@ -354,6 +354,11 @@ export function listApplicationBuiltinResourceSlots(): readonly ApplicationResou
   return Object.freeze(DEFINITIONS.map(({ slot }) => slot));
 }
 
+export function listApplicationBuiltinImages(): readonly { slot: ApplicationResourceSlot; url: string }[] {
+  return DEFINITIONS.filter(definition => definition.kind === "image")
+    .map(({ slot, url }) => ({ slot, url }));
+}
+
 export function listBuiltinDefinitionsForTesting(): readonly Readonly<{
   slot: ApplicationResourceSlot;
   id: string;

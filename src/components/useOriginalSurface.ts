@@ -1,3 +1,4 @@
+import { usePreparationPending } from "./PagePreparation";
 import { useEffect, useLayoutEffect, useMemo, useState, useSyncExternalStore, type CSSProperties, type RefObject } from "react";
 import common from "../data/uiCommonAtlas.json";
 import menu from "../data/menuUiAtlas.json";
@@ -124,6 +125,7 @@ export function useOriginalSurface(name: string, scale = 0.75, atlas: OriginalAt
     });
     return () => { active = false; };
   }, [surface, key]);
+  usePreparationPending(typeof surface !== "string" && resolved?.key !== key, error?.key === key ? error.cause : undefined);
   if (error?.key === key) throw error.cause;
   const row = chineseRows[atlas].get(name) ?? rows[atlas].find(value => value.exactKey === name);
   if (!row) throw new Error(`Unknown original sprite ${atlas}/${name}`);
@@ -184,6 +186,7 @@ export function useOriginalCanvasSurface(canvas: RefObject<HTMLCanvasElement | n
     else void image.then(paint).catch(cause => { if (active) setError(cause instanceof Error ? cause : new Error(String(cause))); });
     return () => { active = false; };
   }, [canvas, url, name, atlas, width, height, scale, scaleY, ratio, spriteType, fillCenter]);
+  usePreparationPending(!ready, error);
   if (error) throw error;
   return ready;
 }

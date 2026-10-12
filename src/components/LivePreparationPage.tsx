@@ -1,3 +1,4 @@
+import { usePreparationPending } from "./PagePreparation";
 import { useEffect, useRef, useState } from "react";
 import source from "../data/originalSongDetailProfile.json";
 import type { ChartMetadata } from "../chartCore";
@@ -37,6 +38,7 @@ export function LivePreparationPage({ metadata, mode, onModeChange, mvEnabled, h
   mvEnabled: boolean; hasMv: boolean; hasSpecialNotes: boolean; onMvChange(enabled: boolean): void;
   onSettings(): void; onStart(mode: SimulatorModeSelection): Promise<void>; resourcesReady: boolean;
 }) {
+  usePreparationPending(!resourcesReady);
   const [demoOpen, setDemoOpen] = useState(false), [switching, setSwitching] = useState(false);
   const [launching, setLaunching] = useState(false);
   const animationRoot = useRef<HTMLDivElement>(null), animation = useRef(0), locked = useRef(false);
