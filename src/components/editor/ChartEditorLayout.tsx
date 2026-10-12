@@ -1,4 +1,5 @@
 import { OriginalMenuBackground } from "../OriginalMenuBackground";
+import { useApplicationPresentation, useReturnToTitle } from "../../app/titleNavigation";
 import { useIsStartingApplication, useStartupReadiness } from "../../app/startupReadiness";
 import { AppSettingsModal } from "../AppSettingsModal";
 import { OriginalUiSoundProvider } from "../OriginalUiSound";
@@ -42,6 +43,8 @@ function isHalfBeatAligned(value: number): boolean {
 }
 
 export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
+  const returnToTitle = useReturnToTitle();
+  const presentation = useApplicationPresentation();
   const uiViewport = useUiViewport();
   const {
     jsonImportRef,
@@ -342,6 +345,18 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   const [liveSelectionOpen, setLiveSelectionOpen] = useState(startingApplication);
   const [musicSelectionOpen, setMusicSelectionOpen] = useState(false);
   const [backgroundPage, setBackgroundPage] = useState<string | null>(null);
+  const handleReturnToTitle = () => {
+    if (isPlayToolSelected) onTogglePlayTool();
+    setIsAppSettingsOpen(false);
+    returnToTitle?.();
+  };
+  useEffect(() => {
+    if (!presentation || presentation.visible) return;
+    setLivePreparationOpen(false);
+    setIsMetadataEditorOpen(false);
+    setMusicSelectionOpen(false);
+    setLiveSelectionOpen(true);
+  }, [presentation?.visible]);
   useStartupReadiness("home-page", backgroundPage === "entrance");
   const [preparationSettingsOpen, setPreparationSettingsOpen] = useState(false);
   const preparationInputs = useRef<Record<SimulatorModeSelection["sessionMode"], SimulatorModeSelection["inputMode"]>>({
@@ -1272,7 +1287,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
           if (page === "search" && (source === "official" || source === "bestdori" || source === "ayachan")) vm.setMusicSelectionSource(source);
         }}
         onWorkspaceBack={() => setLiveSelectionOpen(true)}
-        showPageBack={isMetadataEditorOpen || livePreparationOpen || musicSelectionOpen}
+        showPageBack={isMetadataEditorOpen || livePreparationOpen || musicSelectionOpen || !!returnToTitle}
         pageKey={livePreparationOpen ? "live" : isMetadataEditorOpen ? "song" : musicSelectionOpen ? `search:${appOptionSettings.musicSelectionSource}` : "entrance"}
         pageId={livePreparationOpen ? "live" : isMetadataEditorOpen ? "song" : musicSelectionOpen ? "search" : "entrance"}
         section={livePreparationOpen ? "演出" : isMetadataEditorOpen ? "歌曲" : musicSelectionOpen ? "演出" : "首页"}
@@ -1281,7 +1296,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         onOpenMenu={openAppSettings} menuOpen={isAppSettingsOpen}
         onBack={() => {
           if (isMetadataEditorOpen || livePreparationOpen) { setIsMetadataEditorOpen(false); setLivePreparationOpen(false); }
-          else setMusicSelectionOpen(false);
+          else if (musicSelectionOpen) setMusicSelectionOpen(false);
+          else handleReturnToTitle();
         }} page={livePreparationOpen ?
       <LivePreparationPage metadata={metadata} mode={preparationMode} onModeChange={changePreparationMode}
         mvEnabled={playbackMvMode} hasMv={!!chartMediaSources.mv}
@@ -2097,6 +2113,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       />
 
       <AppSettingsModal
+        onReturnToTitle={returnToTitle ? handleReturnToTitle : undefined}
         onSongInformation={() => { setIsAppSettingsOpen(false); setLivePreparationOpen(false); openMetadataEditor(); }}
         onLivePreparation={() => { setIsAppSettingsOpen(false); setIsMetadataEditorOpen(false); setLivePreparationOpen(true); }}
         optionsOpen={preparationSettingsOpen} onOptionsClose={() => setPreparationSettingsOpen(false)}

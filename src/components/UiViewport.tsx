@@ -31,7 +31,13 @@ export function UiPageViewport({ children, fullWindow = false }: { children: Rea
     const element = host.current!;
     const measure = () => setSize(previous => {
       const width = element.clientWidth, height = element.clientHeight;
-      const { left, top } = element.getBoundingClientRect();
+      const bounds = element.getBoundingClientRect();
+      // Page animation is a presentation offset, not part of the layout origin.
+      // ResizeObserver may run while the page is entering (or being resized).
+      const motionRoot = element.closest<HTMLElement>("[data-original-page-motion]");
+      const transform = motionRoot ? getComputedStyle(motionRoot).transform : "none";
+      const motion = transform === "none" ? null : new DOMMatrixReadOnly(transform);
+      const left = bounds.left - (motion?.m41 ?? 0), top = bounds.top - (motion?.m42 ?? 0);
       return previous.width === width && previous.height === height && previous.left === left && previous.top === top
         ? previous : { width, height, left, top };
     });

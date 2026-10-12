@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { EditorSettingsModalProps } from "./EditorSettingsModal";
 import { OriginalGameSettingsModal } from "./OriginalGameSettingsModal";
 import { OriginalAuthoredDialog } from "./OriginalAuthoredDialog";
-import { OriginalMenuCell, originalMenuPositions, ORIGINAL_MENU_ITEMS, type OriginalMenuItem } from "./OriginalMenuParts";
+import { OriginalMenuCell, originalMenuPositions, ORIGINAL_MENU_ITEMS, ORIGINAL_TITLE_MENU_ITEM, type OriginalMenuItem } from "./OriginalMenuParts";
 import { OriginalPrefabModel, ORIGINAL_PREFABS } from "./originalPrefabModel";
 import { useApplicationResourceUrl } from "../resources/applicationResourceContext";
 
@@ -10,6 +10,7 @@ type AppSettingsModalProps = EditorSettingsModalProps & {
   resourcesReady: boolean;
   onSongInformation: () => void;
   onLivePreparation: () => void;
+  onReturnToTitle?: () => void;
   optionsOpen?: boolean; onOptionsClose?: () => void;
   onImport: () => void; onExport: () => void; onPreview: () => void;
   onSimulator: () => void; onSkinLibrary: () => void; onAccount: () => void;
@@ -22,7 +23,7 @@ const model = new OriginalPrefabModel(source.prefab, { nodes: {
 const cellsRoot = model.transform([...model.nodes.values()].find(node => node.transformId === 25)!.id);
 
 export function AppSettingsModal(props: AppSettingsModalProps) {
-  const [pendingPage, setPendingPage] = useState<"song" | "live" | null>(null);
+  const [pendingPage, setPendingPage] = useState<"song" | "live" | "title" | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const previewIcon = useApplicationResourceUrl("ui.icon.preview");
   const liveIcon = useApplicationResourceUrl("ui.icon.simulator-play");
@@ -39,11 +40,14 @@ export function AppSettingsModal(props: AppSettingsModalProps) {
     { key: "editor-live", label: "演出", image: liveIcon, action: () => { setPendingPage("live"); props.onClose(); } },
     { key: "editor-preview", label: "谱面预览", image: previewIcon, action: props.onPreview },
     { key: "editor-account", label: "Bestdori 账号", icon: "icon_data_take_over", action: props.onAccount },
+    ...(props.onReturnToTitle ? [{ ...ORIGINAL_TITLE_MENU_ITEM,
+      action: () => { setPendingPage("title"); props.onClose(); } }] : []),
   ];
   const positions = originalMenuPositions(items);
   return <>
     <OriginalAuthoredDialog open={props.open} model={model} onClose={props.onClose}
-      onClosed={() => { if (pendingPage) { setPendingPage(null); if (pendingPage === "song") props.onSongInformation(); else props.onLivePreparation(); } }}
+      onClosed={() => { if (pendingPage) { setPendingPage(null); if (pendingPage === "song") props.onSongInformation();
+        else if (pendingPage === "title") props.onReturnToTitle?.(); else props.onLivePreparation(); } }}
       bindings={{ buttons: { 54: { action: props.onClose, label: model.text(model.components.get(51)!) } } }}>
       {items.map((item, index) => <div key={item.key} className="original-prefab-origin"
         data-original-menu-key={item.key}
