@@ -43,16 +43,14 @@ class AppErrorBoundary extends Component<{ children: ReactNode; onError?: (error
             height: "100%",
             display: "grid",
             placeItems: "center",
-            color: "#ecf7fb",
-            background: "#0b1724",
-            fontFamily: "Rajdhani, Noto Sans SC, sans-serif",
+            color: "var(--text)",
           }}
         >
           <section className="ui-fallback-content ui-design-scale"
             style={{
-              border: "1px solid rgba(114,214,229,0.45)",
+              border: "1px solid var(--line)",
               borderRadius: "12px",
-              background: "rgba(8,23,34,0.9)",
+              background: "var(--panel)",
               padding: "16px",
               maxWidth: "min(640px, var(--ui-safe-logical-width))",
               width: "100%",

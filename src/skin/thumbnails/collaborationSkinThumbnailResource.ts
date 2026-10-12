@@ -1,7 +1,7 @@
-import { startOperation } from "../logging/applicationLogger";
-import type { ApplicationResourceManager } from "../resources/applicationResourceManager";
-import { originalSkinResourceRef } from "../resources/originalSkinResourceRef";
-import { readOriginalPreviewSprites } from "../components/originalPreviewSprites";
+import { startOperation } from "../../logging/applicationLogger";
+import type { ApplicationResourceManager } from "../../resources/applicationResourceManager";
+import { originalSkinResourceRef } from "../../resources/originalSkinResourceRef";
+import { readOriginalPreviewSprites } from "../../components/originalPreviewSprites";
 import { generateCollaborationSkinThumbnail } from "./generateCollaborationSkinThumbnail";
 
 type Skin = { readonly notesBundleName: string | null; readonly laneBundleName: string | null };

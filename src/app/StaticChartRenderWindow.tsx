@@ -1,3 +1,4 @@
+import { OriginalMenuBackground } from "../components/OriginalMenuBackground";
 import { usePresentRoute } from "./RoutePresentation";
 import { appLog } from "../logging/applicationLogger";
 ﻿import { loggedInvoke as invoke } from "../logging/applicationLogger";
@@ -1340,6 +1341,7 @@ export default function StaticChartRenderWindow() {
 
   return (
     <main className="static-render-page">
+      <OriginalMenuBackground type={257} onError={setErrorMessage} />
       <header className="static-render-toolbar ui-design-scale">
         {isMobileRoute ? (
           <button

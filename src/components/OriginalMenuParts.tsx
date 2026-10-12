@@ -24,6 +24,9 @@ export function OriginalHeaderMenuButton({ open, onClick }: { open: boolean; onC
 export interface OriginalMenuItem { key: string; label: string; action?: () => void; icon?: string; image?: string }
 export const ORIGINAL_MENU_ITEMS = content.items.filter(item => item.key === "menuList_option_button")
   .map(item => ({ key: item.key, icon: item.icon, label: (ORIGINAL_WORDING[item.key] ?? item.label).replace(/\\n/g, "\n") }));
+const titleItem = content.items.find(item => item.key === "menuList_title_button")!;
+export const ORIGINAL_TITLE_MENU_ITEM = { key: titleItem.key, icon: titleItem.icon,
+  label: ORIGINAL_WORDING[titleItem.key] ?? titleItem.label };
 export function originalMenuPositions(items: readonly OriginalMenuItem[]) {
   const layout = content.layout;
   return items.map((_, index) => {

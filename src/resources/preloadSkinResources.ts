@@ -6,7 +6,7 @@ import { CURRENT_NORMAL_NOTE_SKINS, CURRENT_NORMAL_LANE_SKINS, CURRENT_NORMAL_EF
 import type { SimulatorOriginalSkinSettings } from "../simulator/public/contracts";
 import { createResourceRef } from "./contracts";
 import { limitedSkinThumbnailDescriptor } from "./providers/bestdoriCatalogProvider";
-import { collaborationThumbnailSources, loadCollaborationSkinThumbnail } from "../skins/collaborationSkinThumbnailResource";
+import { collaborationThumbnailSources, loadCollaborationSkinThumbnail } from "../skin/thumbnails/collaborationSkinThumbnailResource";
 
 export interface SkinPreloadResult { readonly failures: readonly string[]; readonly unpublished: readonly string[] }
 const started = new WeakMap<ApplicationResourceManager, Promise<SkinPreloadResult>>();
