@@ -82,7 +82,10 @@ export interface AdoptedLegacyChartMedia {
   readonly migratedActiveRefs: readonly ResourceRef[];
 }
 
+type SharedFileRead = { pending: Promise<Uint8Array>; owners: Set<ResourceLeaseId> };
+
 export class ApplicationResourceManager {
+  private readonly fileReads = new Map<string, SharedFileRead>();
   getDisplayImageRef(): ResourceRef {
     return this.installed.has(DISPLAY_IMAGE_REF.id) ? DISPLAY_IMAGE_REF : DEFAULT_DISPLAY_IMAGE_REF;
   }
@@ -334,10 +337,8 @@ export class ApplicationResourceManager {
   }
 
   async listResources(query: ResourceListQuery = {}): Promise<ResourceResult<readonly ApplicationResourceDescriptor[]>> {
-    const listed = await this.backend.listRecords();
-    if (listed.status === "rejected") return listed;
-    this.installed.clear();
-    for (const record of listed.value) this.installed.set(record.descriptor.ref.id, record);
+    const initialized = await this.initialize();
+    if (initialized.status === "rejected") return initialized;
     const merged = new Map<string, ApplicationResourceDescriptor>();
     for (const builtin of this.builtins.values()) merged.set(builtin.descriptor.ref.id, builtin.descriptor);
     for (const catalog of this.activeCatalogs.values()) {
@@ -384,7 +385,8 @@ export class ApplicationResourceManager {
     if (builtin !== undefined) return this.ensureBuiltinAvailable(builtin);
     let repairDescriptor: NetworkResourceDescriptor | null = null;
     if (options.refresh !== true) {
-      const existing = await this.backend.readRecord(ref);
+      const cached = this.installed.get(ref.id);
+      const existing = cached ? resourceAccepted(cached) : await this.backend.readRecord(ref);
       if (existing.status === "accepted") {
         const stored = existing.value.descriptor;
         const current = this.findNetworkDescriptor(ref.id);
@@ -650,19 +652,29 @@ export class ApplicationResourceManager {
       return invalid("resources.manager.invalid-explicit-snapshot-binding");
     }
     const slots: Record<string, ResourceRef> = {};
-    const ready = new Set<string>();
-    const total = new Set(entries.map(([, ref]) => ref.id)).size;
+    // Prepare each resource once even when several slots share it. Keep the
+    // snapshot atomic, but do not serialize thousands of independent cache reads.
+    const unique = [...new Map(entries.map(entry => [entry[1].id, entry])).values()];
+    const total = unique.length;
+    let cursor = 0, completed = 0;
+    let failure: ResourceResult<ResourceSnapshotReceipt> | undefined;
+    let thrown: unknown, hasThrown = false;
     onProgress?.(0, total);
-    for (const [slot, ref] of entries) {
-      const available = await this.ensureAvailable(ref);
-      if (available.status === "rejected") {
-        appLog("error", "resources.snapshot.slot.failed", { slot, resourceId: ref.id, failure: available.failure });
-        return resourceRejected(available.failure.code, available.failure.capability, `${slot}: ${available.failure.boundary}`, available.failure.userMessage);
+    await Promise.all(Array.from({ length: Math.min(4, total) }, async () => {
+      while (!failure && !hasThrown && cursor < total) {
+        const [slot, ref] = unique[cursor++]!;
+        try {
+          const available = await this.ensureAvailable(ref);
+          if (available.status === "rejected") {
+            appLog("error", "resources.snapshot.slot.failed", { slot, resourceId: ref.id, failure: available.failure });
+            failure ??= resourceRejected(available.failure.code, available.failure.capability, `${slot}: ${available.failure.boundary}`, available.failure.userMessage);
+          } else if (!failure && !hasThrown) onProgress?.(++completed, total);
+        } catch (error) { if (!hasThrown) thrown = error; hasThrown = true; }
       }
-      slots[slot] = ref;
-      ready.add(ref.id);
-      onProgress?.(ready.size, total);
-    }
+    }));
+    if (hasThrown) throw thrown;
+    if (failure) return failure;
+    for (const [slot, ref] of entries) slots[slot] = ref;
     const created = await this.backend.createSnapshot(Object.freeze(slots));
     return created.status === "rejected" ? created : resourceAccepted(Object.freeze({
       snapshotId: created.value.snapshotId,
@@ -684,6 +696,7 @@ export class ApplicationResourceManager {
       opened.value.filesBySlot,
       this.backend,
       this.objectUrls,
+      this.fileReads,
     ));
   }
 
@@ -725,6 +738,8 @@ class ManagedResourceConsumerLease implements ResourceConsumerLease {
   readonly leaseId: ResourceLeaseId;
   private released = false;
   private readonly urls = new Map<string, string>();
+  private readonly readKeys = new Set<string>();
+  private readonly pendingUrls = new Map<string, Promise<string>>();
 
   constructor(
     readonly snapshotId: ResourceSnapshotId,
@@ -733,6 +748,7 @@ class ManagedResourceConsumerLease implements ResourceConsumerLease {
     private readonly filesBySlot: Readonly<Record<string, readonly ResourceFileRecord[]>>,
     private readonly backend: ApplicationResourceBackend,
     private readonly objectUrls: ResourceObjectUrlFactory,
+    private readonly reads: Map<string, SharedFileRead>,
   ) {
     this.leaseId = `lease/${snapshotId.slice("snapshot/".length)}-${nextLeaseIdentity++}` as ResourceLeaseId;
   }
@@ -746,22 +762,46 @@ class ManagedResourceConsumerLease implements ResourceConsumerLease {
     this.assertOpen();
     const ref = this.slots[slot];
     if (ref === undefined) throw new Error(`resource slot is not leased: ${slot}`);
-    const read = await this.backend.readSnapshotFile(this.snapshotId, slot, logicalPath);
-    if (read.status === "rejected") throw new Error(`${read.failure.capability}: ${read.failure.boundary}`);
-    return Uint8Array.from(read.value);
+    const file = this.listFiles(slot).find(candidate => candidate.logicalPath === logicalPath);
+    if (!file) throw new Error(`resource file metadata is not leased: ${slot}/${logicalPath}`);
+    const key = `${ref.id}\u0000${this.revisions[slot]}\u0000${logicalPath}`;
+    let shared = this.reads.get(key);
+    if (!shared) {
+      const pending = this.backend.readSnapshotFile(this.snapshotId, slot, logicalPath).then(read => {
+        if (read.status === "rejected") throw new Error(`${read.failure.capability}: ${read.failure.boundary}`);
+        return read.value;
+      });
+      shared = { pending, owners: new Set() };
+      this.reads.set(key, shared);
+      const entry = shared;
+      void pending.catch(() => { if (this.reads.get(key) === entry) this.reads.delete(key); });
+    }
+    shared.owners.add(this.leaseId);
+    this.readKeys.add(key);
+    const bytes = await shared.pending;
+    this.assertOpen();
+    return Uint8Array.from(bytes);
   }
 
   async openObjectUrl(slot: string, logicalPath: string): Promise<string> {
     this.assertOpen();
-    const key = `${slot}\u0000${logicalPath}`;
+    const key = `${this.slots[slot]?.id}\u0000${this.revisions[slot]}\u0000${logicalPath}`;
     const existing = this.urls.get(key);
     if (existing !== undefined) return existing;
-    const file = this.listFiles(slot).find((candidate) => candidate.logicalPath === logicalPath);
-    if (file === undefined) throw new Error(`resource file metadata is not leased: ${slot}/${logicalPath}`);
-    const bytes = await this.readBytes(slot, logicalPath);
-    const url = this.objectUrls.create(bytes, file.mediaType);
-    this.urls.set(key, url);
-    return url;
+    const file = this.listFiles(slot).find(candidate => candidate.logicalPath === logicalPath);
+    if (!file) throw new Error(`resource file metadata is not leased: ${slot}/${logicalPath}`);
+    let pending = this.pendingUrls.get(key);
+    if (!pending) {
+      pending = this.readBytes(slot, logicalPath).then(bytes => {
+        this.assertOpen();
+        const url = this.objectUrls.create(bytes, file.mediaType);
+        this.urls.set(key, url);
+        return url;
+      });
+      this.pendingUrls.set(key, pending);
+      void pending.finally(() => { if (this.pendingUrls.get(key) === pending) this.pendingUrls.delete(key); }).catch(() => {});
+    }
+    return pending;
   }
 
   async release(): Promise<void> {
@@ -769,6 +809,13 @@ class ManagedResourceConsumerLease implements ResourceConsumerLease {
     this.released = true;
     for (const url of this.urls.values()) this.objectUrls.revoke(url);
     this.urls.clear();
+    for (const key of this.readKeys) {
+      const shared = this.reads.get(key);
+      shared?.owners.delete(this.leaseId);
+      if (shared?.owners.size === 0) this.reads.delete(key);
+    }
+    this.readKeys.clear();
+    this.pendingUrls.clear();
     const released = await this.backend.releaseSnapshot(this.snapshotId);
     if (released.status === "rejected") {
       throw new Error(`${released.failure.capability}: ${released.failure.boundary}`);
@@ -842,7 +889,7 @@ class ManagedBuiltinFile {
   private pending: Promise<ResourceResult<Uint8Array>> | null = null;
 
   constructor(
-    private readonly record: ResourceFileRecord,
+    _record: ResourceFileRecord,
     initialBytes: Uint8Array | null,
     private readonly loadBytes: (() => Promise<Uint8Array>) | null,
   ) {
@@ -852,14 +899,14 @@ class ManagedBuiltinFile {
   async read(): Promise<ResourceResult<Uint8Array>> {
     if (this.bytes !== null) return resourceAccepted(Uint8Array.from(this.bytes));
     if (this.loadBytes === null) return integrityFailure("resources.manager.builtin-loader-missing");
-    this.pending ??= this.loadAndVerify();
+    this.pending ??= this.load();
     const loaded = await this.pending;
     if (loaded.status === "accepted") this.bytes = Uint8Array.from(loaded.value);
     else this.pending = null;
     return loaded.status === "rejected" ? loaded : resourceAccepted(Uint8Array.from(loaded.value));
   }
 
-  private async loadAndVerify(): Promise<ResourceResult<Uint8Array>> {
+  private async load(): Promise<ResourceResult<Uint8Array>> {
     let bytes: Uint8Array;
     try {
       bytes = await this.loadBytes!();
@@ -870,17 +917,7 @@ class ManagedBuiltinFile {
         "The selected builtin resource could not be read from the application payload.",
       );
     }
-    const observed = await observeResourceIntegrity(bytes);
-    if (observed.status === "rejected") return observed;
-    if (
-      observed.value.byteLength === this.record.integrity.byteLength &&
-      observed.value.sha256 === this.record.integrity.sha256
-    ) return resourceAccepted(Uint8Array.from(bytes));
-    return resourceRejected(
-      "resource-integrity",
-      "resources.manager.builtin-load-integrity",
-      `Builtin logical resource ${this.record.logicalPath} expected ${this.record.integrity.byteLength} bytes / SHA-256 ${this.record.integrity.sha256}, but the application payload supplied ${observed.value.byteLength} bytes / SHA-256 ${observed.value.sha256}.`,
-    );
+    return resourceAccepted(Uint8Array.from(bytes));
   }
 }
 

@@ -97,7 +97,7 @@ export async function decodeAppliedSkinResources(
       openPackage(lease, "skin.field"),
       openPackage(lease, "skin.background"),
       openPackage(lease, "skin.judge"),
-      openPackage(lease, "skin.common-se"),
+      openPackage(lease, "skin.common-se", ["se_rhythm_tap_skill.mp3"]),
     ]);
     const [rhythm, directional, judge] = await Promise.all([
       decodeRhythm(rhythmPackage, rhythmSamplePackage, identities.rhythm, createImageUrl),
@@ -134,6 +134,7 @@ export async function decodeAppliedSkinResources(
 async function openPackage(
   lease: ResourceConsumerLease,
   slot: ApplicationResourceSlot | typeof RHYTHM_SAMPLE_SLOT | typeof DIRECTIONAL_SAMPLE_SLOT,
+  requiredNames?: readonly string[],
 ): Promise<PackageView> {
   const files = lease.listFiles(slot);
   if (files.length === 0) throw new Error(`selected resource package is empty: ${slot}`);
@@ -145,9 +146,10 @@ async function openPackage(
     const key = basename(file.logicalPath).toLowerCase();
     if (basenames.has(key)) throw new Error(`resource package has ambiguous filename: ${key}`);
     basenames.add(key);
+    if (requiredNames && !requiredNames.includes(key)) continue;
     paths.push(file.logicalPath);
-    const bytes = await lease.readBytes(slot, file.logicalPath);
     if (file.mediaType === "application/json" || key === ".sprites" || key.endsWith(".bundle") || key.endsWith(".asset")) {
+      const bytes = await lease.readBytes(slot, file.logicalPath);
       texts.set(key, new TextDecoder("utf-8", { fatal: true }).decode(bytes));
     }
     if (file.mediaType.startsWith("image/") || file.mediaType.startsWith("audio/")) {

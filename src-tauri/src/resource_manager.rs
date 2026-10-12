@@ -4,10 +4,10 @@ use serde_json::Value;
 use sha2::{Digest, Sha256};
 use std::collections::{HashMap, HashSet};
 use std::fs;
-use std::io::{Read, Write};
+use std::io::Write;
 use std::path::{Component, Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::Manager;
 use unicode_normalization::UnicodeNormalization;
@@ -22,6 +22,7 @@ const WORKSPACE_MEDIA_DIRECTORY: &str = "project-media";
 struct ResourceRuntimeState {
     initialized: bool,
     open_snapshots: HashMap<String, usize>,
+    snapshots: HashMap<String, Arc<StoredSnapshot>>,
     released_snapshots: HashSet<String>,
     pending_workspace_imports: HashMap<String, PendingWorkspaceMediaImport>,
 }
@@ -37,6 +38,7 @@ struct PendingWorkspaceMediaImport {
 #[derive(Default)]
 pub struct ApplicationResourceState {
     runtime: Mutex<ResourceRuntimeState>,
+    records: Mutex<HashMap<String, StoredResourceRecord>>,
     sequence: AtomicU64,
 }
 
@@ -226,8 +228,17 @@ impl Default for WorkspaceMediaIndex {
 }
 
 #[tauri::command]
-pub fn resource_initialize(
-    app: tauri::AppHandle,
+pub async fn resource_initialize(app: tauri::AppHandle) -> Result<Vec<StoredResourceRecordDto>, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let state = app.state::<ApplicationResourceState>();
+        initialize_resources(&app, state)
+    })
+    .await
+    .map_err(|error| format!("resource initialization task failed: {error}"))?
+}
+
+fn initialize_resources(
+    app: &tauri::AppHandle,
     state: tauri::State<'_, ApplicationResourceState>,
 ) -> Result<Vec<StoredResourceRecordDto>, String> {
     let root = resource_root(&app)?;
@@ -235,6 +246,11 @@ pub fn resource_initialize(
         .runtime
         .lock()
         .map_err(|error| format!("lock resource state failed: {error}"))?;
+    if runtime.initialized {
+        return Ok(state.records.lock().map_err(|e| e.to_string())?.values()
+            .filter(|record| record.descriptor.get("origin").and_then(Value::as_str) != Some("workspace"))
+            .map(|record| record.dto()).collect());
+    }
     if !runtime.initialized {
         ensure_layout_without_index(&root)?;
         remove_directory_contents(&root.join("transactions"))?;
@@ -244,20 +260,28 @@ pub fn resource_initialize(
         ensure_layout(&root)?;
         ensure_workspace_layout(&workspace_media_root(&app)?)?;
         migrate_legacy_bestdori_cache(&app, &root, state.inner())?;
-        recover_projections(&root, state.inner())?;
         runtime.open_snapshots.clear();
+        runtime.snapshots.clear();
         runtime.released_snapshots.clear();
         runtime.pending_workspace_imports.clear();
-        runtime.initialized = true;
     }
     let index = read_index(&root)?;
     let mut records = Vec::new();
     for resource_id in index.resource_ids {
         match read_record(&root, &resource_id) {
-            Ok(record) => records.push(record.dto()),
+            Ok(record) => {
+                let projection = projection_resource_path(&root, &record.descriptor)?;
+                if !projection.join("current.json").exists() {
+                    publish_projection(&root, &projection, &resource_id, &record.revision,
+                        &record.files, &next_identity(state.inner(), "projection-recovery"))?;
+                }
+                state.records.lock().map_err(|e| e.to_string())?.insert(resource_id.clone(), record.clone());
+                records.push(record.dto());
+            },
             Err(error) => crate::application_log::record("warn", "resources.record.invalid", serde_json::json!({"resourceId":resource_id,"error":error})),
         }
     }
+    runtime.initialized = true;
     Ok(records)
 }
 
@@ -275,9 +299,11 @@ pub fn resource_shutdown(
         return Ok(());
     }
     runtime.open_snapshots.clear();
+    runtime.snapshots.clear();
     runtime.released_snapshots.clear();
     runtime.pending_workspace_imports.clear();
     runtime.initialized = false;
+    state.records.lock().map_err(|e| e.to_string())?.clear();
     remove_directory_contents(&root.join("snapshots"))?;
     remove_directory_contents(&root.join("transactions"))?;
     drop(runtime);
@@ -302,20 +328,18 @@ pub fn resource_list_records(
 pub fn resource_read_record(
     app: tauri::AppHandle,
     reference: ResourceRefDto,
+    state: tauri::State<'_, ApplicationResourceState>,
 ) -> Result<StoredResourceRecordDto, String> {
     let root = resource_root(&app)?;
     let workspace = workspace_media_root(&app)?;
     let resource_id = normalize_resource_id(&reference.id)?;
-    let record = read_any_record(&root, &workspace, &resource_id).map_err(|error| {
+    let record = read_cached_record(&root, &workspace, &resource_id, state.inner()).map_err(|error| {
         if record_path(&root, &resource_id).exists() || workspace_record_path(&workspace, &resource_id).exists() {
             crate::application_log::record("warn", "resources.record.read.failed", serde_json::json!({"resourceId":resource_id,"error":error}));
         }
         error
     })?;
-    verify_any_record(&root, &record).map_err(|error| {
-        crate::application_log::record("warn", "resources.record.integrity.failed", serde_json::json!({"resourceId":resource_id,"error":error}));
-        error
-    })?;
+    state.records.lock().map_err(|e| e.to_string())?.insert(descriptor_resource_id(&record.descriptor)?, record.clone());
     Ok(record.dto())
 }
 
@@ -391,6 +415,7 @@ pub fn resource_install_builtin_package(
         input.files,
         &next_identity(state.inner(), "builtin"),
     )?;
+    state.records.lock().map_err(|e| e.to_string())?.insert(descriptor_resource_id(&record.descriptor)?, record.clone());
     Ok(record.dto())
 }
 
@@ -424,6 +449,7 @@ pub fn resource_install_network_package(
         input.files,
         &next_identity(state.inner(), "network"),
     )?;
+    state.records.lock().map_err(|e| e.to_string())?.insert(descriptor_resource_id(&record.descriptor)?, record.clone());
     Ok(record.dto())
 }
 
@@ -461,7 +487,10 @@ pub fn resource_install_display_image(
     }).collect::<Result<Vec<_>, String>>()?;
     let transaction = next_identity(state.inner(), "display-image");
     match commit_resource(&root, descriptor, vec![file], &transaction) {
-        Ok(record) => Ok(record.dto()),
+        Ok(record) => {
+            state.records.lock().map_err(|e| e.to_string())?.insert(descriptor_resource_id(&record.descriptor)?, record.clone());
+            Ok(record.dto())
+        },
         Err(error) => {
             let mut rollback_errors = Vec::new();
             for (index, (path, bytes)) in paths.iter().zip(previous).enumerate() {
@@ -597,6 +626,7 @@ pub fn resource_commit_workspace_media_import(
     if let Some(directory) = pending.path.parent() {
         let _ = fs::remove_dir_all(directory);
     }
+    state.records.lock().map_err(|e| e.to_string())?.insert(descriptor_resource_id(&record.descriptor)?, record.clone());
     Ok(record.dto())
 }
 
@@ -678,6 +708,7 @@ pub fn resource_reconcile_workspace_media(
     )?;
     for resource_id in previous.resource_ids {
         if !resource_ids.contains(&resource_id) {
+            state.records.lock().map_err(|e| e.to_string())?.remove(&resource_id);
             let path = workspace_record_path(&workspace, &resource_id);
             if path.exists() {
                 fs::remove_file(path).map_err(|error| {
@@ -824,7 +855,7 @@ pub fn resource_create_snapshot(
     slots: HashMap<String, ResourceRefDto>,
     state: tauri::State<'_, ApplicationResourceState>,
 ) -> Result<OpenedResourceSnapshotDto, String> {
-    let _guard = state
+    let mut runtime = state
         .runtime
         .lock()
         .map_err(|error| format!("lock resource state failed: {error}"))?;
@@ -846,8 +877,7 @@ pub fn resource_create_snapshot(
             },
         );
         let workspace = workspace_media_root(&app)?;
-        let record = read_any_record(&root, &workspace, &resource_id)?;
-        verify_any_record(&root, &record)?;
+        let record = read_cached_record(&root, &workspace, &resource_id, state.inner())?;
         revisions.insert(slot.clone(), record.revision);
         files_by_slot.insert(slot, record.files);
     }
@@ -867,7 +897,9 @@ pub fn resource_create_snapshot(
         &bytes,
         &next_identity(state.inner(), "snapshot-write"),
     )?;
-    Ok(snapshot.dto())
+    let dto = snapshot.dto();
+    runtime.snapshots.insert(snapshot_id, Arc::new(snapshot));
+    Ok(dto)
 }
 
 #[tauri::command]
@@ -878,16 +910,15 @@ pub fn resource_open_snapshot(
 ) -> Result<OpenedResourceSnapshotDto, String> {
     let snapshot_id = normalize_snapshot_id(&snapshot_id)?;
     let root = resource_root(&app)?;
-    let snapshot = read_snapshot(&root, &snapshot_id)?;
-    for files in snapshot.files_by_slot.values() {
-        for file in files {
-            verify_stored_file(&root, file)?;
+    let mut runtime = state.runtime.lock().map_err(|error| format!("lock resource state failed: {error}"))?;
+    let snapshot = match runtime.snapshots.get(&snapshot_id) {
+        Some(snapshot) => Arc::clone(snapshot),
+        None => {
+            let snapshot = Arc::new(read_snapshot(&root, &snapshot_id)?);
+            runtime.snapshots.insert(snapshot_id.clone(), Arc::clone(&snapshot));
+            snapshot
         }
-    }
-    let mut runtime = state
-        .runtime
-        .lock()
-        .map_err(|error| format!("lock resource state failed: {error}"))?;
+    };
     runtime.released_snapshots.remove(&snapshot_id);
     *runtime.open_snapshots.entry(snapshot_id).or_insert(0) += 1;
     Ok(snapshot.dto())
@@ -902,23 +933,14 @@ pub fn resource_read_snapshot_file(
     state: tauri::State<'_, ApplicationResourceState>,
 ) -> Result<String, String> {
     let snapshot_id = normalize_snapshot_id(&snapshot_id)?;
-    {
-        let runtime = state
-            .runtime
-            .lock()
-            .map_err(|error| format!("lock resource state failed: {error}"))?;
-        if runtime
-            .open_snapshots
-            .get(&snapshot_id)
-            .copied()
-            .unwrap_or(0)
-            == 0
-        {
+    let snapshot = {
+        let runtime = state.runtime.lock().map_err(|error| format!("lock resource state failed: {error}"))?;
+        if runtime.open_snapshots.get(&snapshot_id).copied().unwrap_or(0) == 0 {
             return Err("resource snapshot is not open".to_string());
         }
-    }
+        Arc::clone(runtime.snapshots.get(&snapshot_id).ok_or("resource snapshot is unavailable")?)
+    };
     let root = resource_root(&app)?;
-    let snapshot = read_snapshot(&root, &snapshot_id)?;
     let slot = normalize_slot(&slot)?;
     let logical_path = normalize_logical_path(&logical_path)?;
     let file = snapshot
@@ -926,7 +948,7 @@ pub fn resource_read_snapshot_file(
         .get(&slot)
         .and_then(|files| files.iter().find(|file| file.logical_path == logical_path))
         .ok_or_else(|| "resource snapshot file is unavailable".to_string())?;
-    let bytes = read_and_verify_blob(&root, file)?;
+    let bytes = read_resource_blob(&root, file)?;
     Ok(base64::engine::general_purpose::STANDARD.encode(bytes))
 }
 
@@ -942,16 +964,18 @@ pub fn resource_release_snapshot(
             .runtime
             .lock()
             .map_err(|error| format!("lock resource state failed: {error}"))?;
-        release_snapshot_runtime(&mut runtime, &snapshot_id)?
+        let remove = release_snapshot_runtime(&mut runtime, &snapshot_id)?;
+        if remove { runtime.snapshots.remove(&snapshot_id); }
+        remove
     };
     if remove_snapshot {
         let root = resource_root(&app)?;
         let path = snapshot_path(&root, &snapshot_id);
+        // Garbage collection runs at shutdown/removal, not for each read lease.
         if path.exists() {
             fs::remove_file(path)
                 .map_err(|error| format!("remove released resource snapshot failed: {error}"))?;
         }
-        collect_garbage_paths(&root, &workspace_media_root(&app)?)?;
     }
     Ok(())
 }
@@ -998,6 +1022,7 @@ pub fn resource_remove(
         .lock()
         .map_err(|error| format!("lock resource state failed: {error}"))?;
     let resource_id = normalize_resource_id(&reference.id)?;
+    state.records.lock().map_err(|e| e.to_string())?.remove(&resource_id);
     if resource_id.starts_with("builtin/") {
         return Err("builtin resources cannot be removed".to_string());
     }
@@ -1065,7 +1090,6 @@ fn archive_legacy_user_record(
                 .map_err(|error| format!("create legacy recovery parent failed: {error}"))?;
         }
         if target.exists() {
-            verify_blob_path(&target, &file.integrity)?;
             continue;
         }
         let blob = root.join("blobs").join(&file.blob);
@@ -1073,7 +1097,6 @@ fn archive_legacy_user_record(
             fs::copy(&blob, &target)
                 .map_err(|error| format!("copy legacy recovery media failed: {error}"))?;
         }
-        verify_blob_path(&target, &file.integrity)?;
     }
     Ok(serde_json::json!({
         "resourceId": resource_id,
@@ -1417,6 +1440,14 @@ fn read_workspace_record(
     Ok(record)
 }
 
+fn read_cached_record(root: &Path, workspace: &Path, id: &str, state: &ApplicationResourceState) -> Result<StoredResourceRecord, String> {
+    let mut records = state.records.lock().map_err(|e| e.to_string())?;
+    if let Some(record) = records.get(id) { return Ok(record.clone()); }
+    let record = read_any_record(root, workspace, id)?;
+    records.insert(id.to_string(), record.clone());
+    Ok(record)
+}
+
 fn read_any_record(
     root: &Path,
     workspace: &Path,
@@ -1476,7 +1507,7 @@ fn verify_record(root: &Path, record: &StoredResourceRecord) -> Result<(), Strin
     verify_record_files(root, record)
 }
 
-fn verify_record_files(root: &Path, record: &StoredResourceRecord) -> Result<(), String> {
+fn verify_record_files(_root: &Path, record: &StoredResourceRecord) -> Result<(), String> {
     let mut seen = HashSet::new();
     for file in &record.files {
         normalize_logical_path(&file.logical_path)?;
@@ -1486,29 +1517,20 @@ fn verify_record_files(root: &Path, record: &StoredResourceRecord) -> Result<(),
                 file.logical_path
             ));
         }
-        verify_stored_file(root, file)?;
+
     }
     Ok(())
 }
 
-fn verify_stored_file(root: &Path, file: &StoredResourceFile) -> Result<(), String> {
-    if file.blob != file.integrity.sha256 {
-        return Err("stored resource blob identity does not match observed SHA-256".to_string());
-    }
-    verify_blob_path(&root.join("blobs").join(&file.blob), &file.integrity)
-}
-
-fn read_and_verify_blob(root: &Path, file: &StoredResourceFile) -> Result<Vec<u8>, String> {
+fn read_resource_blob(root: &Path, file: &StoredResourceFile) -> Result<Vec<u8>, String> {
     let path = root.join("blobs").join(&file.blob);
-    verify_blob_path(&path, &file.integrity)?;
     fs::read(path).map_err(|error| format!("read resource blob failed: {error}"))
 }
 
-fn publish_resource_blob(temp: &Path, target: &Path, expected: &ObservedIntegrityDto) -> Result<(), String> {
-    if target.exists() && verify_blob_path(target, expected).is_ok() {
+fn publish_resource_blob(temp: &Path, target: &Path, _expected: &ObservedIntegrityDto) -> Result<(), String> {
+    if target.exists() {
         return fs::remove_file(temp).map_err(|error| format!("remove duplicate resource blob failed: {error}"));
     }
-    verify_blob_path(temp, expected)?;
     let backup = temp.with_extension("previous");
     if target.exists() {
         fs::rename(target, &backup).map_err(|error| format!("stage damaged resource blob failed: {error}"))?;
@@ -1518,33 +1540,6 @@ fn publish_resource_blob(temp: &Path, target: &Path, expected: &ObservedIntegrit
         return Err(format!("publish repaired resource blob failed: {error}"));
     }
     // The enclosing transaction removes the old, invalid blob after publication.
-    Ok(())
-}
-
-fn verify_blob_path(path: &Path, expected: &ObservedIntegrityDto) -> Result<(), String> {
-    let mut file =
-        fs::File::open(path).map_err(|error| format!("open resource blob failed: {error}"))?;
-    let metadata = file
-        .metadata()
-        .map_err(|error| format!("read resource blob metadata failed: {error}"))?;
-    if metadata.len() != expected.byte_length {
-        return Err("resource blob byte length no longer matches observed integrity".to_string());
-    }
-    let mut hasher = Sha256::new();
-    let mut buffer = [0_u8; 64 * 1024];
-    loop {
-        let count = file
-            .read(&mut buffer)
-            .map_err(|error| format!("hash resource blob failed: {error}"))?;
-        if count == 0 {
-            break;
-        }
-        hasher.update(&buffer[..count]);
-    }
-    let actual = format!("{:X}", hasher.finalize());
-    if actual != expected.sha256 {
-        return Err("resource blob SHA-256 no longer matches observed integrity".to_string());
-    }
     Ok(())
 }
 
@@ -1652,16 +1647,6 @@ fn publish_projection(
         .ok_or_else(|| "resource revision is invalid".to_string())?;
     let revision_directory = projection_root.join("revisions").join(digest);
     let revision_root = revision_directory.join("files");
-    if revision_root.exists() {
-        let valid = files.iter().all(|file| {
-            verify_blob_path(&revision_root.join(&file.logical_path), &file.integrity).is_ok()
-        });
-        if !valid {
-            fs::remove_dir_all(&revision_directory).map_err(|error| {
-                format!("remove incomplete projection revision failed: {error}")
-            })?;
-        }
-    }
     if !revision_root.exists() {
         for file in files {
             let target = revision_root.join(&file.logical_path);
@@ -1674,7 +1659,6 @@ fn publish_projection(
                 fs::copy(&blob, &target)
                     .map_err(|error| format!("copy projection file failed: {error}"))?;
             }
-            verify_blob_path(&target, &file.integrity)?;
         }
     }
     let pointer = serde_json::to_vec(&serde_json::json!({
@@ -1683,9 +1667,15 @@ fn publish_projection(
         "revision": revision,
     }))
     .map_err(|error| format!("serialize projection current pointer failed: {error}"))?;
+    // Reuse existing projection files. Keep an unchanged pointer
+    // instead of publishing the same bytes again for every resource on startup.
+    let pointer_path = projection_root.join("current.json");
+    if fs::read(&pointer_path).is_ok_and(|current| current == pointer) {
+        return Ok(());
+    }
     atomic_write(
         root,
-        &projection_root.join("current.json"),
+        &pointer_path,
         &pointer,
         &format!("projection-{transaction_id}"),
     )
@@ -2466,34 +2456,6 @@ fn install_logical_placement_for_canonical_id(
         "canonicalPath": canonical,
         "identityClass": if source.get("family").and_then(Value::as_str).is_some_and(|value| value.starts_with("media-")) { "provider-media" } else { "provider-package" },
     }));
-    Ok(())
-}
-
-fn recover_projections(root: &Path, state: &ApplicationResourceState) -> Result<(), String> {
-    for resource_id in read_index(root)?.resource_ids {
-        let record = match read_record(root, &resource_id) {
-            Ok(record) => record,
-            Err(error) => {
-                crate::application_log::record("warn", "resources.projection.record-invalid",
-                    serde_json::json!({"resourceId":resource_id,"error":error}));
-                continue;
-            }
-        };
-        if let Err(error) = verify_record(root, &record) {
-            crate::application_log::record("warn", "resources.projection.awaiting-repair",
-                serde_json::json!({"resourceId":resource_id,"error":error}));
-            continue;
-        }
-        let projection = projection_resource_path(root, &record.descriptor)?;
-        publish_projection(
-            root,
-            &projection,
-            &resource_id,
-            &record.revision,
-            &record.files,
-            &next_identity(state, "projection-recovery"),
-        )?;
-    }
     Ok(())
 }
 

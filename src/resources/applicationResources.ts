@@ -18,7 +18,10 @@ let bootstrapPromise: Promise<ResourceResult<ApplicationResourceManager>> | null
 export function bootstrapApplicationResources(
   onLoadingReady?: (manager: ApplicationResourceManager) => Promise<void>,
 ): Promise<ResourceResult<ApplicationResourceManager>> {
-  bootstrapPromise ??= bootstrap(onLoadingReady);
+  bootstrapPromise ??= bootstrap(onLoadingReady).then(result => {
+    if (result.status === "rejected") bootstrapPromise = null;
+    return result;
+  }, error => { bootstrapPromise = null; throw error; });
   return bootstrapPromise;
 }
 
@@ -45,7 +48,6 @@ async function bootstrap(onLoadingReady?: (manager: ApplicationResourceManager) 
   const simulatorBuiltins = await registerSimulatorBuiltinResources(manager);
   if (simulatorBuiltins.status === "rejected") return simulatorBuiltins;
 
-  void manager.refreshCatalog("bestdori");
   return resourceAccepted(manager);
 }
 

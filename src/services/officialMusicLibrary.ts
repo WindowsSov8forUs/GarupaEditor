@@ -92,7 +92,12 @@ export function bootstrapOfficialMusic(manager: ApplicationResourceManager, prog
   return pending ??= initialize(manager, progress).catch(error => {
     appLog("error", "official.startup-failed", { error });
     return { songs: [], metadata: null, lease: null, error: String(error), mediaFailures: [] };
-  }).then(result => library = result);
+  }).then(async result => {
+    if (library?.lease && library.lease !== result.lease) await library.lease.release();
+    library = result;
+    if (result.error || result.mediaFailures.length) pending = undefined;
+    return result;
+  });
 }
 async function initialize(manager: ApplicationResourceManager, progress: (ratio: number) => void): Promise<OfficialLibrary> {
   let previous: LibraryMetadata | undefined;
@@ -105,22 +110,42 @@ async function initialize(manager: ApplicationResourceManager, progress: (ratio:
     validatePackageFiles: (_, paths) => paths.length === 1 && paths[0] === "payload"
       ? resourceAccepted(undefined) : resourceRejected("invalid-resource-request", "official.incomplete-cache", "Expected one payload."),
     install: async resource => {
+      let mediaScan: Promise<OfficialSourceMedia> | undefined;
       try {
         let bytes: Uint8Array, mediaType: string;
         if (resource.ref.id === metadataDescriptor.ref.id) {
-          const masters = Object.fromEntries(await Promise.all(OFFICIAL_SERVER_ORDER.map(async server => [server,
+          mediaScan = fetchOfficialSourceMedia(cachedSourceMedia(previous));
+          // Drain every independent task before publishing or falling back, so
+          // failed metadata cannot leave a second scan running in the background.
+          const masterRequests = Promise.allSettled(OFFICIAL_SERVER_ORDER.map(async server => [server,
             await refreshOfficialMaster(previous?.masters?.[server] ?? (server === "jp" && !previous?.masters ? previous?.official : undefined), server),
-          ] as const))) as Record<MasterServer, OfficialMasterSnapshot>;
+          ] as const));
+          const unchanged = masterRequests.then(rows => rows.every(row => {
+            if (row.status !== "fulfilled") return false;
+            const [server, current] = row.value;
+            const old = previous?.masters?.[server];
+            return old && old.clientVersion === current.clientVersion && old.dataVersion === current.dataVersion
+              && old.masterDataVersion === current.masterDataVersion;
+          }));
+          const results = await Promise.allSettled([
+            masterRequests,
+            unchanged.then(same => same && previous?.index ? previous.index
+              : fetchBestdoriJson<Record<string, BestdoriSongInfo>>("/api/songs/all.8.json")),
+            unchanged.then(same => same && previous?.bands ? structuredClone(previous.bands)
+              : fetchBestdoriJson<BestdoriBandsAll1>("/api/bands/all.1.json")),
+            mediaScan,
+          ] as const);
+          const unwrap = <T,>(result: PromiseSettledResult<T>): T => {
+            if (result.status === "rejected") throw result.reason;
+            return result.value;
+          };
+          const masters = Object.fromEntries(unwrap(results[0]).map(unwrap)) as Record<MasterServer, OfficialMasterSnapshot>;
+          const index = unwrap(results[1]), bands = unwrap(results[2]), sourceMedia = unwrap(results[3]);
           const { jp, cn } = masters;
           const capturedAt = Date.now();
           const merged = mergeOfficialMusic(masters, capturedAt);
           const official = { ...jp, master: merged.master };
           const cnSongs = new Map(cn.master.masterMusicList.entries.map(song => [song.musicId, song]));
-          const [index, bands, sourceMedia] = await Promise.all([
-            fetchBestdoriJson<Record<string, BestdoriSongInfo>>("/api/songs/all.8.json"),
-            fetchBestdoriJson<BestdoriBandsAll1>("/api/bands/all.1.json"),
-            fetchOfficialSourceMedia(cachedSourceMedia(previous)),
-          ]);
           if (!index || !bands) throw new Error("官方曲库响应格式无效");
           const songs: Record<string, BestdoriSongInfo> = {};
           const localize = (value: string | undefined, values?: BestdoriPerServerValue<string>, server: MasterServer = "jp"): BestdoriPerServerValue<string> => {
@@ -185,13 +210,12 @@ async function initialize(manager: ApplicationResourceManager, progress: (ratio:
         }
         return resourceAccepted({ descriptor: resource, files: [{ logicalPath: "payload", mediaType, bytes }] });
       } catch (error) {
-        // A master update can fail before the media manifests are requested.
-        // Keep the complete old master, but independently repair its media index.
+        // Keep the complete old master while reusing this attempt's media scan.
         if (resource.ref.id === metadataDescriptor.ref.id && previous) {
           refreshFailure = String(error);
           appLog("warn", "official.catalog-offline", { error: refreshFailure });
           try {
-            const sourceMedia = await fetchOfficialSourceMedia(cachedSourceMedia(previous));
+            const sourceMedia = await (mediaScan ?? fetchOfficialSourceMedia(cachedSourceMedia(previous)));
             metadata = { ...previous, sourceMedia };
             return resourceAccepted({ descriptor: resource, files: [{ logicalPath: "payload", mediaType: "application/json",
               bytes: new TextEncoder().encode(JSON.stringify(metadata)) }] });
