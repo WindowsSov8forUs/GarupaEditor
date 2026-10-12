@@ -213,6 +213,11 @@ export class BestdoriApplicationResourceProvider implements ResourceCatalogProvi
         "The selected network resource is not owned by the Bestdori provider.",
       );
     }
+    if (descriptor.source.publishedFileCount === 0) {
+      return resourceRejected("resource-unavailable", "resources.bestdori.package-not-published",
+        `${descriptor.ref.id}: provider catalog publishes zero files.`,
+        "Bestdori 目录列出了此资源，但尚未提供文件；重试下载无法补齐，请等待资源站更新。");
+    }
     if (descriptor.source.family.startsWith("media-")) {
       try {
         const blob = await fetchBestdoriFileBlob(
@@ -366,13 +371,15 @@ function collect(
     const logicalPath = packageLogicalPath(family, nativeId);
     const reference = createResourceRef(`bestdori/${server}/${logicalPath}`);
     if (reference.status === "rejected") continue;
-    const source = sourceFor(server, family, nativeId);
+    const count = values[nativeId];
+    const publishedFileCount = typeof count === "number" && Number.isSafeInteger(count) && count >= 0 ? count : undefined;
+    const source = { ...sourceFor(server, family, nativeId), ...(publishedFileCount === undefined ? {} : { publishedFileCount }) };
     output.push(Object.freeze({
       ref: reference.value,
       origin: "network" as const,
       kind: "package" as const,
       title: titleFor(family, nativeId, names),
-      availability: "remote-only" as const,
+      availability: publishedFileCount === 0 ? "unavailable" as const : "remote-only" as const,
       files: null,
       catalogObservedAt: observedAt,
       logicalPlacement: Object.freeze({

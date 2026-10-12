@@ -770,6 +770,56 @@
       "path": "live.png",
       "byteLength": 596898,
       "sha256": "9396BAF609E11A76F152947F255ABABF47035504356F712DC1A0E11F908422F1"
+    },
+    {
+      "path": "game/portable/skins/cn/normal/Default-ParticleSystem.png",
+      "byteLength": 2065,
+      "sha256": "E4A1E48DB3C80DD59299F848AB733640D8527E15B0ED9848E8E746CB27DEC332"
+    },
+    {
+      "path": "game/portable/skins/cn/normal/dependency-2621970490209455388-tex_parSet_1.png",
+      "byteLength": 194357,
+      "sha256": "6049F502B177F46011B7BC0568828FD6218F17B922836B946F208755B567A6C7"
+    },
+    {
+      "path": "game/portable/skins/cn/normal/effect_circle.png",
+      "byteLength": 38893,
+      "sha256": "0054317BFB833B83D9979728E5E63B36B9181B83C922B1DB2C2C812146441F57"
+    },
+    {
+      "path": "game/portable/skins/cn/normal/source.asset",
+      "byteLength": 1762,
+      "sha256": "98006FD90920292CD8C5DE1C8A474CA487F4104B311ABF91A3677E1A119A1509"
+    },
+    {
+      "path": "game/portable/skins/cn/normal/source.bundle",
+      "byteLength": 2370,
+      "sha256": "A05467A7A55CD5A37812F9A2B8661E13DC31B929BAB313028B9D1463A5EC0168"
+    },
+    {
+      "path": "game/portable/skins/cn/light/Default-ParticleSystem.png",
+      "byteLength": 2065,
+      "sha256": "E4A1E48DB3C80DD59299F848AB733640D8527E15B0ED9848E8E746CB27DEC332"
+    },
+    {
+      "path": "game/portable/skins/cn/light/dependency-8966196757431654492-tex_parSet_1.png",
+      "byteLength": 194357,
+      "sha256": "6049F502B177F46011B7BC0568828FD6218F17B922836B946F208755B567A6C7"
+    },
+    {
+      "path": "game/portable/skins/cn/light/effect_circle.png",
+      "byteLength": 38893,
+      "sha256": "0054317BFB833B83D9979728E5E63B36B9181B83C922B1DB2C2C812146441F57"
+    },
+    {
+      "path": "game/portable/skins/cn/light/source.asset",
+      "byteLength": 1763,
+      "sha256": "3200306E42092EF6E15A46B5770983B5543AC85CEB6B2DD7FBE2D99FA7D23E60"
+    },
+    {
+      "path": "game/portable/skins/cn/light/source.bundle",
+      "byteLength": 2356,
+      "sha256": "1C860AC08186E559AC8D31016462A2FD73D16D75E6D61E7694EA947BDC2237DC"
     }
   ]
 }

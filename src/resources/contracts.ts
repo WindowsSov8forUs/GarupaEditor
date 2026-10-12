@@ -76,6 +76,8 @@ export interface NetworkResourceSource {
   readonly server: string;
   readonly family: string;
   readonly nativeId: string;
+  /** Published explorer file count; zero means the provider has no downloadable package. */
+  readonly publishedFileCount?: number;
   readonly manifestUrl: string | null;
   readonly assetBaseUrl: string;
 }

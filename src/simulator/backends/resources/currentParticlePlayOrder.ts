@@ -1,7 +1,8 @@
 import playOrder from "../../../data/simulator/currentParticlePlayOrder.json";
 import playActive from "../../../data/simulator/currentParticlePlayActive.json";
+import mainland from "../../../data/simulator/mainlandSkinSemanticCatalog.json";
 
-const resources: Readonly<Record<string, Readonly<Record<string, number>>>> = playOrder.resources;
+const resources: Readonly<Record<string, Readonly<Record<string, number>>>> = { ...playOrder.resources, ...mainland.playOrder };
 
 /** Original Transform child traversal, independent of serialized component order. */
 export function getNativeParticlePlayOrdinal(logicalResource: string, path: string): number {
@@ -12,7 +13,7 @@ export function getNativeParticlePlayOrdinal(logicalResource: string, path: stri
   return ordinal;
 }
 
-const activeResources: Readonly<Record<string, Readonly<Record<string, boolean>>>> = playActive.resources;
+const activeResources: Readonly<Record<string, Readonly<Record<string, boolean>>>> = { ...playActive.resources, ...mainland.playActive };
 
 /** Source descendant hierarchy state when its gameplay prefab root enters Play. */
 export function getNativeParticlePlayActive(logicalResource: string, path: string): boolean {
