@@ -55,7 +55,6 @@ function installBuiltinDocumentResources(manager: ApplicationResourceManager): v
   if (typeof document === "undefined") return;
   const primary = manager.resolveBuiltinSlotUrl("ui.font.chart-ui-primary");
   const fallback = manager.resolveBuiltinSlotUrl("ui.font.chart-ui-fallback");
-  const background = manager.resolveBuiltinSlotUrl("ui.application-background");
   if (typeof FontFace === "function" && document.fonts !== undefined) {
     if (primary.status === "accepted") {
       document.fonts.add(new FontFace("TTShinGoM", `url(${JSON.stringify(primary.value)})`, {
@@ -77,12 +76,7 @@ function installBuiltinDocumentResources(manager: ApplicationResourceManager): v
       }));
     }
   }
-  if (background.status === "accepted") {
-    document.documentElement.style.setProperty(
-      "--app-resource-background-image",
-      `url(${JSON.stringify(background.value)})`,
-    );
-  }
+
 }
 
 function isTauriRuntime(): boolean {

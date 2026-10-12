@@ -237,7 +237,7 @@ function BuiltInSimulatorWindow() {
     () => { void leavePlayer(); },
   );
   return (
-    <main style={{ width: "100vw", height: "100vh", overflow: "hidden", position: "relative", background: "#02050d" }}>
+    <main style={{ width: "100vw", height: "100vh", overflow: "hidden", position: "relative" }}>
       <div ref={hostRef} style={{ width: "100%", height: "100%" }} />
       {overlay}
     </main>

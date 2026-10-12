@@ -113,11 +113,6 @@ body {
   font-family: "ChartUI", "GB18030", "TTShinGoM", "Microsoft YaHei UI", sans-serif;
   font-synthesis: none;
   color: var(--text);
-  background-color: #0c1020;
-  background-image: var(--app-resource-background-image);
-  background-position: center center;
-  background-repeat: no-repeat;
-  background-size: cover;
 }
 
 body::before {
@@ -2789,6 +2784,7 @@ button.app-settings-apply-button:not(.original-button):not(.note-token):not(.bpm
 }
 
 .static-render-page {
+  isolation: isolate;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   height: 100%;
@@ -2800,6 +2796,11 @@ button.app-settings-apply-button:not(.original-button):not(.note-token):not(.bpm
   color: var(--text);
 }
 
+.static-render-page > :not(.original-menu-background) {
+  position: relative;
+  z-index: 1;
+}
+
 .mobile-route-overlay {
   position: fixed;
   inset: 0;
@@ -2807,7 +2808,6 @@ button.app-settings-apply-button:not(.original-button):not(.note-token):not(.bpm
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background: #0c1020;
   pointer-events: auto;
 }
 
