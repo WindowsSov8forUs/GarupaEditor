@@ -244,11 +244,10 @@ export class GarupaRenderInputAdapter {
   private readonly renderNodesByChain = new Map<string, readonly GarupaProductNode[]>();
   private readonly slideStates = new Map<string, ProductSlideState>();
   private readonly singleStates = new Map<string, OrdinaryLongNormalChildState>();
-  private readonly axisGroups: ReadonlySet<string>;
   private readonly axisChains: ReadonlySet<string>;
   private readonly firstLinearChainPosition = new Map<string, number>();
   private usesNodeAxis(node: GarupaProductNode): boolean {
-    return this.axisGroups.has(node.timingGroup) || node.chainIdentity !== null &&
+    return this.chart.svItemIndices.has(node.chartItemIndex) || node.chainIdentity !== null &&
       this.chainByIdentity.get(node.chainIdentity)?.independentTiming === true;
   }
 
@@ -271,11 +270,10 @@ export class GarupaRenderInputAdapter {
     this.chainByIdentity = new Map(chart.slideChains.map((chain) => [chain.identity, chain]));
     for (const chain of chart.slideChains) this.renderNodesByChain.set(chain.identity,
       Object.freeze(chain.connectionIdentities.map(id => noteRenderInput(chart.nodeByIdentity.get(id)!))));
-    this.axisGroups = new Set(axis.groups.filter(group => group.changes.some(change => change.speed !== 1)).map(group => group.id));
-    this.axisChains = new Set(chart.slideChains.filter(chain => chain.independentTiming || chain.connectionIdentities.some(id =>
-      this.axisGroups.has(chart.nodeByIdentity.get(id)!.timingGroup))).map(chain => chain.identity));
+    this.axisChains = new Set(chart.slideChains.filter(chain => chain.independentTiming ||
+      chart.svItemIndices.has(chain.chartItemIndex)).map(chain => chain.identity));
     for (const chain of chart.slideChains) {
-      if (chain.connectionIdentities.every(id => !this.axisGroups.has(chart.nodeByIdentity.get(id)!.timingGroup))) {
+      if (!chart.svItemIndices.has(chain.chartItemIndex)) {
         this.firstLinearChainPosition.set(chain.identity, chain.connectionIdentities.reduce(
           (first, id) => Math.min(first, chart.nodeByIdentity.get(id)!.absolutePosition), Infinity));
       }

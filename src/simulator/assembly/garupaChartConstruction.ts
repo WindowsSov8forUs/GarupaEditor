@@ -39,8 +39,12 @@ import {
 } from "../engine/garupa/productChartProfile";
 import {
   createGarupaProductTimingGroupAxisProfile,
+  mergeTimingGroupChanges,
   registerGarupaProductTimingGroupAxisProfile,
+  timingGroupAxisAffectsNote,
+  type GarupaProductAxisChange,
 } from "../engine/garupa/timingGroupAxis";
+import { MANUAL_MISS_SECONDS } from "../engine/data/manualJudgement";
 
 export const GARUPA_JSON_POSITION_UNITS_PER_BEAT = 48;
 const POSITION_UNITS_PER_BAR = 192;
@@ -80,12 +84,19 @@ interface NoteKinds {
   readonly after: AfterNoteTypeValue;
 }
 
+/** `noteArrivalSeconds` is this session's GetNoteArrivalSeconds value; it bounds
+ * the time a note can be visible when deciding whether SV changes its motion. */
 export function constructChartFromGarupaChartJson(
   chart: GarupaChartJson,
+  noteArrivalSeconds: number,
 ): SimulatorResult<ChartConstructionResult> {
+  if (!Number.isFinite(noteArrivalSeconds) || noteArrivalSeconds <= 0) {
+    return integrityFailure("simulator.garupa-json.invalid-note-arrival",
+      "Chart construction requires the session's positive finite note arrival seconds.");
+  }
   const tempo = buildSignedTempo(chart);
   if (tempo.status !== "ok") return tempo;
-  const profile = buildGarupaProductChartProfile(chart, tempo.value);
+  const profile = buildGarupaProductChartProfile(chart, tempo.value, noteArrivalSeconds);
   if (profile.status !== "ok") return profile;
   const originalSources = new Map<string, NoteInformation>();
   const extensions = Object.freeze({ ...profile.value, originalSources });
@@ -105,7 +116,8 @@ export function constructChartFromGarupaChartJson(
     }
   }
   const bound = freezeGarupaProductChartProfile({
-    originalItemIndices: extensions.originalItemIndices, svEvents: [...projectedProfile.svEvents],
+    originalItemIndices: extensions.originalItemIndices, svItemIndices: extensions.svItemIndices,
+    svEvents: [...projectedProfile.svEvents],
     slideChains: [...extensions.slideChains],
     nodes: extensions.authoredNodes.map(node => {
       const root = roots.get(node.chartItemIndex);
@@ -312,6 +324,7 @@ function constructGarupaNoteGraphs(
 function buildGarupaProductChartProfile(
   chart: GarupaChartJson,
   tempo: SignedTempo,
+  noteArrivalSeconds: number,
 ): SimulatorResult<GarupaProductChartProfile> {
   const svEvents: GarupaProductSvEvent[] = [];
   const nodes: GarupaProductNode[] = [];
@@ -389,25 +402,44 @@ function buildGarupaProductChartProfile(
   }
 
   // A group name or a neutral SV does not change note behaviour. Only notes
-  // whose own geometry, topology or effective axis needs an extension use it.
-  const needsAxisExtension = (group: GarupaProductTimingGroupId): boolean =>
-    svEvents.some((event) => (event.timingGroup === "#Global" || event.timingGroup === group) && event.value !== 1);
+  // whose own geometry, topology or effective axis needs an extension use it;
+  // SV affects a node only if it can change that node's visible motion.
+  const changesByGroup = new Map<GarupaProductTimingGroupId, readonly GarupaProductAxisChange[]>();
+  const groupChanges = (group: GarupaProductTimingGroupId): SimulatorResult<readonly GarupaProductAxisChange[]> => {
+    const cached = changesByGroup.get(group);
+    if (cached !== undefined) return ok(cached);
+    const changes = mergeTimingGroupChanges(svEvents, group, (event) => ok(tempo.secondsAt(event.absolutePosition) * 1000));
+    if (changes.status === "ok") changesByGroup.set(group, changes.value);
+    return changes;
+  };
+  const svItemIndices = new Set<number>();
+  for (const [index, item] of chart.entries()) {
+    if (item.type === "BPM" || item.type === "SV") continue;
+    const owner = productTimingGroup(item.timingGroup);
+    for (const node of item.type === "Slide" ? item.connections : [item]) {
+      const changes = groupChanges(node.timingGroup === undefined ? owner : productTimingGroup(node.timingGroup));
+      if (changes.status !== "ok") return changes;
+      if (timingGroupAxisAffectsNote(changes.value, tempo.secondsAt(node.beat * GARUPA_JSON_POSITION_UNITS_PER_BEAT) * 1000,
+        noteArrivalSeconds * 1000, MANUAL_MISS_SECONDS * 1000)) {
+        svItemIndices.add(index);
+        break;
+      }
+    }
+  }
   const independentItems = new Set(slideChains.filter(chain => chain.independentTiming).map(chain => chain.chartItemIndex));
   const originalItemIndices = new Set<number>();
   for (const [index, item] of chart.entries()) {
     if (item.type === "BPM" || item.type === "SV") continue;
-    const group = productTimingGroup(item.timingGroup);
     const compatible = item.type === "Slide"
       ? item.connections.slice(0, -1).every(node => node.type !== "Flick" && node.type !== "Directional") &&
         item.connections[0]!.type !== "Hidden" && item.connections[item.connections.length - 1]!.type !== "Hidden" &&
-        item.connections.every((node) =>
-          canUseFixedLaneGeometry(node) && !needsAxisExtension(
-            node.timingGroup === undefined ? group : productTimingGroup(node.timingGroup)))
-      : canUseFixedLaneGeometry(item) && !needsAxisExtension(group);
-    if (compatible && !independentItems.has(index)) originalItemIndices.add(index);
+        item.connections.every(canUseFixedLaneGeometry)
+      : canUseFixedLaneGeometry(item);
+    if (compatible && !independentItems.has(index) && !svItemIndices.has(index)) originalItemIndices.add(index);
   }
   return ok(freezeGarupaProductChartProfile({
     originalItemIndices,
+    svItemIndices,
     svEvents,
     nodes,
     slideChains: slideChains.filter((chain) => !originalItemIndices.has(chain.chartItemIndex)),

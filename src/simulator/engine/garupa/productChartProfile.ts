@@ -53,6 +53,8 @@ export interface GarupaProductSlideChain {
 
 export interface GarupaProductChartProfile {
   readonly originalItemIndices: ReadonlySet<number>;
+  /** Chart items whose SV axis can differ from the original linear motion. */
+  readonly svItemIndices: ReadonlySet<number>;
   readonly hasExtensions: boolean;
   readonly originalSources: ReadonlyMap<string, NoteInformation>;
   readonly originalSourceOrder: WeakMap<NoteInformation, number>;
@@ -82,6 +84,7 @@ export function getGarupaProductChartProfile(
 
 export function freezeGarupaProductChartProfile(input: {
   readonly originalItemIndices: ReadonlySet<number>;
+  readonly svItemIndices: ReadonlySet<number>;
   readonly svEvents: GarupaProductSvEvent[];
   readonly nodes: GarupaProductNode[];
   readonly slideChains: GarupaProductSlideChain[];
@@ -104,6 +107,7 @@ export function freezeGarupaProductChartProfile(input: {
   })));
   return Object.freeze({
     originalItemIndices: input.originalItemIndices,
+    svItemIndices: input.svItemIndices,
     originalSources: new Map(),
     originalSourceOrder: new WeakMap(),
     authoredNodes,

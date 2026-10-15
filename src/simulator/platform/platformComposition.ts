@@ -70,6 +70,8 @@ import { createOriginalSurfaceLayout } from "../scene/originalSurfaceLayout";
 import type { PauseControlSceneSnapshot } from "../scene/pauseControlScene";
 import { validateConstructedChartCapabilities } from "../assembly/chartCapabilityValidation";
 import { constructChartFromGarupaChartJson } from "../assembly/garupaChartConstruction";
+import { createRenderFloat32 } from "../backends/renderingValidation";
+import { getOrdinaryNoteArrivalSeconds } from "../engine/rendering/ordinaryNoteGeometry";
 import { assembleSimulatorResources } from "../assembly/resourceAssembly";
 import { deriveSessionMvResource } from "../assembly/sessionMvDerivation";
 import type {
@@ -244,8 +246,14 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
         )]);
       }
     };
+    const speed = createRenderFloat32(Math.fround(recipe.request.config.visual.specificSpeed));
+    const arrival = speed.status === "ok" ? getOrdinaryNoteArrivalSeconds(speed.value) : speed;
+    if (arrival.status !== "ok") {
+      return rejectedWithCleanup(fromIntegrity(arrival), releasePendingMovie());
+    }
     const chart = constructChartFromGarupaChartJson(
       recipe.request.chartData.chart,
+      arrival.value.value,
     );
     if (chart.status !== "ok") {
       return rejectedWithCleanup(fromIntegrity(chart), releasePendingMovie());

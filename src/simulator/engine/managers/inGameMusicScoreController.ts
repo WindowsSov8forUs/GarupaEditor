@@ -51,9 +51,8 @@ export class InGameMusicScoreController {
     this.signedTempo = getSignedTempo(chart);
     const profile = getGarupaProductChartProfile(chart);
     const axisSources = new Set<NoteInformation>();
-    const axisGroups = new Set(profile?.svEvents.filter(event => event.value !== 1).map(event => event.timingGroup));
     for (const node of profile?.nodes ?? []) {
-      if (axisGroups.has("#Global") || axisGroups.has(node.timingGroup)) {
+      if (profile!.svItemIndices.has(node.chartItemIndex)) {
         for (const source of node.runtimeMembers ?? []) axisSources.add(source);
       }
     }
