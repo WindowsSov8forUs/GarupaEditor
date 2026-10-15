@@ -629,7 +629,7 @@ export class InGameOneFrameJudgementController {
       !Number.isInteger(request.rawTiming) ||
       request.rawTiming < JudgeTiming.None ||
       request.rawTiming > JudgeTiming.Slow ||
-      !isOwnedDamageDivisor(source, request) ||
+      !isOwnedDamageDivisor(source, request, ownership) ||
       (request.rawResult === NoteResultType.Perfect && request.rawTiming !== JudgeTiming.None) ||
       (request.rawResult >= NoteResultType.Bad &&
         request.rawResult <= NoteResultType.Great &&
@@ -668,10 +668,13 @@ function judgementDirectionalCount(request: AutoLiveJudgementRequest | ManualJud
 function isOwnedDamageDivisor(
   source: ManualJudgementRequest["noteInformation"],
   request: ManualJudgementRequest,
+  ownership: ManualJudgementOwnership,
 ): boolean {
   if (request.damageDivisor === undefined) return true;
-  return request.rawResult === NoteResultType.Miss && request.damageDivisor === 2 &&
-    source.fireNoteType === FrontNoteType.Long && request.noteType === 1;
+  if (request.rawResult !== NoteResultType.Miss) return false;
+  return request.damageDivisor === 2
+    ? source.fireNoteType === FrontNoteType.Long && request.noteType === 1
+    : request.damageDivisor === 5 && ownership.slidePhase === "intermediate";
 }
 
 function isClosedManualRequest(

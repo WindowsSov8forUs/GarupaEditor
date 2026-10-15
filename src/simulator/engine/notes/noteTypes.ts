@@ -1482,13 +1482,16 @@ export class NoteSlide extends NoteFrontBase {
     if (current.source.isInvisible) return ok({ judgementPlan: null, familyData: {
       currentIndex: current.sourceIndex, advanceHidden: true, nextOrigin, nextGrace,
     } });
+    const phase = current.sourceIndex === -1 ? "head" : current.isTerminal ? "tail" : "intermediate";
     const reserved = input.judgementTransaction.preflight({
       noteInformation: current.source,
-      phase: current.sourceIndex === -1 ? "head" : current.isTerminal ? "tail" : "intermediate",
+      phase,
       noteType,
       rawResult,
       rawTiming,
       absolutePosition: current.source.absolutePos,
+      // A non-end after node can only Miss through NoteSlide.onMiss.
+      ...(phase === "intermediate" && rawResult === NoteResultType.Miss ? { damageDivisor: 5 as const } : {}),
     });
     return reserved.status === "ok"
       ? ok(Object.freeze({
@@ -1846,13 +1849,16 @@ export class NoteSlide extends NoteFrontBase {
       if (!slideAfterTimeoutDue(over.value, adjusted, current.source.absolutePos,
         current.isTerminal, nextVisible?.source.absolutePos, nextStopped)) return ok(undefined);
     }
+    const scoringPhase = current.sourceIndex === -1 ? "head" : current.isTerminal ? "tail" : "intermediate";
     const submitted = runtime.value.submitJudgement({
       noteInformation: current.source,
-      phase: current.sourceIndex === -1 ? "head" : current.isTerminal ? "tail" : "intermediate",
+      phase: scoringPhase,
       noteType: current.source.slideGesture?.noteType ?? 8,
       rawResult: NoteResultType.Miss,
       rawTiming: JudgeTiming.None,
       absolutePosition: current.source.absolutePos,
+      // NoteSlide.onMiss divides damage by five for a non-end after node.
+      ...(scoringPhase === "intermediate" ? { damageDivisor: 5 as const } : {}),
     });
     if (submitted.status !== "ok") {
       return submitted;
