@@ -1110,7 +1110,7 @@ export class NoteManager {
           candidate !== root &&
           candidate.fireNoteType === FrontNoteType.LongMultipleDirectionalFlickAdd &&
           authoredEndpointPosition(candidate, true) === authoredEndpointPosition(root, true) &&
-          isSameDirectionalGroup(root, candidate)),
+          isDirectionalGroupMember(root, candidate)),
       ];
       if (members.length < 2) {
         return integrityFailure(
@@ -1148,7 +1148,7 @@ export class NoteManager {
           candidate !== root &&
           candidate.fireNoteType === visualType &&
           authoredEndpointPosition(candidate, true) === authoredEndpointPosition(root, true) &&
-          isSameDirectionalGroup(root, candidate)),
+          isDirectionalGroupMember(root, candidate)),
       ];
       if (members.length < 2) {
         return integrityFailure(
@@ -2343,6 +2343,13 @@ class MultipleDirectionalGroupOwner implements MultipleDirectionalRuntimeGroup {
     this.usedValue = true;
     return ok(undefined);
   }
+}
+
+/** The native side chain is contiguous; explicit members name that chain directly. */
+function isDirectionalGroupMember(root: NoteInformation, candidate: NoteInformation): boolean {
+  return root.directionalMemberRootIndex === undefined
+    ? isSameDirectionalGroup(root, candidate)
+    : candidate.directionalMemberRootIndex === root.directionalMemberRootIndex;
 }
 
 function directionalGroupSpan(group: MultipleDirectionalRuntimeGroup | undefined) {

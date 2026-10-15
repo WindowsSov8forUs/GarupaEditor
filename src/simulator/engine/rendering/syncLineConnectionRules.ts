@@ -44,10 +44,8 @@ export class SyncLineConnectionRules<T extends { readonly noteInformation: Direc
       matches = (after === AfterNoteType.SlideMultipleDirectionalFlickLeft && target.gameNoteType === left) ||
         (after === AfterNoteType.SlideMultipleDirectionalFlickRight && target.gameNoteType === left + 1);
     }
-    if (source.directionalMemberRootIndex !== undefined || target.directionalMemberRootIndex !== undefined) {
-      if (source.directionalMemberRootIndex !== target.directionalMemberRootIndex) return false;
-      if (maxRange === 2) return matches;
-    }
+    if ((source.directionalMemberRootIndex !== undefined || target.directionalMemberRootIndex !== undefined) &&
+      source.directionalMemberRootIndex !== target.directionalMemberRootIndex) return false;
     const difference = source.directionalMemberRootIndex === undefined
       ? directionalEndpointLane(source) - frontEndpointLane(target)
       : source.directionalMemberOffset! - target.directionalMemberOffset!;
