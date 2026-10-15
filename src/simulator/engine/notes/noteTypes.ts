@@ -2357,45 +2357,6 @@ export class NoteMultipleDirectionalFlick extends NoteDirectionalFlick {
     return 10;
   }
 
-  override preflightManualTouchBegan(
-    input: ManualNoteTouchInput,
-  ): SimulatorResult<ManualNoteBeganPlan> {
-    const group = this.groupValue;
-    if (group?.isUsed) {
-      return integrityFailure(
-        "manual.multiple-directional-group-already-used",
-        "A consumed Multiple Directional side owner cannot accept another Began.",
-      );
-    }
-    const basePlan = super.preflightManualTouchBegan(input);
-    if (basePlan.status !== "ok" || basePlan.value.outcome === "none") {
-      return basePlan;
-    }
-    if (group === null) {
-      return integrityFailure(
-        "manual.multiple-directional-runtime-unavailable",
-        "Multiple Directional Began requires its registered group owner.",
-      );
-    }
-    const fingerOwner = group.preflightManualFinger(
-      input.judgementTransaction,
-      input.fingerId,
-    );
-    return fingerOwner.status === "ok" ? basePlan : fingerOwner;
-  }
-
-  override commitManualTouchBegan(
-    input: ManualNoteTouchInput,
-    plan: ManualNoteBeganPlan,
-  ): void {
-    const group = this.groupValue;
-    if (group === null) {
-      throw new Error("Multiple Directional Began commit lost its group owner");
-    }
-    group.commitManualFinger(input.judgementTransaction, input.fingerId);
-    super.commitManualTouchBegan(input, plan);
-  }
-
   override preflightManualTouchMoved(
     input: ManualNoteTouchInput,
   ): SimulatorResult<ManualNoteContinuationPlan> {
@@ -2410,17 +2371,14 @@ export class NoteMultipleDirectionalFlick extends NoteDirectionalFlick {
           )
         : runtime;
     }
-    if (group.isUsed) {
-      return integrityFailure(
-        "manual.multiple-directional-group-already-used",
-        "A consumed Multiple Directional side owner cannot produce a duplicate movement judgement.",
-      );
-    }
+    const noJudgement = ok(Object.freeze({ judgementPlan: null, familyData: Object.freeze({ complete: false }) }));
+    // Touches run in order; a side note whose group was judged earlier no longer judges.
+    if (group.isUsed) return noJudgement;
     const movement = hasFlickMovement(runtime.value.geometry, input.beganPosition, input.currentPosition,
       information.gameNoteType === GameNoteType.DirectionalFlickLeft ? "Left" : "Right", group.count);
     if (movement.status !== "ok") return movement;
-    return movement.value ? this.reserveSuccessfulManualMove(input, group.count)
-      : ok(Object.freeze({ judgementPlan: null, familyData: Object.freeze({ complete: false }) }));
+    return movement.value && group.reserveUse(input.judgementTransaction)
+      ? this.reserveSuccessfulManualMove(input, group.count) : noJudgement;
   }
 
   override commitManualTouchMoved(
@@ -2482,6 +2440,15 @@ export class NoteMultipleDirectionalFlick extends NoteDirectionalFlick {
       return this.changeState(NoteState.Deactive);
     }
     return super.moveState(deltaTimeSeconds);
+  }
+
+  /** Move/WaitState deactivate a side note once its group has been judged. */
+  protected override waitState(deltaTimeSeconds: number): SimulatorResult<void> {
+    const group = this.groupValue;
+    if (group?.isUsed) {
+      return this.changeState(NoteState.Deactive);
+    }
+    return super.waitState(deltaTimeSeconds);
   }
 
   /** NoteMultipleDirectionalFlick.onMiss judges the connected group once. */
@@ -2575,10 +2542,7 @@ export class NoteMultipleDirectionalFlick extends NoteDirectionalFlick {
   }
 
   protected override onDeactivated(): void {
-    const group = this.groupValue;
-    const fingerId = this.fingerId;
     super.onDeactivated();
-    group?.clearManualFinger(fingerId);
     this.groupValue = null;
   }
 

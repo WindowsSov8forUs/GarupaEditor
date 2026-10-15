@@ -2308,8 +2308,7 @@ function manualLongAfterNoteType(afterNoteType: number): 2 | 5 | 6 | 7 | null {
 
 class MultipleDirectionalGroupOwner implements MultipleDirectionalRuntimeGroup {
   private usedValue = false;
-  private activeManualFingerId = -1;
-  private readonly projectedManualFingers = new WeakMap<object, number>();
+  private readonly reservedTransactions = new WeakSet<object>();
   readonly members: readonly NoteInformation[];
   readonly count: number;
   readonly buttonTypes: readonly ButtonTypeValue[];
@@ -2328,38 +2327,10 @@ class MultipleDirectionalGroupOwner implements MultipleDirectionalRuntimeGroup {
     return this.usedValue;
   }
 
-  preflightManualFinger(transaction: object, fingerId: number): SimulatorResult<void> {
-    const projectedFinger = this.projectedManualFingers.get(transaction) ?? -1;
-    if (
-      this.usedValue ||
-      (this.activeManualFingerId >= 0 && this.activeManualFingerId !== fingerId) ||
-      (projectedFinger >= 0 && projectedFinger !== fingerId)
-    ) {
-      return integrityFailure(
-        "manual.multiple-directional-finger-owner-conflict",
-        "A Multiple Directional group accepts one owner finger before side consumption.",
-      );
-    }
-    this.projectedManualFingers.set(transaction, fingerId);
-    return ok(undefined);
-  }
-
-  commitManualFinger(transaction: object, fingerId: number): void {
-    if (
-      this.projectedManualFingers.get(transaction) !== fingerId ||
-      (this.activeManualFingerId >= 0 && this.activeManualFingerId !== fingerId) ||
-      this.usedValue
-    ) {
-      throw new Error("Multiple Directional manual finger owner changed after preflight");
-    }
-    this.activeManualFingerId = fingerId;
-    this.projectedManualFingers.delete(transaction);
-  }
-
-  clearManualFinger(fingerId: number): void {
-    if (this.activeManualFingerId === fingerId) {
-      this.activeManualFingerId = -1;
-    }
+  reserveUse(transaction: object): boolean {
+    if (this.usedValue || this.reservedTransactions.has(transaction)) return false;
+    this.reservedTransactions.add(transaction);
+    return true;
   }
 
   markUsed(): SimulatorResult<void> {

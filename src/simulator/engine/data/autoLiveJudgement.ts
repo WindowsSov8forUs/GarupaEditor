@@ -19,9 +19,8 @@ export interface MultipleDirectionalRuntimeGroup {
   readonly count: number;
   readonly buttonTypes: readonly ButtonTypeValue[];
   readonly isUsed: boolean;
-  preflightManualFinger(transaction: object, fingerId: number): import("../result").SimulatorResult<void>;
-  commitManualFinger(transaction: object, fingerId: number): void;
-  clearManualFinger(fingerId: number): void;
+  /** Reserves the single group judgement within one input transaction. */
+  reserveUse(transaction: object): boolean;
   markUsed(): import("../result").SimulatorResult<void>;
 }
 
