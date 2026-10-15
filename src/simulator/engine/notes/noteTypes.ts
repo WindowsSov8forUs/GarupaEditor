@@ -697,6 +697,8 @@ export class NoteLong extends NoteFrontBase {
     if (over.status !== "ok" || (!over.value && !runtime.value.isStartupExpired?.(information.absolutePos))) {
       return over.status === "ok" ? ok(undefined) : over;
     }
+    // execOverWaitState splits one Miss damage into two onMiss frames; the two
+    // frames account for the head and tail of the Long note.
     const transaction = runtime.value.beginJudgementTransaction();
     const request = Object.freeze({
       noteInformation: information,
@@ -705,13 +707,18 @@ export class NoteLong extends NoteFrontBase {
       rawResult: NoteResultType.Miss,
       rawTiming: JudgeTiming.None,
       absolutePosition: information.absolutePos,
+      damageDivisor: 2 as const,
     });
     const first = transaction.preflight(request);
     if (first.status !== "ok") {
       transaction.abort();
       return first;
     }
-    const second = transaction.preflight(request);
+    const second = transaction.preflight({
+      ...request,
+      phase: "tail",
+      absolutePosition: information.afterNoteAbsolutePos,
+    });
     if (second.status !== "ok") {
       transaction.abort();
       return second;

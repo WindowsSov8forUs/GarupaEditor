@@ -586,6 +586,7 @@ export class InGameOneFrameJudgementController {
           ? JudgeTiming.None
           : request.rawTiming,
       multipleDirectionalFlickNoteCount: judgementDirectionalCount(request, ownership),
+      ...(request.damageDivisor === undefined ? {} : { damageDivisor: request.damageDivisor }),
     });
     const business = this.businessOwner?.(judgement, request.noteInformation) ?? null;
     if (business?.status === "integrity-failure") return business;
@@ -628,6 +629,7 @@ export class InGameOneFrameJudgementController {
       !Number.isInteger(request.rawTiming) ||
       request.rawTiming < JudgeTiming.None ||
       request.rawTiming > JudgeTiming.Slow ||
+      !isOwnedDamageDivisor(source, request) ||
       (request.rawResult === NoteResultType.Perfect && request.rawTiming !== JudgeTiming.None) ||
       (request.rawResult >= NoteResultType.Bad &&
         request.rawResult <= NoteResultType.Great &&
@@ -661,6 +663,15 @@ function judgementDirectionalCount(request: AutoLiveJudgementRequest | ManualJud
   return request.noteType === 7 && ownership?.slidePhase === "tail"
     ? ownership.judgementLaneSpan?.width ?? ownership.slideButtonTypes!.length
     : request.multipleDirectionalFlickNoteCount ?? 0;
+}
+
+function isOwnedDamageDivisor(
+  source: ManualJudgementRequest["noteInformation"],
+  request: ManualJudgementRequest,
+): boolean {
+  if (request.damageDivisor === undefined) return true;
+  return request.rawResult === NoteResultType.Miss && request.damageDivisor === 2 &&
+    source.fireNoteType === FrontNoteType.Long && request.noteType === 1;
 }
 
 function isClosedManualRequest(
@@ -711,6 +722,14 @@ function isClosedManualRequest(
     }
     const longButtons = ownership.longAfterButtonTypes;
     const expectedLongCount = ownership.longAfterMultipleCount;
+    // NoteLong Miss frames use GameNoteType 1 for every after-note family.
+    if (request.noteType === 1) {
+      return request.rawResult === NoteResultType.Miss &&
+        request.absolutePosition === ownership.longAfterAbsolutePosition &&
+        Array.isArray(longButtons) &&
+        longButtons.length > 0 &&
+        request.multipleDirectionalFlickNoteCount === undefined;
+    }
     return request.noteType === ownership.longAfterNoteType &&
       request.absolutePosition === ownership.longAfterAbsolutePosition &&
       Array.isArray(longButtons) &&

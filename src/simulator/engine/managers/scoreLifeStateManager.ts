@@ -147,11 +147,14 @@ export class ScoreLifeStateManager {
       this.profile.mode.isAutoPlay,
     );
     if (contribution.status !== "ok") return contribution;
-    const addPower = adjustedResult === 0
+    const damage = adjustedResult === 0
       ? this.profile.life.missDamage
       : adjustedResult === 1
       ? this.profile.life.badDamage
       : 0;
+    // Native Int32 division truncates the split Miss damage toward zero.
+    const divisor = "damageDivisor" in judgement ? judgement.damageDivisor : undefined;
+    const addPower = divisor === undefined || damage === 0 ? damage : Math.trunc(damage / divisor);
     return ok(Object.freeze({
       scoringUnitId: unit.value.id,
       scoringUnitOrdinal: unit.value.ordinal,

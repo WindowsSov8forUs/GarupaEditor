@@ -32,6 +32,7 @@ export interface ManualJudgementData {
   readonly absolutePosition: number;
   readonly judgeTiming: 0 | 1 | 2;
   readonly multipleDirectionalFlickNoteCount: number;
+  readonly damageDivisor?: 2;
 }
 
 export interface OneFrameBusinessData {

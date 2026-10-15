@@ -68,6 +68,8 @@ export interface ManualJudgementRequest {
   readonly rawTiming: JudgeTimingValue;
   readonly absolutePosition: number;
   readonly multipleDirectionalFlickNoteCount?: number;
+  /** Miss damage divisor of NoteLong.execOverWaitState. */
+  readonly damageDivisor?: 2;
 }
 
 export interface ManualJudgementOwnership {
