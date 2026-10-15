@@ -289,14 +289,15 @@ function resolveBindings(
     left = directionalAssets?.get("FlickNoteLine_l") ?? "";
     right = directionalAssets?.get("FlickNoteLine_r") ?? "";
     const judge = judgeAssets?.get("Judge") ?? "";
+    // Atlas ownership of the original HABAHIRO note package Sprites.
     const habahiro = {
-      normal: noteAssets?.get("RhythmGameSprites1") ?? "",
+      normal: noteAssets?.get("RhythmGameSprites4") ?? "",
       normal16: noteAssets?.get("RhythmGameSprites16") ?? "",
-      skill: noteAssets?.get("RhythmGameSprites2") ?? "",
-      flick: noteAssets?.get("RhythmGameSprites3") ?? "",
-      long: noteAssets?.get("RhythmGameSprites4") ?? "",
-      longFlash: noteAssets?.get("RhythmGameSprites5") ?? "",
-      slideAmong: noteAssets?.get("RhythmGameSprites1") ?? "",
+      skill: noteAssets?.get("RhythmGameSprites5") ?? "",
+      flick: noteAssets?.get("RhythmGameSprites1") ?? "",
+      long: noteAssets?.get("RhythmGameSprites2") ?? "",
+      longFlash: noteAssets?.get("RhythmGameSprites3") ?? "",
+      slideAmong: noteAssets?.get("RhythmGameSprites2") ?? "",
     };
     const beforeFieldAssets = assets.get("ingameskin/fieldskin/skin00");
     const afterFieldAssets = assets.get("ingameskin/fieldskin/habahiro");
