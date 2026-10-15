@@ -18,11 +18,12 @@ type SongInformationPageProps = {
   onCoverUpload: ChangeEventHandler<HTMLInputElement>;
   onMvUpload: ChangeEventHandler<HTMLInputElement>;
   optionSettings: EditorOptionSettings;
+  habahiro: boolean;
   onError(message: string): void;
 };
 
 export function SongInformationPage({ audioDurationSec, noteCount, notes, slideChains, metadata, mediaSources,
-  setMetadata, onCoverUpload, onMvUpload, optionSettings, onError }: SongInformationPageProps) {
+  setMetadata, onCoverUpload, onMvUpload, optionSettings, habahiro, onError }: SongInformationPageProps) {
   const coverInput = useRef<HTMLInputElement>(null);
   const mvInput = useRef<HTMLInputElement>(null);
   const noteCounts = useMemo(() => countSongNoteKinds(notes, slideChains), [notes, slideChains]);
@@ -58,7 +59,7 @@ export function SongInformationPage({ audioDurationSec, noteCount, notes, slideC
           mv={mediaSources.mv}
           onChangeMv={() => mvInput.current?.click()}
           noteStatistics={(expanded, onExpandedChange) => <SongNoteStatisticsPage counts={noteCounts}
-            settings={optionSettings} onError={onError} expanded={expanded} onExpandedChange={onExpandedChange} />}
+            settings={optionSettings} habahiro={habahiro} onError={onError} expanded={expanded} onExpandedChange={onExpandedChange} />}
           isFullLength={metadata.isFullLength}
           onFullLengthChange={isFullLength => setMetadata(current => ({ ...current, isFullLength }))}
           onLevelChange={difficultyLevel => setMetadata(current => current.difficultyLevel === difficultyLevel

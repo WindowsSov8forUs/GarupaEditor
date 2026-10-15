@@ -3,6 +3,7 @@ import {
   normalizeNoteTimingGroup,
   normalizeTimingGroup,
   type ChartNote,
+  type ChartSettings,
   type ChartSvEvent,
   type ChartTimingGroupMap,
   type EditorOptionSettings,
@@ -46,14 +47,15 @@ function degradeDirectionalToFlick(note: ChartNote): ChartNote {
   };
 }
 
-type ModeOptionInput = Pick<EditorOptionSettings, "spRhythmNoteEnabled" | "habahiro" | "exGarupaEnabled">;
+type ModeOptionInput = Pick<EditorOptionSettings, "spRhythmNoteEnabled" | "exGarupaEnabled">;
 
 export function canUseSpRhythm(options: Pick<ModeOptionInput, "spRhythmNoteEnabled">): boolean {
   return options.spRhythmNoteEnabled === true;
 }
 
-export function canUseHabahiro(options: Pick<ModeOptionInput, "habahiro">): boolean {
-  return options.habahiro === true;
+/** HABAHIRO is a chart header, not an application option. */
+export function canUseHabahiro(settings: Pick<ChartSettings, "habahiro">): boolean {
+  return settings.habahiro === true;
 }
 
 export function canUseExGarupa(options: Pick<ModeOptionInput, "exGarupaEnabled">): boolean {

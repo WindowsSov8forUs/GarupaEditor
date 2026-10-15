@@ -1,4 +1,5 @@
 import { GLOBAL_TIMING_GROUP_ID, sortNotes, sortBpmEvents, sortSvEvents, type ChartNote } from "../chartCore";
+import { GARUPA_HEADER_HABAHIRO, GARUPA_SYSTEM_LANE_CHANGE } from "../chart";
 import type { GarupaChartJson, GarupaChartJsonSlideConnection, GarupaChartJsonTopLevelNote } from "../chart";
 import type { ChartProjectDraft } from "./chartProject";
 
@@ -31,8 +32,12 @@ export function projectGarupaChart(project: Pick<ChartProjectDraft, "metadata" |
     });
     return { type: "Slide" as const, timingGroup: group(chain.timingGroup), connections };
   });
+  const settings = chart.settings;
   return [
     { type: "BPM", beat: 0, value: metadata.bpm },
+    ...(settings.habahiro === true ? [{ type: "Header" as const, data: GARUPA_HEADER_HABAHIRO }] : []),
+    ...(settings.habahiro === true && settings.laneChangeBeat !== undefined
+      ? [{ type: "System" as const, beat: settings.laneChangeBeat, data: GARUPA_SYSTEM_LANE_CHANGE }] : []),
     ...sortBpmEvents(chart.bpmEvents).filter(b => b.beat !== 0).map(b => ({ type: "BPM" as const, beat: b.beat, value: b.bpm })),
     ...sortSvEvents(Object.values(chart.timingGroups).flatMap(g => g.sv)).map(e => ({ type: "SV" as const,
       beat: e.beat, value: e.value, timingGroup: e.timingGroup })),

@@ -101,7 +101,10 @@ export function validateProject(value: unknown): asserts value is ChartProject {
     && ["EASY", "NORMAL", "HARD", "EXPERT", "SPECIAL"].includes(m.difficulty)
     && typeof m.isFullLength === "boolean" && [m.bpm, m.offsetMs, m.mvOffsetMs].every(finite) && m.bpm > 0, "元信息");
   requireValue(record(c) && record(c.settings) && [c.settings.laneCount, c.settings.timeSignatureNumerator,
-    c.settings.timeSignatureDenominator].every(n => finite(n) && n > 0), "谱面设置");
+    c.settings.timeSignatureDenominator].every(n => finite(n) && n > 0)
+    && (c.settings.habahiro === undefined || c.settings.habahiro === true)
+    && (c.settings.laneChangeBeat === undefined
+      || (c.settings.habahiro === true && finite(c.settings.laneChangeBeat) && c.settings.laneChangeBeat >= 0)), "谱面设置");
   requireValue(Array.isArray(c.notes) && Array.isArray(c.slideChains) && Array.isArray(c.bpmEvents)
     && record(c.timingGroups), "谱面结构");
   const unique = (items: any[], label: string) => {

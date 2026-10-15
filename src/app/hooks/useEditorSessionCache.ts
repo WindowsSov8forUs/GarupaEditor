@@ -470,7 +470,7 @@ export function useEditorSessionCache(params: any) {
             ? ensureTimingGroups(snapshot.timingGroups)
             : buildTimingGroupsFromSvEvents(sortedNormalizedSvEvents);
 
-          const restoredNotes = restoredAppOptionSettings.habahiro
+          const restoredNotes = nextSettings.habahiro === true
             ? applyHabahiroSlideWidths(nextNotes, nextSlideChains)
             : nextNotes;
 

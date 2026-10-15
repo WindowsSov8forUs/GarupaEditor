@@ -85,7 +85,6 @@ function normalizeOptionDraft(value: EditorOptionSettings): EditorOptionSettings
   return {
     ...value,
     clickEffectEnabled: typeof value.clickEffectEnabled === "boolean" ? value.clickEffectEnabled : true,
-    habahiro: typeof value.habahiro === "boolean" ? value.habahiro : false,
     exGarupaEnabled: typeof value.exGarupaEnabled === "boolean" ? value.exGarupaEnabled : true,
     mirrorEnabled: typeof value.mirrorEnabled === "boolean" ? value.mirrorEnabled : false,
     spRhythmNoteEnabled:
@@ -761,23 +760,6 @@ export function EditorSettingsModal({
                             />
                             <span className="ui-checkbox-box" aria-hidden="true" />
                             <span className="ui-checkbox-text">SP节奏图示</span>
-                          </label>
-
-                          <label className="ui-checkbox">
-                            <input
-                              type="checkbox"
-                              className="ui-checkbox-input"
-                              checked={draftOptionSettings.habahiro}
-                              onChange={(event) => {
-                                const checked = event.currentTarget.checked;
-                                setDraftOptionSettings((previous) => ({
-                                  ...previous,
-                                  habahiro: checked,
-                                }));
-                              }}
-                            />
-                            <span className="ui-checkbox-box" aria-hidden="true" />
-                            <span className="ui-checkbox-text">2026愚人节</span>
                           </label>
 
                           <label className="ui-checkbox">

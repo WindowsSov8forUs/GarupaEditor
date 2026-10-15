@@ -63,11 +63,9 @@ import {
   canUseExGarupa,
   canUseHabahiro,
   canUseSpRhythm,
-  isChartUsingHabahiro,
   isChartUsingExGarupa,
   isChartUsingSpRhythm,
   regressChartWithoutExGarupa,
-  regressChartWithoutHabahiro,
   regressChartWithoutSpRhythm,
   type ChartStateLike,
 } from "./modeChartRegression";
@@ -576,7 +574,7 @@ function ChartEditorController() {
   const svPreviewTimeSecRef = useRef(0);
   const [copiedChartPayload, setCopiedChartPayload] = useState<CopiedChartPayload | null>(null);
   const canUseSpRhythmMode = canUseSpRhythm(appOptionSettings);
-  const isHabahiroEnabled = canUseHabahiro(appOptionSettings);
+  const isHabahiroEnabled = canUseHabahiro(settings);
   const isExGarupaEnabled = canUseExGarupa(appOptionSettings);
   const [cursorPreview, setCursorPreviewState] = useState<CursorPreviewState | null>(null);
   const [isPlayToolSelected, setIsPlayToolSelected] = useState(false);
@@ -4710,21 +4708,6 @@ function ChartEditorController() {
     });
   }, [openOverlayDialog]);
 
-  const requestHabahiroRegressionConfirm = useCallback(() => {
-    return new Promise<boolean>((resolve) => {
-      openOverlayDialog(
-        {
-          tone: "warning",
-          message: "关闭“2026愚人节”后将对当前谱面执行不可逆修改（所有非 Directional 音符宽度将回退为 1）。是否继续应用？",
-        },
-        {
-          onConfirm: () => resolve(true),
-          onCancel: () => resolve(false),
-        },
-      );
-    });
-  }, [openOverlayDialog]);
-
   const requestExGarupaRegressionConfirm = useCallback(() => {
     return new Promise<boolean>((resolve) => {
       openOverlayDialog(
@@ -4748,12 +4731,6 @@ function ChartEditorController() {
     const turningOffExGarupa =
       isExGarupaEnabled
       && normalizedNext.exGarupaEnabled === false;
-    const turningOnHabahiro =
-      !isHabahiroEnabled
-      && normalizedNext.habahiro === true;
-    const turningOffHabahiro =
-      isHabahiroEnabled
-      && normalizedNext.habahiro === false;
     let nextChartState: ChartStateLike = { notes, slideChains, svEvents, timingGroups };
     let shouldApplyRegressedChart = false;
 
@@ -4781,29 +4758,6 @@ function ChartEditorController() {
       shouldApplyRegressedChart = true;
     }
 
-    if (turningOffHabahiro) {
-      const chartUsesHabahiro = isChartUsingHabahiro(nextChartState);
-      if (chartUsesHabahiro) {
-        const confirmed = await requestHabahiroRegressionConfirm();
-        if (!confirmed) {
-          return false;
-        }
-      }
-      nextChartState = regressChartWithoutHabahiro(nextChartState);
-      shouldApplyRegressedChart = true;
-    }
-
-    if (turningOnHabahiro) {
-      const normalizedNotes = applyHabahiroSlideWidths(nextChartState.notes, nextChartState.slideChains);
-      if (!Object.is(normalizedNotes, nextChartState.notes)) {
-        nextChartState = {
-          ...nextChartState,
-          notes: normalizedNotes,
-        };
-        shouldApplyRegressedChart = true;
-      }
-    }
-
     if (shouldApplyRegressedChart) {
       setNotes(sortNotes(nextChartState.notes));
       setSlideChains(nextChartState.slideChains);
@@ -4819,31 +4773,15 @@ function ChartEditorController() {
       setIsTimingGroupPanelOpen(false);
     }
 
-    if (turningOnHabahiro || turningOffHabahiro) {
-      const nextSkinSelection = turningOnHabahiro
-        ? buildHabahiroSkinSelection()
-        : buildStandardRhythmSkinSelection();
-      syncingHabahiroSkinRef.current = true;
-      try {
-        await applyBestdoriSkinSelectionRef.current(nextSkinSelection, true, false);
-      } finally {
-        syncingHabahiroSkinRef.current = false;
-      }
-    }
-
     setAppOptionSettings(normalizedNext);
     setStatusMessage("已应用选项设置。");
     return true;
   }, [
     canUseSpRhythmMode,
-    isHabahiroEnabled,
     isExGarupaEnabled,
-    buildHabahiroSkinSelection,
-    buildStandardRhythmSkinSelection,
     clearAllSelections,
     normalizeEditorOptionSettings,
     notes,
-    requestHabahiroRegressionConfirm,
     requestExGarupaRegressionConfirm,
     requestSpRhythmRegressionConfirm,
     setStatusMessage,

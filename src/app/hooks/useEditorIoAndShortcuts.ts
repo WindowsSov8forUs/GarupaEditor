@@ -14,6 +14,7 @@ import {
   GLOBAL_TIMING_GROUP_ID,
   type ChartBpmEvent,
   type ChartMetadata,
+  type ChartSettings,
   type ChartNote,
   type ChartSvEvent,
   normalizeNoteTimingGroup,
@@ -38,6 +39,8 @@ import {
 import {
   convertBestdoriV2ToGarupaChartJson,
   convertGarupaChartJsonToBestdoriV2,
+  GARUPA_HEADER_HABAHIRO,
+  GARUPA_SYSTEM_LANE_CHANGE,
   type GarupaChartJsonDirection,
 } from "../../chart";
 import {
@@ -171,6 +174,7 @@ export function useEditorIoAndShortcuts(params: any) {
     openOverlayDialog,
     setNotes,
     setSlideChains,
+    setSettings,
     setMetadata,
     setBpmEvents,
     setTimingGroups,
@@ -894,6 +898,8 @@ export function useEditorIoAndShortcuts(params: any) {
     const nextSlideChains: Array<{ id: string; noteIds: string[]; timingGroup?: string }> = [];
     const rawBpmItems: ShiftedBpmItem[] = [];
     const rawSvItems: ShiftedSvItem[] = [];
+    let habahiroHeaderCount = 0;
+    const rawLaneChangeBeats: number[] = [];
 
     parsed.forEach((rawItem, itemIndex) => {
       if (!isRecord(rawItem)) {
@@ -954,6 +960,22 @@ export function useEditorIoAndShortcuts(params: any) {
         return;
       }
 
+      if (itemType === "Header") {
+        if (rawItem.beat !== undefined || rawItem.data !== GARUPA_HEADER_HABAHIRO) {
+          throw new Error(`item[${itemIndex}]: Header requires data ${GARUPA_HEADER_HABAHIRO} and no beat`);
+        }
+        habahiroHeaderCount += 1;
+        return;
+      }
+
+      if (itemType === "System") {
+        if (rawItem.data !== GARUPA_SYSTEM_LANE_CHANGE) {
+          throw new Error(`item[${itemIndex}].data is invalid: ${String(rawItem.data)}`);
+        }
+        rawLaneChangeBeats.push(parseBeatNumber(rawItem.beat, `item[${itemIndex}].beat`));
+        return;
+      }
+
       if (itemType === "Hidden") {
         throw new Error(`item[${itemIndex}]: Hidden is only allowed inside Slide.connections`);
       }
@@ -965,6 +987,16 @@ export function useEditorIoAndShortcuts(params: any) {
     if (rawBpmItems.length === 0) {
       throw new Error("Chart JSON must include at least one BPM item.");
     }
+    if (habahiroHeaderCount > 1) {
+      throw new Error(`Chart JSON allows at most one ${GARUPA_HEADER_HABAHIRO} Header.`);
+    }
+    if (rawLaneChangeBeats.length > 1) {
+      throw new Error(`Chart JSON allows at most one ${GARUPA_SYSTEM_LANE_CHANGE} System item.`);
+    }
+    if (rawLaneChangeBeats.length > 0 && habahiroHeaderCount === 0) {
+      throw new Error(`${GARUPA_SYSTEM_LANE_CHANGE} requires the ${GARUPA_HEADER_HABAHIRO} Header.`);
+    }
+    const chartHabahiro = habahiroHeaderCount === 1;
 
     const slideTopLevelConflictKeys = new Set(
       slideParsedNotes
@@ -1086,7 +1118,8 @@ export function useEditorIoAndShortcuts(params: any) {
 
     const shouldRegressExGarupaOnImport = !preserveForPlay && appOptionSettings.exGarupaEnabled === false;
     const shouldRegressSpRhythmOnImport = !preserveForPlay && appOptionSettings.spRhythmNoteEnabled === false;
-    const shouldRegressHabahiroOnImport = !preserveForPlay && appOptionSettings.habahiro === false;
+    // Wide notes belong to a chart only through its HABAHIRO header.
+    const shouldRegressHabahiroOnImport = !preserveForPlay && !chartHabahiro;
     const nextChartState = { notes: nextNotes, slideChains: nextSlideChains, svEvents: nextSvEvents };
     let regressedChartState: ChartStateLike = nextChartState;
     let regressedExGarupa = false;
@@ -1107,13 +1140,22 @@ export function useEditorIoAndShortcuts(params: any) {
     const importedSlideChains = regressedChartState.slideChains;
     const importedSvEvents = regressedChartState.svEvents ?? nextSvEvents;
     const importedNotes = sortNotes(
-      !preserveForPlay && appOptionSettings.habahiro
+      !preserveForPlay && chartHabahiro
         ? applyHabahiroSlideWidths(regressedChartState.notes, importedSlideChains)
         : regressedChartState.notes,
     );
 
     onNewProject(preserveForPlay);
     setMetadata(nextMetadata);
+    setSettings((current: ChartSettings) => ({
+      laneCount: current.laneCount,
+      timeSignatureNumerator: current.timeSignatureNumerator,
+      timeSignatureDenominator: current.timeSignatureDenominator,
+      ...(chartHabahiro ? {
+        habahiro: true as const,
+        ...(rawLaneChangeBeats.length === 0 ? {} : { laneChangeBeat: shiftAndClampBeat(rawLaneChangeBeats[0]!, beatOffset) }),
+      } : {}),
+    }));
     setNotes(importedNotes);
     setSlideChains(importedSlideChains);
     setBpmEvents(nextBpmEvents);
@@ -1144,7 +1186,7 @@ export function useEditorIoAndShortcuts(params: any) {
     appLog("info", "editor.chart.imported", { source: label, summary });
     const regressionNotices = [
       summary.regressedSpRhythm ? "已按当前模式自动执行去SP节奏图示回退。" : "",
-      summary.regressedHabahiro ? "已按当前模式自动执行去2026愚人节回退。" : "",
+      summary.regressedHabahiro ? "谱面无 #HABAHIRO 谱面头，已将非 Directional 宽音符回退为宽度 1。" : "",
     ].filter((message) => message.length > 0);
     const regressionNotice = regressionNotices.length > 0 ? ` ${regressionNotices.join(" ")}` : "";
     const needsOffsetNotice = !approxEq(summary.beatOffset, 0);

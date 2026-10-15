@@ -113,8 +113,8 @@ function NoteThumbnail({ resources, index, label, onError }: {
       zIndex: cell.components.get(11)!.data.mDepth }} />;
 }
 
-export function SongNoteStatisticsPage({ counts, settings, onError, expanded, onExpandedChange }: {
-  counts: readonly number[]; settings: EditorOptionSettings; onError(message: string): void;
+export function SongNoteStatisticsPage({ counts, settings, habahiro, onError, expanded, onExpandedChange }: {
+  counts: readonly number[]; settings: EditorOptionSettings; habahiro: boolean; onError(message: string): void;
   expanded: boolean; onExpandedChange(value: boolean): void;
 }) {
   const page = useMemo(() => {
@@ -137,8 +137,8 @@ export function SongNoteStatisticsPage({ counts, settings, onError, expanded, on
   const viewportTop = -(scrollTransform.y + panel.mClipRange.y + panel.mClipOffset.y + panel.mClipRange.w / 2);
   const rows = Math.ceil(counts.length / grid.data.maxPerLine);
   const contentHeight = -gridPosition.y + (rows - 1) * grid.data.cellHeight + countBox.y + countBox.height - viewportTop;
-  const recipe = useMemo(() => resolveOriginalPreviewSkin(settings.simulatorSettings.skin, settings.habahiro ? "habahiro" : "ordinary"),
-    [settings.simulatorSettings.skin, settings.habahiro]);
+  const recipe = useMemo(() => resolveOriginalPreviewSkin(settings.simulatorSettings.skin, habahiro ? "habahiro" : "ordinary"),
+    [settings.simulatorSettings.skin, habahiro]);
   const resources = useOriginalAnimatedSkinResources(recipe, onError, true);
   const scrollState = useRef({ value: 0 });
   return <>

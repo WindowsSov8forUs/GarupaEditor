@@ -52,6 +52,10 @@ export interface ChartSettings {
   laneCount: LaneCount;
   timeSignatureNumerator: number;
   timeSignatureDenominator: number;
+  /** Chart header `#HABAHIRO`: multi-width notes belong to this chart. */
+  habahiro?: true;
+  /** Beat of the `#LANE_CHANGE` command; only valid with `habahiro`. */
+  laneChangeBeat?: number;
 }
 
 export interface EditorOptionSettings {
@@ -66,7 +70,6 @@ export interface EditorOptionSettings {
   mirrorEnabled: boolean;
   noteSeVolumePercent: number;
   verticalScalePercent: number;
-  habahiro: boolean;
   spRhythmNoteEnabled: boolean;
   exGarupaEnabled: boolean;
 }
@@ -251,7 +254,6 @@ export const DEFAULT_EDITOR_OPTION_SETTINGS: EditorOptionSettings = {
   mirrorEnabled: false,
   noteSeVolumePercent: 70,
   verticalScalePercent: 100,
-  habahiro: false,
   spRhythmNoteEnabled: true,
   exGarupaEnabled: true,
 };
@@ -896,10 +898,16 @@ export function normalizeSettings(
     DEFAULT_SETTINGS.timeSignatureDenominator,
   );
 
+  const laneChangeBeat = Number(input.laneChangeBeat);
   return {
     laneCount,
     timeSignatureNumerator: numerator,
     timeSignatureDenominator: denominator,
+    ...(input.habahiro === true ? {
+      habahiro: true as const,
+      ...(input.laneChangeBeat !== undefined && Number.isFinite(laneChangeBeat) && laneChangeBeat >= 0
+        ? { laneChangeBeat } : {}),
+    } : {}),
   };
 }
 
@@ -951,10 +959,6 @@ export function normalizeEditorOptionSettings(
         : DEFAULT_EDITOR_OPTION_SETTINGS.mirrorEnabled,
     noteSeVolumePercent,
     verticalScalePercent,
-    habahiro:
-      typeof input.habahiro === "boolean"
-        ? input.habahiro
-        : DEFAULT_EDITOR_OPTION_SETTINGS.habahiro,
     spRhythmNoteEnabled:
       typeof input.spRhythmNoteEnabled === "boolean"
         ? input.spRhythmNoteEnabled
