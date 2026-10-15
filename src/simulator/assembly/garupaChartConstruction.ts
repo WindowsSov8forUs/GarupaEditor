@@ -226,27 +226,6 @@ function constructGarupaNoteGraphs(
     records.push(Object.freeze({ absolutePos: note.absolutePos, sourceOrder, localOrder: 0, note }));
   }
 
-  for (const bpm of bpmItems) {
-    if (bpm.absolutePos === 0 || tempo.folded) continue;
-    const position = positionFieldsFromAbsolute(bpm.absolutePos);
-    const note = createBaseNote({
-      index: nextIndex++,
-      position,
-      span: commandSpan(),
-      kinds: Object.freeze({ game: GameNoteType.LongEndFlick, front: FrontNoteType.None, after: AfterNoteType.None }),
-      additional: GameNoteAdditionalType.None,
-      bpm: bpm.value,
-      bpmString: bpm.text,
-      ccNum: 8,
-    });
-    records.push(Object.freeze({
-      absolutePos: bpm.absolutePos,
-      sourceOrder: bpm.sourceOrder,
-      localOrder: 0x7fffffff,
-      note,
-    }));
-  }
-
   if (tempo.folded) {
     const visited = new Set<NoteInformation>();
     const project = (note: NoteInformation): void => {
@@ -265,6 +244,40 @@ function constructGarupaNoteGraphs(
     records = records.map(record => ({ ...record, absolutePos: record.note.absolutePos }));
     if (records.some(record => !Number.isFinite(record.absolutePos)))
       return invalidBpm("Folded runtime coordinates must remain finite.");
+    // Only a Slide whose node times run backwards needs the folded-timing branches.
+    for (const chain of extensions.slideChains) {
+      if (!chain.independentTiming) continue;
+      const root = records.find(record => record.sourceOrder === chain.chartItemIndex && record.localOrder === 0)?.note;
+      if (root !== undefined) Object.assign(root, { foldedTiming: true as const });
+    }
+  }
+
+  // BPM changes are the tempo frontier: the original clock command where a
+  // positive segment advances the latest reached time. Without folding this is
+  // every authored change at its authored position.
+  const changeItems = tempo.frontier.slice(1).map(piece => {
+    const item = bpmItems.find(candidate => candidate.sourceOrder === piece.sourceOrder)!;
+    return { sourceOrder: item.sourceOrder, value: item.value, text: item.text,
+      absolutePos: piece.authored - piece.offset, storedAbsolutePos: piece.authored };
+  });
+  for (const bpm of changeItems) {
+    const note = createBaseNote({
+      index: nextIndex++,
+      position: positionFieldsFromAbsolute(bpm.absolutePos),
+      span: commandSpan(),
+      kinds: Object.freeze({ game: GameNoteType.LongEndFlick, front: FrontNoteType.None, after: AfterNoteType.None }),
+      additional: GameNoteAdditionalType.None,
+      bpm: bpm.value,
+      bpmString: bpm.text,
+      ccNum: 8,
+    });
+    if (bpm.storedAbsolutePos !== bpm.absolutePos) Object.assign(note, { storedAbsolutePos: bpm.storedAbsolutePos });
+    records.push(Object.freeze({
+      absolutePos: bpm.absolutePos,
+      sourceOrder: bpm.sourceOrder,
+      localOrder: 0x7fffffff,
+      note,
+    }));
   }
   records.sort((left, right) =>
     left.absolutePos - right.absolutePos ||
@@ -281,7 +294,6 @@ function constructGarupaNoteGraphs(
       ? root : root.slideNoteList[node.connectionIndex - 1];
     if (source !== undefined) originalSources.set(node.identity, source);
   }
-  const changeItems = tempo.folded ? [] : bpmItems.filter((item) => item.absolutePos > 0);
   const result = freezeChartConstructionResult({
     noteBatches,
     startBpm: baseBpm.value,

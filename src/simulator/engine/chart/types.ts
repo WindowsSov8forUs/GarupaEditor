@@ -148,6 +148,8 @@ export interface NoteInformation {
   readonly bpmString: string;
   readonly storedAbsolutePos: number;
   readonly authoredAfterAbsolutePos?: number;
+  /** Root of a Slide whose node times run backwards under negative BPM. */
+  readonly foldedTiming?: true;
   readonly slideNoteList: readonly NoteInformation[];
   readonly soundValueList: readonly string[];
   readonly gameNoteAdditionalType: GameNoteAdditionalTypeValue;

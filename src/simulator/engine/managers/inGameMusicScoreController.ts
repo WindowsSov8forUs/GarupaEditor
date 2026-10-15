@@ -70,12 +70,11 @@ export class InGameMusicScoreController {
     // Keep position precision until projection; both input formats use this clock.
     this.launcherMusicBarProgressValue = Math.floor(launcherLead / MUSIC_BAR_DIVISION_COUNT);
     this.launcherMusicBeatProgressValue = launcherLead % MUSIC_BAR_DIVISION_COUNT;
-    if (this.signedTempo?.folded) {
-      const start = this.signedTempo.positionAtSeconds(0);
-      this.musicBarProgressValue = Math.floor(start / MUSIC_BAR_DIVISION_COUNT);
-      this.musicBeatProgressValue = start % MUSIC_BAR_DIVISION_COUNT;
-      this.launcherMusicBarProgressValue = Math.floor((start + launcherLead) / MUSIC_BAR_DIVISION_COUNT);
-      this.launcherMusicBeatProgressValue = (start + launcherLead) % MUSIC_BAR_DIVISION_COUNT;
+    const start = this.signedTempo?.startPosition ?? 0;
+    if (start > 0) {
+      // Whole bars added in front of events folded before music start.
+      this.musicBarProgressValue = start / MUSIC_BAR_DIVISION_COUNT;
+      this.launcherMusicBarProgressValue += start / MUSIC_BAR_DIVISION_COUNT;
     }
     this.tempoCommands = chart.noteBatches.flatMap((batch) => {
       const command = findBatchBpmCommand(batch.informationList);
@@ -182,14 +181,16 @@ export class InGameMusicScoreController {
     return ok(undefined);
   }
 
-  usesIndependentVisualAxis(batch: NoteBatchInformation): boolean { return this.signedTempo?.folded === true || this.axisBatches.has(batch); }
+  usesIndependentVisualAxis(batch: NoteBatchInformation): boolean { return this.axisBatches.has(batch); }
 
+  /** Stage beats follow the authored bar grid on the tempo frontier. */
   get stageTiming(): { bpm: number; position: number; beatProgress: number } {
     if (!this.signedTempo?.folded) return {
       bpm: this.currentBpm, position: this.musicPosition, beatProgress: this.currentBeatProgress,
     };
-    const stage = this.signedTempo.stageAtSeconds(this.signedTempo.secondsAtRuntimePosition(this.musicPosition));
-    return { ...stage, beatProgress: ((stage.position % MUSIC_BAR_DIVISION_COUNT) + MUSIC_BAR_DIVISION_COUNT) % MUSIC_BAR_DIVISION_COUNT };
+    const position = this.signedTempo.frontierAuthoredPosition(this.musicPosition);
+    return { bpm: this.currentBpm, position,
+      beatProgress: ((position % MUSIC_BAR_DIVISION_COUNT) + MUSIC_BAR_DIVISION_COUNT) % MUSIC_BAR_DIVISION_COUNT };
   }
 
   canActivateBatch(batch: NoteBatchInformation): SimulatorResult<boolean> {

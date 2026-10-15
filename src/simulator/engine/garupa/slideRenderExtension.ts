@@ -304,6 +304,7 @@ export function advanceExtensionMotion(
 function geometrySource(node: GarupaProductNode): SlideGeometrySource {
   return { absolutePos: node.absolutePosition, isInvisible: !node.visible,
     authoredAfterAbsolutePos: node.runtimeRoot?.authoredAfterAbsolutePos,
+    ...(node.runtimeRoot?.foldedTiming === true ? { foldedTiming: true as const } : {}),
     virtualLaneDirection: 0, virtualLaneDistance: 0,
     slideExitOffset: node.scoringSource?.slideExitOffset };
 }

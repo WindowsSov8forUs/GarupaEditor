@@ -215,7 +215,6 @@ export class NoteManager {
     0, 0, 0, 0,
   ];
   private nextBatchIndexValue = 0;
-  private catchingStartup = false;
   private bpmPoolCursorValue = 0;
   private outerFrameIndexValue = 0;
   private setupComplete = false;
@@ -522,8 +521,7 @@ export class NoteManager {
           submitJudgement: this.submitAutoLiveJudgement,
         });
         note.registerManualRuntime({
-          usesFoldedTime: this.musicScoreController.signedTempo?.folded === true,
-          isStartupExpired: position => this.musicScoreController.signedTempo?.folded === true && position < this.musicScoreController.signedTempo.positionAtSeconds(0),
+          get usesFoldedTime() { return note.noteInformation?.foldedTiming === true; },
           getExecuteFrame: () => this.musicScoreController.executeFrame,
           getSlideChildPhase: (index) => {
             if (note.noteInformation?.laneSpan !== undefined && this.projectedGeometry !== null)
@@ -574,10 +572,6 @@ export class NoteManager {
             return snapped.status === "ok" ? ok(true) : snapped;
           },
           judgeSlide: (source) => {
-            const tempo = this.musicScoreController.signedTempo;
-            if (tempo?.folded && !source.isInvisible && !this.inGameCalculatedData.isAutoPlay && !this.isMoveTime() &&
-              source.absolutePos < tempo.positionAtSeconds(0))
-              return ok({ result: -1 as const, correction: 0, hasReachedPerfectLine: false });
             if (note.noteInformation?.laneSpan !== undefined && this.projectedGeometry !== null) {
               const y = this.projectedGeometry.judgeY(source);
               return y.status === "ok" ? this.slideNoteManager.judge(source, y.value) : y;
@@ -688,19 +682,11 @@ export class NoteManager {
     this.clock.setExecuteFrame(substepExecuteFrame);
     const renderFrame = this.renderProducer?.beginOuterFrame(this.outerFrameIndexValue);
     if (renderFrame?.status === "integrity-failure") return renderFrame;
-    const firstFrame = this.outerFrameIndexValue === 0;
     this.outerFrameIndexValue += 1;
 
     for (let substepIndex = 0; substepIndex < substepCount; substepIndex += 1) {
       const renderSubstep = this.renderProducer?.beginSubstep(substepIndex);
       if (renderSubstep?.status === "integrity-failure") return renderSubstep;
-      if (firstFrame && substepIndex === 0) {
-        this.catchingStartup = true;
-        try {
-          const caughtUp = this.catchUpStartup(substepIndex);
-          if (caughtUp.status !== "ok") return caughtUp;
-        } finally { this.catchingStartup = false; }
-      }
       const advanceResult = this.clock.advance(substepDelta);
       if (advanceResult.status !== "ok") {
         return advanceResult;
@@ -807,32 +793,6 @@ export class NoteManager {
     return ok(undefined);
   }
 
-  private catchUpStartup(substepIndex: number): SimulatorResult<void> {
-    const tempo = this.musicScoreController.signedTempo;
-    if (!tempo?.folded) return ok(undefined);
-    const cutoff = tempo.positionAtSeconds(0);
-    while ((this.batches[this.nextBatchIndexValue]?.absolutePos ?? Infinity) < cutoff) {
-      const batch = this.batches[this.nextBatchIndexValue]!;
-      const activated = this.activateCurrentBatch(substepIndex);
-      if (activated.status !== "ok") return activated;
-      // Drain the shared state machines at the same clock instant, in connection order.
-      // A graph-derived bound allows Move -> Wait -> Stop and each child exactly once.
-      const owners = new Set(batch.informationList.flatMap(source => {
-        const note = this.getActiveNote(source); return note === null ? [] : [note];
-      }));
-      const progress = () => [...owners].map(note => `${note.state}:${note instanceof NoteSlide ?
-        `${note.headJudged}:${note.afterNotes.filter(child => child.judged).length}` : ""}`).join(";");
-      const steps = batch.informationList.reduce((count, source) => count + 2 * source.slideNoteList.length + 4, 0);
-      for (let step = 0; step < steps; step++) {
-        const before = progress();
-        const updated = this.updateActiveNotes(0, owners);
-        if (updated.status !== "ok") return updated;
-        if (progress() === before) break;
-      }
-    }
-    return ok(undefined);
-  }
-
   advanceNoteAnimations(deltaTimeSeconds: number): SimulatorResult<void> {
     if (this.renderProducer !== null) {
       const animation = this.renderProducer.preflightNoteAnimationFrame(Math.fround(deltaTimeSeconds),
@@ -849,7 +809,6 @@ export class NoteManager {
   get hasPendingNotes(): boolean { return this.nextBatchIndexValue < this.batches.length || this.activeNotesValue.length > 0; }
 
   getAdjustedMusicPosition(): number {
-    if (this.catchingStartup && this.musicScoreController.signedTempo?.folded) return this.musicScoreController.signedTempo.positionAtSeconds(0);
     return this.musicScoreController.getAdjustedMusicPosition(
       this.judgementAdjustValueB,
     );
@@ -1887,8 +1846,8 @@ export class NoteManager {
       const activated = this.activateCurrentBatch(substepIndex);
       if (activated.status !== "ok") return activated;
       if (this.nextBatchIndexValue === index || batch === undefined) return ok(undefined);
-      // SV and folded time can have several due batches in one update, and
-      // batches already reached by the music clock launch without waiting.
+      // SV axes can have several due batches in one update, and batches
+      // already reached by the music clock launch without waiting.
       // Drain them through the same activation path.
       const following = this.batches[this.nextBatchIndexValue];
       if (!this.clock.usesIndependentVisualAxis(batch) &&

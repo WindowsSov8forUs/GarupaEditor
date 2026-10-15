@@ -97,9 +97,7 @@ export abstract class NoteSingleBase extends NoteFrontBase {
     this.missSecondCounterValue = Math.fround(
       this.missSecondCounterValue + Math.fround(deltaTimeSeconds),
     );
-    const startupRuntime = this.manualRuntime;
-    const startupExpired = startupRuntime.status === "ok" && startupRuntime.value.isStartupExpired?.(noteInformation.absolutePos);
-    if (!startupExpired && this.missSecondCounterValue <= MANUAL_MISS_SECONDS) {
+    if (this.missSecondCounterValue <= MANUAL_MISS_SECONDS) {
       return ok(undefined);
     }
     return this.onTimeoutMiss(noteInformation);
@@ -643,7 +641,6 @@ export class NoteLong extends NoteFrontBase {
     if (!runtime.value.shouldForcePerfect()) {
       const manual = this.manualRuntime;
       if (manual.status !== "ok") return manual;
-      if (manual.value.isStartupExpired?.(noteInformation.absolutePos)) return this.changeState(NoteState.Wait);
       const crossed = manual.value.hasCrossedMotionLine();
       if (crossed.status !== "ok") return crossed;
       return crossed.value ? this.changeState(NoteState.Wait) : ok(undefined);
@@ -701,7 +698,7 @@ export class NoteLong extends NoteFrontBase {
       runtime.value.getAdjustedMusicPosition(),
       runtime.value.getCurrentBpm(),
     );
-    if (over.status !== "ok" || (!over.value && !runtime.value.isStartupExpired?.(information.absolutePos))) {
+    if (over.status !== "ok" || !over.value) {
       return over.status === "ok" ? ok(undefined) : over;
     }
     // execOverWaitState splits one Miss damage into two onMiss frames; the two
@@ -760,7 +757,7 @@ export class NoteLong extends NoteFrontBase {
       runtime.value.getAdjustedMusicPosition(),
       runtime.value.getCurrentBpm(),
     );
-    if (over.status !== "ok" || (!over.value && !runtime.value.isStartupExpired?.(after.absolutePosition))) {
+    if (over.status !== "ok" || !over.value) {
       return over.status === "ok" ? ok(undefined) : over;
     }
     // execOverStopState emits its Miss with GameNoteType 1.
@@ -1594,7 +1591,6 @@ export class NoteSlide extends NoteFrontBase {
     if (!runtime.value.shouldForcePerfect()) {
       const manual = this.manualRuntime;
       if (manual.status !== "ok") return manual;
-      if (manual.value.isStartupExpired?.(noteInformation.absolutePos)) return this.changeState(NoteState.Wait);
       const stopped = manual.value.stopSlideHeadAtJudgeLine();
       if (stopped.status !== "ok") return stopped;
       return stopped.value ? this.changeState(NoteState.Wait) : ok(undefined);
@@ -1672,7 +1668,7 @@ export class NoteSlide extends NoteFrontBase {
         !after.judged &&
         !after.source.isInvisible,
     ) ?? (this.hiddenEndpoints ? this.afterNotesValue[this.afterNotesValue.length - 1] : undefined);
-    if (!runtime.value.isStartupExpired?.(information.absolutePos) && !slideHeadTimeoutDue(frontOver.value, adjusted, information.absolutePos, nextVisible?.source.absolutePos)) {
+    if (!slideHeadTimeoutDue(frontOver.value, adjusted, information.absolutePos, nextVisible?.source.absolutePos)) {
       return ok(undefined);
     }
     const submitted = runtime.value.submitJudgement({
@@ -1711,7 +1707,7 @@ export class NoteSlide extends NoteFrontBase {
     }
     // Folded targets must follow the connection cursor. The after-update path
     // drains due nodes in order instead of scoring a later visible node early.
-    if (this.noteInformation?.authoredAfterAbsolutePos !== undefined) return ok(undefined);
+    if (this.noteInformation?.foldedTiming === true) return ok(undefined);
     const selected = this.afterNotesValue.find(
       (after) => !after.source.isInvisible && !after.judged,
     );
@@ -1788,7 +1784,7 @@ export class NoteSlide extends NoteFrontBase {
     // It remains owned by the head, just like every later connection.
     if (!this.manualHeadJudgedValue) return ok(undefined);
     if (this.headGestureNode !== null && !this.manualHeadJudgedValue && this.state === NoteState.Stop) return ok(undefined);
-    if (this.noteInformation?.authoredAfterAbsolutePos === undefined) return this.forcePerfectPendingAfter();
+    if (this.noteInformation?.foldedTiming !== true) return this.forcePerfectPendingAfter();
     // A fold can make hundreds of hidden successors due together. Advance the
     // existing state machine until its cursor stops, without adding frame delay.
     while ((this.state as NoteState) !== NoteState.Deactive) {
@@ -1815,24 +1811,21 @@ export class NoteSlide extends NoteFrontBase {
       );
     }
     if (runtime.value.usesFoldedTime && adjusted < current.source.absolutePos) return ok(undefined);
-    const startupExpired = runtime.value.isStartupExpired?.(current.source.absolutePos) === true;
-    const phase = startupExpired ? ok("stop" as const) : runtime.value.getSlideChildPhase(current.sourceIndex);
+    const phase = runtime.value.getSlideChildPhase(current.sourceIndex);
     if (phase.status !== "ok") return phase;
-    if (!startupExpired && phase.value !== "stop") return ok(undefined);
+    if (phase.value !== "stop") return ok(undefined);
     const nextVisible = this.afterNotesValue.find((after) =>
       after.sourceIndex > current.sourceIndex && !after.source.isInvisible) ??
       (this.hiddenEndpoints && !current.isTerminal ? this.afterNotesValue[this.afterNotesValue.length - 1] : undefined);
     const adjustment = runtime.value.getJudgementAdjustValueB();
     const stopWait = advanceSlideStopWait(current.stopAdjustmentCounter, nextVisible !== undefined, adjustment);
-    if (!startupExpired && stopWait.waited) {
+    if (stopWait.waited) {
       current.stopAdjustmentCounter = stopWait.counter;
       current.stopAdjustmentWaited = true;
       return ok(undefined);
     }
     if (current.judged || !canJudge) return ok(undefined);
-    if (startupExpired) {
-      // The approved startup cutoff has no late-input grace period.
-    } else if (current.isTerminal && this.noteInformation!.afterNoteType === AfterNoteType.SlideFlickEnd) {
+    if (current.isTerminal && this.noteInformation!.afterNoteType === AfterNoteType.SlideFlickEnd) {
       current.timeoutFrameCounter = Math.fround(current.timeoutFrameCounter + runtime.value.getExecuteFrame());
       if (current.timeoutFrameCounter < 7) return ok(undefined);
     } else {

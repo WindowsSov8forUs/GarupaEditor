@@ -1,4 +1,3 @@
-import { getSignedTempo } from "./signedTempo";
 import { findBatchBpmCommand } from "../chart/noteGraph";
 import type { ChartConstructionResult } from "../chart/types";
 import { integrityFailure, ok, type SimulatorResult } from "../result";
@@ -67,10 +66,8 @@ export function createGarupaProductTimingGroupAxisProfile(
   const bpmSegmentsResult = buildBpmSegments(chart);
   if (bpmSegmentsResult.status !== "ok") return bpmSegmentsResult;
   const bpmSegments = bpmSegmentsResult.value;
-  const tempo = getSignedTempo(chart);
   const positionToMilliseconds = (position: number): SimulatorResult<number> =>
-    tempo?.folded ? (Number.isFinite(position) ? ok(tempo.secondsAtRuntimePosition(position) * 1000) : invalidAxis("Non-finite runtime position."))
-      : positionToMillisecondsFromSegments(bpmSegments, position);
+    positionToMillisecondsFromSegments(bpmSegments, position);
 
   const usedGroups = new Set<GarupaProductTimingGroupId>(["#Global"]);
   for (const node of product.nodes) usedGroups.add(node.timingGroup);
@@ -188,8 +185,9 @@ function positionToMillisecondsFromSegments(
   segments: readonly GarupaProductBpmSegment[],
   absolutePosition: number,
 ): SimulatorResult<number> {
-  if (!Number.isFinite(absolutePosition) || absolutePosition < 0) {
-    return invalidAxis("Product visual position must be finite and nonnegative.");
+  // Negative runtime positions are events folded before music start.
+  if (!Number.isFinite(absolutePosition)) {
+    return invalidAxis("Product visual position must be finite.");
   }
   let low = 0;
   let high = segments.length - 1;

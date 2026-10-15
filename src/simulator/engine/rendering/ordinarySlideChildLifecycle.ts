@@ -72,7 +72,7 @@ export interface OrdinarySlideStopControl {
 }
 
 export type SlideGeometrySource = Pick<NoteInformation,
-  "absolutePos" | "isInvisible" | "virtualLaneDirection" | "virtualLaneDistance" | "slideExitOffset" | "authoredAfterAbsolutePos">;
+  "absolutePos" | "isInvisible" | "virtualLaneDirection" | "virtualLaneDistance" | "slideExitOffset" | "authoredAfterAbsolutePos" | "foldedTiming">;
 
 /** Extensions supply motion inputs, not a second Slide lifecycle. */
 export interface SlideMotionExtension {
@@ -217,7 +217,7 @@ export function advanceOrdinarySlideChildren(
       const moved = moveSlideEndpoint(frontTransform, stopControl.rootMotionState,
         stopControl.rootSource, first.lifecycle.motionState, sources[first.segmentStartIndex]!,
         input.deltaTime.value, stopControl.currentBpm, stopControl.virtualLaneDeltaX,
-        stopControl.rootSource, stopControl.rootSource.authoredAfterAbsolutePos !== undefined);
+        stopControl.rootSource, stopControl.rootSource.foldedTiming === true);
       if (moved.status !== "ok") return moved;
       frontTransform = moved.value;
     }
@@ -322,7 +322,7 @@ export function advanceOrdinarySlideChildren(
           const moved = moveSlideEndpoint(currentTransform, origin.lifecycle.motionState,
             sources[segmentStartIndex]!, childStates[nextChild.segmentStartIndex]!.lifecycle.motionState, sources[nextChild.segmentStartIndex]!,
             input.deltaTime.value, stopControl.currentBpm, stopControl.virtualLaneDeltaX,
-            sources[index]!, stopControl.rootSource.authoredAfterAbsolutePos !== undefined);
+            sources[index]!, stopControl.rootSource.foldedTiming === true);
           if (moved.status !== "ok") return moved;
           lifecycle = Object.freeze({ ...lifecycle, renderedTransform: moved.value });
           if (frontCanFollow) {
