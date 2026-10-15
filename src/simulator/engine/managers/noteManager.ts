@@ -491,6 +491,7 @@ export class NoteManager {
         const note = this.createPoolObject(family, `${family}:${index}`);
         if (source.laneSpan !== undefined) this.projectedNotes.add(note);
         note.onTapLaneEffect = event => this.enqueueTapLaneEffect(event);
+        if (note instanceof NoteSlide) note.onManualOwnershipReleased = (released) => this.manualNoteDeactivatedOwner?.(released);
         if (note instanceof NoteSlide || note instanceof NoteLong) note.onTouchKeepSound = (index, action) => {
           if (action === "start" && this.isMoveTime()) return;
           this.pendingHoldSounds.push({ ownerKey: `${note instanceof NoteSlide ? "slide" : "long"}:${index}`, action });
@@ -888,6 +889,12 @@ export class NoteManager {
     }
     this.manualNoteDeactivatedOwner = owner;
     return ok(undefined);
+  }
+
+  /** Active Hidden-head Slides whose first visible node can still register a finger. */
+  hiddenHeadRegistrationCandidates(): readonly NoteSlide[] {
+    return this.activeNotesValue.filter((note): note is NoteSlide =>
+      note instanceof NoteSlide && note.awaitsHiddenHeadRegistration);
   }
 
   selectManualCandidateBeforeJudgement(

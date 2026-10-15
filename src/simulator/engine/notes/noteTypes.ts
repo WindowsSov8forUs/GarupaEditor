@@ -897,15 +897,17 @@ export class NoteSlide extends NoteFrontBase {
     this.tapLane("off-reserve", this.laneEffectTarget);
   }
 
-  private reflectAutoAfterTapLane(current: SlideAfterRuntime): void {
-    if (this.hiddenEndpoints && this.noteInformation?.isInvisible &&
-        current.sourceIndex === this.firstVisibleAfterIndexValue) {
-      this.laneEffectTarget = this.targetButtonLane(current.source);
-      if (!current.isTerminal) {
-        this.feedback.restartFlash();
-        this.feedback.setSound("start");
-      }
+  /** Auto Live head handling for the first visible node of a Hidden head. */
+  private beginAutoHiddenHead(first: SlideAfterRuntime): void {
+    this.laneEffectTarget = this.targetButtonLane(first.source);
+    if (!first.isTerminal) {
+      this.feedback.restartFlash();
+      this.feedback.setSound("start");
     }
+  }
+
+  private reflectAutoAfterTapLane(current: SlideAfterRuntime): void {
+    if (current === this.hiddenHeadNode) this.beginAutoHiddenHead(current);
     if (!current.isTerminal) {
       this.advanceHeldTapLane(current);
       return;
@@ -919,8 +921,30 @@ export class NoteSlide extends NoteFrontBase {
   private manualHeadJudgedValue = false;
   private allHiddenValue = false;
   private firstVisibleAfterIndexValue = -1;
-  get isGeometryOnly(): boolean { return this.allHiddenValue; }
+  private lastVisibleAfterIndexValue = -1;
+  private trailingGeometryValue = false;
+  /** Drops every finger reference once the last visible node has taken tail handling. */
+  onManualOwnershipReleased: ((note: NoteSlide) => void) | null = null;
+  get isGeometryOnly(): boolean { return this.allHiddenValue || this.trailingGeometryValue; }
   private get hiddenEndpoints(): boolean { return this.noteInformation?.hiddenSlideEndpoints === true; }
+  /** First visible node of a Hidden-head Slide; it takes head handling and intermediate judgement. */
+  private get hiddenHeadNode(): SlideAfterRuntime | null {
+    return this.hiddenEndpoints && this.noteInformation?.isInvisible === true && !this.allHiddenValue
+      ? this.afterNotesValue[this.firstVisibleAfterIndexValue] ?? null : null;
+  }
+  get awaitsHiddenHeadRegistration(): boolean {
+    const first = this.hiddenHeadNode;
+    return first !== null && !first.judged && this.fingerId < 0 &&
+      this.state !== NoteState.Deactive && !this.trailingGeometryValue;
+  }
+  /** The last visible node of a Hidden-tail Slide has been judged. */
+  private get visibleRangeFinished(): boolean {
+    if (!this.hiddenEndpoints || this.allHiddenValue) return false;
+    const last = this.afterNotesValue[this.afterNotesValue.length - 1];
+    if (last === undefined || !last.source.isInvisible) return false;
+    return this.lastVisibleAfterIndexValue < 0 ? this.manualHeadJudgedValue
+      : this.afterNotesValue[this.lastVisibleAfterIndexValue]!.judged;
+  }
 
   private slideAfterMultipleGroupResolverValue: ((
     information: NoteInformation,
@@ -986,12 +1010,12 @@ export class NoteSlide extends NoteFrontBase {
   }
 
   get manualCandidateSource(): NoteInformation | null {
-    if (this.allHiddenValue) return null;
-    const source = !this.manualHeadJudgedValue ? this.noteInformation
+    // The first visible node of a Hidden head registers through hidden-head
+    // registration only; ordinary Began arbitration never selects it.
+    if (this.isGeometryOnly || this.awaitsHiddenHeadRegistration) return null;
+    if (!this.manualHeadJudgedValue && this.noteInformation?.isInvisible) return null;
+    return !this.manualHeadJudgedValue ? this.noteInformation
       : this.afterNotesValue[this.currentAfterIndexValue]?.source ?? null;
-    const leadingHidden = this.hiddenEndpoints && source?.isInvisible && this.noteInformation?.isInvisible &&
-      this.currentAfterIndexValue <= this.firstVisibleAfterIndexValue;
-    return leadingHidden ? null : source;
   }
 
   override isContainsButton(buttonType: ButtonTypeValue): boolean {
@@ -1066,6 +1090,10 @@ export class NoteSlide extends NoteFrontBase {
     this.headGestureNode = noteInformation.slideGesture ? new SlideAfterRuntime(noteInformation, -1, false, null) : null;
     this.feedback.reset();
     this.firstVisibleAfterIndexValue = afterNotes.findIndex(after => !after.source.isInvisible);
+    let lastVisible = afterNotes.length - 1;
+    while (lastVisible >= 0 && afterNotes[lastVisible]!.source.isInvisible) lastVisible -= 1;
+    this.lastVisibleAfterIndexValue = lastVisible;
+    this.trailingGeometryValue = false;
     this.allHiddenValue = noteInformation.isInvisible && this.firstVisibleAfterIndexValue < 0;
     this.afterNotesValue = afterNotes;
     this.currentAfterIndexValue = 0;
@@ -1111,16 +1139,11 @@ export class NoteSlide extends NoteFrontBase {
       return ok({ outcome: "bind", ...this.noManualSlideJudgementPlan(input.currentPosition, 0) });
     if (this.manualHeadJudgedValue) {
       const current = this.afterNotesValue[this.currentAfterIndexValue]!;
-      const firstVisibleMiddle = this.noteInformation?.isInvisible && current.judgeNoteType === 8 && !current.isTerminal &&
-        current.sourceIndex === this.firstVisibleAfterIndexValue;
-      const result = firstVisibleMiddle
-        ? slideHeldNodeResult(judgement.value, runtime.value.getJudgementAdjustValueB()) : judgement.value.result;
-      if (result === NoteResultType.None) return ok({ outcome: "none", judgementPlan: null, familyData: null });
       // A flick tail binds on Began and judges on movement/release.
       const continuation = current.judgeNoteType !== 8
         ? ok(this.noManualSlideJudgementPlan(input.currentPosition, Math.fround(0)))
         : this.reserveManualSlideNode(
-            input, current, 8, result, firstVisibleMiddle ? JudgeTiming.None : timing,
+            input, current, 8, judgement.value.result, timing,
             false, input.currentPosition, Math.fround(0),
           );
       return continuation.status === "ok"
@@ -1157,6 +1180,7 @@ export class NoteSlide extends NoteFrontBase {
         this.feedback.restartFlash();
         this.feedback.setSound("start");
       }
+      this.enterTrailingGeometryIfFinished();
       return;
     }
     if (plan.judgementPlan === null && this.headGestureNode === null)
@@ -1173,11 +1197,13 @@ export class NoteSlide extends NoteFrontBase {
     }
     this.feedback.restartFlash();
     this.feedback.setSound("start");
+    this.enterTrailingGeometryIfFinished();
   }
 
   override preflightManualTouchMoved(
     input: ManualNoteTouchInput,
   ): SimulatorResult<ManualNoteContinuationPlan> {
+    if (this.isGeometryOnly) return ok(this.noManualSlideJudgementPlan());
     const plans: ManualNoteContinuationPlan[] = [];
     let current = this.manualCurrentNode;
     let origin = this.manualTouchOriginValue;
@@ -1240,7 +1266,7 @@ export class NoteSlide extends NoteFrontBase {
         : runtime;
     }
     if (terminalTarget === undefined && current.judgeNoteType === 8) {
-      if (current.isTerminal && !this.hiddenEndpoints) return ok(this.noManualSlideJudgementPlan(origin, grace));
+      if (current.isTerminal) return ok(this.noManualSlideJudgementPlan(origin, grace));
       if (!current.source.isInvisible) {
         const inside = runtime.value.isInsideSource(
           input.currentPosition, current.source,
@@ -1372,18 +1398,19 @@ export class NoteSlide extends NoteFrontBase {
         }
       }
       this.commitManualSlideNode(input, step, afterUpdate);
+      if (this.isGeometryOnly) break;
     }
+    this.enterTrailingGeometryIfFinished();
   }
 
   override preflightManualTouchEnded(
     input: ManualNoteTouchInput,
   ): SimulatorResult<ManualNoteContinuationPlan> {
+    if (this.isGeometryOnly) return ok({ judgementPlan: null, familyData: { geometryOnly: true } });
     const current = !this.manualHeadJudgedValue && this.headGestureNode !== null ? this.headGestureNode : this.afterNotesValue.find((after, index) =>
       index >= this.currentAfterIndexValue && !after.source.isInvisible && !after.judged);
     const root = this.noteInformation;
     const runtime = this.manualRuntime;
-    if (current === undefined && this.hiddenEndpoints) return ok({ judgementPlan: null,
-      familyData: { hiddenRelease: true } });
     if (current === undefined || root === null || runtime.status !== "ok") {
       return runtime.status === "ok"
         ? integrityFailure(
@@ -1428,15 +1455,8 @@ export class NoteSlide extends NoteFrontBase {
     plan: ManualNoteContinuationPlan,
     afterUpdate = false,
   ): void {
-    const data = plan.familyData as { readonly currentIndex: number; readonly reserveLaneOff: boolean; readonly hiddenRelease?: boolean };
-    if (data.hiddenRelease) {
-      this.feedback.setSound("fade");
-      this.feedback.hideFlash();
-      this.tapLane("off", this.laneEffectTarget);
-      this.laneEffectTarget = null;
-      this.setFingerId(-1);
-      return;
-    }
+    const data = plan.familyData as { readonly currentIndex: number; readonly reserveLaneOff: boolean; readonly geometryOnly?: boolean };
+    if (data.geometryOnly) return;
     this.replaceTapLaneTarget(this.afterNotesValue[this.currentAfterIndexValue]?.source ?? null);
     const laneTarget = this.laneEffectTarget;
     this.feedback.setSound("fade");
@@ -1446,6 +1466,7 @@ export class NoteSlide extends NoteFrontBase {
     this.skipManualInvisibleAfterNodes();
     this.tapLane(data.reserveLaneOff ? "off-reserve" : "off", laneTarget);
     this.setFingerId(-1);
+    this.enterTrailingGeometryIfFinished();
   }
 
   private noManualSlideJudgementPlan(
@@ -1574,11 +1595,19 @@ export class NoteSlide extends NoteFrontBase {
 
   protected override moveState(_deltaTimeSeconds: number): SimulatorResult<void> {
     if (this.noteInformation?.isInvisible) {
-      if (!this.allHiddenValue) return ok(undefined);
-      const manual = this.manualRuntime;
-      if (manual.status !== "ok") return manual;
-      const stopped = manual.value.stopSlideHeadAtJudgeLine();
-      return stopped.status !== "ok" ? stopped : stopped.value ? this.changeState(NoteState.Stop) : ok(undefined);
+      // A Hidden head has no judgement; it only stops on the original head timing.
+      const auto = this.autoLiveRuntime;
+      if (auto.status !== "ok") return auto;
+      if (!this.allHiddenValue && auto.value.shouldForcePerfect()) {
+        if (auto.value.getAdjustedMusicPosition() < this.noteInformation.absolutePos) return ok(undefined);
+      } else {
+        const manual = this.manualRuntime;
+        if (manual.status !== "ok") return manual;
+        const stopped = manual.value.stopSlideHeadAtJudgeLine();
+        if (stopped.status !== "ok" || !stopped.value) return stopped.status !== "ok" ? stopped : ok(undefined);
+      }
+      if (!this.allHiddenValue) this.manualHeadJudgedValue = true;
+      return this.changeState(NoteState.Stop);
     }
     const noteInformation = this.noteInformation;
     const runtime = this.autoLiveRuntime;
@@ -1667,7 +1696,7 @@ export class NoteSlide extends NoteFrontBase {
       (after, index) => index >= this.currentAfterIndexValue &&
         !after.judged &&
         !after.source.isInvisible,
-    ) ?? (this.hiddenEndpoints ? this.afterNotesValue[this.afterNotesValue.length - 1] : undefined);
+    );
     if (!slideHeadTimeoutDue(frontOver.value, adjusted, information.absolutePos, nextVisible?.source.absolutePos)) {
       return ok(undefined);
     }
@@ -1692,8 +1721,9 @@ export class NoteSlide extends NoteFrontBase {
   }
 
   protected override stopState(_deltaTimeSeconds: number): SimulatorResult<void> {
-    if (this.hiddenEndpoints && (!this.manualHeadJudgedValue ||
-        this.afterNotesValue[this.currentAfterIndexValue]?.source.isInvisible)) return ok(undefined);
+    // Leading Hidden nodes are consumed by geometry time before the first visible node.
+    if (this.isGeometryOnly || this.hiddenHeadNode !== null &&
+        this.currentAfterIndexValue < this.firstVisibleAfterIndexValue) return ok(undefined);
     const noteInformation = this.noteInformation;
     const runtime = this.autoLiveRuntime;
     if (noteInformation === null || runtime.status !== "ok") {
@@ -1746,7 +1776,7 @@ export class NoteSlide extends NoteFrontBase {
   protected override onUpdate(_deltaTimeSeconds: number): SimulatorResult<void> {
     const runtime = this.autoLiveRuntime;
     if (runtime.status !== "ok") return runtime;
-    if (this.allHiddenValue) {
+    if (this.isGeometryOnly) {
       const manual = this.manualRuntime;
       if (manual.status !== "ok") return manual;
       const tailIndex = this.afterNotesValue.length - 1;
@@ -1760,37 +1790,42 @@ export class NoteSlide extends NoteFrontBase {
       const timed = this.waitState(_deltaTimeSeconds);
       if (timed.status !== "ok" || !this.manualHeadJudgedValue) return timed;
     }
-    if (this.hiddenEndpoints) {
-      const advanced = this.advanceHiddenEndpoints();
-      if (advanced.status !== "ok" || this.state === NoteState.Deactive || !this.manualHeadJudgedValue) return advanced;
-    }
+    const leading = this.advanceLeadingHiddenNodes();
+    if (leading.status !== "ok") return leading;
     if (this.manualHeadJudgedValue) {
       for (const after of this.afterNotesValue) {
-        if (this.state === NoteState.Deactive) break;
+        if (this.state === NoteState.Deactive || this.isGeometryOnly) break;
         after.stopAdjustmentWaited = false;
         const timeout = this.executeManualSlideAfterTimeout(after,
           !runtime.value.shouldForcePerfect() && !after.source.isInvisible);
         if (timeout.status !== "ok") return timeout;
+        this.enterTrailingGeometryIfFinished();
       }
       if (this.state === NoteState.Deactive) return ok(undefined);
     }
+    this.enterTrailingGeometryIfFinished();
     return ok(undefined);
   }
 
   /** NoteSlide.OnUpdate runs forcePerfectOnUpdate after every child ExecuteUpdate. */
   executeAfterChildrenUpdate(): SimulatorResult<void> {
-    if (this.state === NoteState.Deactive || this.allHiddenValue) return ok(undefined);
+    if (this.state === NoteState.Deactive || this.isGeometryOnly) return ok(undefined);
     // A folded successor can already be due while its head is still travelling.
     // It remains owned by the head, just like every later connection.
     if (!this.manualHeadJudgedValue) return ok(undefined);
     if (this.headGestureNode !== null && !this.manualHeadJudgedValue && this.state === NoteState.Stop) return ok(undefined);
-    if (this.noteInformation?.foldedTiming !== true) return this.forcePerfectPendingAfter();
+    if (this.noteInformation?.foldedTiming !== true) {
+      const advanced = this.forcePerfectPendingAfter();
+      if (advanced.status === "ok") this.enterTrailingGeometryIfFinished();
+      return advanced;
+    }
     // A fold can make hundreds of hidden successors due together. Advance the
     // existing state machine until its cursor stops, without adding frame delay.
-    while ((this.state as NoteState) !== NoteState.Deactive) {
+    while ((this.state as NoteState) !== NoteState.Deactive && !this.isGeometryOnly) {
       const before = this.currentAfterIndexValue;
       const advanced = this.forcePerfectPendingAfter();
       if (advanced.status !== "ok") return advanced;
+      this.enterTrailingGeometryIfFinished();
       if (this.currentAfterIndexValue === before) break;
     }
     return ok(undefined);
@@ -1815,8 +1850,7 @@ export class NoteSlide extends NoteFrontBase {
     if (phase.status !== "ok") return phase;
     if (phase.value !== "stop") return ok(undefined);
     const nextVisible = this.afterNotesValue.find((after) =>
-      after.sourceIndex > current.sourceIndex && !after.source.isInvisible) ??
-      (this.hiddenEndpoints && !current.isTerminal ? this.afterNotesValue[this.afterNotesValue.length - 1] : undefined);
+      after.sourceIndex > current.sourceIndex && !after.source.isInvisible);
     const adjustment = runtime.value.getJudgementAdjustValueB();
     const stopWait = advanceSlideStopWait(current.stopAdjustmentCounter, nextVisible !== undefined, adjustment);
     if (stopWait.waited) {
@@ -1838,7 +1872,7 @@ export class NoteSlide extends NoteFrontBase {
         nextStopped = nextPhase.value === "stop";
       }
       if (!slideAfterTimeoutDue(over.value, adjusted, current.source.absolutePos,
-        current.isTerminal, nextVisible?.source.absolutePos, nextStopped)) return ok(undefined);
+        nextVisible?.source.absolutePos, nextStopped)) return ok(undefined);
     }
     const scoringPhase = current.sourceIndex === -1 ? "head" : current.isTerminal ? "tail" : "intermediate";
     const submitted = runtime.value.submitJudgement({
@@ -1874,8 +1908,10 @@ export class NoteSlide extends NoteFrontBase {
   private skipManualInvisibleAfterNodes(
     adjustedMusicPosition?: number,
   ): void {
-    if (this.hiddenEndpoints) return;
     while (true) {
+      // Leading and trailing Hidden nodes only follow geometry time.
+      if (this.hiddenEndpoints && (this.currentAfterIndexValue < this.firstVisibleAfterIndexValue ||
+        this.currentAfterIndexValue > this.lastVisibleAfterIndexValue)) return;
       const current = this.afterNotesValue[this.currentAfterIndexValue];
       if (
         current === undefined ||
@@ -1902,29 +1938,94 @@ export class NoteSlide extends NoteFrontBase {
     return current.isTerminal ? this.changeState(NoteState.Deactive) : ok(undefined);
   }
 
-  private advanceHiddenEndpoints(): SimulatorResult<void> {
+  /** Hidden nodes before the first visible node only follow geometry time. */
+  private advanceLeadingHiddenNodes(): SimulatorResult<void> {
+    if (this.hiddenHeadNode === null || !this.manualHeadJudgedValue) return ok(undefined);
+    const runtime = this.autoLiveRuntime;
+    if (runtime.status !== "ok") return runtime;
+    const adjusted = runtime.value.getAdjustedMusicPosition();
+    while (this.currentAfterIndexValue < this.firstVisibleAfterIndexValue) {
+      const current = this.afterNotesValue[this.currentAfterIndexValue]!;
+      if (current.judged) { this.currentAfterIndexValue += 1; continue; }
+      if (adjusted < current.source.absolutePos) break;
+      const completed = this.completeHiddenAfter(current);
+      if (completed.status !== "ok") return completed;
+    }
+    return ok(undefined);
+  }
+
+  /** Tail handling after the last visible node of a Hidden tail: release the
+   * finger, stop feedback and keep only the remaining hidden geometry. */
+  private enterTrailingGeometryIfFinished(): void {
+    if (this.trailingGeometryValue || this.state === NoteState.Deactive || !this.visibleRangeFinished) return;
+    this.trailingGeometryValue = true;
+    this.feedback.setSound("fade");
+    this.feedback.hideFlash();
+    this.tapLane("off-reserve", this.laneEffectTarget);
+    this.laneEffectTarget = null;
+    this.manualGestureSource = null;
+    this.manualTouchOriginValue = null;
+    this.setFingerId(-1);
+    this.onManualOwnershipReleased?.(this);
+  }
+
+  /** Head handling for the first visible node of a Hidden head. Any touch,
+   * including one already owned by another Slide, may register; the node itself
+   * keeps the intermediate held-node judgement. */
+  preflightHiddenHeadRegistration(
+    input: ManualNoteTouchInput,
+  ): SimulatorResult<ManualNoteContinuationPlan | null> {
+    const first = this.hiddenHeadNode;
     const runtime = this.manualRuntime;
     if (runtime.status !== "ok") return runtime;
-    const root = this.noteInformation!;
-    const current = this.afterNotesValue[this.currentAfterIndexValue];
-    const source = !this.manualHeadJudgedValue ? root : current?.source;
-    if (source === undefined || !source.isInvisible) return ok(undefined);
-    const auto = this.autoLiveRuntime;
-    if (auto.status !== "ok") return auto;
-    if (auto.value.shouldForcePerfect()) {
-      // Same hidden-node timing as forcePerfectPendingAfter; no scoring request.
-      if (auto.value.getAdjustedMusicPosition() < source.absolutePos) return ok(undefined);
-    } else {
-      const decision = runtime.value.judgeSlide(source);
-      if (decision.status !== "ok") return decision;
-      if (slideHeldNodeResult(decision.value, runtime.value.getJudgementAdjustValueB()) === NoteResultType.None)
-        return ok(undefined);
+    if (first === null || !this.awaitsHiddenHeadRegistration) return ok(null);
+    const inside = runtime.value.isInsideSource(input.currentPosition, first.source, first.source.buttonTypesArray);
+    if (inside.status !== "ok") return inside;
+    if (!inside.value) return ok(null);
+    const decision = runtime.value.judgeSlide(first.source);
+    if (decision.status !== "ok") return decision;
+    if (first.judgeNoteType !== 8 || first.source.slideGesture !== undefined) {
+      // Gesture nodes bind on contact and judge on the following movement.
+      return decision.value.result === NoteResultType.None ? ok(null)
+        : ok(this.noManualSlideJudgementPlan(input.currentPosition, Math.fround(0)));
     }
-    if (!this.manualHeadJudgedValue) {
-      this.manualHeadJudgedValue = true;
-      return this.changeState(NoteState.Stop);
+    const result = slideHeldNodeResult(decision.value, runtime.value.getJudgementAdjustValueB());
+    if (result === NoteResultType.None) return ok(null);
+    return this.reserveManualSlideNode(input, first, 8, result, JudgeTiming.None, false,
+      input.currentPosition, Math.fround(0));
+  }
+
+  commitHiddenHeadRegistration(input: ManualNoteTouchInput, plan: ManualNoteContinuationPlan): void {
+    const first = this.hiddenHeadNode;
+    if (first === null || !this.awaitsHiddenHeadRegistration) throw new Error("Slide hidden head changed after preflight");
+    this.setFingerId(input.fingerId);
+    this.laneEffectTarget = this.targetButtonLane(first.source);
+    // A Began touch already reports its own button-on event.
+    if (input.phase !== ManualTouchPhase.Began) this.tapLane("on", this.laneEffectTarget);
+    this.manualHeadJudgedValue = true;
+    // Registration consumes the leading geometry-only nodes.
+    while (this.currentAfterIndexValue < first.sourceIndex) {
+      const leading = this.afterNotesValue[this.currentAfterIndexValue]!;
+      if (leading.judged) { this.currentAfterIndexValue += 1; continue; }
+      const completed = this.completeHiddenAfter(leading, false);
+      if (completed.status !== "ok") throw new Error("Slide hidden head could not consume leading geometry");
     }
-    return this.completeHiddenAfter(current!);
+    if (this.state !== NoteState.Stop) {
+      const changed = this.changeState(NoteState.Stop);
+      if (changed.status !== "ok") throw new Error("Slide hidden head could not enter Stop state");
+    }
+    this.feedback.restartFlash();
+    this.feedback.setSound("start");
+    const data = plan.familyData as { readonly nextOrigin: ManualInputPosition | null; readonly nextGrace: number };
+    if (plan.judgementPlan === null) {
+      this.manualTouchOriginValue = data.nextOrigin;
+      this.manualAfterMoveTimeValue = data.nextGrace;
+      this.manualGestureSource = first.source.slideGesture ? first.source : null;
+      return;
+    }
+    this.hideBeforeSlideNode(first.sourceIndex, false);
+    this.commitManualSlideNode(input, plan);
+    this.enterTrailingGeometryIfFinished();
   }
 
   private forcePerfectPendingAfter(): SimulatorResult<void> {
@@ -1960,7 +2061,8 @@ export class NoteSlide extends NoteFrontBase {
     if (adjusted < current.source.absolutePos) {
       return ok(undefined);
     }
-    if (!current.isTerminal && current.source.slideGesture === undefined && !this.hiddenEndpoints) {
+    if (!current.isTerminal && current.source.slideGesture === undefined) {
+      if (current === this.hiddenHeadNode) this.beginAutoHiddenHead(current);
       const manual = this.manualRuntime;
       if (manual.status !== "ok") return manual;
       const position = manual.value.geometry.getTargetCenterScreenPosition?.(current.source);
@@ -1977,9 +2079,7 @@ export class NoteSlide extends NoteFrontBase {
       transaction.finish();
       return ok(undefined);
     }
-    if (current.source.isInvisible) {
-      return this.hiddenEndpoints ? ok(undefined) : this.completeHiddenAfter(current, false);
-    }
+    if (current.source.isInvisible) return this.completeHiddenAfter(current, false);
     const phase = current.isTerminal ? "tail" : "intermediate";
     let noteType = current.judgeNoteType;
     if (current.isTerminal) {
@@ -2020,6 +2120,8 @@ export class NoteSlide extends NoteFrontBase {
     this.feedback.hideFlash();
     this.allHiddenValue = false;
     this.firstVisibleAfterIndexValue = -1;
+    this.lastVisibleAfterIndexValue = -1;
+    this.trailingGeometryValue = false;
     this.headGestureNode = null;
     this.afterNotesValue = [];
     this.beganPlacementPending = false;
@@ -2058,6 +2160,7 @@ export class NoteSlide extends NoteFrontBase {
     for (const after of this.afterNotesValue) {
       after.resetForParentDeactivation();
     }
+    this.trailingGeometryValue = false;
     this.headGestureNode = null;
     this.afterNotesValue = [];
     this.beganPlacementPending = false;
