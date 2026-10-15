@@ -85,6 +85,7 @@ export interface NoteManagerClock {
   setExecuteFrame(executeFrame: number): void;
   advance(deltaTimeSeconds: number): SimulatorResult<void>;
   canActivateBatch(batch: NoteBatchInformation): SimulatorResult<boolean>;
+  isLateBatch(batch: NoteBatchInformation): boolean;
   usesIndependentVisualAxis(batch: NoteBatchInformation): boolean;
 }
 
@@ -1885,10 +1886,13 @@ export class NoteManager {
       const batch = this.batches[index];
       const activated = this.activateCurrentBatch(substepIndex);
       if (activated.status !== "ok") return activated;
-      // SV and folded time can have several due batches in one update.
+      if (this.nextBatchIndexValue === index || batch === undefined) return ok(undefined);
+      // SV and folded time can have several due batches in one update, and
+      // batches already reached by the music clock launch without waiting.
       // Drain them through the same activation path.
-      if (this.nextBatchIndexValue === index || batch === undefined ||
-        !this.clock.usesIndependentVisualAxis(batch)) return ok(undefined);
+      const following = this.batches[this.nextBatchIndexValue];
+      if (!this.clock.usesIndependentVisualAxis(batch) &&
+        (following === undefined || !this.clock.isLateBatch(following))) return ok(undefined);
     }
   }
 
@@ -1902,7 +1906,7 @@ export class NoteManager {
     if (activationDecision.status !== "ok") {
       return activationDecision;
     }
-    if (!activationDecision.value) {
+    if (!activationDecision.value && !this.clock.isLateBatch(batch)) {
       return ok(undefined);
     }
 

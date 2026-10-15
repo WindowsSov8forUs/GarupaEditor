@@ -196,9 +196,7 @@ export class InGameMusicScoreController {
     if (this.usesIndependentVisualAxis(batch)) {
       return ok(batch.absolutePos <= this.launcherMusicPosition);
     }
-    const first = batch.informationList.find(
-      (note) => note.buttonType !== ButtonType.None || note.laneSpan !== undefined || isBpmCommand(note),
-    );
+    const first = activationRepresentative(batch);
     if (first === undefined) {
       return ok(true);
     }
@@ -209,6 +207,16 @@ export class InGameMusicScoreController {
       this.musicPosition < batch.absolutePos &&
         batch.absolutePos <= this.launcherMusicPosition,
     );
+  }
+
+  /** IsNoteActivateJustNow rejects a batch the music clock has already reached;
+   * the original chart never reaches that branch because bar 0 is skipped. A
+   * Garupa chart may place notes there, so such a batch is launched late. */
+  isLateBatch(batch: NoteBatchInformation): boolean {
+    if (this.usesIndependentVisualAxis(batch)) return false;
+    const first = activationRepresentative(batch);
+    return first !== undefined &&
+      (first.barIndex < this.musicBarProgressValue || batch.absolutePos <= this.musicPosition);
   }
 
   getAdjustedMusicPosition(offsetFrames: number): number {
@@ -320,6 +328,12 @@ export class InGameMusicScoreController {
     }
     return bpm;
   }
+}
+
+function activationRepresentative(batch: NoteBatchInformation): NoteInformation | undefined {
+  return batch.informationList.find(
+    (note) => note.buttonType !== ButtonType.None || note.laneSpan !== undefined || isBpmCommand(note),
+  );
 }
 
 export function advancePosition(
