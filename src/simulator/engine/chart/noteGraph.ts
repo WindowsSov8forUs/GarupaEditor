@@ -178,15 +178,11 @@ export function isSameDirectionalGroup(
   if (kind === null || !matchesDirectionalKind(target, kind)) {
     return false;
   }
-  // NoteUtility.IsSameDirectionGroup: the family root accepts members one or
-  // two buttons away, other members only adjacent ones. Explicit members keep
-  // that rule on their authored offsets.
-  let difference: number;
+  const difference = directionalEndpointLane(source) - directionalEndpointLane(target);
   if (source.directionalMemberRootIndex !== undefined || target.directionalMemberRootIndex !== undefined) {
     if (source.directionalMemberRootIndex !== target.directionalMemberRootIndex) return false;
-    difference = source.directionalMemberOffset! - target.directionalMemberOffset!;
-  } else {
-    difference = directionalEndpointLane(source) - directionalEndpointLane(target);
+    if (source.fireNoteType === kind.familyFireNoteType || target.fireNoteType === kind.familyFireNoteType) return source !== target;
+    return Math.abs(source.directionalMemberOffset! - target.directionalMemberOffset!) === 1;
   }
   if (source.fireNoteType === kind.familyFireNoteType) {
     return kind.direction === "left"
