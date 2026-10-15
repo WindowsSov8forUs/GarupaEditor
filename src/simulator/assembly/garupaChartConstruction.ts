@@ -161,6 +161,8 @@ function constructGarupaNoteGraphs(
       text: String(item.value),
     }));
   }
+  const laneChange = habahiroLaneChangePosition(chart, tempo);
+  if (laneChange.status !== "ok") return laneChange;
   const effectiveOrders = new Set(tempo.segments.map(segment => segment.sourceOrder));
   for (let index = bpmItems.length - 1; index >= 0; index--) if (!effectiveOrders.has(bpmItems[index]!.sourceOrder)) bpmItems.splice(index, 1);
   bpmItems.sort((left, right) => left.absolutePos - right.absolutePos || left.sourceOrder - right.sourceOrder);
@@ -179,7 +181,8 @@ function constructGarupaNoteGraphs(
   let records: PositionedRecord[] = [];
   for (let sourceOrder = 0; sourceOrder < chart.length; sourceOrder += 1) {
     const item = chart[sourceOrder];
-    if (item === undefined || item.type === "SV" || item.type === "BPM") continue;
+    if (item === undefined || item.type === "SV" || item.type === "BPM" ||
+      item.type === "Header" || item.type === "System") continue;
     const projected = !extensions.originalItemIndices.has(sourceOrder);
     if (item.type === "Slide") {
       const long = isLongShape(item) && (!tempo.folded || tempo.secondsAt(item.connections[1]!.beat * 48) > tempo.secondsAt(item.connections[0]!.beat * 48));
@@ -312,9 +315,10 @@ function constructGarupaNoteGraphs(
     startBpmString: baseBpm.text,
     bpmChangeRealValueList: changeItems.map((item) => item.value),
     bpmChangeStringRealValueList: changeItems.map((item) => item.text),
-    // Garupa JSON has no #HABAHIRO mode marker; note widths are independent geometry.
-    isMultiRangeNotes: false,
-    habahiroChangeAbsolutePos: -1,
+    // The Header item is the original #HABAHIRO header; the System lane change
+    // is the original lane_change command position on the runtime clock.
+    isMultiRangeNotes: chart.some((item) => item.type === "Header"),
+    habahiroChangeAbsolutePos: laneChange.value,
   });
   registerSignedTempo(result, tempo);
   registerConstructedChartRuntimeMetadata(result);
@@ -333,7 +337,7 @@ function buildGarupaProductChartProfile(
 
   for (let sourceOrder = 0; sourceOrder < chart.length; sourceOrder += 1) {
     const item = chart[sourceOrder]!;
-    if (item.type === "BPM") continue;
+    if (item.type === "BPM" || item.type === "Header" || item.type === "System") continue;
     if (item.type === "SV") {
       const position = garupaBeatToAbsolutePosition(item.beat);
       if (position.status !== "ok") return position;
@@ -414,7 +418,7 @@ function buildGarupaProductChartProfile(
   };
   const svItemIndices = new Set<number>();
   for (const [index, item] of chart.entries()) {
-    if (item.type === "BPM" || item.type === "SV") continue;
+    if (item.type === "BPM" || item.type === "SV" || item.type === "Header" || item.type === "System") continue;
     const owner = productTimingGroup(item.timingGroup);
     for (const node of item.type === "Slide" ? item.connections : [item]) {
       const changes = groupChanges(node.timingGroup === undefined ? owner : productTimingGroup(node.timingGroup));
@@ -429,7 +433,7 @@ function buildGarupaProductChartProfile(
   const independentItems = new Set(slideChains.filter(chain => chain.independentTiming).map(chain => chain.chartItemIndex));
   const originalItemIndices = new Set<number>();
   for (const [index, item] of chart.entries()) {
-    if (item.type === "BPM" || item.type === "SV") continue;
+    if (item.type === "BPM" || item.type === "SV" || item.type === "Header" || item.type === "System") continue;
     const compatible = item.type === "Slide"
       ? item.connections.slice(0, -1).every(node => node.type !== "Flick" && node.type !== "Directional") &&
         item.connections[0]!.type !== "Hidden" && item.connections[item.connections.length - 1]!.type !== "Hidden" &&
@@ -507,6 +511,16 @@ function canUseFixedLaneGeometry(connection: GarupaChartJsonSlideConnection): bo
     : connection.lane;
   return Number.isInteger(connection.lane) && connection.width <= 7 &&
     start >= 0 && start + connection.width <= LANE_COUNT;
+}
+
+function habahiroLaneChangePosition(chart: GarupaChartJson, tempo: SignedTempo): SimulatorResult<number> {
+  const laneChanges = chart.filter((item) => item.type === "System");
+  if (laneChanges.length === 0) return ok(-1);
+  if (laneChanges.length > 1 || !chart.some((item) => item.type === "Header")) {
+    return invalidPosition("A #LANE_CHANGE requires the #HABAHIRO Header and occurs at most once.");
+  }
+  const authored = garupaBeatToAbsolutePosition(laneChanges[0]!.beat);
+  return authored.status === "ok" ? ok(tempo.runtimePosition(authored.value)) : authored;
 }
 
 export function garupaBeatToAbsolutePosition(beat: number): SimulatorResult<number> {

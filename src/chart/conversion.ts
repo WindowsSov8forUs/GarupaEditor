@@ -6,6 +6,7 @@ import type {
   BestdoriV2ChartJsonSingleNote,
   BestdoriV2ChartJsonSlideConnection,
 } from "./bestdori-v2";
+import { GARUPA_HEADER_HABAHIRO, GARUPA_SYSTEM_LANE_CHANGE } from "./garupa";
 import type {
   GarupaChartJson,
   GarupaChartJsonBpmItem,
@@ -121,6 +122,9 @@ function normalizeGarupaBpmAtZero(items: GarupaChartJson): GarupaChartJson {
         })),
         ...(item.timingGroup === undefined ? {} : { timingGroup: item.timingGroup }),
       };
+    }
+    if (item.type === "Header") {
+      return { ...item };
     }
     return {
       ...item,
@@ -265,6 +269,29 @@ export function parseGarupaChartJson(input: unknown): GarupaChartJson {
       return;
     }
 
+    if (rawType === "Header") {
+      if (rawItem.beat !== undefined) {
+        throw new Error(`${label}: Header has no beat`);
+      }
+      if (rawItem.data !== GARUPA_HEADER_HABAHIRO) {
+        throw new Error(`${label}.data is invalid: ${String(rawItem.data)}`);
+      }
+      items.push({ type: "Header", data: GARUPA_HEADER_HABAHIRO });
+      return;
+    }
+
+    if (rawType === "System") {
+      if (rawItem.data !== GARUPA_SYSTEM_LANE_CHANGE) {
+        throw new Error(`${label}.data is invalid: ${String(rawItem.data)}`);
+      }
+      items.push({
+        type: "System",
+        beat: parseFiniteNumber(rawItem.beat, `${label}.beat`),
+        data: GARUPA_SYSTEM_LANE_CHANGE,
+      });
+      return;
+    }
+
     if (rawType === "Hidden") {
       throw new Error(`${label}: Hidden is only allowed inside Slide.connections`);
     }
@@ -286,8 +313,24 @@ export function parseGarupaChartJson(input: unknown): GarupaChartJson {
   if (bpmCount === 0) {
     throw new Error("Garupa chart JSON must include at least one BPM item.");
   }
+  validateGarupaChartHeaders(items);
 
   return items;
+}
+
+/** One HABAHIRO header and one lane change at most; a lane change requires the header. */
+export function validateGarupaChartHeaders(items: GarupaChartJson): void {
+  const headerCount = items.filter((item) => item.type === "Header").length;
+  const laneChangeCount = items.filter((item) => item.type === "System").length;
+  if (headerCount > 1) {
+    throw new Error(`Garupa chart JSON allows at most one ${GARUPA_HEADER_HABAHIRO} Header.`);
+  }
+  if (laneChangeCount > 1) {
+    throw new Error(`Garupa chart JSON allows at most one ${GARUPA_SYSTEM_LANE_CHANGE} System item.`);
+  }
+  if (laneChangeCount > 0 && headerCount === 0) {
+    throw new Error(`${GARUPA_SYSTEM_LANE_CHANGE} requires the ${GARUPA_HEADER_HABAHIRO} Header.`);
+  }
 }
 
 export function parseBestdoriV2ChartJson(input: unknown): BestdoriV2ChartJson {
@@ -655,7 +698,8 @@ export function convertGarupaChartJsonToBestdoriV2(
       });
       continue;
     }
-    if (item.type === "SV") {
+    // Bestdori V2 has no SV, chart header or lane-change command.
+    if (item.type === "SV" || item.type === "Header" || item.type === "System") {
       continue;
     }
     if (item.type === "Slide") {

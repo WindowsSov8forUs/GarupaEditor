@@ -43,6 +43,24 @@ export interface GarupaChartJsonSvItem {
   readonly timingGroup?: string;
 }
 
+/** Chart header switch, the counterpart of the original BMS `#HABAHIRO` header. */
+export const GARUPA_HEADER_HABAHIRO = "#HABAHIRO" as const;
+/** Timed lane-change command of a HABAHIRO chart; it requires the HABAHIRO header. */
+export const GARUPA_SYSTEM_LANE_CHANGE = "#LANE_CHANGE" as const;
+
+/** Chart-wide header; at most one item per value and no beat. */
+export interface GarupaChartJsonHeaderItem {
+  readonly type: "Header";
+  readonly data: typeof GARUPA_HEADER_HABAHIRO;
+}
+
+/** Timed non-note command; at most one lane change per chart. */
+export interface GarupaChartJsonSystemItem {
+  readonly type: "System";
+  readonly beat: number;
+  readonly data: typeof GARUPA_SYSTEM_LANE_CHANGE;
+}
+
 export type GarupaChartJsonTopLevelNote =
   | Omit<GarupaChartJsonSimpleNote, "type"> & {
       readonly type: Exclude<GarupaChartJsonSimpleNoteType, "Hidden">;
@@ -53,6 +71,8 @@ export type GarupaChartJsonItem =
   | GarupaChartJsonTopLevelNote
   | GarupaChartJsonSlideItem
   | GarupaChartJsonBpmItem
-  | GarupaChartJsonSvItem;
+  | GarupaChartJsonSvItem
+  | GarupaChartJsonHeaderItem
+  | GarupaChartJsonSystemItem;
 
 export type GarupaChartJson = readonly GarupaChartJsonItem[];

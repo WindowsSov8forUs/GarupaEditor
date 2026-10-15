@@ -1,4 +1,5 @@
 // Simulator-owned validation and freezing for the shared Garupa chart schema.
+import { GARUPA_HEADER_HABAHIRO, GARUPA_SYSTEM_LANE_CHANGE } from "../../chart";
 import type {
   GarupaChartJson,
   GarupaChartJsonDirectionalNote,
@@ -34,6 +35,8 @@ export function copyAndFreezeGarupaChartJson(
     svItemCount += copied.value.svItemCount;
     timingGroupFieldCount += copied.value.timingGroupFieldCount;
   }
+  const headers = validateHabahiroItems(items);
+  if (headers.status !== "ok") return headers;
   return ok(Object.freeze({
     chart: Object.freeze(items),
     extensions: Object.freeze({ svItemCount, timingGroupFieldCount }),
@@ -58,6 +61,18 @@ function copyItem(
       return invalid(`${label} BPM requires exact type/beat/value finite fields.`);
     }
     return copied(Object.freeze({ type: "BPM", beat: input.beat, value: input.value }), 0, 0);
+  }
+  if (input.type === "Header") {
+    if ("beat" in input || input.data !== GARUPA_HEADER_HABAHIRO) {
+      return invalid(`${label} Header requires data ${GARUPA_HEADER_HABAHIRO} and no beat.`);
+    }
+    return copied(Object.freeze({ type: "Header", data: GARUPA_HEADER_HABAHIRO }), 0, 0);
+  }
+  if (input.type === "System") {
+    if (!isFiniteNonnegative(input.beat) || input.data !== GARUPA_SYSTEM_LANE_CHANGE) {
+      return invalid(`${label} System requires a finite beat and data ${GARUPA_SYSTEM_LANE_CHANGE}.`);
+    }
+    return copied(Object.freeze({ type: "System", beat: input.beat, data: GARUPA_SYSTEM_LANE_CHANGE }), 0, 0);
   }
   if (input.type === "SV") {
     const timing = copyTimingGroup(input, label);
@@ -101,10 +116,27 @@ function copyItem(
     return invalid(`${label} Hidden is allowed only inside Slide.connections.`);
   }
   return copied(
-    note.value.connection as Exclude<GarupaChartJsonItem, { readonly type: "Slide" | "BPM" | "SV" }>,
+    note.value.connection as Exclude<GarupaChartJsonItem, { readonly type: "Slide" | "BPM" | "SV" | "Header" | "System" }>,
     0,
     note.value.hasTimingGroup ? 1 : 0,
   );
+}
+
+/** The original merges wide notes only under #HABAHIRO; a lane change also requires it. */
+function validateHabahiroItems(items: readonly GarupaChartJsonItem[]): SimulatorResult<void> {
+  const headers = items.filter((item) => item.type === "Header").length;
+  const laneChanges = items.filter((item) => item.type === "System").length;
+  if (headers > 1 || laneChanges > 1) {
+    return invalid(`At most one ${GARUPA_HEADER_HABAHIRO} Header and one ${GARUPA_SYSTEM_LANE_CHANGE} System item are allowed.`);
+  }
+  if (headers === 1) return ok(undefined);
+  if (laneChanges > 0) return invalid(`${GARUPA_SYSTEM_LANE_CHANGE} requires the ${GARUPA_HEADER_HABAHIRO} Header.`);
+  const wide = items.some((item) => item.type === "Slide"
+    ? item.connections.some((node) => node.type !== "Directional" && node.width > 1)
+    : (item.type === "Single" || item.type === "Flick" || item.type === "Skill") && item.width > 1);
+  return wide
+    ? invalid(`Notes wider than one lane, except Directional, require the ${GARUPA_HEADER_HABAHIRO} Header.`)
+    : ok(undefined);
 }
 
 function copyConnection(

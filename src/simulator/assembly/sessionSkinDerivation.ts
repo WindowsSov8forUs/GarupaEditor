@@ -13,7 +13,7 @@ export function deriveSessionSkinRecipe(
   return resolveOriginalSkinRecipe(
     request.config.skin,
     mode,
-    chart.habahiroChangeAbsolutePos >= 0 ? "habahiro" : "ordinary",
+    chart.isMultiRangeNotes ? "habahiro" : "ordinary",
     request.presentation.mv === null ? "standard" : "mv",
   );
 }

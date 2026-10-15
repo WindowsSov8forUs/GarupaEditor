@@ -81,6 +81,7 @@ export function buildSignedTempo(chart: GarupaChartJson): SimulatorResult<Signed
   };
   let earliestSeconds = 0;
   for (const item of chart) {
+    if (item.type === "Header") continue;
     for (const node of item.type === "Slide" ? item.connections : [item]) {
       const at = secondsAt(node.beat * 48);
       if (!Number.isFinite(at)) return invalid("Every chart event must map to finite time.");

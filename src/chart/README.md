@@ -2,7 +2,7 @@
 
 `src/chart` owns application-wide serialized chart schemas and pure format conversion utilities.
 
-- `garupa.ts`: canonical Garupa chart JSON schema.
+- `garupa.ts`: canonical Garupa chart JSON schema. Besides BPM/SV/notes/Slide, it carries the chart header `{"type":"Header","data":"#HABAHIRO"}` (no beat, at most one; the original `#HABAHIRO` header) and the timed command `{"type":"System","beat":…,"data":"#LANE_CHANGE"}` (at most one; requires the HABAHIRO header). Notes wider than one lane, except Directional, require the HABAHIRO header. Bestdori V2 export drops both items.
 - `bestdori-v2.ts`: canonical Bestdori V2 chart JSON schema used by import/export flows.
 - `conversion.ts`: parsing, optional BPM-zero normalization, and Garupa ↔ Bestdori V2 conversion. Canonical optional `timingGroup` fields are omitted when absent/Global rather than emitted as own `undefined` properties; BPM-zero normalization preserves Slide owner groups.
 - `index.ts`: the public module surface.

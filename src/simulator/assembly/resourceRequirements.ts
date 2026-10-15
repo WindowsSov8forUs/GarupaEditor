@@ -93,7 +93,7 @@ export function selectSimulatorResourceRequirements(
   ];
   return Object.freeze({
     schemaVersion: 1 as const,
-    renderingKind: chart.habahiroChangeAbsolutePos >= 0 ? "habahiro" as const : "ordinary" as const,
+    renderingKind: chart.isMultiRangeNotes ? "habahiro" as const : "ordinary" as const,
     skin,
     requirements: Object.freeze(requirements),
   });

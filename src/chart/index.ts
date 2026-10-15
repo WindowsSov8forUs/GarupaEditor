@@ -3,14 +3,17 @@ export type {
   GarupaChartJsonBpmItem,
   GarupaChartJsonDirection,
   GarupaChartJsonDirectionalNote,
+  GarupaChartJsonHeaderItem,
   GarupaChartJsonItem,
   GarupaChartJsonSimpleNote,
   GarupaChartJsonSimpleNoteType,
   GarupaChartJsonSlideConnection,
   GarupaChartJsonSlideItem,
   GarupaChartJsonSvItem,
+  GarupaChartJsonSystemItem,
   GarupaChartJsonTopLevelNote,
 } from "./garupa";
+export { GARUPA_HEADER_HABAHIRO, GARUPA_SYSTEM_LANE_CHANGE } from "./garupa";
 
 export type {
   BestdoriV2ChartJson,

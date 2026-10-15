@@ -16,7 +16,9 @@ export function buildSimulatorGarupaChart(
   if (typeof mirror !== "boolean") throw new Error("Simulator mirror requires one explicit boolean.");
   if (!mirror) return parsed;
   return Object.freeze(parsed.map((item) => {
-    if (item.type === "BPM" || item.type === "SV") return Object.freeze({ ...item });
+    if (item.type === "BPM" || item.type === "SV" || item.type === "Header" || item.type === "System") {
+      return Object.freeze({ ...item });
+    }
     if (item.type === "Slide") {
       return Object.freeze({
         type: "Slide" as const,
