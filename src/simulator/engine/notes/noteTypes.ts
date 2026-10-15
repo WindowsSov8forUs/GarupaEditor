@@ -563,13 +563,15 @@ export class NoteLong extends NoteFrontBase {
         "Long tail reservation requires its root and parent-owned after source.",
       );
     }
-    const noteType = longAfterJudgeNoteType(after.afterNoteType);
-    if (noteType === null) {
+    const afterNoteType = longAfterJudgeNoteType(after.afterNoteType);
+    if (afterNoteType === null) {
       return integrityFailure(
         "manual.long-after-type-unrepresented",
         `Long after type ${after.afterNoteType} has no confirmed manual note type.`,
       );
     }
+    // judgeAfterNote replaces the after-note GameNoteType with 1 for a Miss.
+    const noteType = rawResult === NoteResultType.Miss ? 1 : afterNoteType;
     const group = this.longAfterMultipleGroupValue;
     const reserved = input.judgementTransaction.preflight({
       noteInformation: information,
@@ -756,23 +758,14 @@ export class NoteLong extends NoteFrontBase {
     if (over.status !== "ok" || (!over.value && !runtime.value.isStartupExpired?.(after.absolutePosition))) {
       return over.status === "ok" ? ok(undefined) : over;
     }
-    const noteType = longAfterJudgeNoteType(after.afterNoteType);
-    if (noteType === null) {
-      return integrityFailure(
-        "manual.long-timeout-after-type-unrepresented",
-        `Long timeout after type ${after.afterNoteType} has no confirmed note type.`,
-      );
-    }
+    // execOverStopState emits its Miss with GameNoteType 1.
     const submitted = runtime.value.submitJudgement({
       noteInformation: information,
       phase: "tail",
-      noteType,
+      noteType: 1,
       rawResult: NoteResultType.Miss,
       rawTiming: JudgeTiming.None,
       absolutePosition: after.absolutePosition,
-      ...(noteType === 7 && this.longAfterMultipleGroupValue !== null
-        ? { multipleDirectionalFlickNoteCount: this.longAfterMultipleGroupValue.count }
-        : {}),
     });
     if (submitted.status !== "ok") {
       return submitted;
