@@ -102,6 +102,11 @@ export abstract class NoteSingleBase extends NoteFrontBase {
     if (!startupExpired && this.missSecondCounterValue <= MANUAL_MISS_SECONDS) {
       return ok(undefined);
     }
+    return this.onTimeoutMiss(noteInformation);
+  }
+
+  /** NoteSingleBase.onMiss: one GameNoteType 0 Miss, then Deactivate. */
+  protected onTimeoutMiss(noteInformation: NoteInformation): SimulatorResult<void> {
     const manualRuntime = this.manualRuntime;
     if (manualRuntime.status !== "ok") {
       return manualRuntime;
@@ -2477,6 +2482,22 @@ export class NoteMultipleDirectionalFlick extends NoteDirectionalFlick {
       return this.changeState(NoteState.Deactive);
     }
     return super.moveState(deltaTimeSeconds);
+  }
+
+  /** NoteMultipleDirectionalFlick.onMiss judges the connected group once. */
+  protected override onTimeoutMiss(noteInformation: NoteInformation): SimulatorResult<void> {
+    const group = this.groupValue;
+    if (group === null) {
+      return integrityFailure(
+        "manual.multiple-directional-runtime-unavailable",
+        "Multiple Directional timeout requires its registered group owner.",
+      );
+    }
+    if (group.isUsed) {
+      return this.changeState(NoteState.Deactive);
+    }
+    const used = group.markUsed();
+    return used.status === "ok" ? super.onTimeoutMiss(noteInformation) : used;
   }
 
   protected override forcePerfect(): SimulatorResult<void> {

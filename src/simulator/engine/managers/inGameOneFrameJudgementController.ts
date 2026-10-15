@@ -686,15 +686,21 @@ function isClosedManualRequest(
   const expectedMultipleCount = ownership.multipleDirectionalFlickNoteCount;
   const expectedMultipleButtons = ownership.multipleDirectionalFlickButtonTypes;
   if (source.fireNoteType === FrontNoteType.MultipleDirectionalFlick) {
+    // NoteMultipleDirectionalFlick.onMiss emits one GameNoteType 0 Miss.
+    if (request.rawResult === NoteResultType.Miss) {
+      return phase === "head" && request.noteType === 0 &&
+        request.absolutePosition === source.absolutePos &&
+        request.multipleDirectionalFlickNoteCount === undefined &&
+        expectedMultipleCount !== null;
+    }
     return phase === "head" &&
       request.noteType === 10 &&
-      request.rawResult !== NoteResultType.Miss &&
       request.absolutePosition === source.absolutePos &&
       isOwnedButtonGroup(
         request.multipleDirectionalFlickNoteCount,
         expectedMultipleCount,
         expectedMultipleButtons,
-      ) || phase === "head" && request.noteType === 10 && request.rawResult !== NoteResultType.Miss &&
+      ) || phase === "head" && request.noteType === 10 &&
         request.absolutePosition === source.absolutePos && request.multipleDirectionalFlickNoteCount === expectedMultipleCount &&
         ownership.multipleDirectionalMembers !== undefined && ownership.multipleDirectionalMembers.includes(source) &&
         ownership.multipleDirectionalMembers.length === expectedMultipleCount && ownership.multipleDirectionalMembers.every(member =>
