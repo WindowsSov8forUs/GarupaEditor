@@ -3981,7 +3981,8 @@ function updateScorePanelClip(
   visual.scoreHighRankPanelMask.position.copyFrom(progress.position);
   const panelRight = Math.fround(panel.targetLeftX + indicatorLocalX);
   const authoredLeft = Math.fround(panel.targetLeftX + panel.leftAbsolute);
-  const panelWidth = Math.fround(Math.max(panel.minimumWidth, panelRight - authoredLeft));
+  // UIPanel.OnAnchor clamps the clip width to max(softness.x, 2).
+  const panelWidth = Math.fround(Math.max(Math.max(panel.softness[0], panel.minimumWidth), panelRight - authoredLeft));
   const panelCenter = Math.fround(
     Math.fround(Math.fround(authoredLeft + panelRight) / 2),
   );
