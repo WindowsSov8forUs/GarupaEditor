@@ -96,6 +96,7 @@ import {
 } from "../assembly/sessionPresentationDerivation";
 import { deriveSessionSkinRecipe } from "../assembly/sessionSkinDerivation";
 import type { ResolvedOriginalSkinRecipe } from "../engine/skin/contracts";
+import { withDefaultJudgeAtlas } from "../engine/skin/originalSkinResolver";
 import type { ChartConstructionResult } from "../engine/chart/types";
 import type { SimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
 import { createPixiStartupDirectionScene, type PixiStartupDirectionScene } from "../backends/pixi/pixiStartupDirectionScene";
@@ -297,8 +298,20 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     if (skin.status === "rejected") {
       return rejectedWithCleanup(skin, releasePendingMovie());
     }
-    const selection = selectSimulatorResourceRequirements(chart.value, skin.value);
-    const resourceLease = await this.platform.resources.acquire(selection.requirements);
+    let selection = selectSimulatorResourceRequirements(chart.value, skin.value);
+    let resourceLease = await this.platform.resources.acquire(selection.requirements);
+    if (resourceLease.status === "rejected" && skin.value.judge.route !== "default") {
+      const judgeRequirement = selection.requirements.find((entry) => entry.semanticRole === "skin.judge");
+      const judgeOnly = judgeRequirement === undefined
+        ? null
+        : await this.platform.resources.acquire([judgeRequirement]);
+      if (judgeOnly?.status === "accepted") {
+        await judgeOnly.value.release();
+      } else if (judgeOnly !== null && judgeOnly.failure.code !== "resource-platform-unavailable") {
+        selection = selectSimulatorResourceRequirements(chart.value, withDefaultJudgeAtlas(skin.value));
+        resourceLease = await this.platform.resources.acquire(selection.requirements);
+      }
+    }
     if (resourceLease.status === "rejected") {
       return rejectedWithCleanup(
         rejected(

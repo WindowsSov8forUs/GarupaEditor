@@ -186,6 +186,23 @@ export function resolveOriginalSkinRecipe(
   }));
 }
 
+/**
+ * Original CE.Result.onFinishedLoadJudgeAtlas: when the selected judge atlas
+ * (HABAHIRO or special) did not load, LoadInGameDefaultJudgeAtlas loads the
+ * default atlas instead; the same atlas feeds judge text and judge timing.
+ */
+export function withDefaultJudgeAtlas(
+  recipe: ResolvedOriginalSkinRecipe,
+): ResolvedOriginalSkinRecipe {
+  const judge = component("default", "skin00", "ingameskin/judgeskin/skin00");
+  const previous = identityPart("judge", recipe.judge.route, recipe.judge.bundleName);
+  return Object.freeze({
+    ...recipe,
+    identity: recipe.identity.replace(previous, identityPart("judge", judge.route, judge.bundleName)),
+    judge,
+  });
+}
+
 function resolveBackground(
   backgroundMode: OriginalSkinBackgroundMode,
   chartMode: OriginalSkinChartMode,
