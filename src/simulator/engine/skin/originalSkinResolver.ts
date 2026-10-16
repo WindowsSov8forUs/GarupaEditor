@@ -117,9 +117,13 @@ export function resolveOriginalSkinRecipe(
     `ingameskin/fieldskin/${fieldBundle}`,
   );
 
-  const effectBundle = specialEffect ? specialMaster!.effectBundleName! : normalEffect.bundleName;
+  // ButtonManager.getEffectSkinBundleName returns the HABAHIRO bundle for a
+  // multi-range chart before consulting Special or normal settings.
+  const effectBundle = chartMode === "habahiro"
+    ? "habahiro"
+    : specialEffect ? specialMaster!.effectBundleName! : normalEffect.bundleName;
   const tapEffect = component(
-    specialEffect ? "special" : "normal",
+    chartMode === "habahiro" ? "habahiro" : specialEffect ? "special" : "normal",
     effectBundle,
     `ingameskin/tapeffect/${effectBundle}`,
   );

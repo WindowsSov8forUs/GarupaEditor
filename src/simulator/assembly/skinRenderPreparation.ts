@@ -52,7 +52,9 @@ export async function prepareSkinRenderOverlay(
   const local: LocalRenderResource[] = [];
   const assetIdsByResource = new Map<string, Map<string, string>>();
   for (const pack of packs) {
-    if (!selected.has(pack.logicalResource)) continue;
+    // A HABAHIRO tap-effect package also serves the lane-change flash; only its
+    // flash-role decoding is a render source.
+    if (!selected.has(pack.logicalResource) || pack.role === "tap-effect" || pack.role === "directional-effect") continue;
     const built = buildAssets(pack);
     if (built.status === "rejected") return built;
     assets.push(...built.value.assets);
