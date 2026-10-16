@@ -237,22 +237,34 @@ export class InGameMusicScoreController {
       bar: this.musicBarProgressValue,
       beatProgress: this.musicBeatProgressValue,
     };
+    const keys = [...this.tempoCommands].sort((left, right) => left.absolutePos - right.absolutePos);
     if (offsetFrames > 0) {
+      // FastAbsolutePos: each step starts from currentBPM and takes the first
+      // cached key with originalPosition <= key < simulatedPosition.
+      const origin = this.musicPosition;
       for (let index = 0; index < offsetFrames; index += 1) {
+        const simulated = absolutePosition(cursor);
+        const crossed = keys.find((command) => origin <= command.absolutePos && simulated > command.absolutePos);
         cursor = advancePosition(
           cursor.bar,
           cursor.beatProgress,
-          this.bpmAtPosition(absolutePosition(cursor)),
+          crossed === undefined ? this.currentBpmValue : Math.fround(crossed.bpm),
           JUDGE_OFFSET_STEP_SECONDS,
         );
       }
     } else {
-      const committedBpm = this.currentBpmValue;
+      // SlowAbsolutePos: each step takes the last cached key not after the
+      // simulated position, otherwise it keeps currentBPM.
       for (let index = 0; index < -offsetFrames; index += 1) {
+        const simulated = absolutePosition(cursor);
+        let reached: (typeof keys)[number] | undefined;
+        for (let key = keys.length - 1; key >= 0; key -= 1) {
+          if (!(simulated < keys[key]!.absolutePos)) { reached = keys[key]; break; }
+        }
         cursor = rewindPosition(
           cursor.bar,
           cursor.beatProgress,
-          committedBpm,
+          reached === undefined ? this.currentBpmValue : Math.fround(reached.bpm),
           JUDGE_OFFSET_STEP_SECONDS,
         );
       }
