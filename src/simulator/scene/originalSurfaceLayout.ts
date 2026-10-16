@@ -23,6 +23,10 @@ const VANISHING_SLOPE = Math.fround(-1.3439395427703857);
 const MOVE_TIME_CHILD_OFFSET = Math.fround(72);
 const MOVE_TIME_WIDGET_SIZE = Math.fround(104);
 const MOVE_TIME_HIT_RADIUS_WORLD = Math.fround(0.11999999731779099);
+// InGameIPhoneXAdjuster.Awake, high-aspect devices only.
+const ADJUSTER_MUSIC_OBJECTS_SCALE_RATE = Math.fround(0.054);
+const ADJUSTER_BUTTON_Y_OFFSET_RATE = Math.fround(0.25);
+const ADJUSTER_RHYTHM_LINES_Y_RATE = Math.fround(13);
 
 export interface OriginalStarUiLayout {
   readonly aspectRatio: number;
@@ -55,6 +59,11 @@ export interface OriginalCameraProjectionLayout {
 export interface OriginalGameplayLayout {
   readonly screenSizeX: number;
   readonly screenWidthAdjustRate: number;
+  /** GamePlay/MusicObjects uniform scale; parent of buttons, judge line and Launcher. */
+  readonly musicObjectsScale: number;
+  /** RhythmGameLines (NoteLane parent) local Y and uniform scale, UI units. */
+  readonly rhythmLinesY: number;
+  readonly rhythmLinesScale: number;
   readonly normalizedNoteSize: number;
   readonly noteSettingScale: number;
   readonly noteParentScale: number;
@@ -148,9 +157,19 @@ export function createOriginalSurfaceLayout(
   const widthRate = div(aspectRatio, ORIGINAL_REFERENCE_SCREEN_SIZE_X);
   const normalizedNoteSize = div(noteSize, 100);
   const noteSettingScale = mul(widthRate, normalizedNoteSize);
-  const targetCenterY = mul(AUTHORED_BUTTON_Y, widthRate);
-  const launcherY = mul(AUTHORED_LAUNCHER_Y, widthRate);
-  const laneSpacingWorld = mul(AUTHORED_BUTTON_SPACING, widthRate);
+  // The adjuster writes MusicObjects scale and the button local Y offset before
+  // setupGameButtonPosition multiplies the current local X/Y by the width rate.
+  // Buttons, judge line and note targets are world positions under MusicObjects;
+  // execMultiResolution sets Launcher local Y from its world Y times the rate.
+  const musicObjectsScale = isHigh
+    ? mul(screenToSafeAreaRatio, add(mul(highAspectRatio, ADJUSTER_MUSIC_OBJECTS_SCALE_RATE), 1))
+    : Math.fround(1);
+  const buttonLocalY = isHigh
+    ? add(AUTHORED_BUTTON_Y, mul(highAspectRatio, ADJUSTER_BUTTON_Y_OFFSET_RATE))
+    : AUTHORED_BUTTON_Y;
+  const targetCenterY = mul(mul(buttonLocalY, widthRate), musicObjectsScale);
+  const launcherY = mul(widthRate, mul(AUTHORED_LAUNCHER_Y, musicObjectsScale));
+  const laneSpacingWorld = mul(mul(AUTHORED_BUTTON_SPACING, widthRate), musicObjectsScale);
   const firstButtonX = mul(Math.fround(-3), laneSpacingWorld);
   const vanishingY = add(targetCenterY, mul(firstButtonX, VANISHING_SLOPE));
   const noteStartY = add(
@@ -160,7 +179,9 @@ export function createOriginalSurfaceLayout(
   const pixelsPerWorldUnit = div(height, 2);
   const pixelsPerAuthoredUnit = div(width, ORIGINAL_SCREEN_WIDTH_BASE);
   const screenToSafeChildScale = mul(pixelsPerAuthoredUnit, screenToSafeAreaRatio);
-  const sudden = originalSuddenLayout(suddenRate, suddenLane, width, height, pixelsPerAuthoredUnit, screenToSafeChildScale);
+  const rhythmLinesY = isHigh ? mul(highAspectRatio, ADJUSTER_RHYTHM_LINES_Y_RATE) : Math.fround(0);
+  const sudden = originalSuddenLayout(suddenRate, suddenLane, width, height, pixelsPerAuthoredUnit, screenToSafeChildScale,
+    rhythmLinesY, musicObjectsScale);
   const moveOffset = mul(MOVE_TIME_CHILD_OFFSET, screenToSafeChildScale);
   const centerY = div(height, 2);
   const safeRight = add(safeArea.value.x, safeArea.value.width);
@@ -209,6 +230,9 @@ export function createOriginalSurfaceLayout(
     gameplay: Object.freeze({
       screenSizeX: aspectRatio,
       screenWidthAdjustRate: widthRate,
+      musicObjectsScale,
+      rhythmLinesY,
+      rhythmLinesScale: musicObjectsScale,
       normalizedNoteSize,
       noteSettingScale,
       noteParentScale: calculateOrdinaryNoteParentScale(isHigh, screenToSafeAreaRatio, highAspectRatio),
@@ -218,9 +242,9 @@ export function createOriginalSurfaceLayout(
       laneSpacingWorld,
       vanishingY,
       noteStartY,
-      noteLineClipY: suddenRate === 0 ? add(centerY, mul(
-        ORIGINAL_NOTE_LANE_BOTTOM_Y + ORIGINAL_NOTE_LANE_HEIGHT, screenToSafeChildScale,
-      )) : sudden.noteLineClipY,
+      noteLineClipY: suddenRate === 0 ? add(centerY, mul(add(rhythmLinesY, mul(
+        ORIGINAL_NOTE_LANE_BOTTOM_Y + ORIGINAL_NOTE_LANE_HEIGHT, musicObjectsScale,
+      )), screenToSafeChildScale)) : sudden.noteLineClipY,
     }),
     ui: Object.freeze({
       comboPosition: originalComboPosition(displayComboPosition, highAspectRatio),
@@ -259,6 +283,11 @@ export function createOriginalSurfaceLayout(
       height: movieHeight,
     }),
   }));
+}
+
+/** World X of an authored button X: setupGameButtonPosition, then MusicObjects scale. */
+export function originalButtonWorldX(layout: OriginalSurfaceLayout, authoredX: number): number {
+  return mul(mul(authoredX, layout.gameplay.screenWidthAdjustRate), layout.gameplay.musicObjectsScale);
 }
 
 /** SORT-C44: InGameIPhoneXAdjuster.Awake overwrites the canonical note parent scale. */

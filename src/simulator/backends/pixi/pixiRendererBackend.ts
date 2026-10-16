@@ -4624,8 +4624,9 @@ function applySpatialSpriteTransform(
       command.position.y.value,
       profile.scene.projection,
     );
+    // Lane effect parent (rate) sits under the button and MusicObjects.
     const parentScale = object.role === "tap-lane-effect"
-      ? object.surfaceLayout.gameplay.screenWidthAdjustRate
+      ? Math.fround(object.surfaceLayout.gameplay.screenWidthAdjustRate * object.surfaceLayout.gameplay.musicObjectsScale)
       : Math.fround(1);
     const textureScale = Math.fround(
       profile.scene.projection.pixelsPerWorldUnit / row.pixelsPerUnit * parentScale,

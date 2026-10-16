@@ -11,6 +11,7 @@ import {
   createOriginalSurfaceLayout,
   ORIGINAL_NOTE_LANE_BOTTOM_Y,
   originalBottomLeftScreenToWorld,
+  originalButtonWorldX,
   originalWorldToBottomLeftScreen,
   type OriginalSurfaceLayout,
 } from "./originalSurfaceLayout";
@@ -162,7 +163,7 @@ export function createSimulatorSceneLayout(
     goalPositions: values.value.goalPositions,
     tapLaneEffectPositions: Object.freeze(AUTHORED_BUTTON_X.filter((_, index) => index % 2 === 0).map((authoredX) =>
       vector3(
-        Math.fround(authoredX * originalLayout.value.gameplay.screenWidthAdjustRate),
+        originalButtonWorldX(originalLayout.value, authoredX),
         originalLayout.value.gameplay.targetCenterY,
         NOTE_WORLD_Z,
       ))),
@@ -468,7 +469,7 @@ class CurrentSimulatorManualGeometry implements SimulatorManualInputGeometryBack
       ? this.scene.goalPositions[3]!.x.value + ((span.start + span.end) / 2 - 3) *
         (this.scene.goalPositions[4]!.x.value - this.scene.goalPositions[3]!.x.value)
       : source.halfButtonIndex >= 0
-        ? Math.fround(AUTHORED_BUTTON_X[source.halfButtonIndex * 2 + 1]! * this.surfaceLayout.gameplay.screenWidthAdjustRate)
+        ? originalButtonWorldX(this.surfaceLayout, AUTHORED_BUTTON_X[source.halfButtonIndex * 2 + 1]!)
         : goal.x.value;
     const screen = originalWorldToBottomLeftScreen(this.surfaceLayout, x, goal.y.value);
     return screen.status === "ok" ? ok({ x: screen.value[0], y: screen.value[1] }) : screen;
@@ -587,7 +588,7 @@ function createParticleScene(
     const buttonType = isHalfButton ? index - 7 : index;
     const goal = goals[buttonType]!;
     const x = isHalfButton
-      ? Math.fround(AUTHORED_BUTTON_X[buttonType * 2 + 1]! * layout.gameplay.screenWidthAdjustRate)
+      ? originalButtonWorldX(layout, AUTHORED_BUTTON_X[buttonType * 2 + 1]!)
       : goal.x.value;
     const xBits = particleFloat32ToBits(x);
     const yBits = particleFloat32ToBits(goal.y.value);
@@ -693,9 +694,12 @@ function createOriginalSkinFieldScene(
   },
   layout: OriginalSurfaceLayout,
 ) {
-  const judgeScale = Math.fround(
+  // judgeLine is a Button4 child, so MusicObjects scale reaches it.
+  const judgeScale = Math.fround(Math.fround(
     layout.gameplay.noteSettingScale * Math.fround(0.9900000095367432),
-  );
+  ) * layout.gameplay.musicObjectsScale);
+  const noteLaneY = noteLaneLocalY(layout);
+  const noteLaneScale = layout.gameplay.rhythmLinesScale;
   return Object.freeze({
     objects: Object.freeze([
       fieldObject(
@@ -704,10 +708,11 @@ function createOriginalSkinFieldScene(
         bindings.backgroundLineLogicalAssetId,
         "bg_line_rhythm",
         0,
-        ORIGINAL_NOTE_LANE_BOTTOM_Y,
+        noteLaneY,
         null,
-        1,
+        noteLaneScale,
         0,
+        noteLaneScale,
       ),
       fieldObject(
         "render:skin-field:judge-line",
@@ -736,18 +741,21 @@ function createPortableHabahiroScene(
   if (bindings === undefined) {
     return reject("scene.habahiro-resource-binding-missing", "HABAHIRO requires its exact flash, field-before and field-after package bindings.");
   }
-  const judgeScale = Math.fround(
+  // judgeLine is a Button4 child, so MusicObjects scale reaches it.
+  const judgeScale = Math.fround(Math.fround(
     layout.gameplay.noteSettingScale * Math.fround(0.9900000095367432),
-  );
+  ) * layout.gameplay.musicObjectsScale);
+  const noteLaneY = noteLaneLocalY(layout);
+  const noteLaneScale = layout.gameplay.rhythmLinesScale;
   const plans = (field: typeof bindings.fieldBefore): readonly RenderFieldObjectPlan[] => Object.freeze([
     fieldObject(
       "render:habahiro:rhythm-lines", "field-line",
-      field.backgroundLineLogicalAssetId, "bg_line_rhythm", 0, ORIGINAL_NOTE_LANE_BOTTOM_Y, null, 1, 0,
+      field.backgroundLineLogicalAssetId, "bg_line_rhythm", 0, noteLaneY, null, noteLaneScale, 0, noteLaneScale,
     ),
     fieldObject(
       "render:habahiro:sudden-area-lines", "field-line",
-      field.backgroundLineLogicalAssetId, "bg_line_rhythm", 0, ORIGINAL_NOTE_LANE_BOTTOM_Y, null, 1, 1,
-      1, 1, 1, false,
+      field.backgroundLineLogicalAssetId, "bg_line_rhythm", 0, noteLaneY, null, noteLaneScale, 1,
+      noteLaneScale, 1, 1, false,
     ),
     fieldObject(
       "render:habahiro:judge-line", "judge-line",
@@ -770,6 +778,12 @@ function createPortableHabahiroScene(
     fieldAfter: plans(bindings.fieldAfter),
     fieldMasks: Object.freeze([] as RenderFieldMaskPlan[]),
   }));
+}
+
+/** NoteLane local Y in Display units after its RhythmGameLines parent transform. */
+function noteLaneLocalY(layout: OriginalSurfaceLayout): number {
+  return Math.fround(layout.gameplay.rhythmLinesY +
+    Math.fround(ORIGINAL_NOTE_LANE_BOTTOM_Y * layout.gameplay.rhythmLinesScale));
 }
 
 function fieldObject(
