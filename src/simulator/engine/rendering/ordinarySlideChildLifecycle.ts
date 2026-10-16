@@ -172,7 +172,7 @@ export function advanceOrdinarySlideChildren(
   screenToSafeAreaRatio: RenderFloat32,
   color: RenderColor,
   stopControl: OrdinarySlideStopControl,
-  habahiroMeshWidthSetting?: RenderFloat32,
+  habahiroHighAspectRatio?: RenderFloat32,
   extension?: SlideMotionExtension,
 ): SimulatorResult<OrdinarySlideFrameResult> {
   if (childStates.length === 0) {
@@ -343,11 +343,11 @@ export function advanceOrdinarySlideChildren(
   let previousExitApplied = rootExitApplied;
   let previousIndex = -1;
   for (const state of nextStates) {
-    const widthRate = habahiroMeshWidthSetting === undefined
+    const widthRate = habahiroHighAspectRatio === undefined
       ? createRenderFloat32(Math.fround(1))
       : getHabahiroMeshWidthRate(
           Math.max(previousButtonCount, state.buttonCount),
-          habahiroMeshWidthSetting,
+          habahiroHighAspectRatio,
         );
     if (widthRate.status !== "ok") return widthRate;
     const afterScale = getOrdinaryNoteMeshAfterScale(state.lifecycle, previousMotionState.goalPosition.y, screenToSafeAreaRatio);

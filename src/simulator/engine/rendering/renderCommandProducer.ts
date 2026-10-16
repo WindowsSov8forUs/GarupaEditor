@@ -168,7 +168,7 @@ export interface PreparedOrdinaryNoteMotion {
 }
 
 export interface HabahiroSceneInput {
-  readonly meshWidthSetting: RenderFloat32;
+  readonly highAspectRatio: RenderFloat32;
   readonly suddenLane: false;
   readonly changeLaneSeconds: RenderFloat32;
   readonly animationCompleteSeconds: RenderFloat32;
@@ -1668,7 +1668,7 @@ export class RenderCommandProducer {
       const widthRate = completeHabahiro
         ? getHabahiroMeshWidthRate(
             motionState.buttonCount,
-            scene.habahiro!.meshWidthSetting,
+            scene.habahiro!.highAspectRatio,
           )
         : createRenderFloat32(Math.fround(1));
       const meshZ = createRenderFloat32(Math.fround(0.9900000095367432));
@@ -1848,7 +1848,7 @@ export class RenderCommandProducer {
         const segmentWidthRate = completeHabahiro
           ? getHabahiroMeshWidthRate(
               Math.max(previousButtonCount, childButtonCount),
-              scene.habahiro!.meshWidthSetting,
+              scene.habahiro!.highAspectRatio,
             )
           : createRenderFloat32(Math.fround(1));
         if (segmentWidthRate.status !== "ok") return segmentWidthRate;
@@ -2064,7 +2064,7 @@ export class RenderCommandProducer {
       );
     }
     const frame = advanceLongChildFrame(childState, frontTransform, input, scene.screenToSafeAreaRatio,
-      scene.longMeshColor, this.isCompleteHabahiro() ? scene.habahiro!.meshWidthSetting : undefined);
+      scene.longMeshColor, this.isCompleteHabahiro() ? scene.habahiro!.highAspectRatio : undefined);
     if (frame.status !== "ok") return frame;
     const next = ok(frame.value.childState);
     const mesh = ok(frame.value.mesh);
@@ -2164,7 +2164,7 @@ export class RenderCommandProducer {
       scene.longMeshColor,
       stopControl,
       this.isCompleteHabahiro()
-        ? scene.habahiro!.meshWidthSetting
+        ? scene.habahiro!.highAspectRatio
         : undefined,
     );
     if (advanced.status !== "ok") return advanced;
@@ -2788,7 +2788,7 @@ export function validateHabahiroScene(
 ): scene is HabahiroSceneInput {
   if (
     scene === undefined ||
-    !validateRenderFloat32(scene.meshWidthSetting) ||
+    !validateRenderFloat32(scene.highAspectRatio) ||
     scene.suddenLane !== false ||
     !validateRenderFloat32(scene.changeLaneSeconds) ||
     scene.changeLaneSeconds.value !== HABAHIRO_CHANGE_LANE_SECONDS ||

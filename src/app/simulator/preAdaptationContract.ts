@@ -14,7 +14,6 @@ export const SIMULATOR_PRE_ADAPTATION_DEFAULTS = Object.freeze({
   allPerfectStatusDisplayMode: true,
   mvDarkness: 20,
   masterGain: Math.fround(1),
-  habahiroMeshWidthSetting: Math.fround(1),
   skin: Object.freeze({
     noteSkin: 0,
     fieldSkin: 0,
@@ -94,7 +93,6 @@ export function buildSimulatorPreAdaptedConfig(
     visual: Object.freeze({
       specificSpeed,
       noteSize,
-      habahiroMeshWidthSetting: SIMULATOR_PRE_ADAPTATION_DEFAULTS.habahiroMeshWidthSetting,
     }),
     audio: Object.freeze({
       masterGain,

@@ -19,7 +19,6 @@ export type SimulatorLaunchTransportConfig = Omit<SimulatorLaunchConfig, "visual
   readonly visual: {
     readonly specificSpeed: SimulatorTransportFloat32Bits;
     readonly noteSize: SimulatorTransportFloat32Bits;
-    readonly habahiroMeshWidthSetting: SimulatorTransportFloat32Bits;
   };
   readonly audio: {
     readonly masterGain: SimulatorTransportFloat32Bits;
@@ -97,10 +96,6 @@ export function encodeSimulatorLaunchTransportConfig(
     visual: Object.freeze({
       specificSpeed: encodeFloat32(config.visual.specificSpeed, "specificSpeed"),
       noteSize: encodeFloat32(config.visual.noteSize, "noteSize"),
-      habahiroMeshWidthSetting: encodeFloat32(
-        config.visual.habahiroMeshWidthSetting,
-        "habahiroMeshWidthSetting",
-      ),
     }),
     audio: Object.freeze({
       masterGain: encodeFloat32(config.audio.masterGain, "masterGain"),
@@ -139,10 +134,6 @@ export function decodeSimulatorLaunchTransportConfig(
     visual: Object.freeze({
       specificSpeed: decodeFloat32(config.visual.specificSpeed, "specificSpeed"),
       noteSize: decodeFloat32(config.visual.noteSize, "noteSize"),
-      habahiroMeshWidthSetting: decodeFloat32(
-        config.visual.habahiroMeshWidthSetting,
-        "habahiroMeshWidthSetting",
-      ),
     }),
     audio: Object.freeze({
       masterGain: decodeFloat32(config.audio.masterGain, "masterGain"),

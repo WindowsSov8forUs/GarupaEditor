@@ -123,7 +123,7 @@ export function advanceExtensionSlide(
     const tail = nodes[1]!;
     const child = previous.children[0]!;
     const long = advanceLongChildFrame(child.lifecycle, root.renderedTransform, input,
-      ordinaryScene.screenToSafeAreaRatio!, ordinaryScene.longMeshColor!, ordinaryScene.habahiro?.meshWidthSetting, {
+      ordinaryScene.screenToSafeAreaRatio!, ordinaryScene.longMeshColor!, ordinaryScene.habahiro?.highAspectRatio, {
         advance: () => {
           if (initializeGeometry && !chainUsesAxis) return ok(child.lifecycle);
           const moved = advanceExtensionMotion(child.lifecycle, tail, frame, input, axis, usesAxis(tail));
@@ -187,7 +187,7 @@ export function advanceExtensionSlide(
         virtualLaneDeltaX: scene.laneSpacingWorld.value,
         stoppedChildWaited: previous.children.map((_, index) =>
           owner instanceof NoteSlide && owner.afterNotes[index]?.stopAdjustmentWaited === true),
-      }, ordinaryScene.habahiro?.meshWidthSetting, {
+      }, ordinaryScene.habahiro?.highAspectRatio, {
         canLeaveNode: index => {
           const source = nodes[index + 1]!.scoringSource;
           return source?.slideGesture === undefined || owner instanceof NoteSlide &&

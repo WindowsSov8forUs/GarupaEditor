@@ -70,7 +70,6 @@ export interface SimulatorSceneVisualConfig {
   readonly noteSize: number;
   readonly judgementAdjustValueB: number;
   readonly displayComboPosition: number;
-  readonly habahiroMeshWidthSetting: number;
   readonly syncLineEdgeMargin: number;
 }
 
@@ -128,12 +127,11 @@ export function createSimulatorSceneLayout(
     !exactPositiveFloat32(config.specificSpeed) ||
     !exactFloat32(config.noteSize) || config.noteSize < 80 || config.noteSize > 150 ||
     !Number.isInteger(config.judgementAdjustValueB) || config.judgementAdjustValueB < -5 || config.judgementAdjustValueB > 5 ||
-    !exactFloat32(config.habahiroMeshWidthSetting) ||
     !exactFloat32(config.syncLineEdgeMargin)
   ) {
     return reject(
       "scene.invalid-visual-config",
-      "Scene assembly requires exact Float32 speed, evidence-bounded 80..150 note size, [-5,5] judge offset and explicit HABAHIRO mesh width; HighAspectRatio is derived only from the platform surface.",
+      "Scene assembly requires exact Float32 speed, evidence-bounded 80..150 note size, and [-5,5] judge offset; HighAspectRatio is derived only from the platform surface.",
     );
   }
   const originalLayout = createOriginalSurfaceLayout(checkedSurface.value, config.noteSize, config.displayComboPosition, config.suddenRate, config.suddenLane);
@@ -143,7 +141,7 @@ export function createSimulatorSceneLayout(
   const arrival = getOrdinaryNoteArrivalSeconds(values.value.specificSpeed);
   if (arrival.status !== "ok") return arrival;
   const habahiro = renderingKind === "habahiro"
-    ? createPortableHabahiroScene(resources, config.habahiroMeshWidthSetting, originalLayout.value)
+    ? createPortableHabahiroScene(resources, originalLayout.value)
     : ok<HabahiroSceneInput | undefined>(undefined);
   if (habahiro.status !== "ok") return habahiro;
   const field = renderingKind === "ordinary" && fieldBindings !== null
@@ -732,7 +730,6 @@ function createOriginalSkinFieldScene(
 
 function createPortableHabahiroScene(
   resources: RenderEngineResourceBindings,
-  meshWidthSetting: number,
   layout: OriginalSurfaceLayout,
 ): SimulatorResult<HabahiroSceneInput> {
   const bindings = resources.habahiroPackage;
@@ -764,7 +761,8 @@ function createPortableHabahiroScene(
     ),
   ]);
   return ok(Object.freeze({
-    meshWidthSetting: f32(meshWidthSetting),
+    // NoteMesh.GetMeshWidthRate reads StarUIManager.HighAspectRatio.
+    highAspectRatio: f32(layout.starUi.highAspectRatio),
     suddenLane: false as const,
     changeLaneSeconds: f32(Math.fround(0.4166666567325592)),
     animationCompleteSeconds: f32(Math.fround(1)),

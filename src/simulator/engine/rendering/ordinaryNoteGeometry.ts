@@ -153,22 +153,24 @@ export interface OrdinaryNoteActivationAdjustmentResult {
 
 export function getHabahiroMeshWidthRate(
   noteLength: number,
-  explicitSetting: RenderFloat32,
+  highAspectRatio: RenderFloat32,
 ): SimulatorResult<RenderFloat32> {
   if (
     !Number.isInteger(noteLength) || noteLength < 1 ||
-    !validateRenderFloat32(explicitSetting)
+    !validateRenderFloat32(highAspectRatio)
   ) {
     return reject(
       "render.geometry.invalid-habahiro-mesh-width-input",
-      "The current static HABAHIRO width formula requires a positive integer note length and explicit Float32 host setting.",
+      "The current static HABAHIRO width formula requires a positive integer note length and the Float32 HighAspectRatio.",
     );
   }
-  let value = noteLength === 1 ? Math.fround(1) : HABAHIRO_MESH_WIDTH_BASE;
-  if (noteLength >= 3 && explicitSetting.value >= 0) {
+  // GetMeshWidthRate: width 2 is 1.05, widths 3..7 add 0.03 * HighAspectRatio,
+  // every other width is 1.
+  let value = noteLength >= 2 && noteLength <= 7 ? HABAHIRO_MESH_WIDTH_BASE : Math.fround(1);
+  if (noteLength >= 3 && noteLength <= 7 && highAspectRatio.value >= 0) {
     value = Math.fround(
       HABAHIRO_MESH_WIDTH_BASE +
-        Math.fround(Math.min(explicitSetting.value, Math.fround(1)) * HABAHIRO_MESH_WIDTH_COEFFICIENT),
+        Math.fround(Math.min(highAspectRatio.value, Math.fround(1)) * HABAHIRO_MESH_WIDTH_COEFFICIENT),
     );
   }
   return createRenderFloat32(value);
