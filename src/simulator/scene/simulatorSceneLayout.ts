@@ -137,7 +137,7 @@ export function createSimulatorSceneLayout(
   }
   const originalLayout = createOriginalSurfaceLayout(checkedSurface.value, config.noteSize, config.displayComboPosition, config.suddenRate, config.suddenLane);
   if (originalLayout.status !== "ok") return originalLayout;
-  const values = createSceneValues(config, originalLayout.value);
+  const values = createSceneValues(config, originalLayout.value, renderingKind === "habahiro");
   if (values.status !== "ok") return values;
   const arrival = getOrdinaryNoteArrivalSeconds(values.value.specificSpeed);
   if (arrival.status !== "ok") return arrival;
@@ -152,6 +152,8 @@ export function createSimulatorSceneLayout(
     specificSpeed: values.value.specificSpeed,
     noteSettingScale: values.value.noteSettingScale,
     noteParentScale: values.value.noteParentScale,
+    musicObjectsScale: values.value.musicObjectsScale,
+    multiRangeNotes: values.value.multiRangeNotes,
     launcherY: values.value.launcherY,
     targetCenterY: values.value.targetCenterY,
     highAspectRatio: values.value.highAspectRatio,
@@ -202,6 +204,8 @@ interface SceneValues {
   readonly specificSpeed: RenderFloat32;
   readonly noteSettingScale: RenderFloat32;
   readonly noteParentScale: RenderFloat32;
+  readonly musicObjectsScale: RenderFloat32;
+  readonly multiRangeNotes: boolean;
   readonly launcherY: RenderFloat32;
   readonly targetCenterY: RenderFloat32;
   readonly highAspectRatio: RenderFloat32;
@@ -212,6 +216,7 @@ interface SceneValues {
 function createSceneValues(
   config: SimulatorSceneVisualConfig,
   layout: OriginalSurfaceLayout,
+  multiRangeNotes: boolean,
 ): SimulatorResult<SceneValues> {
   const targetCenterY = layout.gameplay.targetCenterY;
   const launcherY = layout.gameplay.launcherY;
@@ -236,6 +241,8 @@ function createSceneValues(
     specificSpeed: f32(config.specificSpeed),
     noteSettingScale: f32(layout.gameplay.noteSettingScale),
     noteParentScale: f32(layout.gameplay.noteParentScale),
+    musicObjectsScale: f32(layout.gameplay.musicObjectsScale),
+    multiRangeNotes,
     launcherY: f32(launcherY),
     targetCenterY: f32(targetCenterY),
     highAspectRatio: f32(layout.starUi.highAspectRatio),
@@ -568,6 +575,8 @@ function motionState(
     currentPositionZ: start.z,
     noteSettingScale: scene.noteSettingScale,
     noteParentScale: scene.noteParentScale,
+    musicObjectsScale: scene.musicObjectsScale,
+    multiRangeNotes: scene.multiRangeNotes,
     launcherY: scene.launcherY,
     targetCenterY: scene.targetCenterY,
     highAspectRatio: scene.highAspectRatio,

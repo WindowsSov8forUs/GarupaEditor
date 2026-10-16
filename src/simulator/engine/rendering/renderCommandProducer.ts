@@ -190,6 +190,8 @@ export interface OrdinaryFixedNoteSceneInput {
   readonly specificSpeed: RenderFloat32;
   readonly noteSettingScale: RenderFloat32;
   readonly noteParentScale: RenderFloat32;
+  readonly musicObjectsScale: RenderFloat32;
+  readonly multiRangeNotes: boolean;
   readonly launcherY: RenderFloat32;
   readonly targetCenterY: RenderFloat32;
   readonly highAspectRatio: RenderFloat32;
@@ -1556,6 +1558,8 @@ export class RenderCommandProducer {
       noteStartPosition: Object.freeze({ x: start.x, y: start.y }),
       currentPositionZ: placedStart.z,
       noteParentScale: scene.noteParentScale,
+      musicObjectsScale: scene.musicObjectsScale,
+      multiRangeNotes: scene.multiRangeNotes,
       noteSettingScale: scene.noteSettingScale,
       launcherY: scene.launcherY,
       targetCenterY: scene.targetCenterY,
@@ -2840,6 +2844,9 @@ export function validateOrdinaryFixedNoteSceneInput(
     scene.noteLineClipY.value < 0 ||
     !validateRenderFloat32(scene.noteParentScale) ||
     scene.noteParentScale.value <= 0 ||
+    !validateRenderFloat32(scene.musicObjectsScale) ||
+    scene.musicObjectsScale.value <= 0 ||
+    typeof scene.multiRangeNotes !== "boolean" ||
     !validateRenderFloat32(scene.noteSettingScale) ||
     scene.noteSettingScale.value < 0 ||
     !validateRenderFloat32(scene.launcherY) ||

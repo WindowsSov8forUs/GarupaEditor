@@ -108,6 +108,10 @@ export interface OrdinaryNoteMotionState {
   readonly noteStartPosition: RenderVector2;
   readonly currentPositionZ: RenderFloat32;
   readonly noteParentScale: RenderFloat32;
+  /** MusicObjects scale; goalPosition is the target button world position under it. */
+  readonly musicObjectsScale: RenderFloat32;
+  /** NoteBatchInformationListFactory.IsMultiRangeNotes. */
+  readonly multiRangeNotes: boolean;
   readonly noteSettingScale: RenderFloat32;
   readonly launcherY: RenderFloat32;
   readonly targetCenterY: RenderFloat32;
@@ -375,18 +379,39 @@ export function noteMotionCurveExponent(progress: number): number {
   return (Number.isFinite(packed) ? packed : raw) * Math.log2(NOTE_POSITION_BASE);
 }
 
-export type OrdinaryNoteGoalScale = "perspective" | "target-button" | RenderVector3;
+/**
+ * "perspective": NoteFrontBase.repositionToJudgeLine writes the target button's
+ * local X/Y into the note's local position under NoteParentTrans; calcNoteScale
+ * reads world Y only for multi-range notes covering at least two buttons.
+ * "stop-state": NoteFrontBase.StopState writes the target world position and
+ * target-button scale; NoteLong.StopState then rescales multi-range notes at world Y.
+ */
+export type OrdinaryNoteGoalScale = "perspective" | "target-button" | "stop-state" | RenderVector3;
 
 export function repositionOrdinaryNoteToJudgeLine(
   state: OrdinaryNoteMotionState,
   goalScale: OrdinaryNoteGoalScale = "perspective",
 ): SimulatorResult<OrdinaryNoteMotionResult> {
-  const position = vector3(state.goalPosition.x.value, state.goalPosition.y.value, state.currentPositionZ.value);
+  if (!validateRenderFloat32(state.musicObjectsScale) || state.musicObjectsScale.value <= 0 ||
+    typeof state.multiRangeNotes !== "boolean") {
+    return reject("render.geometry.invalid-note-parent-chain",
+      "Judge-line placement requires the positive MusicObjects scale and the multi-range flag.");
+  }
+  let x = state.goalPosition.x.value, y = state.goalPosition.y.value, scaleY = y;
+  if (goalScale === "perspective") {
+    const localX = Math.fround(x / state.musicObjectsScale.value);
+    const localY = Math.fround(y / state.musicObjectsScale.value);
+    x = Math.fround(localX * state.noteParentScale.value);
+    y = Math.fround(localY * state.noteParentScale.value);
+    scaleY = state.multiRangeNotes && state.buttonCount >= 2 ? y : localY;
+  }
+  const position = vector3(x, y, state.currentPositionZ.value);
   if (position.status !== "ok") return position;
   // The scene's thirteen gameplay target transforms have unit local scale.
-  const scale = typeof goalScale === "object" ? ok(goalScale) : goalScale === "target-button"
-    ? vector3(state.noteSettingScale.value, state.noteSettingScale.value, state.noteSettingScale.value)
-    : calculateOrdinaryNoteScaleAtY(state, state.goalPosition.y.value);
+  const scale = typeof goalScale === "object" ? ok(goalScale)
+    : goalScale === "target-button" || (goalScale === "stop-state" && !state.multiRangeNotes)
+      ? vector3(state.noteSettingScale.value, state.noteSettingScale.value, state.noteSettingScale.value)
+      : calculateOrdinaryNoteScaleAtY(state, scaleY);
   return scale.status === "ok" ? ok(Object.freeze({
     progressRate: state.progressRate,
     position: position.value,

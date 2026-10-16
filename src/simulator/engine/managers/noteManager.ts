@@ -175,7 +175,7 @@ interface DirectionalVisualTailOwner {
 export interface ProjectedNoteGeometry {
   connectionBatchActivated(sources: readonly NoteInformation[]): void;
   candidateY(source: NoteInformation): ReturnType<typeof noteSpatialY> | undefined;
-  advance(note: NoteBase, delta: number, placement: "perspective" | "target-button" | "preserve" | null, children: boolean,
+  advance(note: NoteBase, delta: number, placement: "perspective" | "target-button" | "stop-state" | "preserve" | null, children: boolean,
     controlledRealMoveSecond?: OrdinaryNoteMotionState["realMoveSecond"]): SimulatorResult<void>;
   hasConnectionOwner(source: NoteInformation): boolean;
   connectionState(source: NoteInformation, after: NoteConnectionEndpoint): OrdinaryLongNormalChildState | undefined;
@@ -741,6 +741,13 @@ export class NoteManager {
         if (updateResult.status !== "ok") {
           return updateResult;
         }
+        // NoteLong.StopState runs every frame the Long begins in Stop: the head
+        // returns to the target world position before the end judgement.
+        if (this.renderProducer !== null && note instanceof NoteLong && stateBefore === NoteState.Stop &&
+          note.state !== NoteState.Deactive) {
+          const stopped = this.advanceOrdinaryRenderMotion(note, Math.fround(0), "stop-state");
+          if (stopped.status !== "ok") return stopped;
+        }
         if (this.renderProducer !== null && stateBefore === NoteState.Move && note.state === NoteState.Stop &&
           (note instanceof NoteLong || note instanceof NoteSlide) &&
           (this.inGameCalculatedData.isAutoPlay || this.isMoveTime())) {
@@ -1175,7 +1182,7 @@ export class NoteManager {
   private advanceOrdinaryRenderMotion(
     note: NoteBase,
     deltaTimeSeconds: number,
-    placement: "perspective" | "target-button" | "preserve" | null = null,
+    placement: "perspective" | "target-button" | "stop-state" | "preserve" | null = null,
     useGoalDepth = false,
     controlledRealMoveSecond?: OrdinaryNoteMotionState["realMoveSecond"],
   ): SimulatorResult<void> {

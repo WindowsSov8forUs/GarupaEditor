@@ -136,7 +136,7 @@ export class GarupaRenderInputAdapter {
     };
   }
 
-  private advanceShared(note: NoteBase, delta: number, placement: "perspective" | "target-button" | "preserve" | null,
+  private advanceShared(note: NoteBase, delta: number, placement: "perspective" | "target-button" | "stop-state" | "preserve" | null,
     children: boolean, controlledRealMoveSecond?: OrdinaryNoteMotionState["realMoveSecond"]): SimulatorResult<void> {
     const source = note.noteInformation;
     const authored = source === null ? undefined : this.sourceNodes.get(source);
