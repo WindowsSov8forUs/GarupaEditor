@@ -363,7 +363,8 @@ class SimulatorEngineHost implements SimulatorEngine {
       if (particle?.status === "ok") particle.value.discard();
       return rendering;
     }
-    const audio = this.audioProducer.preflightCompleteLive(clearStatus);
+    const audio = this.audioProducer.preflightCompleteLive(clearStatus,
+      this.inGameManager.noteManager.inGameCalculatedData.mode.isEnablePractice);
     if (audio.status !== "ok") {
       if (particle?.status === "ok") particle.value.discard();
       if (rendering?.status === "ok") rendering.value.discard();

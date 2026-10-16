@@ -457,6 +457,7 @@ export class AudioCommandProducer {
 
   preflightCompleteLive(
     clearStatus: 1 | 2 | 3,
+    practice: boolean,
   ): SimulatorResult<AudioOwnerTransaction> {
     if (this.completionTriggered) {
       return rejected(
@@ -469,6 +470,8 @@ export class AudioCommandProducer {
       commands.push(oneShot("SE_RHYTHM_FULLCOMBO", "full-combo"));
     }
     commands.push(oneShot("SE_RHYTHM_CLEAR", "game-clear"));
+    // The Game Clear route adds its voice cue except in practice mode.
+    if (!practice) commands.push(oneShot("SE_RHYTHM_CLEAR_VO", "game-clear-voice"));
     return this.preflightCommands(commands, () => {
       this.naturallyEnded = true;
       this.completionTriggered = true;
