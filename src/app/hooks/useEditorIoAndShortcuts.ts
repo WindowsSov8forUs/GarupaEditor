@@ -990,9 +990,6 @@ export function useEditorIoAndShortcuts(params: any) {
     if (habahiroHeaderCount > 1) {
       throw new Error(`Chart JSON allows at most one ${GARUPA_HEADER_HABAHIRO} Header.`);
     }
-    if (rawLaneChangeBeats.length > 1) {
-      throw new Error(`Chart JSON allows at most one ${GARUPA_SYSTEM_LANE_CHANGE} System item.`);
-    }
     if (rawLaneChangeBeats.length > 0 && habahiroHeaderCount === 0) {
       throw new Error(`${GARUPA_SYSTEM_LANE_CHANGE} requires the ${GARUPA_HEADER_HABAHIRO} Header.`);
     }
@@ -1153,7 +1150,9 @@ export function useEditorIoAndShortcuts(params: any) {
       timeSignatureDenominator: current.timeSignatureDenominator,
       ...(chartHabahiro ? {
         habahiro: true as const,
-        ...(rawLaneChangeBeats.length === 0 ? {} : { laneChangeBeat: shiftAndClampBeat(rawLaneChangeBeats[0]!, beatOffset) }),
+        ...(rawLaneChangeBeats.length === 0 ? {} : {
+          laneChangeBeats: rawLaneChangeBeats.map((beat) => shiftAndClampBeat(beat, beatOffset)),
+        }),
       } : {}),
     }));
     setNotes(importedNotes);

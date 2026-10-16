@@ -36,8 +36,9 @@ export function projectGarupaChart(project: Pick<ChartProjectDraft, "metadata" |
   return [
     { type: "BPM", beat: 0, value: metadata.bpm },
     ...(settings.habahiro === true ? [{ type: "Header" as const, data: GARUPA_HEADER_HABAHIRO }] : []),
-    ...(settings.habahiro === true && settings.laneChangeBeat !== undefined
-      ? [{ type: "System" as const, beat: settings.laneChangeBeat, data: GARUPA_SYSTEM_LANE_CHANGE }] : []),
+    ...(settings.habahiro === true
+      ? (settings.laneChangeBeats ?? []).map((beat) => ({ type: "System" as const, beat, data: GARUPA_SYSTEM_LANE_CHANGE }))
+      : []),
     ...sortBpmEvents(chart.bpmEvents).filter(b => b.beat !== 0).map(b => ({ type: "BPM" as const, beat: b.beat, value: b.bpm })),
     ...sortSvEvents(Object.values(chart.timingGroups).flatMap(g => g.sv)).map(e => ({ type: "SV" as const,
       beat: e.beat, value: e.value, timingGroup: e.timingGroup })),

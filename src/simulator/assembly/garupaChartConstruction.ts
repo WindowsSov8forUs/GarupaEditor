@@ -520,10 +520,13 @@ function canUseFixedLaneGeometry(connection: GarupaChartJsonSlideConnection): bo
 function habahiroLaneChangePosition(chart: GarupaChartJson, tempo: SignedTempo): SimulatorResult<number> {
   const laneChanges = chart.filter((item) => item.type === "System");
   if (laneChanges.length === 0) return ok(-1);
-  if (laneChanges.length > 1 || !chart.some((item) => item.type === "Header")) {
-    return invalidPosition("A #LANE_CHANGE requires the #HABAHIRO Header and occurs at most once.");
+  if (!chart.some((item) => item.type === "Header")) {
+    return invalidPosition("A #LANE_CHANGE requires the #HABAHIRO Header.");
   }
-  const authored = garupaBeatToAbsolutePosition(laneChanges[0]!.beat);
+  // convertResultDictionary overwrites the position for every retained command
+  // in bar/position order, so the latest beat wins; equal positions are one command.
+  const latest = laneChanges.reduce((best, item) => item.beat > best.beat ? item : best);
+  const authored = garupaBeatToAbsolutePosition(latest.beat);
   return authored.status === "ok" ? ok(tempo.runtimePosition(authored.value)) : authored;
 }
 

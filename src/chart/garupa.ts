@@ -54,7 +54,8 @@ export interface GarupaChartJsonHeaderItem {
   readonly data: typeof GARUPA_HEADER_HABAHIRO;
 }
 
-/** Timed non-note command; at most one lane change per chart. */
+/** Timed non-note command. Several lane changes may appear; as in the original
+ * converter, the last one traversed (the latest beat) sets the change position. */
 export interface GarupaChartJsonSystemItem {
   readonly type: "System";
   readonly beat: number;

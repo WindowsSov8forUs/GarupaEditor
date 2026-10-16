@@ -318,15 +318,12 @@ export function parseGarupaChartJson(input: unknown): GarupaChartJson {
   return items;
 }
 
-/** One HABAHIRO header and one lane change at most; a lane change requires the header. */
+/** One HABAHIRO header at most; any lane change requires the header. */
 export function validateGarupaChartHeaders(items: GarupaChartJson): void {
   const headerCount = items.filter((item) => item.type === "Header").length;
   const laneChangeCount = items.filter((item) => item.type === "System").length;
   if (headerCount > 1) {
     throw new Error(`Garupa chart JSON allows at most one ${GARUPA_HEADER_HABAHIRO} Header.`);
-  }
-  if (laneChangeCount > 1) {
-    throw new Error(`Garupa chart JSON allows at most one ${GARUPA_SYSTEM_LANE_CHANGE} System item.`);
   }
   if (laneChangeCount > 0 && headerCount === 0) {
     throw new Error(`${GARUPA_SYSTEM_LANE_CHANGE} requires the ${GARUPA_HEADER_HABAHIRO} Header.`);

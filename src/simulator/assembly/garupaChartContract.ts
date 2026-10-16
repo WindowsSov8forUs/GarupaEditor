@@ -126,8 +126,8 @@ function copyItem(
 function validateHabahiroItems(items: readonly GarupaChartJsonItem[]): SimulatorResult<void> {
   const headers = items.filter((item) => item.type === "Header").length;
   const laneChanges = items.filter((item) => item.type === "System").length;
-  if (headers > 1 || laneChanges > 1) {
-    return invalid(`At most one ${GARUPA_HEADER_HABAHIRO} Header and one ${GARUPA_SYSTEM_LANE_CHANGE} System item are allowed.`);
+  if (headers > 1) {
+    return invalid(`At most one ${GARUPA_HEADER_HABAHIRO} Header is allowed.`);
   }
   if (headers === 1) return ok(undefined);
   if (laneChanges > 0) return invalid(`${GARUPA_SYSTEM_LANE_CHANGE} requires the ${GARUPA_HEADER_HABAHIRO} Header.`);

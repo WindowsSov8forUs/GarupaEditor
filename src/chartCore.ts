@@ -54,8 +54,8 @@ export interface ChartSettings {
   timeSignatureDenominator: number;
   /** Chart header `#HABAHIRO`: multi-width notes belong to this chart. */
   habahiro?: true;
-  /** Beat of the `#LANE_CHANGE` command; only valid with `habahiro`. */
-  laneChangeBeat?: number;
+  /** Beats of the `#LANE_CHANGE` commands; only valid with `habahiro`. */
+  laneChangeBeats?: number[];
 }
 
 export interface EditorOptionSettings {
@@ -898,15 +898,16 @@ export function normalizeSettings(
     DEFAULT_SETTINGS.timeSignatureDenominator,
   );
 
-  const laneChangeBeat = Number(input.laneChangeBeat);
+  const laneChangeBeats = Array.isArray(input.laneChangeBeats)
+    ? input.laneChangeBeats.filter((beat) => Number.isFinite(beat) && beat >= 0)
+    : [];
   return {
     laneCount,
     timeSignatureNumerator: numerator,
     timeSignatureDenominator: denominator,
     ...(input.habahiro === true ? {
       habahiro: true as const,
-      ...(input.laneChangeBeat !== undefined && Number.isFinite(laneChangeBeat) && laneChangeBeat >= 0
-        ? { laneChangeBeat } : {}),
+      ...(laneChangeBeats.length > 0 ? { laneChangeBeats } : {}),
     } : {}),
   };
 }
