@@ -832,11 +832,14 @@ export class RenderCommandProducer {
         ? HUD_OBJECTS.combo
         : HUD_OBJECTS.comboAllPerfect;
       const animationRole = owner === "ap-alpha" ? "all-perfect" as const : "combo" as const;
-      if (animationRole === "combo" && nextElapsed >= 1) {
+      // ComboNumber.showCoroutine checks the previous timer against its one
+      // second duration, then calls Hide (gameObject.SetActive(false)).
+      if (animationRole === "combo" && elapsed >= 1) {
         commands.push({
           ...base(commands.length), kind: "stop-animation", renderObjectId,
           animationRole, restart: false,
         });
+        commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
       } else {
         const sample = createRenderFloat32(nextElapsed);
         if (sample.status !== "ok") return sample;
