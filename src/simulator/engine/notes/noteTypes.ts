@@ -532,9 +532,12 @@ export class NoteLong extends NoteFrontBase {
       if (grouped.status !== "ok") return grouped;
       movementSucceeded = grouped.value;
     }
-    const complete = movementSucceeded &&
+    // NoteLong.ExecTouchMoved: ordinary and directional tails also require a
+    // valid end judgement and positive remaining grace; the Multiple branch
+    // sets isFlicked and calls the button end without either gate.
+    const complete = movementSucceeded && (multiple ||
       judgement.value.result !== NoteResultType.None &&
-      nextAfterMoveTime > Math.fround(0);
+      nextAfterMoveTime > Math.fround(0));
     const familyData = Object.freeze({
       complete,
       nextOrigin,
@@ -545,7 +548,7 @@ export class NoteLong extends NoteFrontBase {
     return complete
       ? this.reserveManualLongTail(
           input,
-          judgement.value.result as Exclude<typeof judgement.value.result, -1>,
+          judgement.value.result === NoteResultType.None ? NoteResultType.Miss : judgement.value.result,
           judgement.value.timing,
           familyData,
         )
