@@ -75,7 +75,8 @@ import { createRenderFloat32 } from "../../backends/renderingValidation";
 
 const BPM_POOL_LENGTH = 30;
 const SYNC_LINE_POOL_LENGTH = 80;
-const MULTIPLE_DIRECTIONAL_LINE_POOL_LENGTH = 60;
+// NoteInstanceContainer creates 80 sync lines and 80 Multiple Directional back lines.
+const MULTIPLE_DIRECTIONAL_LINE_POOL_LENGTH = 80;
 
 export interface NoteManagerClock {
   validateAdvanceSequence(
@@ -1028,6 +1029,8 @@ export class NoteManager {
   }
 
   private clearRuntimeForDispose(): void {
+    this.connectionPoolCursors.sync = 0;
+    this.connectionPoolCursors.directional = 0;
     this.activeBySource.clear();
     this.pendingHoldSounds.length = 0;
     for (const bpm of this.bpmPoolValue) {
@@ -1603,10 +1606,20 @@ export class NoteManager {
     return owned ?? incoming;
   }
 
+  private readonly connectionPoolCursors = { sync: 0, directional: 0 };
+
   private acquireConnectionPoolSlot<T>(pool: Array<T | null>, kind: "sync" | "directional"): SimulatorResult<number> {
-    const inactive = pool.findIndex(line => line === null);
-    if (inactive >= 0) return ok(inactive);
+    // GetInitialize scans from the pool cursor to the end, then from the start,
+    // and stores index + 1. A full original pool returns null; the extension
+    // grows it so dense product charts keep every connection.
+    const cursor = this.connectionPoolCursors[kind];
+    for (const index of [...Array(pool.length).keys()].slice(cursor).concat([...Array(Math.min(cursor, pool.length)).keys()])) {
+      if (pool[index] !== null) continue;
+      this.connectionPoolCursors[kind] = index + 1;
+      return ok(index);
+    }
     const index = pool.length;
+    this.connectionPoolCursors[kind] = index + 1;
     const sync = kind === "sync";
     const prepared = this.renderProducer!.preflightPoolSetup([], sync ? index + 1 : 0, sync ? 0 : index + 1,
       { syncLine: sync ? index : 0, multipleDirectionalLine: sync ? 0 : index });
