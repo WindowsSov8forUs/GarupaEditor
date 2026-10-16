@@ -673,7 +673,8 @@ export class GarupaRenderInputAdapter {
         direction: line.materialDirection, visible, state: visible ? { targetA: target(a), targetB: target(b) } : null });
     }
     for (const chain of renderChains) {
-      const materialRole = slideLineMaterialRole(chain.connectionIdentities
+      // NoteSlide.Activate tests Any(child.isInvisible) over after nodes only.
+      const materialRole = slideLineMaterialRole(chain.connectionIdentities.slice(1)
         .some(id => !this.chart.nodeByIdentity.get(id)!.visible));
       for (let index = 1; index < chain.connectionIdentities.length; index += 1) {
         const from = samples.get(chain.connectionIdentities[index - 1]!)!;
