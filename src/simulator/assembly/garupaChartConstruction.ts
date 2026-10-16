@@ -294,9 +294,13 @@ function constructGarupaNoteGraphs(
       note,
     }));
   }
+  // CreateNoteBatchInformationList sorts groups by AbsolutePos and each
+  // group's members by buttonType. The original introsort leaves equal keys
+  // unordered; authored order is the deterministic tie-break here.
   records.sort((left, right) =>
     left.absolutePos - right.absolutePos ||
     left.note.storedAbsolutePos - right.note.storedAbsolutePos ||
+    memberLaneKey(left.note) - memberLaneKey(right.note) ||
     left.sourceOrder - right.sourceOrder ||
     left.localOrder - right.localOrder);
   for (const record of records) extensions.originalSourceOrder.set(record.note, record.sourceOrder);
@@ -784,6 +788,12 @@ function createBaseNote(input: {
   };
   registerMultiRangeSourceIdentity(note, { ccNums: input.span.ccNums, afterCcNums: [] });
   return note;
+}
+
+/** buttonType is the original member key; a projected span extends it with its lane centre. */
+function memberLaneKey(note: NoteInformation): number {
+  const span = note.laneSpan;
+  return span === undefined ? note.buttonType : (span.start + span.end) / 2;
 }
 
 function createBatches(records: readonly PositionedRecord[]): NoteBatchInformation[] {
