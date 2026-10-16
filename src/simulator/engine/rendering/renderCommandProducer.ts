@@ -466,7 +466,7 @@ export class RenderCommandProducer {
         hudRole: "add-score", state: Object.freeze({
           value: 1,
           alpha: 0,
-          localXOffset: 0,
+          localYOffset: 0,
           poolIndex: poolIndex as 0 | 1 | 2 | 3,
           depth: 0 as const,
         }),

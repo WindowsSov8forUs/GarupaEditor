@@ -3333,7 +3333,7 @@ function updatePersistentComboHud(
 function applyAddScoreHud(
   object: PixiObjectRecord,
   visual: PixiHudVisual,
-  state: { readonly value: number; readonly depth: number; readonly alpha: number; readonly localXOffset: number },
+  state: { readonly value: number; readonly depth: number; readonly alpha: number; readonly localYOffset: number },
   textures: ReadonlyMap<string, Texture>,
   referenceCounts: Map<string, number>,
 ): void {
@@ -3341,10 +3341,12 @@ function applyAddScoreHud(
   const current = CURRENT_ORDINARY_HUD_PROFILE.addScore;
   placeSafeTopAnchoredUiRoot(object, "left");
   const uiScale = authoredUiScale(object);
+  // AddScoreObject moves Unity local +Y (-50, then +8/+1 per resume); the
+  // top-left renderer inverts Y, so the number rises.
   object.node.position.set(
-    Math.fround(object.node.position.x +
-      (current.numberBaseAuthoredPosition[0] + current.initialLocalX + state.localXOffset) * uiScale),
-    Math.fround(object.node.position.y - current.numberBaseAuthoredPosition[1] * uiScale),
+    Math.fround(object.node.position.x + current.numberBaseAuthoredPosition[0] * uiScale),
+    Math.fround(object.node.position.y -
+      (current.numberBaseAuthoredPosition[1] + current.initialLocalY + state.localYOffset) * uiScale),
   );
   object.node.scale.set(Math.fround(uiScale * current.numberScale));
   object.node.alpha = state.alpha;

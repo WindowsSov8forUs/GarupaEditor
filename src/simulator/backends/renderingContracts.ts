@@ -337,7 +337,7 @@ export interface RenderLifeHudState {
 
 export interface RenderAddScoreHudState {
   readonly alpha: number;
-  readonly localXOffset: number;
+  readonly localYOffset: number;
   readonly value: number;
   readonly poolIndex: 0 | 1 | 2 | 3;
   readonly depth: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
