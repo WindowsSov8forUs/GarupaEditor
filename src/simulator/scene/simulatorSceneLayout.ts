@@ -126,16 +126,18 @@ export function createSimulatorSceneLayout(
   if (
     !isOriginalLongNoteLineBrightness(config.longNoteLineBrightness) ||
     !exactPositiveFloat32(config.specificSpeed) ||
-    !exactFloat32(config.noteSize) || config.noteSize < 80 || config.noteSize > 150 ||
+    !exactFloat32(config.noteSize) || config.noteSize < 10 || config.noteSize > 200 ||
     !Number.isInteger(config.judgementAdjustValueB) || config.judgementAdjustValueB < -5 || config.judgementAdjustValueB > 5 ||
     !exactFloat32(config.syncLineEdgeMargin)
   ) {
     return reject(
       "scene.invalid-visual-config",
-      "Scene assembly requires exact Float32 speed, evidence-bounded 80..150 note size, and [-5,5] judge offset; HighAspectRatio is derived only from the platform surface.",
+      "Scene assembly requires exact Float32 speed, 10..200 note size, and [-5,5] judge offset; HighAspectRatio is derived only from the platform surface.",
     );
   }
-  const originalLayout = createOriginalSurfaceLayout(checkedSurface.value, config.noteSize, config.displayComboPosition, config.suddenRate, config.suddenLane);
+  // ButtonManager.initButtonScale clamps the percentage to [80,150] only for multi-range notes.
+  const noteSize = renderingKind === "habahiro" ? Math.min(150, Math.max(80, config.noteSize)) : config.noteSize;
+  const originalLayout = createOriginalSurfaceLayout(checkedSurface.value, noteSize, config.displayComboPosition, config.suddenRate, config.suddenLane);
   if (originalLayout.status !== "ok") return originalLayout;
   const values = createSceneValues(config, originalLayout.value, renderingKind === "habahiro");
   if (values.status !== "ok") return values;

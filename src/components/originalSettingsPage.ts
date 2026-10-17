@@ -88,7 +88,7 @@ export function buildOriginalSettingsPage(page: number, draft: OriginalSettingsD
     if (openGuide) for (const guide of guideProfile.routes)
       buttons[guide.buttonId] = { action: () => openGuide(guide.key as OriginalSettingsGuideKey) };
     number(604, draft.options.rhythmNoteSpeed, 1, 12, 0.1, value => option("rhythmNoteSpeed", value), value => value.toFixed(2), 5);
-    number(569, draft.options.rhythmNoteSizePercent, 80, 150, 10, value => option("rhythmNoteSizePercent", value), value => `${value}%`, 100);
+    number(569, draft.options.rhythmNoteSizePercent, 10, 200, 10, value => option("rhythmNoteSizePercent", value), value => `${value}%`, 100);
     number(547, draft.options.simulatorSettings.judgementAdjustValue, -30, 30, 1,
       value => native("judgementAdjustValue", value), String);
     number(439, draft.options.simulatorSettings.judgementAdjustValueB, -5, 5, 1,

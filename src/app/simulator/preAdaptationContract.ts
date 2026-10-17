@@ -63,7 +63,7 @@ export function buildSimulatorPreAdaptedConfig(
   const masterGain = exactUnitPercent(input.masterGainPercent, "Master gain");
   const noteSize = exactFloat32(input.noteSize, "note size");
   const specificSpeed = exactFloat32(input.noteSpeed, "note speed");
-  if (noteSize < 80 || noteSize > 150) throw new Error("Simulator note size must be within [80,150] without clamping.");
+  if (noteSize < 10 || noteSize > 200) throw new Error("Simulator note size must be within [10,200] without clamping.");
   if (!(specificSpeed > 0)) throw new Error("Simulator note speed must be positive.");
   const bgmGain = exactUnitPercent(input.bgmGainPercent, "BGM gain");
   const seGain = exactUnitPercent(input.seGainPercent, "SE gain");

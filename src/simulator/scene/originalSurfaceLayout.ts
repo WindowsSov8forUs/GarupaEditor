@@ -117,10 +117,10 @@ export function createOriginalSurfaceLayout(
 ): SimulatorResult<OriginalSurfaceLayout> {
   if (!isOriginalSuddenRate(suddenRate) || typeof suddenLane !== "boolean")
     return reject("layout.invalid-sudden", "Sudden requires an integer percentage and lane-fit flag.");
-  if (!exactFloat32(noteSize) || noteSize < 80 || noteSize > 150) {
+  if (!exactFloat32(noteSize) || noteSize < 10 || noteSize > 200) {
     return reject(
       "layout.invalid-note-size",
-      "Original multiresolution layout requires the already evidenced exact binary32 note-size range 80..150.",
+      "Original multiresolution layout requires an exact binary32 note size in the LiveSettingsNoteSize range 10..200.",
     );
   }
   const width = surface.viewportWidth;
