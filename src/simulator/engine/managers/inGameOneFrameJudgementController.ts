@@ -34,6 +34,7 @@ import {
 import { validateAutoLiveActivationGraph } from "../notes/noteTypes";
 import { judgementGeometry } from "../data/judgementGeometry";
 import { hasContinuousNoteGeometry } from "../chart/noteGeometry";
+import { isSlideGestureNode, slideFlickJudgeNoteType, slideGestureAfterType } from "../chart/slideFlickNodes";
 
 const ONE_FRAME_CAPACITY = 5;
 
@@ -658,9 +659,9 @@ export class InGameOneFrameJudgementController {
 
 function judgementDirectionalCount(request: AutoLiveJudgementRequest | ManualJudgementRequest,
   ownership: ManualJudgementOwnership | null | undefined): number {
-  if (request.noteType === 10 && request.noteInformation.slideGesture?.noteType === 10)
-    return request.noteInformation.slideGesture.width;
-  return request.noteType === 7 && ownership?.slidePhase === "tail"
+  // A Slide Multiple-Directional family counts its owned judgement span, at the
+  // last node as in the original and at an approved gesture node alike.
+  return request.noteType === 7 && ownership?.slidePhase != null
     ? ownership.judgementLaneSpan?.width ?? ownership.slideButtonTypes!.length
     : request.multipleDirectionalFlickNoteCount ?? 0;
 }
@@ -858,8 +859,10 @@ function isClosedAutoLiveJudgementRequest(
   const source = request.noteInformation;
   const expectedMultipleDirectionalCount =
     ownership.multipleDirectionalFlickNoteCount;
-  if (source.slideGesture !== undefined) return request.phase === (source.isSlideNoteHead ? "head" : "intermediate") &&
-    request.absolutePosition === source.absolutePos && request.noteType === source.slideGesture.noteType &&
+  // Approved gesture head/intermediate: the original Slide tail types (8 for Miss).
+  if (request.phase !== "tail" && isSlideGestureNode(source)) return request.phase === (source.isSlideNoteHead ? "head" : "intermediate") &&
+    request.absolutePosition === source.absolutePos &&
+    (request.noteType === 8 || request.noteType === slideFlickJudgeNoteType(slideGestureAfterType(source))) &&
     request.multipleDirectionalFlickNoteCount === 0;
   if (request.phase === "head") {
     if (

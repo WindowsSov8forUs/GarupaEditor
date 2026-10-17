@@ -72,6 +72,7 @@ import {
   type OrdinarySyncLineOwnerState,
 } from "../rendering/ordinaryNoteGeometry";
 import { createRenderFloat32 } from "../../backends/renderingValidation";
+import { slideFlickDirection, slideGestureAfterType, slideGestureWidth } from "../chart/slideFlickNodes";
 
 const BPM_POOL_LENGTH = 30;
 const SYNC_LINE_POOL_LENGTH = 80;
@@ -395,7 +396,7 @@ export class NoteManager {
             laneSpan: slideGestureSpan(noteInformation),
             sourceIndex: -1,
             phase: "head",
-            allowedNoteTypes: Object.freeze([noteInformation.slideGesture?.noteType ?? 8]),
+            allowedNoteTypes: Object.freeze(manualSlideTerminalNoteTypes(slideGestureAfterType(noteInformation))),
             absolutePosition: noteInformation.absolutePos,
             buttonTypes: Object.freeze([...noteInformation.buttonTypesArray]),
           }));
@@ -408,7 +409,7 @@ export class NoteManager {
             const terminal = slideIndex === noteInformation.slideNoteList.length - 1;
             const allowedNoteTypes = terminal
               ? manualSlideTerminalNoteTypes(noteInformation.afterNoteType)
-              : [source.slideGesture?.noteType ?? 8];
+              : manualSlideTerminalNoteTypes(slideGestureAfterType(source));
             this.manualSlideSources.set(source, Object.freeze({
               laneSpan: terminal && slideAfterGroup !== undefined ? directionalGroupSpan(slideAfterGroup) : slideGestureSpan(source) ?? source.laneSpan,
               sourceIndex: slideIndex,
@@ -1190,7 +1191,7 @@ export class NoteManager {
       const advanced = this.projectedGeometry?.advance(note, deltaTimeSeconds, placement, false, controlledRealMoveSecond) ?? ok(undefined);
       if (advanced.status !== "ok") return advanced;
       if (placement === null && note instanceof NoteSlide && this.slidePresentationRoots.has(note.noteInformation.index) &&
-          note.noteInformation.slideGesture?.direction != null && !note.headJudged) {
+          slideFlickDirection(slideGestureAfterType(note.noteInformation)) !== null && !note.headJudged) {
         const head = this.projectedGeometry?.connectionState(note.noteInformation, false);
         if (head !== undefined) return this.advanceDirectionalVisualsForEndpoint(note, deltaTimeSeconds, head.motionState.realMoveSecond, false);
       }
@@ -1321,7 +1322,9 @@ export class NoteManager {
     const endpoints: NoteConnectionEndpoint[] = [true];
     if (this.slidePresentationRoots.has(source.index) && this.hasConnectionOwner(source)) for (let index = 1; index < source.slideNoteList.length; index += 1) {
       const node = source.slideNoteList[index - 1]!;
-      if (node.slideGesture?.direction != null && node.slideGesture.width > 1) endpoints.push(index || false);
+      const gesture = slideGestureAfterType(node);
+      if (gesture === AfterNoteType.SlideMultipleDirectionalFlickLeft || gesture === AfterNoteType.SlideMultipleDirectionalFlickRight)
+        endpoints.push(index || false);
     }
     const previous = endpoints.map(endpoint => this.projectedGeometry?.connectionState(source, endpoint));
     const advanced = this.projectedGeometry?.advance(note, delta, null, true) ?? ok(undefined);
@@ -2349,9 +2352,8 @@ function directionalGroupSpan(group: MultipleDirectionalRuntimeGroup | undefined
 
 /** Preserve the authored full target while Directional's Slide mesh uses its incoming member. */
 function slideGestureSpan(source: NoteInformation) {
-  const gesture = source.slideGesture;
-  if (gesture?.direction == null) return source.laneSpan;
+  if (source.slideExitOffset === undefined) return source.laneSpan;
   const incoming = source.laneSpan?.start ?? source.buttonType;
-  const exit = incoming + (source.slideExitOffset ?? 0);
-  return { start: Math.min(incoming, exit), end: Math.max(incoming, exit), width: gesture.width };
+  const exit = incoming + source.slideExitOffset;
+  return { start: Math.min(incoming, exit), end: Math.max(incoming, exit), width: slideGestureWidth(source) };
 }

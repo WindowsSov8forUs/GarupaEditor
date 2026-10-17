@@ -1,5 +1,5 @@
 import { noteSpatialY, noteUnclippedSyncTarget, type OrdinaryNoteMotionResult } from "../rendering/ordinaryNoteGeometry";
-import { projectedNodeLane } from "./productChartProfile";
+import { isProductGestureNode, projectedNodeLane } from "./productChartProfile";
 import { NoteState, type NoteBase } from "../notes/noteBase";
 import { NoteLong, NoteSlide, NoteMultipleDirectionalVisual } from "../notes/noteTypes";
 import type { NoteInformation, NoteBatchInformation } from "../chart/types";
@@ -507,7 +507,7 @@ export class GarupaRenderInputAdapter {
         const lifecycle = index === 0 ? state.root : state.children[index - 1]!.lifecycle;
         const transform = lifecycle.renderedTransform;
         const visible = index === 0 ? state.rootVisible : state.children[index - 1]!.visible &&
-          !(node.scoringSource?.slideGesture && owner instanceof NoteSlide && owner.afterNotes[index - 1]?.judged);
+          !(isProductGestureNode(node) && owner instanceof NoteSlide && owner.afterNotes[index - 1]?.judged);
         const stopped = lifecycle.phase === "stop";
         samples.set(node.identity, { ...previous, position: transform.position, unclipped: transform.unclipped,
           uniformScale: transform.localScale.x,
@@ -521,7 +521,7 @@ export class GarupaRenderInputAdapter {
     const plans: NotePresentation[] = [];
     const retired = new Set<string>();
     for (const node of this.chart.nodes) {
-      if (plannedJudged.has(node.identity) && node.scoringSource?.slideGesture && this.connectionMembers.has(node.identity))
+      if (plannedJudged.has(node.identity) && isProductGestureNode(node) && this.connectionMembers.has(node.identity))
         retired.add(node.identity);
       const state = node.chainIdentity === null ? undefined : plannedSlides.get(node.chainIdentity);
       if (state === undefined ? plannedJudged.has(node.identity) : state.finished ||
@@ -536,7 +536,7 @@ export class GarupaRenderInputAdapter {
         ?? noteRenderInput(authored);
       visualNodes.push(node);
       visualOwners.set(node.identity, authored);
-      if (node.connectionIndex === 0 && node.scoringSource?.slideGesture && plannedSlides.get(node.chainIdentity!)?.headCompleted &&
+      if (node.connectionIndex === 0 && isProductGestureNode(node) && plannedSlides.get(node.chainIdentity!)?.headCompleted &&
           !this.connectionMembers.has(node.identity)) continue;
       if (node.type !== "Directional" || authored.width === 1) { iconOwners.add(node.identity); continue; }
       const baseSample = samples.get(node.identity)!;
@@ -633,7 +633,7 @@ export class GarupaRenderInputAdapter {
         this.resources, node.width, this.resources.habahiroAtlasLogicalAssetIds !== undefined);
       const binding = frontBinding(node, this.resources, this.noteColor, this.chainByIdentity,
         node.connectionIndex === 0 && plannedSlides.get(node.chainIdentity!)?.root.phase === "stop" &&
-          (!node.scoringSource?.slideGesture || plannedSlides.get(node.chainIdentity!)?.headCompleted === true),
+          (!isProductGestureNode(node) || plannedSlides.get(node.chainIdentity!)?.headCompleted === true),
         visualOwners.get(node.identity)!);
       if (binding.status !== "ok") return binding;
       plans.push({ id: objectId, lifetime: visualOwners.get(node.identity)!.identity, kind: "body", visible: sample.visible,

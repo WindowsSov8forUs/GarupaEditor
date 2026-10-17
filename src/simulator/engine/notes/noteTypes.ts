@@ -36,6 +36,7 @@ import {
 import { ManualTouchPhase, type ManualInputPosition } from "../data/manualInput";
 import type { MultipleDirectionalRuntimeGroup } from "../data/autoLiveJudgement";
 import { hasContinuousNoteGeometry } from "../chart/noteGeometry";
+import { isSlideGestureNode, slideEndGameFamily, slideFlickDirection, slideFlickJudgeNoteType, slideGestureAfterType, slideGestureWidth } from "../chart/slideFlickNodes";
 import { advanceSlideStopWait, queueSlideRenderHideBefore } from "../rendering/ordinarySlideChildLifecycle";
 import { advanceSlideGestureContact, slideHeldNodeResult, slideHeadTimeoutDue, slideAfterTimeoutDue } from "../managers/slideNoteManager";
 
@@ -896,7 +897,7 @@ export class NoteSlide extends NoteFrontBase {
 
   private advanceHeldTapLane(current: SlideAfterRuntime): void {
     // ExecTouchMoved's beam branch is for visible intermediate nodes only.
-    if (current.isTerminal || current.source.isInvisible || current.source.slideGesture) return;
+    if (current.isTerminal || current.source.isInvisible || current.isGesture) return;
     this.replaceTapLaneTarget(current.source);
     this.tapLane("off-reserve", this.laneEffectTarget);
   }
@@ -1093,7 +1094,7 @@ export class NoteSlide extends NoteFrontBase {
     if (activated.status !== "ok") {
       return activated;
     }
-    this.headGestureNode = noteInformation.slideGesture ? new SlideAfterRuntime(noteInformation, -1, false, null) : null;
+    this.headGestureNode = isSlideGestureNode(noteInformation) ? new SlideAfterRuntime(noteInformation, -1, false, null) : null;
     this.feedback.reset();
     this.firstVisibleAfterIndexValue = afterNotes.findIndex(after => !after.source.isInvisible);
     let lastVisible = afterNotes.length - 1;
@@ -1205,7 +1206,7 @@ export class NoteSlide extends NoteFrontBase {
     this.beganPlacementPending = true;
     this.manualHeadJudgedValue = plan.judgementPlan !== null;
     this.manualTouchOriginValue = input.currentPosition;
-    this.manualGestureSource = this.noteInformation?.slideGesture ? this.noteInformation : null;
+    this.manualGestureSource = this.noteInformation !== null && isSlideGestureNode(this.noteInformation) ? this.noteInformation : null;
     this.manualAfterMoveTimeValue = Math.fround(0);
     const changed = this.changeState(NoteState.Stop);
     if (changed.status !== "ok") {
@@ -1232,7 +1233,7 @@ export class NoteSlide extends NoteFrontBase {
       if (planned.status !== "ok") return planned;
       plans.push(planned.value);
       const data = planned.value.familyData as { advanceHidden?: boolean };
-      if (current === undefined || current.isTerminal || current.sourceIndex < 0 || current.source.slideGesture !== undefined) break;
+      if (current === undefined || current.isTerminal || current.sourceIndex < 0 || current.isGesture) break;
       const advanced = planned.value.judgementPlan !== null || data.advanceHidden === true;
       const next = advanced ? this.afterNotesValue[current.sourceIndex + 1] : current;
       if (next === undefined) break;
@@ -1249,7 +1250,7 @@ export class NoteSlide extends NoteFrontBase {
         }
         break;
       }
-      if (next.source.slideGesture) {
+      if (next.isGesture) {
         origin = input.currentPosition;
         grace = 0;
         gestureSource = next.source;
@@ -1324,7 +1325,8 @@ export class NoteSlide extends NoteFrontBase {
     if (judgement.status !== "ok") {
       return judgement;
     }
-    const gesture = target.source.slideGesture;
+    const gestureAfterType = target.gestureAfterType;
+    const gesture = gestureAfterType !== AfterNoteType.None;
     const group = target.isTerminal ? this.slideAfterMultipleGroupValue : null;
     const targetButtons = group?.buttonTypes ?? target.source.buttonTypesArray;
     const inside = runtime.value.isInsideSource(
@@ -1336,7 +1338,7 @@ export class NoteSlide extends NoteFrontBase {
     }
     const contact = advanceSlideGestureContact(judgement.value, inside.value,
       grace, runtime.value.getExecuteFrame(),
-      gesture !== undefined && gestureSource !== target.source ? input.currentPosition : origin,
+      gesture && gestureSource !== target.source ? input.currentPosition : origin,
       input.currentPosition);
     const nextGrace = contact.grace;
     const nextOrigin = contact.origin;
@@ -1346,11 +1348,10 @@ export class NoteSlide extends NoteFrontBase {
         "Slide terminal movement requires its cached Began origin.",
       );
     }
-    const afterNoteType = this.noteInformation!.afterNoteType;
-    const direction = gesture ? gesture.direction : afterNoteType === AfterNoteType.SlideFlickEnd ? null
-      : afterNoteType === AfterNoteType.SlideDirectionalFlickEndLeft || afterNoteType === AfterNoteType.SlideMultipleDirectionalFlickLeft
-        ? "Left" : "Right";
-    const multiple = gesture ? gesture.direction !== null && gesture.width > 1 : afterNoteType === AfterNoteType.SlideMultipleDirectionalFlickLeft ||
+    // A gesture node carries its own original tail family; the last node uses the root's.
+    const afterNoteType = gesture ? gestureAfterType : this.noteInformation!.afterNoteType;
+    const direction = slideFlickDirection(afterNoteType);
+    const multiple = afterNoteType === AfterNoteType.SlideMultipleDirectionalFlickLeft ||
       afterNoteType === AfterNoteType.SlideMultipleDirectionalFlickRight;
     const cache = target.isTerminal ? this.manualTailCacheValue : null;
     if (cache !== null && origin !== null) {
@@ -1373,8 +1374,9 @@ export class NoteSlide extends NoteFrontBase {
     if (movement.status !== "ok") return movement;
     let movementSucceeded = movement.value;
     if (movementSucceeded && multiple) {
-      if (gesture === undefined && (group === null || group.isUsed)) return integrityFailure("manual.slide-multiple-terminal-group-unavailable", "Slide Multiple terminal requires its unused chart-owned group.");
-      const grouped = hasFlickMovement(runtime.value.geometry, nextOrigin, input.currentPosition, direction, gesture?.width ?? group!.count);
+      if (!gesture && (group === null || group.isUsed)) return integrityFailure("manual.slide-multiple-terminal-group-unavailable", "Slide Multiple terminal requires its unused chart-owned group.");
+      const grouped = hasFlickMovement(runtime.value.geometry, nextOrigin, input.currentPosition, direction,
+        gesture ? slideGestureWidth(target.source) : group!.count);
       if (grouped.status !== "ok") return grouped;
       movementSucceeded = grouped.value;
     }
@@ -1570,7 +1572,7 @@ export class NoteSlide extends NoteFrontBase {
       readonly nextOrigin: ManualInputPosition | null;
       readonly nextGrace: number;
     };
-    this.manualGestureSource = this.manualCurrentNode?.source.slideGesture ? this.manualCurrentNode.source : null;
+    this.manualGestureSource = this.manualCurrentNode?.isGesture ? this.manualCurrentNode.source : null;
     this.manualTouchOriginValue = data.nextOrigin;
     this.manualAfterMoveTimeValue = data.nextGrace;
     if (data.advanceHidden) {
@@ -1613,10 +1615,10 @@ export class NoteSlide extends NoteFrontBase {
       throw new Error("Slide current node changed after preflight");
     }
     this.currentAfterIndexValue += 1;
-    if (current?.source.slideGesture || this.afterNotesValue[this.currentAfterIndexValue]?.source.slideGesture) {
+    if (current?.isGesture || this.afterNotesValue[this.currentAfterIndexValue]?.isGesture) {
       this.manualTouchOriginValue = input.currentPosition;
       this.manualAfterMoveTimeValue = 0;
-      this.manualGestureSource = this.manualCurrentNode?.source.slideGesture ? this.manualCurrentNode.source : null;
+      this.manualGestureSource = this.manualCurrentNode?.isGesture ? this.manualCurrentNode.source : null;
     }
     if (current?.isTerminal) {
       const changed = this.changeState(NoteState.Deactive);
@@ -1674,15 +1676,15 @@ export class NoteSlide extends NoteFrontBase {
     const submitted = runtime.value.submitJudgement({
       noteInformation,
       phase: "head",
-      noteType: this.noteInformation!.slideGesture?.noteType ?? 8,
+      noteType: slideFlickJudgeNoteType(slideGestureAfterType(this.noteInformation!)),
       absolutePosition: noteInformation.absolutePos,
       multipleDirectionalFlickNoteCount: 0,
     });
     if (submitted.status === "ok") {
-      if (!noteInformation.slideGesture) this.pulseAutoFrontTapLane(this.effectButtonLane(noteInformation));
+      if (!isSlideGestureNode(noteInformation)) this.pulseAutoFrontTapLane(this.effectButtonLane(noteInformation));
       this.laneEffectTarget = this.targetButtonLane(noteInformation);
       // forcePerfectMoveState invokes Began, which advances currentNote, then pulses that target.
-      if (!noteInformation.slideGesture) this.pulseTapLane(this.targetButtonLane(this.afterNotesValue[0]?.source ?? noteInformation));
+      if (!isSlideGestureNode(noteInformation)) this.pulseTapLane(this.targetButtonLane(this.afterNotesValue[0]?.source ?? noteInformation));
       const manual = this.manualRuntime;
       if (manual.status !== "ok") return manual;
       const origin = manual.value.geometry.getTargetCenterScreenPosition?.(noteInformation);
@@ -1736,7 +1738,8 @@ export class NoteSlide extends NoteFrontBase {
     const submitted = runtime.value.submitJudgement({
       noteInformation: information,
       phase: "head",
-      noteType: this.noteInformation!.slideGesture?.noteType ?? 8,
+      // Slide Miss and timeout use type 8 for every flick family.
+      noteType: 8,
       rawResult: NoteResultType.Miss,
       rawTiming: JudgeTiming.None,
       absolutePosition: information.absolutePos,
@@ -1745,7 +1748,7 @@ export class NoteSlide extends NoteFrontBase {
       return submitted;
     }
     this.manualHeadJudgedValue = true;
-    if (information.slideGesture) { this.feedback.hideFlash(); this.feedback.setSound("fade"); }
+    if (isSlideGestureNode(information)) { this.feedback.hideFlash(); this.feedback.setSound("fade"); }
     this.hideSlideNode(-1, true);
     this.skipManualInvisibleAfterNodes();
     return this.currentAfterIndexValue >= this.afterNotesValue.length
@@ -1911,7 +1914,7 @@ export class NoteSlide extends NoteFrontBase {
     const submitted = runtime.value.submitJudgement({
       noteInformation: current.source,
       phase: scoringPhase,
-      noteType: current.source.slideGesture?.noteType ?? 8,
+      noteType: 8,
       rawResult: NoteResultType.Miss,
       rawTiming: JudgeTiming.None,
       absolutePosition: current.source.absolutePos,
@@ -2017,7 +2020,7 @@ export class NoteSlide extends NoteFrontBase {
     if (!inside.value) return ok(null);
     const decision = runtime.value.judgeSlide(first.source);
     if (decision.status !== "ok") return decision;
-    if (first.judgeNoteType !== 8 || first.source.slideGesture !== undefined) {
+    if (first.judgeNoteType !== 8) {
       // Gesture nodes bind on contact and judge on the following movement.
       return decision.value.result === NoteResultType.None ? ok(null)
         : ok(this.noManualSlideJudgementPlan(input.currentPosition, Math.fround(0)));
@@ -2053,7 +2056,7 @@ export class NoteSlide extends NoteFrontBase {
     if (plan.judgementPlan === null) {
       this.manualTouchOriginValue = data.nextOrigin;
       this.manualAfterMoveTimeValue = data.nextGrace;
-      this.manualGestureSource = first.source.slideGesture ? first.source : null;
+      this.manualGestureSource = first.isGesture ? first.source : null;
       return;
     }
     this.hideBeforeSlideNode(first.sourceIndex, false);
@@ -2094,7 +2097,7 @@ export class NoteSlide extends NoteFrontBase {
     if (adjusted < current.source.absolutePos) {
       return ok(undefined);
     }
-    if (!current.isTerminal && current.source.slideGesture === undefined) {
+    if (!current.isTerminal && !current.isGesture) {
       if (current === this.hiddenHeadNode) this.beginAutoHiddenHead(current);
       const manual = this.manualRuntime;
       if (manual.status !== "ok") return manual;
@@ -2790,7 +2793,16 @@ export class SlideAfterRuntime {
     readonly terminalJudgeNoteType: 5 | 6 | 7 | 8 | null,
   ) {}
 
-  get judgeNoteType(): number { return this.source.slideGesture?.noteType ?? this.terminalJudgeNoteType ?? 8; }
+  /** Approved extension: a non-last node with an original flick-tail family. */
+  get gestureAfterType(): AfterNoteTypeValue {
+    return this.isTerminal ? AfterNoteType.None : slideGestureAfterType(this.source);
+  }
+
+  get isGesture(): boolean { return this.gestureAfterType !== AfterNoteType.None; }
+
+  get judgeNoteType(): number {
+    return this.isTerminal ? this.terminalJudgeNoteType ?? 8 : slideFlickJudgeNoteType(this.gestureAfterType);
+  }
 
   get judged(): boolean {
     return this.judgedValue;
@@ -3087,7 +3099,10 @@ function validateSlideChildRole(
     (isTerminal
       ? source.fireNoteType === FrontNoteType.None
       : source.fireNoteType === root.fireNoteType &&
-        source.gameNoteType === root.gameNoteType);
+        source.gameNoteType === root.gameNoteType ||
+        // Approved gesture intermediate: the root family's original Slide end kinds.
+        source.fireNoteType === FrontNoteType.None &&
+        slideEndGameFamily(source.gameNoteType) === (root.fireNoteType === FrontNoteType.SlideA ? "A" : "B"));
   return validRole
     ? ok(undefined)
     : integrityFailure(

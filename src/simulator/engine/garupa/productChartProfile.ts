@@ -1,5 +1,6 @@
 import type { GarupaChartJsonDirection, GarupaChartJsonSlideConnection } from "../../../chart";
 import type { ChartConstructionResult, NoteInformation } from "../chart/types";
+import { isSlideGestureNode } from "../chart/slideFlickNodes";
 
 export type GarupaProductTimingGroupId = "#Global" | `#${string}`;
 
@@ -138,4 +139,9 @@ export function projectedNodeLane(node: GarupaProductNode): number {
   }
   return node.runtimeRoot !== undefined && source != null && source.buttonType >= 0 && source.buttonType <= 6
     ? source.buttonType : node.spanStart + (node.width - 1) / 2;
+}
+
+/** Approved gesture head or intermediate node; a last node keeps the original tail path. */
+export function isProductGestureNode(node: Pick<GarupaProductNode, "scoringSource" | "scoringPhase">): boolean {
+  return node.scoringPhase !== "tail" && node.scoringSource != null && isSlideGestureNode(node.scoringSource);
 }

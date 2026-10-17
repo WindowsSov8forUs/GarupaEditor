@@ -27,6 +27,7 @@ import {
 } from "../garupa/productChartProfile";
 import type { GarupaProductSceneLayout } from "../../scene/simulatorSceneLayout";
 import { virtualLaneBaseIndex } from "../chart/virtualLane";
+import { slideEndGameFamily, slideFlickDirection, slideGestureAfterType } from "../chart/slideFlickNodes";
 import {
   isTapKeepStartJudgeNoteType,
   isTapKeepStopJudgeNoteType,
@@ -235,8 +236,10 @@ export class ParticleCommandProducer {
           (note.gameNoteAdditionalType === GameNoteAdditionalType.None || note.gameNoteAdditionalType === GameNoteAdditionalType.Skill) &&
           (note.gameNoteAdditionalTypeLongNoteEnd === GameNoteAdditionalType.None || note.gameNoteAdditionalTypeLongNoteEnd === GameNoteAdditionalType.Skill);
         const nativeSlideRoot = this.slideRootByNode.get(note);
-        const slideGesture = nativeSlideRoot !== undefined && note.slideGesture !== undefined;
-        const gestureDirectionalGroup = slideGesture && note.slideGesture!.direction !== null && note.slideGesture!.width > 1;
+        const gestureAfterType = nativeSlideRoot !== undefined && entry.phase !== "tail" ? slideGestureAfterType(note) : AfterNoteType.None;
+        const slideGesture = gestureAfterType !== AfterNoteType.None;
+        const gestureDirectionalGroup = gestureAfterType === AfterNoteType.SlideMultipleDirectionalFlickLeft ||
+          gestureAfterType === AfterNoteType.SlideMultipleDirectionalFlickRight;
         const slideDirectionalGroup = nativeSlideRoot !== undefined && entry.phase === "tail" && entry.noteType === 7 &&
           note === nativeSlideRoot.slideNoteList[nativeSlideRoot.slideNoteList.length - 1] &&
           (nativeSlideRoot.afterNoteType === AfterNoteType.SlideMultipleDirectionalFlickLeft ||
@@ -542,8 +545,10 @@ export class ParticleCommandProducer {
     slideRoot?: NoteInformation,
   ): SimulatorResult<Readonly<{ body: number; finger: number }>> {
     const ownership = this.judgementOwnership?.(note);
-    if (slideRoot !== undefined && note.slideGesture?.direction != null && ownership?.judgementLaneSpan !== undefined) {
-      const body = note.slideGesture.direction === "Left" ? ownership.judgementLaneSpan.end : ownership.judgementLaneSpan.start;
+    const gestureDirection = slideRoot !== undefined && ownership?.slidePhase !== "tail"
+      ? slideFlickDirection(slideGestureAfterType(note)) : null;
+    if (gestureDirection !== null && ownership?.judgementLaneSpan !== undefined) {
+      const body = gestureDirection === "Left" ? ownership.judgementLaneSpan.end : ownership.judgementLaneSpan.start;
       return ok({ body, finger: body });
     }
     const buttons = slideRoot === undefined ? ownership?.multipleDirectionalFlickButtonTypes : ownership?.slideButtonTypes;
@@ -1058,9 +1063,17 @@ function judgementGameNoteType(
   note: NoteInformation,
   entry: OneFrameJudgementEntry,
 ): NoteInformation["gameNoteType"] {
-  if (note.slideGesture?.direction != null) return note.slideGesture.direction === "Left"
-    ? GameNoteType.DirectionalFlickLeft : GameNoteType.DirectionalFlickRight;
-  if (entry.phase !== "tail") return note.gameNoteType;
+  if (entry.phase !== "tail") {
+    // Approved gesture head/intermediate: the original Slide tail mapping of its own family.
+    const gesture = slideGestureAfterType(note);
+    if (gesture === AfterNoteType.None) return note.gameNoteType;
+    const game = note.slideHeadGestureGameType ?? note.gameNoteType;
+    const familyA = slideEndGameFamily(game) === "A";
+    const direction = slideFlickDirection(gesture);
+    return direction === null ? game : direction === "Left"
+      ? familyA ? GameNoteType.SlideADirectionalFlickLeft : GameNoteType.SlideBDirectionalFlickLeft
+      : familyA ? GameNoteType.SlideADirectionalFlickRight : GameNoteType.SlideBDirectionalFlickRight;
+  }
   if (note.fireNoteType === FrontNoteType.Long) {
     if (note.afterNoteType === AfterNoteType.DirectionalFlickLeft ||
       note.afterNoteType === AfterNoteType.MultipleDirectionalFlickLeft) {

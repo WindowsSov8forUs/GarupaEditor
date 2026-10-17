@@ -1,6 +1,6 @@
 import { noteMotionY, noteMotionCurveExponent, projectOrdinaryNoteMotion } from "../rendering/ordinaryNoteGeometry";
 import { coordinate, coordinateAdd, coordinateScale } from "../rendering/exponentialCoordinates";
-import { projectedNodeLane } from "./productChartProfile";
+import { isProductGestureNode, projectedNodeLane } from "./productChartProfile";
 import { FrontNoteType } from "../chart/types";
 import { NoteState } from "../notes/noteBase";
 import { NoteLong, NoteSlide } from "../notes/noteTypes";
@@ -106,7 +106,7 @@ export function advanceExtensionSlide(
     : Math.max(rootJudgementY.value, scene.virtualPerfectLine);
   // A gesture head binds before it judges. Its sprite can stop at the real line,
   // but its spatial judgement must continue toward the virtual line like an after node.
-  if (head.scoringSource?.slideGesture && owner instanceof NoteSlide && !owner.headJudged &&
+  if (isProductGestureNode(head) && owner instanceof NoteSlide && !owner.headJudged &&
       previous.root.phase === "stop" && rootJudgeY > scene.virtualPerfectLine) {
     const vertical = advanceOrdinaryNoteVerticalMotion({ ...root.motionState, deltaTime: input.deltaTime });
     if (vertical.status !== "ok") return vertical;
@@ -189,8 +189,7 @@ export function advanceExtensionSlide(
           owner instanceof NoteSlide && owner.afterNotes[index]?.stopAdjustmentWaited === true),
       }, ordinaryScene.habahiro?.highAspectRatio, {
         canLeaveNode: index => {
-          const source = nodes[index + 1]!.scoringSource;
-          return source?.slideGesture === undefined || owner instanceof NoteSlide &&
+          return !isProductGestureNode(nodes[index + 1]!) || owner instanceof NoteSlide &&
             (index === -1 ? owner.headJudged : owner.afterNotes[index]?.judged === true);
         },
         outgoingTransform: (transform, index) => {

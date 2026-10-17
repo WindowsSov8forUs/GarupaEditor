@@ -627,7 +627,10 @@ function createSlide(
     const span = connection.type === "Directional"
       ? projectedSpan(connection.lane, 1, projected)
       : fullSpan.value;
-    const terminalKinds = isTerminal
+    // Approved extension: an intermediate Flick/Directional carries the original
+    // Slide end kinds; only its position before the last node is new.
+    const gesture = connection.type === "Flick" || connection.type === "Directional";
+    const terminalKinds = isTerminal || gesture
       ? slideTerminalKinds(connection, familyA, connection.width > 1)
       : Object.freeze({ game: familyGame, front: familyFront, after: AfterNoteType.None });
     const child = createBaseNote({
@@ -637,7 +640,7 @@ function createSlide(
       kinds: terminalKinds,
       additional: connection.type === "Skill" ? GameNoteAdditionalType.Skill : GameNoteAdditionalType.None,
       invisible: connection.type === "Hidden",
-      ...(!isTerminal ? slideGestureFields(connection) : {}),
+      ...(!isTerminal ? slideExitFields(connection) : {}),
     });
     children.push(child);
   }
@@ -658,7 +661,9 @@ function createSlide(
     }),
     additional: head.type === "Skill" ? GameNoteAdditionalType.Skill : GameNoteAdditionalType.None,
     isSlideNoteHead: true,
-    ...slideGestureFields(head),
+    ...(head.type === "Flick" || head.type === "Directional"
+      ? { slideHeadGestureGameType: slideTerminalKinds(head, familyA, head.width > 1).game } : {}),
+    ...slideExitFields(head),
     invisible: head.type === "Hidden",
     ...(head.type === "Hidden" || tail.type === "Hidden" ? { hiddenSlideEndpoints: true as const } : {}),
     slideNoteList: children,
@@ -728,11 +733,9 @@ function createSlide(
   }));
 }
 
-function slideGestureFields(node: GarupaChartJsonSlideItem["connections"][number]): Pick<NoteInformation, "slideGesture" | "slideExitOffset"> {
-  if (node.type !== "Flick" && node.type !== "Directional") return {};
-  return { slideGesture: Object.freeze({ direction: node.type === "Directional" ? node.direction : null,
-    width: node.width, noteType: node.type === "Flick" ? 3 : node.width > 1 ? 10 : 9 }),
-    ...(node.type === "Directional" ? { slideExitOffset: (node.direction === "Left" ? -1 : 1) * (node.width - 1) } : {}) };
+/** Approved extension geometry: a gesture Directional continues from its far end. */
+function slideExitFields(node: GarupaChartJsonSlideItem["connections"][number]): Pick<NoteInformation, "slideExitOffset"> {
+  return node.type === "Directional" ? { slideExitOffset: (node.direction === "Left" ? -1 : 1) * (node.width - 1) } : {};
 }
 
 function createBaseNote(input: {
@@ -743,7 +746,7 @@ function createBaseNote(input: {
   readonly additional: GameNoteAdditionalTypeValue;
   readonly invisible?: boolean;
   readonly hiddenSlideEndpoints?: true;
-  readonly slideGesture?: NoteInformation["slideGesture"];
+  readonly slideHeadGestureGameType?: NoteInformation["slideHeadGestureGameType"];
   readonly slideExitOffset?: number;
   readonly isSlideNoteHead?: boolean;
   readonly slideNoteList?: readonly NoteInformation[];
@@ -761,7 +764,7 @@ function createBaseNote(input: {
     ...(input.directionalSlideConnection === undefined ? {} : { directionalSlideConnection: input.directionalSlideConnection }),
     ...(input.directionalMemberRootIndex === undefined ? {} : { directionalMemberRootIndex: input.directionalMemberRootIndex, directionalMemberOffset: input.directionalMemberOffset }),
     ...(input.hiddenSlideEndpoints ? { hiddenSlideEndpoints: true as const } : {}),
-    ...(input.slideGesture === undefined ? {} : { slideGesture: input.slideGesture }),
+    ...(input.slideHeadGestureGameType === undefined ? {} : { slideHeadGestureGameType: input.slideHeadGestureGameType }),
     ...(input.slideExitOffset === undefined ? {} : { slideExitOffset: input.slideExitOffset }),
     index: input.index,
     isResult: false,

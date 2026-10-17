@@ -2,6 +2,7 @@ import { noteUnclippedTransform } from "./ordinaryNoteGeometry";
 import { noteBodyBinding, noteFlickIconBinding, noteLongFlashBinding, noteSlideFlashBinding, noteSlideHeldBodyBinding, slideLineMaterialRole, advanceNoteAnimationClock } from "./noteVisualBinding";
 import type { SlideNodeHideRequest } from "../notes/noteTypes";
 import { virtualLaneUnit } from "../chart/virtualLane";
+import { isSlideGestureNode } from "../chart/slideFlickNodes";
 import type {
   RenderColor,
   RenderCommand,
@@ -3326,14 +3327,20 @@ interface NoteBindingGeometry {
 export function resolveProjectedNoteBinding(root: NoteInformation, source: NoteInformation,
   phase: "head" | "intermediate" | "tail", resources: RenderEngineResourceBindings, noteColor: boolean,
   geometry: NoteBindingGeometry, habahiro: boolean): SimulatorResult<NoteSpriteBinding | null> {
-  if (phase === "head" && source.slideGesture) return ok(noteBodyBinding(resources, "note_flick", geometry.suffix,
-    geometry.width, habahiro, source.slideGesture.direction === null ? null : source.slideGesture.direction === "Left" ? "l" : "r"));
+  // Approved gesture head/intermediate: the original Slide end sprite of its tail game type.
+  const headGesture = phase === "head" ? source.slideHeadGestureGameType : undefined;
+  if (headGesture !== undefined) {
+    const tail = { ...source, gameNoteType: headGesture };
+    return habahiro ? resolveHabahiroSlideChildBinding(tail, true, resources, geometry)
+      : resolveSlideChildSpriteBinding(tail, true, resources, geometry);
+  }
   if (phase === "head") return habahiro ? resolveHabahiroFrontSpriteBinding(source, resources, noteColor, geometry)
     : resolveFrontSpriteBinding(source, resources, noteColor, geometry);
   if (root.fireNoteType === FrontNoteType.Long) return habahiro ? resolveHabahiroAfterSpriteBinding(root, resources, geometry)
     : resolveAfterSpriteBinding(root, resources, geometry);
-  return habahiro ? resolveHabahiroSlideChildBinding(source, phase === "tail", resources, geometry)
-    : resolveSlideChildSpriteBinding(source, phase === "tail", resources, geometry);
+  const flickEnd = phase === "tail" || isSlideGestureNode(source);
+  return habahiro ? resolveHabahiroSlideChildBinding(source, flickEnd, resources, geometry)
+    : resolveSlideChildSpriteBinding(source, flickEnd, resources, geometry);
 }
 
 /** Coordinate/gesture inputs still resolve icons through the original front/after functions. */
@@ -3653,11 +3660,11 @@ function resolveNoteAnimationBinding(
 ): OrdinaryAnimationBinding | null {
   const role = resolveNoteAnimationRole(information);
   if (role !== null) {
-    const direction = information.slideGesture !== undefined
-      ? information.slideGesture.direction === null ? "up" : information.slideGesture.direction === "Left" ? "left" : "right"
-      : gameTypeIsDirectional(information.gameNoteType)
-      ? gameTypeIsLeft(information.gameNoteType) ? "left" : "right"
-      : afterTypeIsDirectional(information.afterNoteType)
+    const headGesture = information.slideHeadGestureGameType;
+    const game = headGesture ?? information.gameNoteType;
+    const direction = gameTypeIsDirectional(game)
+      ? gameTypeIsLeft(game) ? "left" : "right"
+      : headGesture === undefined && afterTypeIsDirectional(information.afterNoteType)
       ? afterTypeIsLeft(information.afterNoteType) ? "left" : "right"
       : "up";
     return Object.freeze({
@@ -3729,8 +3736,10 @@ function resolveAfterAnimationRole(
 function resolveNoteAnimationRole(
   information: NoteInformation,
 ): "note-flick" | "note-directional-flick" | null {
-  if (information.slideGesture !== undefined)
-    return information.slideGesture.noteType === 3 ? "note-flick" : "note-directional-flick";
+  const headGesture = information.slideHeadGestureGameType;
+  if (headGesture !== undefined)
+    return headGesture === GameNoteType.SlideEndFlickA || headGesture === GameNoteType.SlideEndFlickB
+      ? "note-flick" : "note-directional-flick";
   if (
     information.fireNoteType === FrontNoteType.Flick ||
     information.gameNoteType === GameNoteType.Flick ||
