@@ -15,6 +15,11 @@ import {
   audioRejected,
 } from "../audioValidation";
 import { RecordingSimulatorAudioBackend } from "../recordingAudioBackend";
+import cueLimitProfile from "../../../data/simulator/originalCueLimitProfile.json";
+
+const CUE_LIMITS: ReadonlyMap<string, Readonly<Record<string, number | undefined>>> = new Map(
+  cueLimitProfile.banks.map((bank) => [bank.logicalId, bank.limits]),
+);
 
 interface WebAudioVoiceFade {
   startValue: number;
@@ -27,6 +32,7 @@ interface WebAudioVoiceFade {
 interface WebAudioVoice {
   voiceKey: string;
   readonly cue: string;
+  readonly order: number;
   readonly category: "bgm" | "se";
   readonly gain: GainNode;
   source: AudioBufferSourceNode | null;
@@ -47,10 +53,14 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
   readonly id = "web-audio";
   private fadingHoldSequence = 0;
   private previousOneShotSequence = 0;
+  private voiceOrder = 0;
 
   private recording = new RecordingSimulatorAudioBackend(false);
   private readonly decodedByCue = new Map<string, AudioBuffer>();
   private readonly loopByCue = new Map<string, { readonly startSeconds: number; readonly endSeconds: number }>();
+  private readonly cueLimitByCue = new Map<string, number>();
+  /** Hold owners whose loop the cue limit stopped; their later owner commands are no-ops. */
+  private readonly stolenHolds = new Set<string>();
   private readonly voices = new Map<string, WebAudioVoice>();
   private pending: PendingWebAudioBatch | null = null;
   private bgmGain: GainNode | null = null;
@@ -189,8 +199,11 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
     this.recording = candidate;
     this.decodedByCue.clear();
     this.loopByCue.clear();
+    this.cueLimitByCue.clear();
     for (const [cue, buffer] of decoded) this.decodedByCue.set(cue, buffer);
     for (const resource of profile.resources) {
+      const limit = resource.role === "se" ? CUE_LIMITS.get(resource.logicalId)?.[resource.cue] : undefined;
+      if (limit !== undefined) this.cueLimitByCue.set(resource.cue, limit);
       if (resource.loop !== null) {
         const buffer = decoded.get(resource.cue)!;
         this.loopByCue.set(resource.cue, Object.freeze({
@@ -353,8 +366,10 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
     };
     for (const voice of this.voices.values()) release(() => this.releaseVoice(voice));
     this.voices.clear();
+    this.stolenHolds.clear();
     this.decodedByCue.clear();
     this.loopByCue.clear();
+    this.cueLimitByCue.clear();
     release(() => this.bgmGain?.disconnect());
     release(() => this.seGain?.disconnect());
     this.bgmGain = null;
@@ -473,6 +488,7 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
         }
         case "hold.start-loop": {
           const resource = this.requireLoopResource(command.cue);
+          this.stolenHolds.delete(`hold:${command.owner_key}`);
           this.createVoice(
             `hold:${command.owner_key}`,
             command.cue,
@@ -486,6 +502,10 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
         }
         case "hold.fade": {
           const voice = this.voices.get(`hold:${command.owner_key}`);
+          if (voice === undefined && this.stolenHolds.has(`hold:${command.owner_key}`)) {
+            if (command.stop_at_zero) this.stolenHolds.delete(`hold:${command.owner_key}`);
+            break;
+          }
           if (voice === undefined) throw new Error("missing Hold voice");
           this.beginVoiceFade(
             voice,
@@ -522,12 +542,14 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
     loopEnd: number | null,
   ): WebAudioVoice {
     if (this.voices.has(voiceKey)) throw new Error("duplicate Web Audio voice");
+    this.enforceCueLimit(cue);
     const gain = this.context.createGain();
     gain.gain.setValueAtTime(gainValue, this.context.currentTime);
     gain.connect(this.categoryGain(category));
     const voice: WebAudioVoice = {
       voiceKey,
       cue,
+      order: ++this.voiceOrder,
       category,
       gain,
       source: null,
@@ -561,6 +583,23 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
       this.voices.set(existing.voiceKey, existing);
     }
     this.createVoice(voiceKey, cue, category, gainValue, offsetSeconds, loopStart, loopEnd);
+  }
+
+  /**
+   * Cue numLimits: a full cue keeps its newest playbacks, so a new start stops
+   * the oldest live (playing, paused or fading) playback of that cue.
+   */
+  private enforceCueLimit(cue: string): void {
+    const limit = this.cueLimitByCue.get(cue);
+    if (limit === undefined) return;
+    const live = [...this.voices.values()].filter((voice) => voice.cue === cue)
+      .sort((left, right) => left.order - right.order);
+    for (let index = 0; index <= live.length - limit; index += 1) {
+      const oldest = live[index]!;
+      this.releaseVoice(oldest);
+      this.voices.delete(oldest.voiceKey);
+      if (oldest.voiceKey.startsWith("hold:")) this.stolenHolds.add(oldest.voiceKey);
+    }
   }
 
   private startVoice(voice: WebAudioVoice): void {
