@@ -79,6 +79,7 @@ export interface OriginalGameplayLayout {
 export interface OriginalUiLayout {
   readonly comboPosition: readonly [number, number];
   readonly pixelsPerAuthoredUnit: number;
+  /** UI_Root/Display child after ScreenToSafeArea, projected through the integer-activeHeight root, in pixels per authored unit. */
   readonly screenToSafeChildScale: number;
   /** UI_Root_Back after UIRoot.UpdateScale (2/activeHeight) with unit Display, in pixels per UI unit. */
   readonly backRootPixelsPerUnit: number;
@@ -180,8 +181,11 @@ export function createOriginalSurfaceLayout(
   );
   const pixelsPerWorldUnit = div(height, 2);
   const pixelsPerAuthoredUnit = div(width, ORIGINAL_SCREEN_WIDTH_BASE);
-  const screenToSafeChildScale = mul(pixelsPerAuthoredUnit, screenToSafeAreaRatio);
-  const backRootPixelsPerUnit = mul(div(height, 2), div(2, originalUiRootActiveHeight(width, height)));
+  // UI_Root and UI_Root_Back share UIRoot.UpdateScale: 2/activeHeight with the integer activeHeight.
+  const uiRootScale = div(2, originalUiRootActiveHeight(width, height));
+  // Display children: world matrix uiRootScale × ScreenToSafeArea scale, then the UI camera projection.
+  const screenToSafeChildScale = mul(mul(uiRootScale, screenToSafeAreaRatio), pixelsPerWorldUnit);
+  const backRootPixelsPerUnit = mul(pixelsPerWorldUnit, uiRootScale);
   const rhythmLinesY = isHigh ? mul(highAspectRatio, ADJUSTER_RHYTHM_LINES_Y_RATE) : Math.fround(0);
   const sudden = originalSuddenLayout(suddenRate, suddenLane, width, height, backRootPixelsPerUnit,
     rhythmLinesY, musicObjectsScale);
