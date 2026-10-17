@@ -12,6 +12,7 @@ import {
   ORIGINAL_NOTE_LANE_BOTTOM_Y,
   originalBottomLeftScreenToWorld,
   originalButtonWorldX,
+  originalButtonWorldZ,
   originalWorldToBottomLeftScreen,
   type OriginalSurfaceLayout,
 } from "./originalSurfaceLayout";
@@ -46,6 +47,8 @@ import type {
 } from "../engine/rendering/renderCommandProducer";
 
 const LAUNCH_DISTANCE_RATE = Math.fround(0.05000000074505806);
+/** Extension projection depth only; original objects take their own depth (button
+ * hierarchy or NoteBase.getStartPos), never this value. */
 const NOTE_WORLD_Z = Math.fround(-13.5);
 const DEFAULT_COLLISION_SQUARED = Math.fround(0.23136097192764282);
 const COLLISION_DISTANCE_RATE = Math.fround(1.1679999828338623);
@@ -156,7 +159,7 @@ export function createSimulatorSceneLayout(
     noteParentScale: values.value.noteParentScale,
     musicObjectsScale: values.value.musicObjectsScale,
     multiRangeNotes: values.value.multiRangeNotes,
-    buttonWorldZ: f32(Math.fround(Math.fround(values.value.musicObjectsScale.value * 15) - 15)),
+    buttonWorldZ: f32(originalButtonWorldZ(originalLayout.value)),
     launcherY: values.value.launcherY,
     targetCenterY: values.value.targetCenterY,
     highAspectRatio: values.value.highAspectRatio,
@@ -170,7 +173,7 @@ export function createSimulatorSceneLayout(
       vector3(
         originalButtonWorldX(originalLayout.value, authoredX),
         originalLayout.value.gameplay.targetCenterY,
-        NOTE_WORLD_Z,
+        originalButtonWorldZ(originalLayout.value),
       ))),
     noteTint: white(),
     noteDomainLayer: 3,
@@ -235,7 +238,7 @@ function createSceneValues(
           Math.fround(vanishingY - targetCenterY),
       ),
     );
-    goalPositions.push(vector3(goalX, targetCenterY, NOTE_WORLD_Z));
+    goalPositions.push(vector3(goalX, targetCenterY, originalButtonWorldZ(layout)));
     // SORT-C43: initLauncher publishes Z=0; activation adds the per-note depth.
     noteStartPositions.push(vector3(startX, startY, 0));
   }

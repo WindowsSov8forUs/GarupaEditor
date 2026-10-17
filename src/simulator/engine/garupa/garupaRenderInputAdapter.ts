@@ -441,7 +441,10 @@ export class GarupaRenderInputAdapter {
         if (projected.status !== "ok") {
           if (curve >= this.scene.visibleCurveRange[0] && curve <= this.scene.visibleCurveRange[1]) return projected;
         } else {
-          position = projected.value;
+          // NoteBase.getStartPos assigns each note its own depth; Move keeps it.
+          const own = this.scene.motionStateAtLane(projectedNodeLane(node), node.width, node.absolutePosition);
+          if (own.status !== "ok") return own;
+          position = { ...projected.value, z: own.value.currentPositionZ };
           if (scale.status !== "ok") {
             if (curve >= this.scene.visibleCurveRange[0] && curve <= this.scene.visibleCurveRange[1]) return scale;
           } else {

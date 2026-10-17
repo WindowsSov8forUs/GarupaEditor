@@ -294,6 +294,11 @@ export function originalButtonWorldX(layout: OriginalSurfaceLayout, authoredX: n
   return mul(mul(authoredX, layout.gameplay.screenWidthAdjustRate), layout.gameplay.musicObjectsScale);
 }
 
+/** Button (and its NoteLaneEffect child) world Z: MusicObjects Z -15 plus its scale times the button local Z 15. */
+export function originalButtonWorldZ(layout: OriginalSurfaceLayout): number {
+  return Math.fround(Math.fround(layout.gameplay.musicObjectsScale * 15) - 15);
+}
+
 /** SORT-C44: InGameIPhoneXAdjuster.Awake overwrites the canonical note parent scale. */
 export function calculateOrdinaryNoteParentScale(
   isHighAspectRatioDevice: boolean,
