@@ -72,6 +72,8 @@ export interface OrdinarySlideStopControl {
   readonly laneSpacingX: number;
   /** One full lane at the launcher; the original-path exit offset scales between the two. */
   readonly startLaneSpacingX?: number;
+  /** Approved gesture head (-1) and nodes that are not judged yet: the Slide cannot leave them. */
+  readonly unjudgedGestures?: ReadonlySet<number>;
   readonly stoppedChildWaited: readonly boolean[];
 }
 
@@ -202,7 +204,7 @@ export function advanceOrdinarySlideChildren(
       ? nextMoving[index + 1]! : index;
   }
   const first = childStates[0]!;
-  let frontCanFollow = stopControl.rootWaiting && (extension?.canLeaveNode?.(-1) ?? true);
+  let frontCanFollow = stopControl.rootWaiting && (extension?.canLeaveNode?.(-1) ?? !stopControl.unjudgedGestures?.has(-1));
   if (stopControl.advanceMotion && frontCanFollow) {
     if (!rootExitApplied && stopControl.rootSource.slideExitOffset) {
       const shifted = withSlidePosition(frontTransform, addSpatial(noteSpatialX(frontTransform),
@@ -232,7 +234,7 @@ export function advanceOrdinarySlideChildren(
   }
   let killNextMesh = false;
   for (const [index, state] of childStates.entries()) {
-    const canLeaveNode = extension?.canLeaveNode?.(index) ?? true;
+    const canLeaveNode = extension?.canLeaveNode?.(index) ?? !stopControl.unjudgedGestures?.has(index);
     // A later node may stop first under folded time or independent SV. Only
     // a contiguous stopped, released prefix may move the shared Slide head.
     frontCanFollow = frontCanFollow && state.lifecycle.phase === "stop" && canLeaveNode;

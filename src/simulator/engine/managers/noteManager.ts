@@ -72,7 +72,7 @@ import {
   type OrdinarySyncLineOwnerState,
 } from "../rendering/ordinaryNoteGeometry";
 import { createRenderFloat32 } from "../../backends/renderingValidation";
-import { slideFlickDirection, slideGestureAfterType, slideGestureWidth } from "../chart/slideFlickNodes";
+import { isSlideGestureNode, slideFlickDirection, slideGestureAfterType, slideGestureWidth } from "../chart/slideFlickNodes";
 
 const BPM_POOL_LENGTH = 30;
 const SYNC_LINE_POOL_LENGTH = 80;
@@ -258,6 +258,8 @@ export class NoteManager {
     NoteBase,
     OrdinaryLongNormalChildState
   >();
+  /** Bound gesture heads not yet judged; their held body appears on judgement. */
+  private readonly pendingGestureHeads = new Set<NoteSlide>();
   /** Approved exit offset already applied to an ordinary Slide head. */
   private readonly ordinarySlideRootExitApplied = new Set<NoteBase>();
   private readonly ordinarySlideRenderStates = new Map<
@@ -515,6 +517,7 @@ export class NoteManager {
             this.ordinaryLongRenderStates.delete(inactiveNote);
             this.ordinarySlideRenderStates.delete(inactiveNote);
             this.ordinarySlideRootExitApplied.delete(inactiveNote);
+            if (inactiveNote instanceof NoteSlide) this.pendingGestureHeads.delete(inactiveNote);
             this.ordinaryRenderMotionStates.delete(inactiveNote);
             this.manualNoteDeactivatedOwner?.(inactiveNote);
           },
@@ -735,10 +738,24 @@ export class NoteManager {
           );
         }
         if (selected !== undefined && !selected.has(note)) { activeIndex -= 1; continue; }
+        if (this.renderProducer !== null && note instanceof NoteSlide && this.pendingGestureHeads.has(note) && !note.gestureHeadPending) {
+          // The gesture head was judged: show the held body from now on.
+          this.pendingGestureHeads.delete(note);
+          if (note.headJudged && note.state === NoteState.Stop && note.noteInformation?.laneSpan === undefined) {
+            const held = this.advanceOrdinaryRenderMotion(note, Math.fround(0), "preserve");
+            if (held.status !== "ok") return held;
+          }
+        }
         if (this.renderProducer !== null && note instanceof NoteSlide && note.pendingBeganPlacement) {
           const placed = this.advanceOrdinaryRenderMotion(note, Math.fround(0), "preserve", true);
           if (placed.status !== "ok") return placed;
           note.commitBeganPlacement();
+          if (note.gestureHeadPending) this.pendingGestureHeads.add(note);
+          // The placement keeps the clock; a bound gesture head's judgement still moves this frame.
+          if (note.gestureHeadPending && note.noteInformation?.laneSpan === undefined) {
+            const advanced = this.advanceGestureHeadJudgement(note, deltaTimeSeconds);
+            if (advanced.status !== "ok") return advanced;
+          }
         } else if (note instanceof NoteSlide && note.gestureHeadPending && note.noteInformation?.laneSpan === undefined) {
           const advanced = this.advanceGestureHeadJudgement(note, deltaTimeSeconds);
           if (advanced.status !== "ok") return advanced;
@@ -1063,6 +1080,7 @@ export class NoteManager {
     this.ordinaryLongRenderStates.clear();
     this.ordinarySlideRenderStates.clear();
     this.ordinarySlideRootExitApplied.clear();
+    this.pendingGestureHeads.clear();
     this.bpmPoolCursorValue = 0;
     this.outerFrameIndexValue = 0;
     this.slideNoteManager.dispose();
@@ -1266,7 +1284,8 @@ export class NoteManager {
       }),
       this.ordinaryNoteScene,
       placement === "preserve" ? current.renderedTransform.localScale : placement,
-      note instanceof NoteSlide && placement !== null && note.state === NoteState.Stop ? note.noteInformation : null,
+      // A bound gesture head keeps its gesture sprite until it is judged.
+      note instanceof NoteSlide && placement !== null && note.state === NoteState.Stop && !note.gestureHeadPending ? note.noteInformation : null,
     );
     if (prepared.status !== "ok") return prepared;
     const committed = prepared.value.transaction.commit();
@@ -1487,6 +1506,10 @@ export class NoteManager {
           startLaneSpacingX: Math.fround(this.ordinaryNoteScene.noteStartPositions[1]!.x.value - this.ordinaryNoteScene.noteStartPositions[0]!.x.value),
           stoppedChildWaited: note instanceof NoteSlide
             ? note.afterNotes.map((after) => after.stopAdjustmentWaited) : [],
+          ...(note instanceof NoteSlide ? { unjudgedGestures: new Set([
+            ...(isSlideGestureNode(note.noteInformation!) && !note.headJudged ? [-1] : []),
+            ...note.afterNotes.flatMap((after, index) => after.isGesture && !after.judged ? [index] : []),
+          ]) } : {}),
         },
         note instanceof NoteSlide ? note.pendingRenderHides : undefined,
       );
