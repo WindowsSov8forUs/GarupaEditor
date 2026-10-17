@@ -305,8 +305,7 @@ export function advanceOrdinarySlideChildren(
           // delay. The next child owns this node's outgoing strip, not this child.
           killNextMesh = true;
           if (frontCanFollow && (sources[index]!.slideExitOffset !== undefined || sources[visibleAfter.sourceIndex]!.slideExitOffset !== undefined)) {
-            const head = slideHeadSpace(stopControl.rootMotionState);
-            const followed = withSlidePosition(frontTransform, head.world(head.local(goal.x.value)), head.world(head.local(goal.y.value)));
+            const followed = withSlidePosition(frontTransform, goal.x.value, goal.y.value);
             if (followed.status !== "ok") return followed;
             frontTransform = followed.value;
           }
@@ -324,16 +323,16 @@ export function advanceOrdinarySlideChildren(
             currentTransform = shifted.value;
           }
           const origin = childStates[segmentStartIndex]!;
+          // executeStopStateByExistAfterNote, moving successor: MoveToNextAfterNoteButton
+          // reads and writes localPosition; SetPosition then copies local X/Y to the head.
           const moved = moveSlideEndpoint(currentTransform, origin.lifecycle.motionState,
             sources[segmentStartIndex]!, childStates[nextChild.segmentStartIndex]!.lifecycle.motionState, sources[nextChild.segmentStartIndex]!,
             input.deltaTime.value, stopControl.currentBpm, stopControl.virtualLaneDeltaX,
-            sources[index]!, stopControl.rootSource.foldedTiming === true);
+            sources[index]!, stopControl.rootSource.foldedTiming === true, slideHeadSpace(lifecycle.motionState));
           if (moved.status !== "ok") return moved;
           lifecycle = Object.freeze({ ...lifecycle, renderedTransform: moved.value });
           if (frontCanFollow) {
-            const head = slideHeadSpace(stopControl.rootMotionState);
-            const movedFront = withSlidePosition(frontTransform, head.fromWorld(noteSpatialX(moved.value)),
-              head.fromWorld(noteSpatialY(moved.value)), undefined, moved.value.unclipped);
+            const movedFront = withSlidePosition(frontTransform, noteSpatialX(moved.value), noteSpatialY(moved.value), undefined, moved.value.unclipped);
             if (movedFront.status !== "ok") return movedFront;
             frontTransform = movedFront.value;
           }
@@ -479,7 +478,7 @@ function moveSlideEndpoint(
   return withSlidePosition(current, space.world(x), y);
 }
 
-/** Conversions between published world coordinates and the head's local space. */
+/** Conversions between published world coordinates and a Slide node's local space under NoteParentTrans. */
 interface SlideHeadSpace {
   /** Target button world value to its MusicObjects-local value. */
   local(value: number): number;
@@ -487,28 +486,22 @@ interface SlideHeadSpace {
   world(value: number): number;
   toLocal(value: number | ExponentialCoordinate): number | ExponentialCoordinate;
   fromLocal(value: ExponentialCoordinate): ExponentialCoordinate;
-  /** Target-derived world value re-expressed through the head's local write. */
-  fromWorld(value: number | ExponentialCoordinate): number | ExponentialCoordinate;
 }
 
 const WORLD_SLIDE_SPACE: SlideHeadSpace = Object.freeze({
   local: (value: number) => value, world: (value: number) => value,
   toLocal: (value: number | ExponentialCoordinate) => value, fromLocal: (value: ExponentialCoordinate) => value,
-  fromWorld: (value: number | ExponentialCoordinate) => value,
 });
 
 function slideHeadSpace(state: OrdinaryNoteMotionState): SlideHeadSpace {
   const music = state.musicObjectsScale.value, parent = state.noteParentScale.value;
   if (music === 1 && parent === 1) return WORLD_SLIDE_SPACE;
-  const scaled = (value: number | ExponentialCoordinate, factor: number) =>
-    typeof value === "number" ? Math.fround(value * factor) : coordinateScale(value, factor);
   return Object.freeze({
     local: (value: number) => Math.fround(value / music),
     world: (value: number) => Math.fround(value * parent),
     toLocal: (value: number | ExponentialCoordinate) => typeof value === "number"
       ? Math.fround(value / parent) : coordinateScale(value, 1 / parent),
     fromLocal: (value: ExponentialCoordinate) => coordinateScale(value, parent),
-    fromWorld: (value: number | ExponentialCoordinate) => scaled(scaled(value, 1 / music), parent),
   });
 }
 
