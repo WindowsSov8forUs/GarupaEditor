@@ -4608,7 +4608,8 @@ function applySpatialSpriteTransform(
   }
   const node = object.node;
   if (object.role === "field-line") {
-    const uiScale = authoredUiScale(object);
+    // RhythmGameLines sits under UI_Root_Back/Display, not the safe-area HUD root.
+    const uiScale = object.surfaceLayout.ui.backRootPixelsPerUnit;
     node.position.set(
       Math.fround(profile.scene.projection.viewportWidth / 2 + command.position.x.value * uiScale),
       Math.fround(profile.scene.projection.viewportHeight / 2 - command.position.y.value * uiScale),

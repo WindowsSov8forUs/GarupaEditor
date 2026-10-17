@@ -80,6 +80,8 @@ export interface OriginalUiLayout {
   readonly comboPosition: readonly [number, number];
   readonly pixelsPerAuthoredUnit: number;
   readonly screenToSafeChildScale: number;
+  /** UI_Root_Back after UIRoot.UpdateScale (2/activeHeight) with unit Display, in pixels per UI unit. */
+  readonly backRootPixelsPerUnit: number;
   readonly moveTime: {
     readonly returnCenterBottomLeft: readonly [number, number];
     readonly advanceCenterBottomLeft: readonly [number, number];
@@ -179,8 +181,9 @@ export function createOriginalSurfaceLayout(
   const pixelsPerWorldUnit = div(height, 2);
   const pixelsPerAuthoredUnit = div(width, ORIGINAL_SCREEN_WIDTH_BASE);
   const screenToSafeChildScale = mul(pixelsPerAuthoredUnit, screenToSafeAreaRatio);
+  const backRootPixelsPerUnit = mul(div(height, 2), div(2, originalUiRootActiveHeight(width, height)));
   const rhythmLinesY = isHigh ? mul(highAspectRatio, ADJUSTER_RHYTHM_LINES_Y_RATE) : Math.fround(0);
-  const sudden = originalSuddenLayout(suddenRate, suddenLane, width, height, pixelsPerAuthoredUnit, screenToSafeChildScale,
+  const sudden = originalSuddenLayout(suddenRate, suddenLane, width, height, pixelsPerAuthoredUnit, backRootPixelsPerUnit,
     rhythmLinesY, musicObjectsScale);
   const moveOffset = mul(MOVE_TIME_CHILD_OFFSET, screenToSafeChildScale);
   const centerY = div(height, 2);
@@ -244,12 +247,13 @@ export function createOriginalSurfaceLayout(
       noteStartY,
       noteLineClipY: suddenRate === 0 ? add(centerY, mul(add(rhythmLinesY, mul(
         ORIGINAL_NOTE_LANE_BOTTOM_Y + ORIGINAL_NOTE_LANE_HEIGHT, musicObjectsScale,
-      )), screenToSafeChildScale)) : sudden.noteLineClipY,
+      )), backRootPixelsPerUnit)) : sudden.noteLineClipY,
     }),
     ui: Object.freeze({
       comboPosition: originalComboPosition(displayComboPosition, highAspectRatio),
       pixelsPerAuthoredUnit,
       screenToSafeChildScale,
+      backRootPixelsPerUnit,
       moveTime: Object.freeze({
         returnCenterBottomLeft: Object.freeze([
           add(safeArea.value.x, moveOffset), centerY,
@@ -372,6 +376,13 @@ function normalizeOriginalSafeArea(
     );
   }
   return ok(Object.freeze({ x, y, width: safeWidth, height: safeHeight }));
+}
+
+/** NGUI UIRoot.activeHeight, Constrained 1334x750 fitting width only: Mathf.RoundToInt(manualWidth / aspect). */
+function originalUiRootActiveHeight(width: number, height: number): number {
+  const value = div(ORIGINAL_SCREEN_WIDTH_BASE, div(width, height));
+  const floor = Math.floor(value), fraction = value - floor;
+  return fraction > 0.5 || (fraction === 0.5 && floor % 2 !== 0) ? floor + 1 : floor;
 }
 
 function toInt32LikeArm64(value: number): number {

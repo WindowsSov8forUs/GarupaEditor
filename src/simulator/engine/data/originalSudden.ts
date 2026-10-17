@@ -43,15 +43,15 @@ export interface OriginalSuddenLayout {
 
 /** NoteLane is a RhythmGameLines child; the wide-screen adjuster moves and scales that parent. */
 export function originalSuddenLayout(percent: number, laneFit: boolean, viewportWidth: number,
-  viewportHeight: number, uiPixelScale: number, safeChildScale: number,
+  viewportHeight: number, uiPixelScale: number, backRootPixelScale: number,
   rhythmLinesY = 0, rhythmLinesScale = 1): OriginalSuddenLayout {
   const ratio = originalSuddenRatio(percent);
-  if (typeof laneFit !== "boolean" || ![viewportWidth, viewportHeight, uiPixelScale, safeChildScale, rhythmLinesScale]
+  if (typeof laneFit !== "boolean" || ![viewportWidth, viewportHeight, uiPixelScale, backRootPixelScale, rhythmLinesScale]
     .every(value => Number.isFinite(value) && value > 0) || !Number.isFinite(rhythmLinesY))
     throw new Error("Invalid Sudden surface parameters.");
   const centerY = viewportHeight / 2;
-  const top = centerY + (rhythmLinesY + (source.noteLane.bottomY + source.noteLane.height) * rhythmLinesScale) * safeChildScale;
-  const bottom = centerY + (rhythmLinesY + source.noteLane.bottomY * rhythmLinesScale) * safeChildScale;
+  const top = centerY + (rhythmLinesY + (source.noteLane.bottomY + source.noteLane.height) * rhythmLinesScale) * backRootPixelScale;
+  const bottom = centerY + (rhythmLinesY + source.noteLane.bottomY * rhythmLinesScale) * backRootPixelScale;
   const mask = source.mask, bar = source.appearBar;
   const originY = mask.suddenAreaY + mask.parentY;
   const maskWidth = mask.width * uiPixelScale, maskHeight = mask.height * ratio * uiPixelScale;
