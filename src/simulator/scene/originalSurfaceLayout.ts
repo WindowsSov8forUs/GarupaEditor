@@ -183,7 +183,7 @@ export function createOriginalSurfaceLayout(
   const screenToSafeChildScale = mul(pixelsPerAuthoredUnit, screenToSafeAreaRatio);
   const backRootPixelsPerUnit = mul(div(height, 2), div(2, originalUiRootActiveHeight(width, height)));
   const rhythmLinesY = isHigh ? mul(highAspectRatio, ADJUSTER_RHYTHM_LINES_Y_RATE) : Math.fround(0);
-  const sudden = originalSuddenLayout(suddenRate, suddenLane, width, height, pixelsPerAuthoredUnit, backRootPixelsPerUnit,
+  const sudden = originalSuddenLayout(suddenRate, suddenLane, width, height, backRootPixelsPerUnit,
     rhythmLinesY, musicObjectsScale);
   const moveOffset = mul(MOVE_TIME_CHILD_OFFSET, screenToSafeChildScale);
   const centerY = div(height, 2);
