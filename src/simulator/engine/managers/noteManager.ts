@@ -1230,7 +1230,8 @@ export class NoteManager {
         deltaTime: deltaTime.value,
         realMoveSecond: realMoveSecond.value,
         ...(useGoalDepth ? {
-          currentPositionZ: this.ordinaryNoteScene.goalPositions[note.noteInformation!.buttonType]!.z,
+          // ExecTouchBegan writes the cached target world XYZ, including the button world Z.
+          currentPositionZ: this.ordinaryNoteScene.buttonWorldZ,
         } : {}),
       }),
       this.ordinaryNoteScene,

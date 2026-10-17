@@ -156,6 +156,7 @@ export function createSimulatorSceneLayout(
     noteParentScale: values.value.noteParentScale,
     musicObjectsScale: values.value.musicObjectsScale,
     multiRangeNotes: values.value.multiRangeNotes,
+    buttonWorldZ: f32(Math.fround(Math.fround(values.value.musicObjectsScale.value * 15) - 15)),
     launcherY: values.value.launcherY,
     targetCenterY: values.value.targetCenterY,
     highAspectRatio: values.value.highAspectRatio,

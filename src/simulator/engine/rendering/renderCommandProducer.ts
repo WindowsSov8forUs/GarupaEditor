@@ -192,6 +192,8 @@ export interface OrdinaryFixedNoteSceneInput {
   readonly noteParentScale: RenderFloat32;
   readonly musicObjectsScale: RenderFloat32;
   readonly multiRangeNotes: boolean;
+  /** Button world Z: MusicObjects Z -15 plus its scale times the button local Z 15. */
+  readonly buttonWorldZ: RenderFloat32;
   readonly launcherY: RenderFloat32;
   readonly targetCenterY: RenderFloat32;
   readonly highAspectRatio: RenderFloat32;
@@ -2846,6 +2848,7 @@ export function validateOrdinaryFixedNoteSceneInput(
     scene.noteParentScale.value <= 0 ||
     !validateRenderFloat32(scene.musicObjectsScale) ||
     scene.musicObjectsScale.value <= 0 ||
+    !validateRenderFloat32(scene.buttonWorldZ) ||
     typeof scene.multiRangeNotes !== "boolean" ||
     !validateRenderFloat32(scene.noteSettingScale) ||
     scene.noteSettingScale.value < 0 ||
