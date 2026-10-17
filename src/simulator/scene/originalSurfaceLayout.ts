@@ -81,7 +81,8 @@ export interface OriginalUiLayout {
   readonly pixelsPerAuthoredUnit: number;
   /** UI_Root/Display child after ScreenToSafeArea, projected through the integer-activeHeight root, in pixels per authored unit. */
   readonly screenToSafeChildScale: number;
-  /** UI_Root_Back after UIRoot.UpdateScale (2/activeHeight) with unit Display, in pixels per UI unit. */
+  /** UI_Root_Back after UIRoot.UpdateScale (2/activeHeight) with unit Display, in pixels per UI unit.
+   * The result scene's UI Root shares fitWidth/manualWidth 1334 and so the same integer activeHeight. */
   readonly backRootPixelsPerUnit: number;
   readonly moveTime: {
     readonly returnCenterBottomLeft: readonly [number, number];

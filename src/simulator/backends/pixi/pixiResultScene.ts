@@ -146,8 +146,9 @@ export class PixiResultScene {
     this.graph.scale.set(scale);
     const background = new Sprite({ texture: backgroundTexture, anchor: 0.5 });
     background.position.copyFrom(this.graph.position);
-    background.width = mediaProfile.background.widgetWidth * layout.ui.pixelsPerAuthoredUnit;
-    background.height = mediaProfile.background.widgetHeight * layout.ui.pixelsPerAuthoredUnit;
+    // CommonBGView/BGTexture sits under UI Root with identity ancestors, outside Layer_UI's safe-area scale.
+    background.width = mediaProfile.background.widgetWidth * layout.ui.backRootPixelsPerUnit;
+    background.height = mediaProfile.background.widgetHeight * layout.ui.backRootPixelsPerUnit;
     this.root.addChild(background, this.graph);
     if (displayTexture !== null) {
       // The requested local image replaces character art only on the judgment page.
