@@ -24,6 +24,7 @@ import {
 import {
   JudgeTiming,
   NoteResultType,
+  cachedTailMovement,
   hasFlickMovement,
   judgeManualNote,
   isManualTimeoutOver,
@@ -922,6 +923,8 @@ export class NoteSlide extends NoteFrontBase {
   }
 
   private manualHeadJudgedValue = false;
+  /** NoteSlide.cachedResult/cachedJudgeTiming; Activate writes -1/0. */
+  private manualTailCacheValue: { readonly result: Exclude<NoteResultTypeValue, -1>; readonly timing: JudgeTimingValue } | null = null;
   private allHiddenValue = false;
   private firstVisibleAfterIndexValue = -1;
   private lastVisibleAfterIndexValue = -1;
@@ -1102,6 +1105,7 @@ export class NoteSlide extends NoteFrontBase {
     this.currentAfterIndexValue = 0;
     this.laneEffectTarget = null;
     this.manualHeadJudgedValue = false;
+    this.manualTailCacheValue = null;
     this.slideAfterMultipleGroupValue = multipleGroup.value;
     this.manualGestureSource = null;
     this.manualTouchOriginValue = null;
@@ -1142,9 +1146,16 @@ export class NoteSlide extends NoteFrontBase {
       return ok({ outcome: "bind", ...this.noManualSlideJudgementPlan(input.currentPosition, 0) });
     if (this.manualHeadJudgedValue) {
       const current = this.afterNotesValue[this.currentAfterIndexValue]!;
-      // A flick tail binds on Began and judges on movement/release.
+      // A flick tail binds on Began and judges on movement/release. On the
+      // last node of a flick-tailed root, ExecTouchBegan caches the result.
+      const afterType = this.noteInformation!.afterNoteType;
+      const tailCache = current.isTerminal && current.source.slideGesture === undefined &&
+        afterType >= AfterNoteType.SlideFlickEnd && afterType <= AfterNoteType.SlideMultipleDirectionalFlickRight
+        ? Object.freeze({ result: judgement.value.result, timing }) : null;
+      const unbound = this.noManualSlideJudgementPlan(input.currentPosition, Math.fround(0));
       const continuation = current.judgeNoteType !== 8
-        ? ok(this.noManualSlideJudgementPlan(input.currentPosition, Math.fround(0)))
+        ? ok(tailCache === null ? unbound : Object.freeze({ ...unbound,
+          familyData: Object.freeze({ ...unbound.familyData as object, tailCache }) }))
         : this.reserveManualSlideNode(
             input, current, 8, judgement.value.result, timing,
             false, input.currentPosition, Math.fround(0),
@@ -1178,6 +1189,8 @@ export class NoteSlide extends NoteFrontBase {
     if (this.manualHeadJudgedValue) {
       if (plan.judgementPlan === null && this.afterNotesValue[this.currentAfterIndexValue]?.isTerminal)
         this.hideSlideNode(this.currentAfterIndexValue, false);
+      const tailCache = (plan.familyData as { tailCache?: NoteSlide["manualTailCacheValue"] }).tailCache;
+      if (tailCache !== undefined) this.manualTailCacheValue = tailCache;
       this.commitManualSlideNode(input, plan);
       if (this.state !== NoteState.Deactive) {
         this.feedback.restartFlash();
@@ -1339,6 +1352,23 @@ export class NoteSlide extends NoteFrontBase {
         ? "Left" : "Right";
     const multiple = gesture ? gesture.direction !== null && gesture.width > 1 : afterNoteType === AfterNoteType.SlideMultipleDirectionalFlickLeft ||
       afterNoteType === AfterNoteType.SlideMultipleDirectionalFlickRight;
+    const cache = target.isTerminal && gesture === undefined ? this.manualTailCacheValue : null;
+    if (cache !== null && origin !== null) {
+      // ExecTouchMoved with cachedResult != -1 rechecks only the distance from
+      // cachedBeganPos, then consumes the cached result without direction,
+      // grace or tail-position gates.
+      if (multiple && (group === null || group.isUsed)) return integrityFailure("manual.slide-multiple-terminal-group-unavailable", "Slide Multiple terminal requires its unused chart-owned group.");
+      const passed = cachedTailMovement(runtime.value.geometry, origin, input.currentPosition, afterNoteType,
+        group?.count ?? 1);
+      if (passed.status !== "ok") return passed;
+      if (!passed.value) return ok(this.noManualSlideJudgementPlan(origin, grace));
+      const forcedPerfect = runtime.value.getJudgementAdjustValueB() >= 1;
+      const cachedReleased = this.reserveManualSlideNode(input, current, target.judgeNoteType,
+        forcedPerfect ? NoteResultType.Perfect : cache.result, forcedPerfect ? JudgeTiming.None : cache.timing,
+        group !== null, origin, grace, true);
+      return cachedReleased.status === "ok" ? ok({ ...cachedReleased.value,
+        familyData: { ...cachedReleased.value.familyData as object, release: true } }) : cachedReleased;
+    }
     const movement = hasFlickMovement(runtime.value.geometry, nextOrigin, input.currentPosition, direction);
     if (movement.status !== "ok") return movement;
     let movementSucceeded = movement.value;
