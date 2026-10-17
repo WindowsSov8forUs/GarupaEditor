@@ -68,6 +68,10 @@ export interface OrdinarySlideStopControl {
   readonly rootMotionState: OrdinaryNoteMotionState;
   readonly currentBpm: number;
   readonly virtualLaneDeltaX: number;
+  /** One full lane at the judgement line: the unit of an approved exit offset. */
+  readonly laneSpacingX: number;
+  /** One full lane at the launcher; the original-path exit offset scales between the two. */
+  readonly startLaneSpacingX?: number;
   readonly stoppedChildWaited: readonly boolean[];
 }
 
@@ -202,7 +206,7 @@ export function advanceOrdinarySlideChildren(
   if (stopControl.advanceMotion && frontCanFollow) {
     if (!rootExitApplied && stopControl.rootSource.slideExitOffset) {
       const shifted = withSlidePosition(frontTransform, addSpatial(noteSpatialX(frontTransform),
-        stopControl.rootSource.slideExitOffset * stopControl.virtualLaneDeltaX), noteSpatialY(frontTransform));
+        stopControl.rootSource.slideExitOffset * stopControl.laneSpacingX), noteSpatialY(frontTransform));
       if (shifted.status !== "ok") return shifted;
       frontTransform = shifted.value;
       rootExitApplied = true;
@@ -221,7 +225,7 @@ export function advanceOrdinarySlideChildren(
       const moved = moveSlideEndpoint(frontTransform, stopControl.rootMotionState,
         stopControl.rootSource, first.lifecycle.motionState, sources[first.segmentStartIndex]!,
         input.deltaTime.value, stopControl.currentBpm, stopControl.virtualLaneDeltaX,
-        stopControl.rootSource, stopControl.rootSource.foldedTiming === true, head);
+        stopControl.rootSource, stopControl.rootSource.foldedTiming === true, head, stopControl.laneSpacingX);
       if (moved.status !== "ok") return moved;
       frontTransform = moved.value;
     }
@@ -291,7 +295,7 @@ export function advanceOrdinarySlideChildren(
         }
         if (!exitApplied && sources[index]!.slideExitOffset) {
           const shifted = withSlidePosition(lifecycle.renderedTransform, addSpatial(noteSpatialX(lifecycle.renderedTransform),
-            sources[index]!.slideExitOffset! * stopControl.virtualLaneDeltaX), noteSpatialY(lifecycle.renderedTransform));
+            sources[index]!.slideExitOffset! * stopControl.laneSpacingX), noteSpatialY(lifecycle.renderedTransform));
           if (shifted.status !== "ok") return shifted;
           lifecycle = { ...lifecycle, renderedTransform: shifted.value };
           exitApplied = true;
@@ -328,7 +332,7 @@ export function advanceOrdinarySlideChildren(
           const moved = moveSlideEndpoint(currentTransform, origin.lifecycle.motionState,
             sources[segmentStartIndex]!, childStates[nextChild.segmentStartIndex]!.lifecycle.motionState, sources[nextChild.segmentStartIndex]!,
             input.deltaTime.value, stopControl.currentBpm, stopControl.virtualLaneDeltaX,
-            sources[index]!, stopControl.rootSource.foldedTiming === true, slideHeadSpace(lifecycle.motionState));
+            sources[index]!, stopControl.rootSource.foldedTiming === true, slideHeadSpace(lifecycle.motionState), stopControl.laneSpacingX);
           if (moved.status !== "ok") return moved;
           lifecycle = Object.freeze({ ...lifecycle, renderedTransform: moved.value });
           if (frontCanFollow) {
@@ -358,8 +362,10 @@ export function advanceOrdinarySlideChildren(
     if (widthRate.status !== "ok") return widthRate;
     const afterScale = getOrdinaryNoteMeshAfterScale(state.lifecycle, previousMotionState.goalPosition.y, screenToSafeAreaRatio);
     if (afterScale.status !== "ok") return afterScale;
-    const outgoing = !previousExitApplied && extension?.outgoingTransform
-      ? extension.outgoingTransform(previousTransform, previousIndex) : ok(previousTransform);
+    const outgoing = previousExitApplied ? ok(previousTransform)
+      : extension !== undefined ? extension.outgoingTransform?.(previousTransform, previousIndex) ?? ok(previousTransform)
+      : ordinaryExitOutgoing(previousTransform, previousIndex === -1 ? stopControl.rootSource : sources[previousIndex]!,
+        previousMotionState, stopControl);
     if (outgoing.status !== "ok") return outgoing;
     const meshInput = {
       front: outgoing.value,
@@ -449,13 +455,14 @@ function moveSlideEndpoint(
   originalSource = source,
   foldedTime = false,
   space: SlideHeadSpace = WORLD_SLIDE_SPACE,
+  exitLaneSpacing = laneDelta,
 ): SimulatorResult<OrdinaryNoteMotionResult> {
   const seconds = getSecondsWithDistance(targetSource.absolutePos - source.absolutePos, bpm);
   if (seconds.status !== "ok") return seconds;
   const originGoalX = space.local(origin.goalPosition.x.value);
   const originX = source.isInvisible
     ? slideGoalX(originalSource, originGoalX, laneDelta, true)
-    : originGoalX + (source.slideExitOffset ?? 0) * laneDelta;
+    : originGoalX + (source.slideExitOffset ?? 0) * space.local(exitLaneSpacing);
   const targetX = slideGoalX(targetSource, space.local(target.goalPosition.x.value), laneDelta);
   const y = space.world(space.local(origin.goalPosition.y.value));
   const dx = targetX - originX;
@@ -503,6 +510,30 @@ function slideHeadSpace(state: OrdinaryNoteMotionState): SlideHeadSpace {
       ? Math.fround(value / parent) : coordinateScale(value, 1 / parent),
     fromLocal: (value: ExponentialCoordinate) => coordinateScale(value, parent),
   });
+}
+
+/** Approved exit offset on the original path: the outgoing strip starts at the far
+ * end of a Directional, offset lanes away at the same depth. X is linear in curve. */
+function ordinaryExitOutgoing(
+  transform: OrdinaryNoteMotionResult,
+  source: SlideGeometrySource,
+  state: OrdinaryNoteMotionState,
+  stopControl: Pick<OrdinarySlideStopControl, "laneSpacingX" | "startLaneSpacingX">,
+): SimulatorResult<OrdinaryNoteMotionResult> {
+  const offset = source.slideExitOffset ?? 0;
+  if (offset === 0) return ok(transform);
+  if (stopControl.startLaneSpacingX === undefined) return reject("render.slide.exit-offset-scale-missing",
+    "An original-path exit offset requires the launcher lane spacing.");
+  const startY = state.noteStartPosition.y.value, goalY = state.goalPosition.y.value;
+  const startShift = offset * stopControl.startLaneSpacingX, goalShift = offset * stopControl.laneSpacingX;
+  const shiftAt = (y: number) => startShift + (goalShift - startShift) * ((y - startY) / (goalY - startY));
+  const raw = transform.unclipped;
+  const unclipped = raw === undefined ? undefined : { ...raw, x: raw.x + shiftAt(raw.y),
+    ...(raw.exponential ? { exponential: { ...raw.exponential, x: coordinateAdd(raw.exponential.x, coordinate(startShift),
+      coordinateScale(coordinateAdd(raw.exponential.y, coordinate(-startY)), (goalShift - startShift) / (goalY - startY))) } } : {}) };
+  const x = createRenderFloat32(Math.fround(transform.position.x.value + shiftAt(transform.position.y.value)));
+  if (x.status !== "ok") return x;
+  return ok({ ...transform, unclipped, position: { ...transform.position, x: x.value } });
 }
 
 function addSpatial(value: number | ExponentialCoordinate, delta: number): number | ExponentialCoordinate {

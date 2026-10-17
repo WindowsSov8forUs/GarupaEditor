@@ -880,6 +880,10 @@ export class NoteSlide extends NoteFrontBase {
   private beganPlacementPending = false;
   private headGestureNode: SlideAfterRuntime | null = null;
   get headJudged(): boolean { return this.manualHeadJudgedValue; }
+  /** Approved gesture head bound in Stop but not yet judged: its judgement keeps moving. */
+  get gestureHeadPending(): boolean {
+    return this.headGestureNode !== null && !this.manualHeadJudgedValue && this.state === NoteState.Stop;
+  }
   private get manualCurrentNode(): SlideAfterRuntime | undefined {
     return !this.manualHeadJudgedValue && this.headGestureNode !== null ? this.headGestureNode
       : this.afterNotesValue[this.currentAfterIndexValue];
@@ -1614,6 +1618,8 @@ export class NoteSlide extends NoteFrontBase {
     if (marked?.status !== "ok") {
       throw new Error("Slide current node changed after preflight");
     }
+    // Approved extension: a judged gesture node leaves while the Slide continues.
+    if (current?.isGesture) this.hideSlideNode(current.sourceIndex, false, afterUpdate);
     this.currentAfterIndexValue += 1;
     if (current?.isGesture || this.afterNotesValue[this.currentAfterIndexValue]?.isGesture) {
       this.manualTouchOriginValue = input.currentPosition;
@@ -1806,6 +1812,7 @@ export class NoteSlide extends NoteFrontBase {
       return marked;
     }
     this.hideBeforeSlideNode(selected.sourceIndex, false);
+    if (selected.isGesture) this.hideSlideNode(selected.sourceIndex, false);
     return selected.isTerminal ? this.changeState(NoteState.Deactive) : ok(undefined);
   }
 
@@ -2146,6 +2153,7 @@ export class NoteSlide extends NoteFrontBase {
       return marked;
     }
     this.hideBeforeSlideNode(this.currentAfterIndexValue, false, true);
+    if (current.isGesture) this.hideSlideNode(current.sourceIndex, false, true);
     this.currentAfterIndexValue += 1;
     return current.isTerminal
       ? this.changeState(NoteState.Deactive)

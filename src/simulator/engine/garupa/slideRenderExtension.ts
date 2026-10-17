@@ -185,6 +185,7 @@ export function advanceExtensionSlide(
         rootSource,
         rootMotionState: root.motionState, currentBpm: frame.currentBpm,
         virtualLaneDeltaX: scene.laneSpacingWorld.value,
+        laneSpacingX: scene.laneSpacingWorld.value,
         stoppedChildWaited: previous.children.map((_, index) =>
           owner instanceof NoteSlide && owner.afterNotes[index]?.stopAdjustmentWaited === true),
       }, ordinaryScene.habahiro?.highAspectRatio, {

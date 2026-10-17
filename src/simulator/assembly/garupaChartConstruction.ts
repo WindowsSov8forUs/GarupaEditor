@@ -445,8 +445,7 @@ function buildGarupaProductChartProfile(
   for (const [index, item] of chart.entries()) {
     if (item.type === "BPM" || item.type === "SV" || item.type === "Header" || item.type === "System") continue;
     const compatible = item.type === "Slide"
-      ? item.connections.slice(0, -1).every(node => node.type !== "Flick" && node.type !== "Directional") &&
-        item.connections[0]!.type !== "Hidden" && item.connections[item.connections.length - 1]!.type !== "Hidden" &&
+      ? item.connections[0]!.type !== "Hidden" && item.connections[item.connections.length - 1]!.type !== "Hidden" &&
         item.connections.every(canUseFixedLaneGeometry)
       : canUseFixedLaneGeometry(item);
     if (compatible && !independentItems.has(index) && !svItemIndices.has(index)) originalItemIndices.add(index);
@@ -708,7 +707,7 @@ function createSlide(
         directionalSlideConnection: { rootIndex: root.index, connectionIndex, memberOffset },
         index: nextIndex + slide.connections.length + additionalRoots.length,
         position: positions[connectionIndex]!,
-        span: projectedSpan(start + memberOffset, 1, true),
+        span: projectedSpan(start + memberOffset, 1, projected),
         kinds: { game: familyA
           ? node.direction === "Left" ? GameNoteType.SlideADirectionalFlickLeftAdd : GameNoteType.SlideADirectionalFlickRightAdd
           : node.direction === "Left" ? GameNoteType.SlideBDirectionalFlickLeftAdd : GameNoteType.SlideBDirectionalFlickRightAdd,
