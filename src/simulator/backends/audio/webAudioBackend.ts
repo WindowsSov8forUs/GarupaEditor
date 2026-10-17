@@ -17,9 +17,11 @@ import {
 import { RecordingSimulatorAudioBackend } from "../recordingAudioBackend";
 import cueLimitProfile from "../../../data/simulator/originalCueLimitProfile.json";
 
-const CUE_LIMITS: ReadonlyMap<string, Readonly<Record<string, number | undefined>>> = new Map(
-  cueLimitProfile.banks.map((bank) => [bank.logicalId, bank.limits]),
-);
+// One logical bundle may carry several ACBs (sound/common: RhythmGameSE and LiveMenu).
+const CUE_LIMITS = new Map<string, Readonly<Record<string, number | undefined>>>();
+for (const bank of cueLimitProfile.banks) {
+  CUE_LIMITS.set(bank.logicalId, { ...CUE_LIMITS.get(bank.logicalId), ...bank.limits });
+}
 
 interface WebAudioVoiceFade {
   startValue: number;
@@ -59,8 +61,8 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
   private readonly decodedByCue = new Map<string, AudioBuffer>();
   private readonly loopByCue = new Map<string, { readonly startSeconds: number; readonly endSeconds: number }>();
   private readonly cueLimitByCue = new Map<string, number>();
-  /** Hold owners whose loop the cue limit stopped; their later owner commands are no-ops. */
-  private readonly stolenHolds = new Set<string>();
+  /** Owned loops (Hold, startup) the cue limit stopped; their later owner commands are no-ops. */
+  private readonly stolenOwners = new Set<string>();
   private readonly voices = new Map<string, WebAudioVoice>();
   private pending: PendingWebAudioBatch | null = null;
   private bgmGain: GainNode | null = null;
@@ -366,7 +368,7 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
     };
     for (const voice of this.voices.values()) release(() => this.releaseVoice(voice));
     this.voices.clear();
-    this.stolenHolds.clear();
+    this.stolenOwners.clear();
     this.decodedByCue.clear();
     this.loopByCue.clear();
     this.cueLimitByCue.clear();
@@ -454,6 +456,7 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
           break;
         case "se.start-owned-loop": {
           const resource = this.requireLoopResource(command.cue);
+          this.stolenOwners.delete(`startup-loop:${command.owner_key}`);
           const voice = this.createVoice(
             `startup-loop:${command.owner_key}`,
             command.cue,
@@ -473,6 +476,12 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
         }
         case "se.fade-owned-loop": {
           const voice = this.voices.get(`startup-loop:${command.owner_key}`);
+          if (voice === undefined && this.stolenOwners.has(`startup-loop:${command.owner_key}`)) {
+            if (command.duration_bits === "0x00000000" || command.stop_at_zero) {
+              this.stolenOwners.delete(`startup-loop:${command.owner_key}`);
+            }
+            break;
+          }
           if (voice === undefined) throw new Error("missing owned loop voice");
           if (command.duration_bits === "0x00000000") {
             this.releaseVoice(voice); this.voices.delete(voice.voiceKey);
@@ -488,7 +497,7 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
         }
         case "hold.start-loop": {
           const resource = this.requireLoopResource(command.cue);
-          this.stolenHolds.delete(`hold:${command.owner_key}`);
+          this.stolenOwners.delete(`hold:${command.owner_key}`);
           this.createVoice(
             `hold:${command.owner_key}`,
             command.cue,
@@ -502,8 +511,8 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
         }
         case "hold.fade": {
           const voice = this.voices.get(`hold:${command.owner_key}`);
-          if (voice === undefined && this.stolenHolds.has(`hold:${command.owner_key}`)) {
-            if (command.stop_at_zero) this.stolenHolds.delete(`hold:${command.owner_key}`);
+          if (voice === undefined && this.stolenOwners.has(`hold:${command.owner_key}`)) {
+            if (command.stop_at_zero) this.stolenOwners.delete(`hold:${command.owner_key}`);
             break;
           }
           if (voice === undefined) throw new Error("missing Hold voice");
@@ -598,7 +607,9 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
       const oldest = live[index]!;
       this.releaseVoice(oldest);
       this.voices.delete(oldest.voiceKey);
-      if (oldest.voiceKey.startsWith("hold:")) this.stolenHolds.add(oldest.voiceKey);
+      if (oldest.voiceKey.startsWith("hold:") || oldest.voiceKey.startsWith("startup-loop:")) {
+        this.stolenOwners.add(oldest.voiceKey);
+      }
     }
   }
 
