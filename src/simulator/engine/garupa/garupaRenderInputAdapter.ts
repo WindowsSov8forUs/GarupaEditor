@@ -17,7 +17,7 @@ import type {
 } from "../../backends/renderingContracts";
 import { createRenderFloat32 } from "../../backends/renderingValidation";
 import type { GarupaProductSceneLayout } from "../../scene/simulatorSceneLayout";
-import { advanceOrdinaryNoteMotion, type OrdinaryNoteMotionState, advanceOrdinaryNoteVerticalMotion, repositionOrdinaryNoteToJudgeLine, calculateNoteMotionCurve, calculateOrdinaryNoteWorldScaleAxis, getOrdinaryNoteArrivalSeconds, type OrdinarySyncLineTargetState } from "../rendering/ordinaryNoteGeometry";
+import { advanceOrdinaryNoteMotion, advanceOrdinaryNoteActivationAdjustment, type OrdinaryNoteMotionState, advanceOrdinaryNoteVerticalMotion, repositionOrdinaryNoteToJudgeLine, calculateNoteMotionCurve, calculateOrdinaryNoteWorldScaleAxis, getOrdinaryNoteArrivalSeconds, type OrdinarySyncLineTargetState } from "../rendering/ordinaryNoteGeometry";
 import { resolveProjectedNoteAnimationBinding, resolveProjectedNoteBinding, RenderCommandProducer, type NotePresentation, type RenderOwnerTransaction, type RenderEngineResourceBindings, type OrdinaryFixedNoteSceneInput } from "../rendering/renderCommandProducer";
 import { createExtensionSlideState, advanceExtensionSlide, advanceExtensionMotion, noteRenderInput, bpmAtNode, type ExtensionSlideState, type ExtensionRenderFrame } from "./slideRenderExtension";
 import { applySlideRenderHides, type OrdinarySlideFrameResult } from "../rendering/ordinarySlideChildLifecycle";
@@ -151,9 +151,19 @@ export class GarupaRenderInputAdapter {
         if (state === undefined) {
           const motion = this.scene.motionStateAtLane(projectedNodeLane(node), 1, node.absolutePosition);
           if (motion.status !== "ok") return motion;
-          const created = createOrdinaryLongNormalChildState(motion.value, node.absolutePosition, f32(bpmAtNode(this.axis, node.absolutePosition)));
+          const bpm = f32(bpmAtNode(this.axis, node.absolutePosition));
+          const created = createOrdinaryLongNormalChildState(motion.value, node.absolutePosition, bpm);
           if (created.status !== "ok") return created;
           state = created.value;
+          // NoteBase.activateAdjust: the Add clock starts from the launch music position,
+          // as on the original path; axis-driven nodes place by time instead.
+          if (!this.usesNodeAxis(node)) {
+            const adjusted = advanceOrdinaryNoteActivationAdjustment(state.motionState, frame.launcherMusicPosition,
+              node.absolutePosition, bpm);
+            if (adjusted.status !== "ok") return adjusted;
+            state = { ...state, motionState: { ...state.motionState, progressRate: adjusted.value.progressRate,
+              realMoveSecond: adjusted.value.realMoveSecond } };
+          }
         }
         const motionState = { ...state.motionState, deltaTime: f32(delta),
           realMoveSecond: controlledRealMoveSecond ?? f32(state.motionState.realMoveSecond.value + delta) };
