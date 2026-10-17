@@ -2,7 +2,7 @@ import { noteUnclippedTransform } from "./ordinaryNoteGeometry";
 import { noteBodyBinding, noteFlickIconBinding, noteLongFlashBinding, noteSlideFlashBinding, noteSlideHeldBodyBinding, slideLineMaterialRole, advanceNoteAnimationClock } from "./noteVisualBinding";
 import type { SlideNodeHideRequest } from "../notes/noteTypes";
 import { virtualLaneUnit } from "../chart/virtualLane";
-import { isSlideGestureNode } from "../chart/slideFlickNodes";
+import { slideGestureAfterType } from "../chart/slideFlickNodes";
 import type {
   RenderColor,
   RenderCommand,
@@ -1839,7 +1839,7 @@ export class RenderCommandProducer {
         appendNoteTransform(commands, base, childObjectId, childTransform.position,
           childTransform.localScale, scene.noteParentScale, scene.noteTint, scene.noteDomainLayer, childCreationSequence, childTransform.unclipped);
         if (created.value.visible) {
-          const flickEnd = index === information.slideNoteList.length - 1 || isSlideGestureNode(source);
+          const flickEnd = index === information.slideNoteList.length - 1 || usesGestureEndBody(source);
           const childBinding = completeHabahiro
             ? resolveHabahiroSlideChildBinding(source, flickEnd, this.resources)
             : resolveSlideChildSpriteBinding(source, flickEnd, this.resources);
@@ -3346,7 +3346,7 @@ export function resolveProjectedNoteBinding(root: NoteInformation, source: NoteI
     : resolveFrontSpriteBinding(source, resources, noteColor, geometry);
   if (root.fireNoteType === FrontNoteType.Long) return habahiro ? resolveHabahiroAfterSpriteBinding(root, resources, geometry)
     : resolveAfterSpriteBinding(root, resources, geometry);
-  const flickEnd = phase === "tail" || isSlideGestureNode(source);
+  const flickEnd = phase === "tail" || usesGestureEndBody(source);
   return habahiro ? resolveHabahiroSlideChildBinding(source, flickEnd, resources, geometry)
     : resolveSlideChildSpriteBinding(source, flickEnd, resources, geometry);
 }
@@ -3634,6 +3634,13 @@ function resolveAfterSpriteBinding(
     logicalAssetId: resources.noteAtlasLogicalAssetId,
     exactKey: `${flick ? "note_flick" : "note_long"}_${lane.value}`,
   }));
+}
+
+/** An intermediate Directional gesture shows its Slide end body; an intermediate
+ * Flick keeps the intermediate body and carries only the flick icon. */
+function usesGestureEndBody(source: NoteInformation): boolean {
+  const gesture = slideGestureAfterType(source);
+  return gesture !== AfterNoteType.None && gesture !== AfterNoteType.SlideFlickEnd;
 }
 
 function resolveSlideChildSpriteBinding(
