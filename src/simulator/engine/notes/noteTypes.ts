@@ -1149,7 +1149,7 @@ export class NoteSlide extends NoteFrontBase {
       // A flick tail binds on Began and judges on movement/release. On the
       // last node of a flick-tailed root, ExecTouchBegan caches the result.
       const afterType = this.noteInformation!.afterNoteType;
-      const tailCache = current.isTerminal && current.source.slideGesture === undefined &&
+      const tailCache = current.isTerminal &&
         afterType >= AfterNoteType.SlideFlickEnd && afterType <= AfterNoteType.SlideMultipleDirectionalFlickRight
         ? Object.freeze({ result: judgement.value.result, timing }) : null;
       const unbound = this.noManualSlideJudgementPlan(input.currentPosition, Math.fround(0));
@@ -1352,7 +1352,7 @@ export class NoteSlide extends NoteFrontBase {
         ? "Left" : "Right";
     const multiple = gesture ? gesture.direction !== null && gesture.width > 1 : afterNoteType === AfterNoteType.SlideMultipleDirectionalFlickLeft ||
       afterNoteType === AfterNoteType.SlideMultipleDirectionalFlickRight;
-    const cache = target.isTerminal && gesture === undefined ? this.manualTailCacheValue : null;
+    const cache = target.isTerminal ? this.manualTailCacheValue : null;
     if (cache !== null && origin !== null) {
       // ExecTouchMoved with cachedResult != -1 rechecks only the distance from
       // cachedBeganPos, then consumes the cached result without direction,
