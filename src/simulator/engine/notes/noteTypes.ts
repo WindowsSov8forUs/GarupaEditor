@@ -2293,9 +2293,16 @@ export abstract class NoteFlickBase extends NoteSingleBase {
     const executeFrame = runtime.value.getExecuteFrame();
     const nextFrameCounter = Math.fround(this.frameCounterValue + executeFrame);
     this.frameCounterValue = nextFrameCounter;
-    return nextFrameCounter < Math.fround(7)
-      ? ok(undefined)
-      : this.forcePerfect();
+    if (nextFrameCounter < Math.fround(7)) return ok(undefined);
+    // NoteFlickBase.WaitState tail-calls vtable +0x2B8 (onMiss), the slot
+    // NoteSingleBase.MoveState uses for its timeout; forcePerfect is +0x2C8.
+    const information = this.noteInformation;
+    return information === null
+      ? integrityFailure(
+          "manual.flick-wait-without-source",
+          "An unflicked Flick Wait expiry requires its activated source owner.",
+        )
+      : this.onTimeoutMiss(information);
   }
 
   protected override forcePerfect(): SimulatorResult<void> {
@@ -2307,29 +2314,13 @@ export abstract class NoteFlickBase extends NoteSingleBase {
     if (autoRuntime.status !== "ok") {
       return autoRuntime;
     }
-    if (autoRuntime.value.shouldForcePerfect()) {
-      return this.submitHeadPerfect(this.forcePerfectJudgeNoteType);
-    }
-    const information = this.noteInformation;
-    const manualRuntime = this.manualRuntime;
-    if (information === null || manualRuntime.status !== "ok") {
-      return manualRuntime.status === "ok"
-        ? integrityFailure(
-            "manual.flick-force-perfect-without-source",
-            "The seven-frame Flick synthetic chain requires its activated source owner.",
-          )
-        : manualRuntime;
-    }
-    const submitted = manualRuntime.value.submitJudgement({
-      noteInformation: information,
-      noteType: this.forcePerfectJudgeNoteType,
-      rawResult: NoteResultType.Perfect,
-      rawTiming: JudgeTiming.None,
-      absolutePosition: information.absolutePos,
-    });
-    return submitted.status === "ok"
-      ? this.changeState(NoteState.Deactive)
-      : submitted;
+    // Only Auto Live / mode 14 reach forcePerfect (NoteSingleBase.MoveState +0x2C8).
+    return autoRuntime.value.shouldForcePerfect()
+      ? this.submitHeadPerfect(this.forcePerfectJudgeNoteType)
+      : integrityFailure(
+          "manual.flick-force-perfect-outside-auto",
+          "Flick forcePerfect is the Auto Live route; an unflicked manual Wait expiry calls onMiss.",
+        );
   }
 
   protected reserveSuccessfulManualMove(
@@ -2645,30 +2636,10 @@ export class NoteMultipleDirectionalFlick extends NoteDirectionalFlick {
         return used;
       }
     } else {
-      const manualRuntime = this.manualRuntime;
-      if (manualRuntime.status !== "ok") {
-        return manualRuntime;
-      }
-      const transaction = manualRuntime.value.beginJudgementTransaction();
-      const reserved = transaction.preflight({
-        noteInformation,
-        noteType: 10,
-        rawResult: NoteResultType.Perfect,
-        rawTiming: JudgeTiming.None,
-        absolutePosition: noteInformation.absolutePos,
-        multipleDirectionalFlickNoteCount: group.count,
-      });
-      if (reserved.status !== "ok") {
-        transaction.abort();
-        return reserved;
-      }
-      const used = group.markUsed();
-      if (used.status !== "ok") {
-        transaction.abort();
-        return used;
-      }
-      transaction.commit(reserved.value);
-      transaction.finish();
+      return integrityFailure(
+        "manual.multiple-directional-force-perfect-outside-auto",
+        "Multiple Directional forcePerfect is the Auto Live route; an unflicked manual Wait expiry calls onMiss.",
+      );
     }
     return this.changeState(NoteState.Deactive);
   }
