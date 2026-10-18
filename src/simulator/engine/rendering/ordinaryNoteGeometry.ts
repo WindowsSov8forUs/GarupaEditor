@@ -47,8 +47,8 @@ function createStripIndices(sectionCount: number): readonly number[] {
   ).flat());
 }
 
-const BASE_INDICES = createStripIndices(BASE_SECTION_COUNT);
-const ADVANCED_INDICES = createStripIndices(ADVANCED_SECTION_COUNT);
+const BASE_INDICES = markConstructedRenderArray(createStripIndices(BASE_SECTION_COUNT));
+const ADVANCED_INDICES = markConstructedRenderArray(createStripIndices(ADVANCED_SECTION_COUNT));
 
 export interface OrdinaryNoteMeshEndpoint {
   readonly position: RenderVector2;
@@ -631,7 +631,7 @@ function defaultStripUv(sectionCount: number): SimulatorResult<readonly RenderVe
       uv.push(coordinate.value);
     }
   }
-  const frozen = Object.freeze(uv);
+  const frozen = markConstructedRenderArray(Object.freeze(uv));
   defaultStripUvs.set(sectionCount, frozen);
   return ok(frozen);
 }

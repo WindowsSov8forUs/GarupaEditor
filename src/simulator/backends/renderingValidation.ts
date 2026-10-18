@@ -304,8 +304,10 @@ export function freezeRenderColor(value: RenderColor): RenderColor {
     ? value : Object.freeze({ red, green, blue, alpha });
 }
 
-// Frozen arrays whose deep-frozen elements were all built from tryRenderFloat32/createRenderFloat32.
-// They cannot change after construction, so recording neither re-validates nor re-snapshots them.
+// Frozen arrays of deep-frozen elements that were valid when constructed (Float32 values from
+// tryRenderFloat32/createRenderFloat32, or primitive indices). They cannot change afterwards, so
+// recording does not re-snapshot them; unbounded element validation is skipped too, while bounded
+// checks such as index ranges still run.
 const constructedRenderArrays = new WeakSet<readonly unknown[]>();
 
 /** Registers a frozen array of deep-frozen vectors/colours built only from validated Float32 values. */
