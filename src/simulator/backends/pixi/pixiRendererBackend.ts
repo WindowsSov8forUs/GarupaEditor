@@ -275,7 +275,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
   private readonly recording = new RecordingSimulatorRendererBackend(false);
   private readonly objects = new Map<string, PixiObjectRecord>();
   private readonly orderedParents = new WeakSet<Container>();
-  private readonly pendingSiblingOrders = new Set<Container>();
+  private readonly pendingSiblingOrders = new Map<Container, Set<Container>>();
   private readonly unclippedNotes = new Set<PixiObjectRecord>();
   private readonly noteClipper = new NoteViewportClipper(
     (sprite, mesh) => {
@@ -813,7 +813,6 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         // Several command transactions update the same sibling list per frame;
         // the final ordering is checked once, before Pixi collects draws.
         parent.sortDirty = true;
-        this.pendingSiblingOrders.add(parent);
       }
     } catch (error) {
       this.pending.delete(batch);
@@ -1750,6 +1749,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         });
         this.objectIdsByNode.set(node, command.renderObjectId);
         orderingParents.add(parent);
+        this.markSiblingOrder(parent, node);
         return;
       }
       case "activate-object":
@@ -1886,6 +1886,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           // requests one only when the order actually changes.
           (node as unknown as { _zIndex: number })._zIndex = orderingZIndex(ordering);
           orderingParents.add(node.parent as Container);
+          this.markSiblingOrder(node.parent as Container, node);
         }
         this.attachGameplayDraw(object);
         return;
@@ -1909,7 +1910,10 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           this.spriteReferenceCounts,
           this.decodedFonts,
         );
-        if (applyHudOrdering(object, command)) orderingParents.add(object.node.parent as Container);
+        if (applyHudOrdering(object, command)) {
+          orderingParents.add(object.node.parent as Container);
+          this.markSiblingOrder(object.node.parent as Container, object.node);
+        }
         for (const role of object.activeAnimationRoles) {
           applyEvidenceAnimation(object, role, object.animationElapsedByRole.get(role) ?? 0);
         }
@@ -1988,19 +1992,39 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     }
   }
 
-  /** Runs before Pixi decides whether to rebuild instructions. A sibling list already in the
-   * original order keeps its cached instructions; only a changed order is re-sorted. */
+  private markSiblingOrder(parent: Container, node: Container): void {
+    const nodes = this.pendingSiblingOrders.get(parent);
+    if (nodes === undefined) this.pendingSiblingOrders.set(parent, new Set([node]));
+    else nodes.add(node);
+  }
+
+  /** Runs before Pixi decides whether to rebuild instructions. The sibling list was in order
+   * after the previous render, and only the marked nodes changed key or joined it, so the list
+   * stays in order exactly when each marked node still fits between its neighbours. */
   private flushSiblingOrders(): void {
-    for (const parent of this.pendingSiblingOrders) {
+    for (const [parent, nodes] of this.pendingSiblingOrders) {
       if (parent.destroyed || !parent.sortDirty) continue;
-      parent.sortDirty = false;
       const compare = this.siblingComparator(parent);
       const children = parent.children;
       let sorted = true;
-      for (let index = 1; index < children.length && sorted; index += 1) {
-        sorted = compare(children[index - 1]!, children[index]!) <= 0;
+      if (nodes.size * 8 > children.length) {
+        for (let index = 1; index < children.length && sorted; index += 1) {
+          sorted = compare(children[index - 1]!, children[index]!) <= 0;
+        }
+      } else {
+        for (const node of nodes) {
+          if (node.parent !== parent) continue;
+          const index = children.indexOf(node);
+          if ((index > 0 && compare(children[index - 1]!, node) > 0) ||
+            (index + 1 < children.length && compare(node, children[index + 1]!) > 0)) {
+            sorted = false;
+            break;
+          }
+        }
       }
+      // Pixi still sorts a dirty list on any rebuild, covering children it added itself.
       if (sorted) continue;
+      parent.sortDirty = false;
       children.sort(compare);
       const group = parent.renderGroup ?? parent.parentRenderGroup;
       if (group !== null) group.structureDidChange = true;
