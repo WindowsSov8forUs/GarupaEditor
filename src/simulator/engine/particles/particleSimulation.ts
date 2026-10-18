@@ -636,6 +636,8 @@ export class DeterministicParticleSimulation {
 
   samples(): readonly ParticleRenderSample[] {
     const samples: ParticleRenderSample[] = [];
+    // Each system's sort distance is decoded once, not on every comparison.
+    const sortDistances = new Map<ParticleRenderSample, number>();
     for (const owner of this.owners.values()) {
       const orderedSystems = [...owner.systems.keys()].sort((left, right) =>
         this.definitions.get(left)!.ordinal - this.definitions.get(right)!.ordinal);
@@ -665,10 +667,15 @@ export class DeterministicParticleSimulation {
         const ownerSortOrdinal = particleOwnerSortOrdinal(owner.instance);
         const transformSizeBits = vectorBits(transformSize);
         const sortingFudgeBits = bits(renderer.m_SortingFudge!);
+        const rendererSortDistance = particleFloat32FromBits(rendererSortDistanceBits)!;
+        // Module relations are per system, not per particle.
+        const sizeModule = getModule(record.bundle, profile, "SizeModule");
+        const colorModule = getModule(record.bundle, profile, "ColorModule");
+        const uv = getModule(record.bundle, profile, "UVModule");
+        const custom = getModule(record.bundle, profile, "CustomDataModule");
         for (const particle of runtime.particles) {
           const normalizedAge = normalizedParticleAge(particle.agePercent);
           let size: Vector3 = [...particle.baseSize];
-          const sizeModule = getModule(record.bundle, profile, "SizeModule");
           if (sizeModule !== null) {
             const sizeRandom = particleSeedRatio((particle.randomSeed + 0x8D2C8431) >>> 0);
             if (sizeModule.separateAxes) {
@@ -685,7 +692,6 @@ export class DeterministicParticleSimulation {
           const sizeBeforeTransform = vectorBits(size);
           size = size.map((value, index) => multiply(value, transformSize[index]!)) as Vector3;
           let colorBytes: ColorBytes = [...particle.baseColor];
-          const colorModule = getModule(record.bundle, profile, "ColorModule");
           if (colorModule !== null) {
             const sampled = lifetimeColorToBytes(
               colorModule.gradient,
@@ -695,18 +701,16 @@ export class DeterministicParticleSimulation {
             colorBytes = colorBytes.map((value, index) => multiplyColorByte(value, sampled[index]!)) as ColorBytes;
           }
           const color = colorBytes.map((value) => divide(value, 255)) as Color4;
-          const uv = getModule(record.bundle, profile, "UVModule");
           let uvFrame = 0;
           if (uv !== null) {
             uvFrame = textureSheetFrame(uv, normalizedAge, particle.randomSeed);
           }
-          const custom = getModule(record.bundle, profile, "CustomDataModule");
           const customData0 = custom === null ? null : customData(custom, 0, normalizedAge, particle.randomSeed);
           const customData1 = custom === null ? null : customData(custom, 1, normalizedAge, particle.randomSeed);
           // Native local SoA is projected only after integration, using the
           // current system Transform. The sample position remains world-space.
           const worldPosition = applyNativeParticleMatrixPoint(runtimeTransform.localToWorld, particle.position);
-          samples.push(Object.freeze({
+          const sample: ParticleRenderSample = Object.freeze({
             particleId: particle.particleId,
             ownerKey: owner.ownerKey,
             instance,
@@ -739,13 +743,15 @@ export class DeterministicParticleSimulation {
             meshProfile: record.definition.meshProfile ?? null,
             customData0: customData0 === null ? null : vector4Bits(customData0),
             customData1: customData1 === null ? null : vector4Bits(customData1),
-          }));
+          });
+          samples.push(sample);
+          sortDistances.set(sample, rendererSortDistance);
         }
       }
     }
     samples.sort((left, right) => left.sortingLayerId! - right.sortingLayerId! ||
       left.sortingOrder - right.sortingOrder ||
-      particleFloat32FromBits(left.rendererSortDistanceBits!)! - particleFloat32FromBits(right.rendererSortDistanceBits!)! ||
+      sortDistances.get(left)! - sortDistances.get(right)! ||
       left.rendererPriority! - right.rendererPriority! ||
       left.ownerSortOrdinal! - right.ownerSortOrdinal! ||
       left.sourceOrdinal! - right.sourceOrdinal! ||
