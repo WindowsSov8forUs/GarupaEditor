@@ -2012,7 +2012,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       const compare = this.siblingComparator(parent);
       const children = parent.children;
       let sorted = true;
-      if (nodes.size * 8 > children.length) {
+      // Locating a marked node scans the list, so beyond a few nodes one linear pass is cheaper.
+      if (nodes.size > 16) {
         for (let index = 1; index < children.length && sorted; index += 1) {
           sorted = compare(children[index - 1]!, children[index]!) <= 0;
         }
