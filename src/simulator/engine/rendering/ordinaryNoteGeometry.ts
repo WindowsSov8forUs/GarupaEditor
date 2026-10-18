@@ -559,28 +559,62 @@ export function buildNoteMeshStrip(
   const vertices: RenderVector3[] = [];
   const uv: RenderVector2[] = [];
   const colors: RenderColor[] = [];
+  // Every vertex carries the same immutable colour snapshot.
+  const vertexColor = copyColor(color);
+  const zero = createRenderFloat32(Math.fround(0));
+  if (zero.status !== "ok") return zero;
   for (let section = 0; section <= sectionCount; section += 1) {
     const rate = Math.fround(section / sectionCount);
     const boundary = boundaryAt(rate);
     if (boundary.status !== "ok") return boundary;
     for (const side of [0, 1] as const) {
-      const x = boundary.value[side].x.value;
-      const y = boundary.value[side].y.value;
-      const vertex = vector3(x, y, Math.fround(0));
-      if (vertex.status !== "ok") return vertex;
-      vertices.push(vertex.value);
-      const coordinate = vector2(Math.fround(side), uvRateAt === undefined ? rate : Math.fround(uvRateAt(rate)));
-      if (coordinate.status !== "ok") return coordinate;
-      uv.push(coordinate.value);
-      colors.push(copyColor(color));
+      const x = float32Snapshot(boundary.value[side].x);
+      if (x.status !== "ok") return x;
+      const y = float32Snapshot(boundary.value[side].y);
+      if (y.status !== "ok") return y;
+      vertices.push(Object.freeze({ x: x.value, y: y.value, z: zero.value }));
+      if (uvRateAt !== undefined) {
+        const coordinate = vector2(Math.fround(side), Math.fround(uvRateAt(rate)));
+        if (coordinate.status !== "ok") return coordinate;
+        uv.push(coordinate.value);
+      }
+      colors.push(vertexColor);
     }
   }
+  const stripUv = uvRateAt === undefined ? defaultStripUv(sectionCount) : ok(Object.freeze(uv));
+  if (stripUv.status !== "ok") return stripUv;
   return ok(Object.freeze({
     vertices: Object.freeze(vertices),
     indices,
-    uv: Object.freeze(uv),
+    uv: stripUv.value,
     colors: Object.freeze(colors),
   }));
+}
+
+/** A frozen Float32 is already its own vertex component; others are re-encoded from their value. */
+function float32Snapshot(value: RenderFloat32): SimulatorResult<RenderFloat32> {
+  return Object.isFrozen(value) && Number.isFinite(value.value) && Math.fround(value.value) === value.value
+    ? ok(value) : createRenderFloat32(value.value);
+}
+
+const defaultStripUvs = new Map<number, readonly RenderVector2[]>();
+
+/** Strip UVs depend only on the original section count. */
+function defaultStripUv(sectionCount: number): SimulatorResult<readonly RenderVector2[]> {
+  const cached = defaultStripUvs.get(sectionCount);
+  if (cached !== undefined) return ok(cached);
+  const uv: RenderVector2[] = [];
+  for (let section = 0; section <= sectionCount; section += 1) {
+    const rate = Math.fround(section / sectionCount);
+    for (const side of [0, 1] as const) {
+      const coordinate = vector2(Math.fround(side), rate);
+      if (coordinate.status !== "ok") return coordinate;
+      uv.push(coordinate.value);
+    }
+  }
+  const frozen = Object.freeze(uv);
+  defaultStripUvs.set(sectionCount, frozen);
+  return ok(frozen);
 }
 
 export function buildOrdinaryMultipleDirectionalLine(

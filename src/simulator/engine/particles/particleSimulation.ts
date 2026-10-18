@@ -1650,19 +1650,39 @@ function minMax(value: ParticleMinMaxCurve, time: number, ratio: number): number
   }
 }
 
+type GradientKeys = { readonly colorTimes: readonly number[]; readonly alphaTimes: readonly number[];
+  readonly channels: { readonly [component in "r" | "g" | "b" | "a"]: readonly number[] } };
+const gradientKeys = new WeakMap<ParticleMinMaxGradient["maxGradient"], GradientKeys>();
+
+/** Key tables of one frozen gradient; the serialized key fields are read once instead of per sample. */
+function gradientKeyTables(value: ParticleMinMaxGradient["maxGradient"]): GradientKeys {
+  const cached = gradientKeys.get(value);
+  if (cached !== undefined) return cached;
+  const times = (prefix: "c" | "a", count: number) => Array.from({ length: Math.max(count, 0) }, (_, index) =>
+    value[`${prefix}time${index}` as keyof typeof value] as number);
+  const keys = (component: "r" | "g" | "b" | "a", count: number) => Array.from({ length: Math.max(count, 0) }, (_, index) =>
+    (value[`key${index}` as keyof typeof value] as unknown as { readonly [key: string]: number })[component]!);
+  const tables: GradientKeys = {
+    colorTimes: times("c", value.m_NumColorKeys), alphaTimes: times("a", value.m_NumAlphaKeys),
+    channels: { r: keys("r", value.m_NumColorKeys), g: keys("g", value.m_NumColorKeys),
+      b: keys("b", value.m_NumColorKeys), a: keys("a", value.m_NumAlphaKeys) },
+  };
+  if (Object.isFrozen(value)) gradientKeys.set(value, tables);
+  return tables;
+}
+
 function gradient(value: ParticleMinMaxGradient["maxGradient"], time: number): Color4 {
   // BND-C58: native retains the fractional Float32 time coordinate.
   const t16 = multiply(time, 65535);
+  const tables = gradientKeyTables(value);
   const channel = (
     prefix: "c" | "a",
     component: "r" | "g" | "b" | "a",
     count: number,
   ): number => {
     if (count < 2) return 1;
-    const times = Array.from({ length: count }, (_, index) =>
-      value[`${prefix}time${index}` as keyof typeof value] as number);
-    const values = Array.from({ length: count }, (_, index) =>
-      (value[`key${index}` as keyof typeof value] as unknown as { readonly [key: string]: number })[component]!);
+    const times = prefix === "c" ? tables.colorTimes : tables.alphaTimes;
+    const values = tables.channels[component];
     const coordinate = Math.min(Math.max(t16, times[0]!), times[count - 1]!);
     let index = value.m_Mode === 1 ? 0 : 1;
     while (index < count - 1 && coordinate > times[index]!) index += 1;
@@ -2367,10 +2387,14 @@ function float32FromBits(value: number): number {
   return view.getFloat32(0, true);
 }
 
+const float32Bytes = new Uint8Array(float32View.buffer);
+const HEX_BYTES = Array.from({ length: 256 }, (_, byte) => byte.toString(16).toUpperCase().padStart(2, "0"));
+
 function bits(value: number): string {
-  const view = float32View;
-  view.setFloat32(0, f32(value), true);
-  return `0x${view.getUint32(0, true).toString(16).toUpperCase().padStart(8, "0")}`;
+  // Big-endian byte lookup gives the same 0x-prefixed uppercase word without per-value formatting.
+  float32View.setFloat32(0, f32(value), false);
+  const bytes = float32Bytes;
+  return "0x" + HEX_BYTES[bytes[0]!]! + HEX_BYTES[bytes[1]!]! + HEX_BYTES[bytes[2]!]! + HEX_BYTES[bytes[3]!]!;
 }
 
 function f32(value: number): number { return Math.fround(value); }

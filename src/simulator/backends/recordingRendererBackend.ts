@@ -23,6 +23,7 @@ import type {
   RenderObjectRole,
   RenderResourcePreflightAdapter,
   RenderResourceProfile,
+  RenderVector2,
   SimulatorRendererBackend,
   SimulatorResourceProvider,
 } from "./renderingContracts";
@@ -30,6 +31,7 @@ import {
   freezeRenderColor,
   freezeRenderVector2,
   freezeRenderVector3,
+  freezeRenderArray,
   validateAndFreezeRenderProfile,
   validateRenderFloat32,
 } from "./renderingValidation";
@@ -399,11 +401,11 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
           command.indices.length === 0 ||
           command.uv.length !== command.vertices.length ||
           command.colors.length !== command.vertices.length ||
-          command.vertices.some((value) => !validateVector3(value)) ||
-          command.uv.some((value) => !validateVector2(value)) ||
-          command.colors.some((value) => !validateColor(value)) ||
-          command.indices.some((value) =>
-            !isNonNegativeInteger(value) || value >= command.vertices.length) ||
+          !validateEach(command.vertices, validateVector3) ||
+          !validateEach(command.uv, validateVector2, UNBOUNDED_ARRAY, isFrozenVector2) ||
+          !validateEach(command.colors, validateColor) ||
+          !validateEach(command.indices, (value) =>
+            isNonNegativeInteger(value) && value < command.vertices.length, command.vertices.length, () => true) ||
           (objects.get(command.renderObjectId)?.role === "habahiro-flash-mesh"
             ? command.materialRole !== "habahiro-flash" || command.coordinateSpace !== "authored-ui" ||
               typeof command.meshIdentity !== "string" || !/^int64:-?[0-9]+$/.test(command.meshIdentity)
@@ -617,10 +619,10 @@ function freezeCommand(command: RenderCommand): RenderCommand {
     case "set-mesh":
       return Object.freeze({
         ...command,
-        vertices: Object.freeze(command.vertices.map(freezeRenderVector3)),
-        indices: Object.freeze([...command.indices]),
-        uv: Object.freeze(command.uv.map(freezeRenderVector2)),
-        colors: Object.freeze(command.colors.map(freezeRenderColor)),
+        vertices: freezeRenderArray(command.vertices, freezeRenderVector3),
+        indices: freezeRenderArray(command.indices, (index) => index),
+        uv: freezeRenderArray(command.uv, freezeRenderVector2),
+        colors: freezeRenderArray(command.colors, freezeRenderColor),
       });
     case "set-line":
       return Object.freeze({
@@ -650,6 +652,36 @@ function freezeCommand(command: RenderCommand): RenderCommand {
     default:
       return Object.freeze({ ...command });
   }
+}
+
+const UNBOUNDED_ARRAY = -1;
+/** Frozen arrays with deep-frozen contents that passed validation, keyed by the bound they were checked against. */
+const validatedFrozenArrays = new WeakMap<readonly unknown[], number>();
+
+/** Validates each element once: an element repeated by identity is unchanged within this pass. A
+ * deep-frozen array that repeats across frames (shared UV and topology) is validated only once. */
+function validateEach<T>(
+  values: readonly T[],
+  check: (value: T) => boolean,
+  bound?: number,
+  deepFrozen?: (value: T) => boolean,
+): boolean {
+  if (bound !== undefined && validatedFrozenArrays.get(values) === bound) return true;
+  let previous: T | undefined;
+  for (let index = 0; index < values.length; index += 1) {
+    const value = values[index]!;
+    if (index > 0 && value === previous) continue;
+    if (!check(value)) return false;
+    previous = value;
+  }
+  if (bound !== undefined && deepFrozen !== undefined && Object.isFrozen(values) && values.every(deepFrozen)) {
+    validatedFrozenArrays.set(values, bound);
+  }
+  return true;
+}
+
+function isFrozenVector2(value: RenderVector2): boolean {
+  return Object.isFrozen(value) && Object.isFrozen(value.x) && Object.isFrozen(value.y);
 }
 
 function validateVector2(value: unknown): boolean {
