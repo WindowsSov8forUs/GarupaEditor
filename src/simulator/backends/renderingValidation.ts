@@ -251,17 +251,21 @@ const commonRenderFloats = [
 ] as const;
 
 export function createRenderFloat32(value: number): SimulatorResult<RenderFloat32> {
+  const float = tryRenderFloat32(value);
+  return float !== null ? ok(float) : reject(
+    "render.float32.invalid-value",
+    "Renderer values must be finite and representable by the output Float32 encoding.",
+  );
+}
+
+/** createRenderFloat32 without the result wrapper, for per-vertex hot paths; null when invalid. */
+export function tryRenderFloat32(value: number): RenderFloat32 | null {
   const rounded = Math.fround(value);
-  if (!Number.isFinite(value) || !Number.isFinite(rounded)) {
-    return reject(
-      "render.float32.invalid-value",
-      "Renderer values must be finite and representable by the output Float32 encoding.",
-    );
-  }
-  if (rounded === 0) return ok(commonRenderFloats[Object.is(rounded, -0) ? 1 : 0]);
-  if (rounded === 1) return ok(commonRenderFloats[2]);
-  if (rounded === -1) return ok(commonRenderFloats[3]);
-  return ok(Object.freeze({ value: rounded, bits: float32Bits(rounded) }));
+  if (!Number.isFinite(value) || !Number.isFinite(rounded)) return null;
+  if (rounded === 0) return commonRenderFloats[Object.is(rounded, -0) ? 1 : 0];
+  if (rounded === 1) return commonRenderFloats[2];
+  if (rounded === -1) return commonRenderFloats[3];
+  return Object.freeze({ value: rounded, bits: float32Bits(rounded) });
 }
 
 export function validateRenderFloat32(value: RenderFloat32): boolean {
@@ -300,8 +304,23 @@ export function freezeRenderColor(value: RenderColor): RenderColor {
     ? value : Object.freeze({ red, green, blue, alpha });
 }
 
+// Frozen arrays whose deep-frozen elements were all built from tryRenderFloat32/createRenderFloat32.
+// They cannot change after construction, so recording neither re-validates nor re-snapshots them.
+const constructedRenderArrays = new WeakSet<readonly unknown[]>();
+
+/** Registers a frozen array of deep-frozen vectors/colours built only from validated Float32 values. */
+export function markConstructedRenderArray<T extends readonly unknown[]>(values: T): T {
+  if (Object.isFrozen(values)) constructedRenderArrays.add(values);
+  return values;
+}
+
+export function isConstructedRenderArray(values: readonly unknown[]): boolean {
+  return constructedRenderArrays.has(values);
+}
+
 /** Reuses a frozen array whose elements are already their own snapshots. */
 export function freezeRenderArray<T>(values: readonly T[], freeze: (value: T) => T): readonly T[] {
+  if (constructedRenderArrays.has(values)) return values;
   let copy: T[] | null = Object.isFrozen(values) ? null : [];
   for (let index = 0; index < values.length; index += 1) {
     const value = values[index]!, frozen = freeze(value);

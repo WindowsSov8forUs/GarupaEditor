@@ -9,6 +9,8 @@ import { coordinate, coordinateAdd, coordinateCompare, coordinateScale, coordina
   type ExponentialCoordinate, type ExponentialLine, type ExponentialTransform } from "./exponentialCoordinates";
 import {
   createRenderFloat32,
+  markConstructedRenderArray,
+  tryRenderFloat32,
   validateRenderFloat32,
 } from "../../backends/renderingValidation";
 import {
@@ -533,16 +535,33 @@ function buildOrdinaryNoteMeshStrip(
     state.widthRate.value,
   );
   if (after.status !== "ok") return after;
-  return buildNoteMeshStrip(sectionCount, (rate) => {
-    const point = (side: 0 | 1) => vector2(
-      interpolate(front.value[side].x.value, after.value[side].x.value, rate),
-      interpolate(front.value[side].y.value, after.value[side].y.value, rate),
-    );
-    const left = point(0);
-    if (left.status !== "ok") return left;
-    const right = point(1);
-    return right.status === "ok" ? ok([left.value, right.value] as const) : right;
-  }, state.color, indices);
+  if (!validateColor(state.color)) {
+    return reject("render.geometry.invalid-base-mesh-owner-state", "Note strips retain original section counts and finite colour.");
+  }
+  // buildNoteMeshStrip over the interpolated boundary, written directly: the same Float32
+  // vertices without an intermediate vector and result object per point.
+  const vertices: RenderVector3[] = [];
+  const colors: RenderColor[] = [];
+  const vertexColor = copyColor(state.color);
+  const zero = createRenderFloat32(Math.fround(0));
+  if (zero.status !== "ok") return zero;
+  for (let section = 0; section <= sectionCount; section += 1) {
+    const rate = Math.fround(section / sectionCount);
+    for (const side of [0, 1] as const) {
+      const xValue = interpolate(front.value[side].x.value, after.value[side].x.value, rate);
+      const yValue = interpolate(front.value[side].y.value, after.value[side].y.value, rate);
+      const x = tryRenderFloat32(xValue);
+      if (x === null) return createRenderFloat32(xValue) as SimulatorResult<never>;
+      const y = tryRenderFloat32(yValue);
+      if (y === null) return createRenderFloat32(yValue) as SimulatorResult<never>;
+      vertices.push(Object.freeze({ x, y, z: zero.value }));
+      colors.push(vertexColor);
+    }
+  }
+  const uv = defaultStripUv(sectionCount);
+  if (uv.status !== "ok") return uv;
+  return ok(Object.freeze({ vertices: markConstructedRenderArray(Object.freeze(vertices)), indices, uv: uv.value,
+    colors: markConstructedRenderArray(Object.freeze(colors)) }));
 }
 
 /** Extensions may supply clipped boundaries; topology, UV and colour stay original. */

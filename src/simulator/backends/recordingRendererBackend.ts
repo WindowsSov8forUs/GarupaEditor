@@ -32,6 +32,7 @@ import {
   freezeRenderVector2,
   freezeRenderVector3,
   freezeRenderArray,
+  isConstructedRenderArray,
   validateAndFreezeRenderProfile,
   validateRenderFloat32,
 } from "./renderingValidation";
@@ -667,6 +668,7 @@ function validateEach<T>(
   deepFrozen?: (value: T) => boolean,
 ): boolean {
   if (bound !== undefined && validatedFrozenArrays.get(values) === bound) return true;
+  if (bound === undefined && isConstructedRenderArray(values)) return true;
   let previous: T | undefined;
   for (let index = 0; index < values.length; index += 1) {
     const value = values[index]!;
