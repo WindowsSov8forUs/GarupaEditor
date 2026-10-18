@@ -235,8 +235,8 @@ export class DeterministicParticleSimulation {
         ownerGeneration: state.ownerGeneration,
         systemId: state.systemId,
         seed: state.seed,
-        stream: Object.freeze([...state.stream]) as ParticleRandomStateU32,
-        emissionStream: Object.freeze([...state.emissionStream]) as ParticleRandomStateU32,
+        stream: frozenCopy(state.stream),
+        emissionStream: frozenCopy(state.emissionStream),
         initialModuleStream: cloneSimdState(state.initialModuleStream),
         shapeModuleStream: cloneSimdState(state.shapeModuleStream),
         rateAccumulator: state.rateAccumulator,
@@ -2132,11 +2132,35 @@ function particleOwnerParents(instance: ParticleInstanceIdentity): readonly Part
   ];
 }
 
+const NO_OWNER_PARENTS: readonly ParticleHierarchyPositionTransform[] = Object.freeze([]);
+const runtimeTransforms = new WeakMap<readonly ParticleHierarchyPositionTransform[],
+  Map<SystemRecord, Map<string, ParticleRuntimeTransform>>>();
+
+/** The transform depends only on its system, setup scale, root reset and the owner's parent
+ * array, which every particle of one owner shares; callers only read the result. */
 function particleRuntimeTransform(
   record: SystemRecord,
   setupScale: ParticleSetupScale,
   resetRootTransform: ParticleRootTransformReset = false,
-  ownerParents: readonly ParticleHierarchyPositionTransform[] = [],
+  ownerParents: readonly ParticleHierarchyPositionTransform[] = NO_OWNER_PARENTS,
+): ParticleRuntimeTransform {
+  let byRecord = runtimeTransforms.get(ownerParents);
+  if (byRecord === undefined) runtimeTransforms.set(ownerParents, byRecord = new Map());
+  let byKey = byRecord.get(record);
+  if (byKey === undefined) byRecord.set(record, byKey = new Map());
+  const key = `${String(resetRootTransform)}|${typeof setupScale === "number" ? setupScale : `${setupScale[0]},${setupScale[1]}`}`;
+  const cached = byKey.get(key);
+  if (cached !== undefined) return cached;
+  const computed = computeParticleRuntimeTransform(record, setupScale, resetRootTransform, ownerParents);
+  byKey.set(key, computed);
+  return computed;
+}
+
+function computeParticleRuntimeTransform(
+  record: SystemRecord,
+  setupScale: ParticleSetupScale,
+  resetRootTransform: ParticleRootTransformReset,
+  ownerParents: readonly ParticleHierarchyPositionTransform[],
 ): ParticleRuntimeTransform {
   const { definition } = record;
   return calculateNativeParticleRuntimeTransform(
@@ -2242,8 +2266,14 @@ function currentBurstCount(
   return Math.max(0, Math.trunc(minMax(value, time, ratio)));
 }
 
+/** A frozen random state cannot change, so the clone shares it. */
+function frozenCopy(state: ParticleRandomStateU32): ParticleRandomStateU32 {
+  return Object.isFrozen(state) ? state : Object.freeze([...state]) as ParticleRandomStateU32;
+}
+
 function cloneSimdState(state: ParticleRandomSimdState): ParticleRandomSimdState {
-  return Object.freeze(state.map((lane) => Object.freeze([...lane]) as ParticleRandomStateU32)) as ParticleRandomSimdState;
+  return Object.isFrozen(state) && state.every((lane) => Object.isFrozen(lane)) ? state
+    : Object.freeze(state.map((lane) => frozenCopy(lane))) as ParticleRandomSimdState;
 }
 
 function sameParticleInstance(left: ParticleInstanceIdentity, right: ParticleInstanceIdentity): boolean {
@@ -2316,6 +2346,10 @@ function particleOwnerSortOrdinal(instance: ParticleInstanceIdentity): number {
   return 32 + (instance.poolSlot ?? 0);
 }
 
+function sharedArray<T extends readonly unknown[]>(value: T): T {
+  return Object.isFrozen(value) ? value : Object.freeze(value);
+}
+
 function cloneOwner(owner: OwnerRuntime): OwnerRuntime {
   return {
     ownerKey: owner.ownerKey,
@@ -2332,17 +2366,19 @@ function cloneOwner(owner: OwnerRuntime): OwnerRuntime {
       cycleCount: runtime.cycleCount,
       emissionStopped: runtime.emissionStopped,
       first: runtime.first,
+      // Only rotation is updated in place; the other arrays are replaced whole, so the
+      // committed and preflight worlds share them frozen.
       particles: runtime.particles.map((particle) => ({
         ...particle,
-        emitterOrigin: [...particle.emitterOrigin] as Vector3,
-        position: [...particle.position] as Vector3,
-        velocity: [...particle.velocity] as Vector3,
-        renderVelocity: [...particle.renderVelocity] as Vector3,
-        moduleVelocity: [...particle.moduleVelocity] as Vector3,
-        baseSize: [...particle.baseSize] as Vector3,
-        baseColor: [...particle.baseColor] as ColorBytes,
+        emitterOrigin: sharedArray(particle.emitterOrigin),
+        position: sharedArray(particle.position),
+        velocity: sharedArray(particle.velocity),
+        renderVelocity: sharedArray(particle.renderVelocity),
+        moduleVelocity: sharedArray(particle.moduleVelocity),
+        baseSize: sharedArray(particle.baseSize),
+        baseColor: sharedArray(particle.baseColor),
         rotation: [...particle.rotation] as Vector3,
-        slots: [...particle.slots],
+        slots: sharedArray(particle.slots),
       })),
     }])),
   };
