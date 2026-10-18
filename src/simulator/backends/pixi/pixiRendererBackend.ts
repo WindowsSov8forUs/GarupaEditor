@@ -1761,6 +1761,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         if (this.objects.get(command.renderObjectId)!.spriteContent !== null) {
           this.objects.get(command.renderObjectId)!.spriteContent!.visible = true;
         }
+        this.attachGameplayDraw(this.objects.get(command.renderObjectId)!);
         return;
       case "hide-object":
         if (command.contentsOnly) {
@@ -1769,9 +1770,15 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         }
         this.objects.get(command.renderObjectId)!.node.visible = false;
         return;
-      case "deactivate-object":
-        this.objects.get(command.renderObjectId)!.node.visible = false;
+      case "deactivate-object": {
+        const object = this.objects.get(command.renderObjectId)!;
+        object.node.visible = false;
+        // A pooled object draws nothing until activate-object re-registers it, so it
+        // leaves the gameplay order instead of being sorted with live draws every frame.
+        const drawOwner = gameplayDrawOwner(object);
+        if (drawOwner !== null) this.gameplayRenderOrder?.detach(drawOwner);
         return;
+      }
       case "release-object": {
         const object = this.objects.get(command.renderObjectId)!;
         if (object.spriteBindingKey !== null) this.decrementSpriteReference(object.spriteBindingKey);
@@ -2073,7 +2080,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     // child containers to the same RenderLayer would collect the child twice.
     // Current Note transforms are unmasked; their Sprite leaves retain the
     // logical transform/tint/visibility chain. Masked field/belt owners stay whole.
-    const drawOwner = noteSpatialRole(object.role) ? object.spriteContent : object.node;
+    const drawOwner = gameplayDrawOwner(object);
     if (drawOwner === null) return;
     order.attach(drawOwner, () => ({
       sortingOrder: object.ordering[1],
@@ -4624,6 +4631,10 @@ function gameplayRendererType(role: RenderObjectRole): 1 | 3 | 6 | null {
   if (role === "note-mesh") return 1;
   if (role === "sync-line" || role === "multiple-directional-line") return 6;
   return null;
+}
+
+function gameplayDrawOwner(object: PixiObjectRecord): Container | null {
+  return noteSpatialRole(object.role) ? object.spriteContent : object.node;
 }
 
 function noteSpatialRole(role: RenderObjectRole): boolean {
