@@ -469,12 +469,16 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
 
   private validateSamples(samples: readonly ParticleRenderSample[]): ParticleOperationResult<void> {
     const ids = new Set<string>();
+    // Samples of one system share their instance object; nothing mutates it during this check.
+    const nativeInstances = new Set<ParticleInstanceIdentity>();
+    const isNative = (instance: ParticleInstanceIdentity) => nativeInstances.has(instance) ||
+      (isNativeInstance(instance) && (nativeInstances.add(instance), true));
     let previous: ParticleRenderSample | null = null;
     for (const sample of samples) {
       const binding = sample === null || typeof sample !== "object" ? undefined : this.systems.get(sample.systemId);
       if (sample === null || typeof sample !== "object" || typeof sample.particleId !== "string" ||
         sample.particleId.length === 0 || ids.has(sample.particleId) || typeof sample.ownerKey !== "string" ||
-        sample.ownerKey.length === 0 || !isNativeInstance(sample.instance) || binding === undefined) {
+        sample.ownerKey.length === 0 || !isNative(sample.instance) || binding === undefined) {
         return this.reject("particle.pixi.invalid-sample-identity", "Every sample requires one unique particle, explicit native owner transform and exact prepared system.");
       }
       ids.add(sample.particleId);
@@ -726,14 +730,14 @@ function positiveBits(bits: string): number | null {
 }
 
 function sampleBitsFinite(sample: ParticleRenderSample): boolean {
-  return [
-    sample.position.xBits, sample.position.yBits, sample.position.zBits,
-    sample.velocity.xBits, sample.velocity.yBits, sample.velocity.zBits,
-    sample.size.xBits, sample.size.yBits, sample.size.zBits,
-    sample.rotation.xBits, sample.rotation.yBits, sample.rotation.zBits,
-    sample.color.redBits, sample.color.greenBits, sample.color.blueBits, sample.color.alphaBits,
-    sample.ageBits, sample.lifetimeBits, sample.rendererSortDistanceBits!,
-  ].every((bits) => particleFloat32FromBits(bits) !== null);
+  const finite = (bits: string) => particleFloat32FromBits(bits) !== null;
+  return finite(sample.position.xBits) && finite(sample.position.yBits) && finite(sample.position.zBits) &&
+    finite(sample.velocity.xBits) && finite(sample.velocity.yBits) && finite(sample.velocity.zBits) &&
+    finite(sample.size.xBits) && finite(sample.size.yBits) && finite(sample.size.zBits) &&
+    finite(sample.rotation.xBits) && finite(sample.rotation.yBits) && finite(sample.rotation.zBits) &&
+    finite(sample.color.redBits) && finite(sample.color.greenBits) && finite(sample.color.blueBits) &&
+    finite(sample.color.alphaBits) && finite(sample.ageBits) && finite(sample.lifetimeBits) &&
+    finite(sample.rendererSortDistanceBits!);
 }
 
 function compareSamples(left: ParticleRenderSample, right: ParticleRenderSample): number {
