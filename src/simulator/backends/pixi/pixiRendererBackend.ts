@@ -275,6 +275,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
   private readonly recording = new RecordingSimulatorRendererBackend(false);
   private readonly objects = new Map<string, PixiObjectRecord>();
   private readonly orderedParents = new WeakSet<Container>();
+  private readonly pendingSiblingOrders = new Set<Container>();
   private readonly unclippedNotes = new Set<PixiObjectRecord>();
   private readonly noteClipper = new NoteViewportClipper(
     (sprite, mesh) => {
@@ -313,6 +314,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
   ) {
     this.stage = new Container({ label: "GarupaSimulatorRoot", sortableChildren: true });
     this.stage.sortableChildren = true;
+    this.stage.onRender = () => this.flushSiblingOrders();
   }
 
   bindOriginalSurfaceLayout(layout: OriginalSurfaceLayout): SimulatorResult<void> {
@@ -808,11 +810,10 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
             this.sortSiblings(parent);
           };
         }
-        // Several command transactions update the same sibling list per frame.
-        // Pixi consumes the final original ordering once, when collecting draws.
+        // Several command transactions update the same sibling list per frame;
+        // the final ordering is checked once, before Pixi collects draws.
         parent.sortDirty = true;
-        const group = parent.renderGroup ?? parent.parentRenderGroup;
-        if (group !== null) group.structureDidChange = true;
+        this.pendingSiblingOrders.add(parent);
       }
     } catch (error) {
       this.pending.delete(batch);
@@ -1881,7 +1882,9 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         ];
         if (compareOrdering(object.ordering, ordering) !== 0) {
           object.ordering = Object.freeze(ordering);
-          node.zIndex = orderingZIndex(ordering);
+          // Pixi's zIndex setter forces an instruction rebuild; the sibling flush
+          // requests one only when the order actually changes.
+          (node as unknown as { _zIndex: number })._zIndex = orderingZIndex(ordering);
           orderingParents.add(node.parent as Container);
         }
         this.attachGameplayDraw(object);
@@ -1985,8 +1988,32 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     }
   }
 
+  /** Runs before Pixi decides whether to rebuild instructions. A sibling list already in the
+   * original order keeps its cached instructions; only a changed order is re-sorted. */
+  private flushSiblingOrders(): void {
+    for (const parent of this.pendingSiblingOrders) {
+      if (parent.destroyed || !parent.sortDirty) continue;
+      parent.sortDirty = false;
+      const compare = this.siblingComparator(parent);
+      const children = parent.children;
+      let sorted = true;
+      for (let index = 1; index < children.length && sorted; index += 1) {
+        sorted = compare(children[index - 1]!, children[index]!) <= 0;
+      }
+      if (sorted) continue;
+      children.sort(compare);
+      const group = parent.renderGroup ?? parent.parentRenderGroup;
+      if (group !== null) group.structureDidChange = true;
+    }
+    this.pendingSiblingOrders.clear();
+  }
+
   private sortSiblings(parent: Container): void {
-    parent.children.sort((left, right) => {
+    parent.children.sort(this.siblingComparator(parent));
+  }
+
+  private siblingComparator(parent: Container): (left: Container, right: Container) => number {
+    return (left, right) => {
       if (left === this.controlOverlayRoot) return right === this.controlOverlayRoot ? 0 : 1;
       if (right === this.controlOverlayRoot) return -1;
       const leftRecord = this.objects.get(this.objectIdsByNode.get(left as Container)!);
@@ -2004,7 +2031,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         return left.zIndex - right.zIndex;
       }
       return compareOrdering(leftRecord.ordering, rightRecord.ordering);
-    });
+    };
   }
 
   private attachGameplayDraw(object: PixiObjectRecord): void {
