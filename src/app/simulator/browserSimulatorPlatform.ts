@@ -337,8 +337,10 @@ class BrowserRafScheduler implements SimulatorFrameScheduler {
         if (!this.stopped && generation === this.generation) this.frameId = requestAnimationFrame(tick);
       });
     };
-    // Build the first frame before revealing a newly-created native window.
-    tick(performance.now());
+    // Build the first frame before revealing a newly-created native window, but
+    // only after start() has returned: the runtime marks itself running once it
+    // receives the subscription, and drops (without counting) earlier frames.
+    queueMicrotask(() => tick(performance.now()));
     return assemblyAccepted(Object.freeze({ stop: () => { if (generation === this.generation) this.dispose(); } }));
   }
 
