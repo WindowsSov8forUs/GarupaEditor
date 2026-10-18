@@ -87,30 +87,37 @@ export function buildCurrentParticlePrimitives(
   samples: readonly ParticleRenderSample[],
 ): readonly ParticleNativeRenderPrimitive[] {
   const bindings = buildBindings(profile);
+  // Culling is per renderer system (its last sample's bounds). Culled systems are never built;
+  // the stable sort keeps the visible subset in the order the full sort would.
   const systemSamples = new Map(samples.map((sample) => [`${sample.ownerKey}\u0000${sample.systemId}`, sample]));
-  const primitives = samples.map((sample) => buildPrimitive(sample, bindings, scene));
+  const visibleSystems = new Set<string>();
+  for (const [key, sample] of systemSamples) {
+    if (intersectsOrthographicViewport(nativeRendererBounds(sample, scene), scene)) visibleSystems.add(key);
+  }
+  const primitives: ParticleNativeRenderPrimitive[] = [];
+  for (const sample of samples) {
+    if (visibleSystems.has(`${sample.ownerKey}\u0000${sample.systemId}`)) primitives.push(buildPrimitive(sample, bindings, scene));
+    else requireSampleBinding(sample, bindings);
+  }
   primitives.sort((left, right) => left.sortingLayerId - right.sortingLayerId ||
     left.sortingOrder - right.sortingOrder || left.sortingDistance - right.sortingDistance ||
     left.rendererPriority - right.rendererPriority || left.ownerSortOrdinal - right.ownerSortOrdinal ||
     left.sourceOrdinal - right.sourceOrdinal || left.creationSequence - right.creationSequence);
-  const grouped = new Map<string, ParticleNativeRenderPrimitive[]>();
-  for (const primitive of primitives) {
-    const key = `${primitive.ownerKey}\u0000${primitive.systemId}`;
-    const rows = grouped.get(key) ?? [];
-    rows.push(primitive);
-    grouped.set(key, rows);
-  }
-  const visible = new Set<ParticleNativeRenderPrimitive>();
-  for (const [key, rows] of grouped) {
-    const bounds = nativeRendererBounds(systemSamples.get(key)!, scene);
-    if (intersectsOrthographicViewport(bounds, scene)) {
-      for (const row of rows) visible.add(row);
-    }
-  }
-  return Object.freeze(primitives.filter((primitive) => visible.has(primitive)));
+  return Object.freeze(primitives);
 }
 
+const bindingCache = new WeakMap<ParticlePortableProfile, ReadonlyMap<string, GeometryBinding>>();
+
+/** Bindings depend only on the frozen prepared profile. */
 function buildBindings(profile: ParticlePortableProfile): ReadonlyMap<string, GeometryBinding> {
+  const cached = bindingCache.get(profile);
+  if (cached !== undefined) return cached;
+  const built = buildBindingsUncached(profile);
+  if (Object.isFrozen(profile)) bindingCache.set(profile, built);
+  return built;
+}
+
+function buildBindingsUncached(profile: ParticlePortableProfile): ReadonlyMap<string, GeometryBinding> {
   const result = new Map<string, GeometryBinding>();
   for (const bundle of profile.bundles) {
     const materials = new Map(bundle.materials.map((material) => [material.name, material]));
@@ -164,11 +171,8 @@ function buildBindings(profile: ParticlePortableProfile): ReadonlyMap<string, Ge
   return result;
 }
 
-function buildPrimitive(
-  sample: ParticleRenderSample,
-  bindings: ReadonlyMap<string, GeometryBinding>,
-  scene: ParticlePixiSceneProfile,
-): ParticleNativeRenderPrimitive {
+/** Every sample, culled or built, must keep its exact renderer/material/mesh relation. */
+function requireSampleBinding(sample: ParticleRenderSample, bindings: ReadonlyMap<string, GeometryBinding>): GeometryBinding {
   const binding = bindings.get(sample.systemId);
   if (binding === undefined || sample.sourceOrdinal === undefined || sample.ownerSortOrdinal === undefined ||
     sample.sortingLayerId === undefined || sample.sortingFudgeBits === undefined || sample.rendererPriority === undefined ||
@@ -180,6 +184,15 @@ function buildPrimitive(
     sample.meshProfile !== (binding.system.meshProfile ?? null)) {
     throw fault("particle.geometry.sample-relation", "Every render sample must retain its source ordinal and exact renderer/material/mesh relation.");
   }
+  return binding;
+}
+
+function buildPrimitive(
+  sample: ParticleRenderSample,
+  bindings: ReadonlyMap<string, GeometryBinding>,
+  scene: ParticlePixiSceneProfile,
+): ParticleNativeRenderPrimitive {
+  const binding = requireSampleBinding(sample, bindings);
   const transform = requiredOwnerTransform(sample.instance);
   const worldCenter = particleWorldCenter(sample, transform);
   const size = bitsVector3(sample.size);
@@ -226,8 +239,8 @@ function buildPrimitive(
     particleId: sample.particleId,
     ownerKey: sample.ownerKey,
     systemId: sample.systemId,
-    sourceOrdinal: sample.sourceOrdinal,
-    ownerSortOrdinal: sample.ownerSortOrdinal,
+    sourceOrdinal: sample.sourceOrdinal!,
+    ownerSortOrdinal: sample.ownerSortOrdinal!,
     creationSequence: sample.creationSequence,
     sortingLayerId: sample.sortingLayerId!,
     sortingOrder: sample.sortingOrder,
