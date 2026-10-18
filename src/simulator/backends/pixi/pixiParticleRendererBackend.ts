@@ -31,9 +31,11 @@ import {
 import {
   createPixiParticleNativePrimitiveMesh,
   destroyPixiParticleLinearColorMesh,
+  applyPixiParticleNativePrimitiveMesh,
   mergeParticlePrimitives,
   sameParticleDraw,
   updatePixiParticleNativePrimitiveMesh,
+  validatePixiParticleNativePrimitive,
   type PixiParticleLinearColorMesh,
 } from "./pixiParticleLinearColorMesh";
 
@@ -57,6 +59,8 @@ interface PendingParticleFrame {
   readonly generation: Container;
   readonly meshes: readonly PixiParticleLinearColorMesh[];
   readonly primitives: readonly ParticleNativeRenderPrimitive[];
+  /** Validated colours when the live meshes are rewritten at commit instead of swapping generations. */
+  readonly inPlaceColors: readonly (readonly [number, number, number, number])[] | null;
 }
 
 interface RetiredParticleGeneration {
@@ -234,6 +238,48 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
     }
     const validation = this.validateSamples(request.samples);
     if (validation.status !== "accepted") return validation;
+    let primitives: readonly ParticleNativeRenderPrimitive[];
+    try {
+      const sorted = buildCurrentParticlePrimitives(this.profile, this.scene, request.samples);
+      // One draw per run of adjacent particles sharing material and draw-order key.
+      const draws: ParticleNativeRenderPrimitive[] = [];
+      for (let start = 0; start < sorted.length;) {
+        let end = start + 1;
+        while (end < sorted.length && sameParticleDraw(sorted[start]!, sorted[end]!)) end += 1;
+        draws.push(mergeParticlePrimitives(sorted.slice(start, end)));
+        start = end;
+      }
+      primitives = Object.freeze(draws);
+    } catch (error) {
+      return error instanceof ParticleGeometryFault
+        ? this.latchFaultPreservingLive(error.capability, error.boundary)
+        : this.latchFaultPreservingLive("particle.pixi.primitive-allocation-threw",
+          "Detached native primitive allocation failed before any scene mutation.");
+    }
+    const capability = Object.freeze({
+      sessionId: this.sessionId,
+      frame: request.frame,
+      sampleCount: request.samples.length,
+    });
+    // Same draw count and material sequence: the live meshes are rewritten at commit and keep their
+    // scene structure, so Pixi need not rebuild its instructions. Nothing visible changes before commit.
+    if (this.liveGeneration !== null && primitives.length === this.liveMeshes.length &&
+      primitives.every((primitive, index) => particleMaterialKey(primitive) === particleMaterialKey(this.livePrimitives[index]!))) {
+      let colors: (readonly [number, number, number, number])[];
+      try {
+        colors = primitives.map((primitive) => {
+          const texture = this.textures.get(primitive.logicalTextureId);
+          if (texture === undefined || texture.destroyed) throw new Error("missing primitive texture");
+          return validatePixiParticleNativePrimitive(texture, primitive);
+        });
+      } catch {
+        return this.latchFaultPreservingLive("particle.pixi.primitive-allocation-threw",
+          "Detached native primitive validation failed before any scene mutation.");
+      }
+      this.pending = Object.freeze({ capability, generation: this.liveGeneration, meshes: Object.freeze([...this.liveMeshes]),
+        primitives, inPlaceColors: Object.freeze(colors) });
+      return particleAccepted(capability);
+    }
     const meshes: PixiParticleLinearColorMesh[] = [];
     // Only the hidden previous generation is reusable. The displayed frame is
     // untouched until commit; at most two generations are retained, not history.
@@ -243,7 +289,6 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
       sortableChildren: false,
       visible: false,
     });
-    let primitives: readonly ParticleNativeRenderPrimitive[];
     try {
       generation.label = `GarupaSimulatorParticleGeneration:${request.frame}`;
       // The hidden generation's meshes return to the material pool; this frame's draws take from it.
@@ -255,16 +300,6 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
       });
       const cleanup = destroyMeshes(retired, "recycled");
       if (cleanup.length > 0) throw new Error(`Retired particle cleanup failed: ${cleanup.join(",")}`);
-      const sorted = buildCurrentParticlePrimitives(this.profile, this.scene, request.samples);
-      // One draw per run of adjacent particles sharing material and draw-order key.
-      const draws: ParticleNativeRenderPrimitive[] = [];
-      for (let start = 0; start < sorted.length;) {
-        let end = start + 1;
-        while (end < sorted.length && sameParticleDraw(sorted[start]!, sorted[end]!)) end += 1;
-        draws.push(mergeParticlePrimitives(sorted.slice(start, end)));
-        start = end;
-      }
-      primitives = Object.freeze(draws);
       for (let index = 0; index < primitives.length; index += 1) {
         const primitive = primitives[index]!;
         const texture = this.textures.get(primitive.logicalTextureId);
@@ -296,12 +331,7 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
               : `Detached primitive cleanup continued; failed identities: ${cleanupFailures.join(",")}.`,
           );
     }
-    const capability = Object.freeze({
-      sessionId: this.sessionId,
-      frame: request.frame,
-      sampleCount: request.samples.length,
-    });
-    this.pending = Object.freeze({ capability, generation, meshes: Object.freeze(meshes), primitives });
+    this.pending = Object.freeze({ capability, generation, meshes: Object.freeze(meshes), primitives, inPlaceColors: null });
     return particleAccepted(capability);
   }
 
@@ -312,6 +342,29 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
     if (pending === null || pending.capability !== batch || batch.sessionId !== this.sessionId ||
       (this.nextFrame !== null && batch.frame !== this.nextFrame)) {
       return this.latchFault("particle.pixi.invalid-batch-capability", "Pixi accepts only its exact one-use detached primitive capability.");
+    }
+    if (pending.inPlaceColors !== null) {
+      try {
+        for (let index = 0; index < pending.meshes.length; index += 1) {
+          const mesh = pending.meshes[index]!, primitive = pending.primitives[index]!;
+          applyPixiParticleNativePrimitiveMesh(mesh, primitive, pending.inPlaceColors[index]!);
+          mesh.label = primitive.particleId;
+          this.gameplayRenderOrder?.attach(mesh, () => ({
+            sortingOrder: primitive.sortingOrder,
+            distance: primitive.sortingDistance,
+            rendererType: 7,
+            sameTypeSequence: index,
+          }));
+        }
+      } catch {
+        this.pending = null;
+        return this.latchFault("particle.pixi.in-place-commit-threw", "Rewriting validated live particle meshes failed during commit.");
+      }
+      this.livePrimitives.splice(0, this.livePrimitives.length, ...pending.primitives);
+      this.pending = null;
+      this.nextFrame = batch.frame + 1;
+      this.lastSampleCount = batch.sampleCount;
+      return particleAccepted(undefined);
     }
     try {
       // The candidate stays hidden until both its logical parent and shared
@@ -365,7 +418,8 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
     if (this.pending?.capability !== batch) {
       return this.reject("particle.pixi.invalid-discard-capability", "Only the exact pending Pixi particle frame may be discarded.");
     }
-    const cleanupFailures = destroyGeneration(
+    // An in-place frame reserved nothing; its meshes are the live generation.
+    const cleanupFailures = this.pending.inPlaceColors !== null ? [] : destroyGeneration(
       this.pending.generation,
       this.pending.meshes,
       "detached",
@@ -443,7 +497,8 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
   dispose(): ParticleOperationResult<void> {
     if (this.state === "disposed") return particleAccepted(undefined);
     const cleanupFailures = [
-      ...(this.pending === null ? [] : destroyGeneration(this.pending.generation, this.pending.meshes, "pending")),
+      ...(this.pending === null || this.pending.inPlaceColors !== null ? []
+        : destroyGeneration(this.pending.generation, this.pending.meshes, "pending")),
       ...this.clearLiveMeshes(),
       ...this.resetTextures(),
     ];
@@ -577,7 +632,8 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
   private latchFault(capability: string, boundary: string): ParticleOperationResult<never> {
     if (this.fault === null) {
       const failures = [
-        ...(this.pending === null ? [] : destroyGeneration(this.pending.generation, this.pending.meshes, "pending")),
+        ...(this.pending === null || this.pending.inPlaceColors !== null ? []
+        : destroyGeneration(this.pending.generation, this.pending.meshes, "pending")),
         ...this.clearLiveMeshes(),
       ];
       this.fault = Object.freeze({

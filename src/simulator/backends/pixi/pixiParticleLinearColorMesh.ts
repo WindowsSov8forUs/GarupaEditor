@@ -217,10 +217,21 @@ export function mergeParticlePrimitives(run: readonly ParticleNativeRenderPrimit
 
 export function updatePixiParticleNativePrimitiveMesh(mesh: PixiParticleLinearColorMesh,
   texture: Texture, primitive: ParticleNativeRenderPrimitive): void {
-  const color = validateMeshData(texture, primitive.particleId, primitive.positions, primitive.uvs,
-    primitive.indices, primitive.linearColor, primitive.vertexColors);
   // The caller supplies a hidden generation with the same texture/shader/blend
   // binding. Updating it cannot change the currently displayed generation.
+  applyPixiParticleNativePrimitiveMesh(mesh, primitive, validatePixiParticleNativePrimitive(texture, primitive));
+}
+
+/** Validates a primitive for a mesh bound to `texture`; the result is the mesh's linear colour. */
+export function validatePixiParticleNativePrimitive(texture: Texture,
+  primitive: ParticleNativeRenderPrimitive): readonly [number, number, number, number] {
+  return validateMeshData(texture, primitive.particleId, primitive.positions, primitive.uvs,
+    primitive.indices, primitive.linearColor, primitive.vertexColors);
+}
+
+/** Writes already validated primitive data into a mesh with the same material binding. */
+export function applyPixiParticleNativePrimitiveMesh(mesh: PixiParticleLinearColorMesh,
+  primitive: ParticleNativeRenderPrimitive, color: readonly [number, number, number, number]): void {
   mesh.geometry.uvs = primitive.uvs;
   mesh.geometry.positions = primitive.positions;
   mesh.geometry.indices = primitive.indices;
