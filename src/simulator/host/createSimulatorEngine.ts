@@ -363,7 +363,8 @@ class SimulatorEngineHost implements SimulatorEngine {
       if (particle?.status === "ok") particle.value.discard();
       return rendering;
     }
-    const audio = this.audioProducer.preflightCompleteLive(clearStatus);
+    const audio = this.audioProducer.preflightCompleteLive(clearStatus,
+      this.inGameManager.noteManager.inGameCalculatedData.mode.isEnablePractice);
     if (audio.status !== "ok") {
       if (particle?.status === "ok") particle.value.discard();
       if (rendering?.status === "ok") rendering.value.discard();
@@ -725,9 +726,7 @@ class SimulatorEngineHost implements SimulatorEngine {
     if (ended.status !== "ok") return ended;
     // Original transitionGameEndState chooses clear before Life-zero, after
     // all judgement/Record/HUD reflection for the current gameplay update.
-    const awaitingFoldedNotes = this.inGameManager.musicScoreController.signedTempo?.folded === true &&
-      this.inGameManager.noteManager.hasPendingNotes;
-    if (!ended.value || awaitingFoldedNotes) {
+    if (!ended.value) {
       return manager.singleGameOver &&
         this.inGameManager.noteManager.inGameCalculatedData.mode.sessionMode === "live"
         ? this.commitGameOver()

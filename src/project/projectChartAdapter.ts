@@ -1,4 +1,5 @@
 import { GLOBAL_TIMING_GROUP_ID, sortNotes, sortBpmEvents, sortSvEvents, type ChartNote } from "../chartCore";
+import { GARUPA_HEADER_HABAHIRO, GARUPA_SYSTEM_LANE_CHANGE, isGarupaLongSlideShape } from "../chart";
 import type { GarupaChartJson, GarupaChartJsonSlideConnection, GarupaChartJsonTopLevelNote } from "../chart";
 import type { ChartProjectDraft } from "./chartProject";
 
@@ -29,10 +30,17 @@ export function projectGarupaChart(project: Pick<ChartProjectDraft, "metadata" |
       if (!value) throw new Error(`Slide 节点类型不可播放：${n.type}`);
       connected.add(id); return [value];
     });
-    return { type: "Slide" as const, timingGroup: group(chain.timingGroup), connections };
+    // An edit that leaves the Long shape (another node, a lane move) makes the chain a Slide again.
+    const long = chain.long === true && isGarupaLongSlideShape({ connections });
+    return { type: "Slide" as const, timingGroup: group(chain.timingGroup), connections, ...(long ? { long: true as const } : {}) };
   });
+  const settings = chart.settings;
   return [
     { type: "BPM", beat: 0, value: metadata.bpm },
+    ...(settings.habahiro === true ? [{ type: "Header" as const, data: GARUPA_HEADER_HABAHIRO }] : []),
+    ...(settings.habahiro === true
+      ? (settings.laneChangeBeats ?? []).map((beat) => ({ type: "System" as const, beat, data: GARUPA_SYSTEM_LANE_CHANGE }))
+      : []),
     ...sortBpmEvents(chart.bpmEvents).filter(b => b.beat !== 0).map(b => ({ type: "BPM" as const, beat: b.beat, value: b.bpm })),
     ...sortSvEvents(Object.values(chart.timingGroups).flatMap(g => g.sv)).map(e => ({ type: "SV" as const,
       beat: e.beat, value: e.value, timingGroup: e.timingGroup })),

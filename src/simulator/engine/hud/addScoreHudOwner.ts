@@ -8,7 +8,7 @@ export class AddScoreHudOwner {
     return Object.freeze({
       value,
       alpha: Math.fround(0.6),
-      localXOffset: 0,
+      localYOffset: 0,
       poolIndex: (this.poolIndex + playOffset) % 4 as 0 | 1 | 2 | 3,
       depth: (this.depth + playOffset) % 8 as 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7,
     });
@@ -50,7 +50,7 @@ export function advanceAddScoreAnimation(
     hud: Object.freeze({
       ...state.hud,
       alpha,
-      localXOffset: Math.fround(state.hud.localXOffset + (phase === 0 ? 8 : 1)),
+      localYOffset: Math.fround(state.hud.localYOffset + (phase === 0 ? 8 : 1)),
     }),
   });
 }

@@ -42,7 +42,7 @@ export const CURRENT_ORDINARY_HUD_PROFILE = Object.freeze({
     numberScale: Math.fround(0.6000000238418579),
     padding: 1,
     maxValueDigits: 6,
-    initialLocalX: -50,
+    initialLocalY: -50,
     digitInnerWidths: Object.freeze({
       icon_number_plus: 47,
       icon_number_0: 43,

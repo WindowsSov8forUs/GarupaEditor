@@ -11,6 +11,8 @@ export interface SlideChain {
   id: string;
   noteIds: string[];
   timingGroup?: string;
+  /** Garupa `long`: the chain is an original Long while it keeps the Long shape. */
+  long?: true;
 }
 
 export interface SlideBuildState {

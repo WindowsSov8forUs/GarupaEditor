@@ -15,7 +15,7 @@ import resultMedia from "../../data/simulator/resultMediaProfile.json";
 
 const EXPECTED_CUES = new Set([
   "directional_fl", "directional_fl_2", "directional_fl_3",
-  "after_live", "SE_RESULT_SUCCESS", "SE_RESULT_FAILED", "SE_RESULT_SCORE_COUNT", "SE_RHYTHM_CLEAR", "SE_RHYTHM_FULLCOMBO", "SE_RHYTHM_GAYA", "SE_RHYTHM_TAP_SKILL", "bad", "miss",
+  "after_live", "SE_RESULT_SUCCESS", "SE_RESULT_FAILED", "SE_RESULT_SCORE_COUNT", "SE_RHYTHM_CLEAR", "SE_RHYTHM_CLEAR_VO", "SE_RHYTHM_FULLCOMBO", "SE_RHYTHM_GAYA", "SE_RHYTHM_TAP_SKILL", "bad", "miss",
   "SE_RHYTHM_TAP_LONG", "flick", "game_button", "good", "great", "perfect", "decide_1",
 ]);
 

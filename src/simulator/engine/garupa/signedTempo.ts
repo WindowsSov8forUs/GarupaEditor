@@ -9,17 +9,32 @@ export interface TempoSegment {
   readonly sourceOrder: number;
 }
 
-/** Authored positions may fold in time; the shared runtime position never does. */
+/** One positive tempo segment while it advances the latest time reached. */
+export interface TempoFrontierPiece {
+  readonly seconds: number;
+  readonly authored: number;
+  /** Authored minus runtime position; constant inside one piece. */
+  readonly offset: number;
+  readonly bpm: number;
+  readonly sourceOrder: number;
+  readonly segmentIndex: number;
+}
+
+/** Authored positions may fold in time; the shared runtime position never does.
+ * The runtime clock follows the tempo frontier, the latest time reached by the
+ * authored tempo sequence. Positions on that frontier keep their authored value
+ * shifted by the frontier offset; folded-back positions use their time. */
 export interface SignedTempo {
   readonly segments: readonly TempoSegment[];
+  readonly frontier: readonly TempoFrontierPiece[];
   readonly folded: boolean;
   readonly baseBpm: number;
-  readonly originSeconds: number;
+  /** Runtime position at music start; whole bars that keep pre-start events nonnegative. */
+  readonly startPosition: number;
   readonly secondsAt: (authoredPosition: number) => number;
   readonly runtimePosition: (authoredPosition: number) => number;
-  readonly positionAtSeconds: (seconds: number) => number;
-  readonly secondsAtRuntimePosition: (position: number) => number;
-  readonly stageAtSeconds: (seconds: number) => { bpm: number; position: number };
+  /** Authored frontier position for a runtime position, used by stage beats. */
+  readonly frontierAuthoredPosition: (runtimePosition: number) => number;
 }
 
 const tempoByChart = new WeakMap<ChartConstructionResult, SignedTempo>();
@@ -51,40 +66,90 @@ export function buildSignedTempo(chart: GarupaChartJson): SimulatorResult<Signed
     if (!Number.isFinite(seconds)) return invalid("BPM integration must retain finite time.");
     segments.push(Object.freeze({ ...command, seconds }));
   }
-  const secondsAt = (position: number): number => {
+  const segmentIndexAt = (position: number): number => {
     let low = 0, high = segments.length - 1;
     while (low <= high) {
       const middle = (low + high) >>> 1;
       if (segments[middle]!.position <= position) low = middle + 1;
       else high = middle - 1;
     }
-    const segment = segments[Math.max(0, high)]!;
+    return Math.max(0, high);
+  };
+  const secondsAt = (position: number): number => {
+    const segment = segments[segmentIndexAt(position)]!;
     return segment.seconds + (position - segment.position) * 60 / (48 * segment.bpm);
   };
-  // This is a coordinate origin only: it never shifts the music or target times.
-  let originSeconds = segments.reduce((minimum, segment) => Math.min(minimum, segment.seconds), 0);
+  let earliestSeconds = 0;
   for (const item of chart) {
+    if (item.type === "Header") continue;
     for (const node of item.type === "Slide" ? item.connections : [item]) {
       const at = secondsAt(node.beat * 48);
       if (!Number.isFinite(at)) return invalid("Every chart event must map to finite time.");
-      originSeconds = Math.min(originSeconds, at);
+      earliestSeconds = Math.min(earliestSeconds, at);
     }
   }
-  const baseBpm = segments[0]!.bpm, unitsPerSecond = baseBpm * 48 / 60;
-  const positionAtSeconds = (time: number) => (time - originSeconds) * unitsPerSecond;
+  const frontier: TempoFrontierPiece[] = [];
+  let latest = 0;
+  for (let index = 0; index < segments.length; index++) {
+    const segment = segments[index]!, next = segments[index + 1];
+    if (segment.bpm < 0) continue;
+    const end = next === undefined ? Infinity : next.seconds;
+    if (frontier.length > 0 && end <= latest) continue;
+    const previous = frontier[frontier.length - 1];
+    if (previous === undefined || segment.seconds >= latest) {
+      // Contiguous continuation keeps the authored coordinate and its offset.
+      frontier.push(Object.freeze({ seconds: segment.seconds, authored: segment.position, offset: previous?.offset ?? 0,
+        bpm: segment.bpm, sourceOrder: segment.sourceOrder, segmentIndex: index }));
+    } else {
+      // The sequence returns to the frontier inside this segment.
+      const authored = segment.position + (latest - segment.seconds) * 48 * segment.bpm / 60;
+      const runtime = previous.authored - previous.offset + (latest - previous.seconds) * 48 * previous.bpm / 60;
+      frontier.push(Object.freeze({ seconds: latest, authored, offset: authored - runtime,
+        bpm: segment.bpm, sourceOrder: segment.sourceOrder, segmentIndex: index }));
+    }
+    latest = end;
+  }
+  // Folding can place events before music start. Shift the runtime axis by whole
+  // bars so every runtime position stays nonnegative and keeps its bar phase.
+  const earliestRuntime = earliestSeconds * 48 * frontier[0]!.bpm / 60;
+  const startPosition = earliestRuntime < 0 ? Math.ceil(-earliestRuntime / 192) * 192 : 0;
+  if (startPosition > 0) {
+    for (let index = 0; index < frontier.length; index++)
+      frontier[index] = Object.freeze({ ...frontier[index]!, offset: frontier[index]!.offset - startPosition });
+  }
+  const pieceAtSeconds = (time: number): TempoFrontierPiece => {
+    let low = 0, high = frontier.length - 1;
+    while (low <= high) {
+      const middle = (low + high) >>> 1;
+      if (frontier[middle]!.seconds <= time) low = middle + 1;
+      else high = middle - 1;
+    }
+    return frontier[Math.max(0, high)]!;
+  };
+  const runtimeAtSeconds = (time: number): number => {
+    const piece = pieceAtSeconds(time);
+    return piece.authored - piece.offset + (time - piece.seconds) * 48 * piece.bpm / 60;
+  };
+  const runtimePosition = (position: number): number => {
+    const time = secondsAt(position);
+    const piece = pieceAtSeconds(time);
+    // Positions on the frontier stay exact; folded ones are placed by time.
+    return piece.segmentIndex === segmentIndexAt(position) && time >= piece.seconds
+      ? position - piece.offset : runtimeAtSeconds(time);
+  };
+  const frontierAuthoredPosition = (runtime: number): number => {
+    let low = 0, high = frontier.length - 1;
+    while (low <= high) {
+      const middle = (low + high) >>> 1;
+      if (frontier[middle]!.authored - frontier[middle]!.offset <= runtime) low = middle + 1;
+      else high = middle - 1;
+    }
+    return runtime + frontier[Math.max(0, high)]!.offset;
+  };
   return ok(Object.freeze({
-    segments: Object.freeze(segments), folded: segments.some(segment => segment.bpm < 0),
-    baseBpm, originSeconds, secondsAt, positionAtSeconds,
-    runtimePosition: (position: number) => positionAtSeconds(secondsAt(position)),
-    secondsAtRuntimePosition: (position: number) => position / unitsPerSecond + originSeconds,
-    stageAtSeconds: (time: number) => {
-      for (let index = 0; index < segments.length; index++) {
-        const segment = segments[index]!, next = segments[index + 1];
-        if (segment.bpm > 0 && time >= segment.seconds && (next === undefined || time < next.seconds))
-          return { bpm: segment.bpm, position: segment.position + (time - segment.seconds) * segment.bpm * 48 / 60 };
-      }
-      return { bpm: baseBpm, position: time * unitsPerSecond };
-    },
+    segments: Object.freeze(segments), frontier: Object.freeze(frontier),
+    folded: segments.some(segment => segment.bpm < 0), baseBpm: segments[0]!.bpm, startPosition,
+    secondsAt, runtimePosition, frontierAuthoredPosition,
   }));
 }
 

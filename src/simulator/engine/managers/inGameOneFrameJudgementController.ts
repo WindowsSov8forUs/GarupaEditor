@@ -34,6 +34,7 @@ import {
 import { validateAutoLiveActivationGraph } from "../notes/noteTypes";
 import { judgementGeometry } from "../data/judgementGeometry";
 import { hasContinuousNoteGeometry } from "../chart/noteGeometry";
+import { isSlideGestureNode, slideFlickJudgeNoteType, slideGestureAfterType } from "../chart/slideFlickNodes";
 
 const ONE_FRAME_CAPACITY = 5;
 
@@ -586,6 +587,7 @@ export class InGameOneFrameJudgementController {
           ? JudgeTiming.None
           : request.rawTiming,
       multipleDirectionalFlickNoteCount: judgementDirectionalCount(request, ownership),
+      ...(request.damageDivisor === undefined ? {} : { damageDivisor: request.damageDivisor }),
     });
     const business = this.businessOwner?.(judgement, request.noteInformation) ?? null;
     if (business?.status === "integrity-failure") return business;
@@ -628,6 +630,7 @@ export class InGameOneFrameJudgementController {
       !Number.isInteger(request.rawTiming) ||
       request.rawTiming < JudgeTiming.None ||
       request.rawTiming > JudgeTiming.Slow ||
+      !isOwnedDamageDivisor(source, request, ownership) ||
       (request.rawResult === NoteResultType.Perfect && request.rawTiming !== JudgeTiming.None) ||
       (request.rawResult >= NoteResultType.Bad &&
         request.rawResult <= NoteResultType.Great &&
@@ -656,11 +659,23 @@ export class InGameOneFrameJudgementController {
 
 function judgementDirectionalCount(request: AutoLiveJudgementRequest | ManualJudgementRequest,
   ownership: ManualJudgementOwnership | null | undefined): number {
-  if (request.noteType === 10 && request.noteInformation.slideGesture?.noteType === 10)
-    return request.noteInformation.slideGesture.width;
-  return request.noteType === 7 && ownership?.slidePhase === "tail"
+  // A Slide Multiple-Directional family counts its owned judgement span, at the
+  // last node as in the original and at an approved gesture node alike.
+  return request.noteType === 7 && ownership?.slidePhase != null
     ? ownership.judgementLaneSpan?.width ?? ownership.slideButtonTypes!.length
     : request.multipleDirectionalFlickNoteCount ?? 0;
+}
+
+function isOwnedDamageDivisor(
+  source: ManualJudgementRequest["noteInformation"],
+  request: ManualJudgementRequest,
+  ownership: ManualJudgementOwnership,
+): boolean {
+  if (request.damageDivisor === undefined) return true;
+  if (request.rawResult !== NoteResultType.Miss) return false;
+  return request.damageDivisor === 2
+    ? source.fireNoteType === FrontNoteType.Long && request.noteType === 1
+    : request.damageDivisor === 5 && ownership.slidePhase === "intermediate";
 }
 
 function isClosedManualRequest(
@@ -672,15 +687,21 @@ function isClosedManualRequest(
   const expectedMultipleCount = ownership.multipleDirectionalFlickNoteCount;
   const expectedMultipleButtons = ownership.multipleDirectionalFlickButtonTypes;
   if (source.fireNoteType === FrontNoteType.MultipleDirectionalFlick) {
+    // NoteMultipleDirectionalFlick.onMiss emits one GameNoteType 0 Miss.
+    if (request.rawResult === NoteResultType.Miss) {
+      return phase === "head" && request.noteType === 0 &&
+        request.absolutePosition === source.absolutePos &&
+        request.multipleDirectionalFlickNoteCount === undefined &&
+        expectedMultipleCount !== null;
+    }
     return phase === "head" &&
       request.noteType === 10 &&
-      request.rawResult !== NoteResultType.Miss &&
       request.absolutePosition === source.absolutePos &&
       isOwnedButtonGroup(
         request.multipleDirectionalFlickNoteCount,
         expectedMultipleCount,
         expectedMultipleButtons,
-      ) || phase === "head" && request.noteType === 10 && request.rawResult !== NoteResultType.Miss &&
+      ) || phase === "head" && request.noteType === 10 &&
         request.absolutePosition === source.absolutePos && request.multipleDirectionalFlickNoteCount === expectedMultipleCount &&
         ownership.multipleDirectionalMembers !== undefined && ownership.multipleDirectionalMembers.includes(source) &&
         ownership.multipleDirectionalMembers.length === expectedMultipleCount && ownership.multipleDirectionalMembers.every(member =>
@@ -711,6 +732,14 @@ function isClosedManualRequest(
     }
     const longButtons = ownership.longAfterButtonTypes;
     const expectedLongCount = ownership.longAfterMultipleCount;
+    // NoteLong Miss frames use GameNoteType 1 for every after-note family.
+    if (request.noteType === 1) {
+      return request.rawResult === NoteResultType.Miss &&
+        request.absolutePosition === ownership.longAfterAbsolutePosition &&
+        Array.isArray(longButtons) &&
+        longButtons.length > 0 &&
+        request.multipleDirectionalFlickNoteCount === undefined;
+    }
     return request.noteType === ownership.longAfterNoteType &&
       request.absolutePosition === ownership.longAfterAbsolutePosition &&
       Array.isArray(longButtons) &&
@@ -830,8 +859,10 @@ function isClosedAutoLiveJudgementRequest(
   const source = request.noteInformation;
   const expectedMultipleDirectionalCount =
     ownership.multipleDirectionalFlickNoteCount;
-  if (source.slideGesture !== undefined) return request.phase === (source.isSlideNoteHead ? "head" : "intermediate") &&
-    request.absolutePosition === source.absolutePos && request.noteType === source.slideGesture.noteType &&
+  // Approved gesture head/intermediate: the original Slide tail types (8 for Miss).
+  if (request.phase !== "tail" && isSlideGestureNode(source)) return request.phase === (source.isSlideNoteHead ? "head" : "intermediate") &&
+    request.absolutePosition === source.absolutePos &&
+    (request.noteType === 8 || request.noteType === slideFlickJudgeNoteType(slideGestureAfterType(source))) &&
     request.multipleDirectionalFlickNoteCount === 0;
   if (request.phase === "head") {
     if (

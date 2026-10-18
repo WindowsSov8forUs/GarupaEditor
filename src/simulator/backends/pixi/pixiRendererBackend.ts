@@ -3333,7 +3333,7 @@ function updatePersistentComboHud(
 function applyAddScoreHud(
   object: PixiObjectRecord,
   visual: PixiHudVisual,
-  state: { readonly value: number; readonly depth: number; readonly alpha: number; readonly localXOffset: number },
+  state: { readonly value: number; readonly depth: number; readonly alpha: number; readonly localYOffset: number },
   textures: ReadonlyMap<string, Texture>,
   referenceCounts: Map<string, number>,
 ): void {
@@ -3341,10 +3341,12 @@ function applyAddScoreHud(
   const current = CURRENT_ORDINARY_HUD_PROFILE.addScore;
   placeSafeTopAnchoredUiRoot(object, "left");
   const uiScale = authoredUiScale(object);
+  // AddScoreObject moves Unity local +Y (-50, then +8/+1 per resume); the
+  // top-left renderer inverts Y, so the number rises.
   object.node.position.set(
-    Math.fround(object.node.position.x +
-      (current.numberBaseAuthoredPosition[0] + current.initialLocalX + state.localXOffset) * uiScale),
-    Math.fround(object.node.position.y - current.numberBaseAuthoredPosition[1] * uiScale),
+    Math.fround(object.node.position.x + current.numberBaseAuthoredPosition[0] * uiScale),
+    Math.fround(object.node.position.y -
+      (current.numberBaseAuthoredPosition[1] + current.initialLocalY + state.localYOffset) * uiScale),
   );
   object.node.scale.set(Math.fround(uiScale * current.numberScale));
   object.node.alpha = state.alpha;
@@ -3979,7 +3981,8 @@ function updateScorePanelClip(
   visual.scoreHighRankPanelMask.position.copyFrom(progress.position);
   const panelRight = Math.fround(panel.targetLeftX + indicatorLocalX);
   const authoredLeft = Math.fround(panel.targetLeftX + panel.leftAbsolute);
-  const panelWidth = Math.fround(Math.max(panel.minimumWidth, panelRight - authoredLeft));
+  // UIPanel.OnAnchor clamps the clip width to max(softness.x, 2).
+  const panelWidth = Math.fround(Math.max(Math.max(panel.softness[0], panel.minimumWidth), panelRight - authoredLeft));
   const panelCenter = Math.fround(
     Math.fround(Math.fround(authoredLeft + panelRight) / 2),
   );
@@ -4605,7 +4608,8 @@ function applySpatialSpriteTransform(
   }
   const node = object.node;
   if (object.role === "field-line") {
-    const uiScale = authoredUiScale(object);
+    // RhythmGameLines sits under UI_Root_Back/Display, not the safe-area HUD root.
+    const uiScale = object.surfaceLayout.ui.backRootPixelsPerUnit;
     node.position.set(
       Math.fround(profile.scene.projection.viewportWidth / 2 + command.position.x.value * uiScale),
       Math.fround(profile.scene.projection.viewportHeight / 2 - command.position.y.value * uiScale),
@@ -4621,8 +4625,9 @@ function applySpatialSpriteTransform(
       command.position.y.value,
       profile.scene.projection,
     );
+    // Lane effect parent (rate) sits under the button and MusicObjects.
     const parentScale = object.role === "tap-lane-effect"
-      ? object.surfaceLayout.gameplay.screenWidthAdjustRate
+      ? Math.fround(object.surfaceLayout.gameplay.screenWidthAdjustRate * object.surfaceLayout.gameplay.musicObjectsScale)
       : Math.fround(1);
     const textureScale = Math.fround(
       profile.scene.projection.pixelsPerWorldUnit / row.pixelsPerUnit * parentScale,

@@ -39,8 +39,12 @@ import {
 } from "../engine/garupa/productChartProfile";
 import {
   createGarupaProductTimingGroupAxisProfile,
+  mergeTimingGroupChanges,
   registerGarupaProductTimingGroupAxisProfile,
+  timingGroupAxisAffectsNote,
+  type GarupaProductAxisChange,
 } from "../engine/garupa/timingGroupAxis";
+import { MANUAL_MISS_SECONDS } from "../engine/data/manualJudgement";
 
 export const GARUPA_JSON_POSITION_UNITS_PER_BEAT = 48;
 const POSITION_UNITS_PER_BAR = 192;
@@ -80,12 +84,19 @@ interface NoteKinds {
   readonly after: AfterNoteTypeValue;
 }
 
+/** `noteArrivalSeconds` is this session's GetNoteArrivalSeconds value; it bounds
+ * the time a note can be visible when deciding whether SV changes its motion. */
 export function constructChartFromGarupaChartJson(
   chart: GarupaChartJson,
+  noteArrivalSeconds: number,
 ): SimulatorResult<ChartConstructionResult> {
+  if (!Number.isFinite(noteArrivalSeconds) || noteArrivalSeconds <= 0) {
+    return integrityFailure("simulator.garupa-json.invalid-note-arrival",
+      "Chart construction requires the session's positive finite note arrival seconds.");
+  }
   const tempo = buildSignedTempo(chart);
   if (tempo.status !== "ok") return tempo;
-  const profile = buildGarupaProductChartProfile(chart, tempo.value);
+  const profile = buildGarupaProductChartProfile(chart, tempo.value, noteArrivalSeconds);
   if (profile.status !== "ok") return profile;
   const originalSources = new Map<string, NoteInformation>();
   const extensions = Object.freeze({ ...profile.value, originalSources });
@@ -105,7 +116,8 @@ export function constructChartFromGarupaChartJson(
     }
   }
   const bound = freezeGarupaProductChartProfile({
-    originalItemIndices: extensions.originalItemIndices, svEvents: [...projectedProfile.svEvents],
+    originalItemIndices: extensions.originalItemIndices, svItemIndices: extensions.svItemIndices,
+    svEvents: [...projectedProfile.svEvents],
     slideChains: [...extensions.slideChains],
     nodes: extensions.authoredNodes.map(node => {
       const root = roots.get(node.chartItemIndex);
@@ -149,6 +161,8 @@ function constructGarupaNoteGraphs(
       text: String(item.value),
     }));
   }
+  const laneChange = habahiroLaneChangePosition(chart, tempo);
+  if (laneChange.status !== "ok") return laneChange;
   const effectiveOrders = new Set(tempo.segments.map(segment => segment.sourceOrder));
   for (let index = bpmItems.length - 1; index >= 0; index--) if (!effectiveOrders.has(bpmItems[index]!.sourceOrder)) bpmItems.splice(index, 1);
   bpmItems.sort((left, right) => left.absolutePos - right.absolutePos || left.sourceOrder - right.sourceOrder);
@@ -167,10 +181,12 @@ function constructGarupaNoteGraphs(
   let records: PositionedRecord[] = [];
   for (let sourceOrder = 0; sourceOrder < chart.length; sourceOrder += 1) {
     const item = chart[sourceOrder];
-    if (item === undefined || item.type === "SV" || item.type === "BPM") continue;
+    if (item === undefined || item.type === "SV" || item.type === "BPM" ||
+      item.type === "Header" || item.type === "System") continue;
     const projected = !extensions.originalItemIndices.has(sourceOrder);
     if (item.type === "Slide") {
-      const long = isLongShape(item) && (!tempo.folded || tempo.secondsAt(item.connections[1]!.beat * 48) > tempo.secondsAt(item.connections[0]!.beat * 48));
+      // Only the authored `long` flag selects the original Long; a straight two-node Slide stays a Slide.
+      const long = item.long === true && (!tempo.folded || tempo.secondsAt(item.connections[1]!.beat * 48) > tempo.secondsAt(item.connections[0]!.beat * 48));
       const slide = long ? createLong(item, nextIndex, projected) : createSlide(item, sourceOrder, slideOrdinal, nextIndex, projected);
       if (slide.status !== "ok") return slide;
       records.push(Object.freeze({
@@ -226,27 +242,6 @@ function constructGarupaNoteGraphs(
     records.push(Object.freeze({ absolutePos: note.absolutePos, sourceOrder, localOrder: 0, note }));
   }
 
-  for (const bpm of bpmItems) {
-    if (bpm.absolutePos === 0 || tempo.folded) continue;
-    const position = positionFieldsFromAbsolute(bpm.absolutePos);
-    const note = createBaseNote({
-      index: nextIndex++,
-      position,
-      span: commandSpan(),
-      kinds: Object.freeze({ game: GameNoteType.LongEndFlick, front: FrontNoteType.None, after: AfterNoteType.None }),
-      additional: GameNoteAdditionalType.None,
-      bpm: bpm.value,
-      bpmString: bpm.text,
-      ccNum: 8,
-    });
-    records.push(Object.freeze({
-      absolutePos: bpm.absolutePos,
-      sourceOrder: bpm.sourceOrder,
-      localOrder: 0x7fffffff,
-      note,
-    }));
-  }
-
   if (tempo.folded) {
     const visited = new Set<NoteInformation>();
     const project = (note: NoteInformation): void => {
@@ -265,12 +260,56 @@ function constructGarupaNoteGraphs(
     records = records.map(record => ({ ...record, absolutePos: record.note.absolutePos }));
     if (records.some(record => !Number.isFinite(record.absolutePos)))
       return invalidBpm("Folded runtime coordinates must remain finite.");
+    // Only a Slide whose node times run backwards needs the folded-timing branches.
+    for (const chain of extensions.slideChains) {
+      if (!chain.independentTiming) continue;
+      const root = records.find(record => record.sourceOrder === chain.chartItemIndex && record.localOrder === 0)?.note;
+      if (root !== undefined) Object.assign(root, { foldedTiming: true as const });
+    }
   }
+
+  // BPM changes are the tempo frontier: the original clock command where a
+  // positive segment advances the latest reached time. Without folding this is
+  // every authored change at its authored position.
+  const changeItems = tempo.frontier.slice(1).map(piece => {
+    const item = bpmItems.find(candidate => candidate.sourceOrder === piece.sourceOrder)!;
+    return { sourceOrder: item.sourceOrder, value: item.value, text: item.text,
+      absolutePos: piece.authored - piece.offset, storedAbsolutePos: piece.authored };
+  });
+  for (const bpm of changeItems) {
+    const note = createBaseNote({
+      index: nextIndex++,
+      position: positionFieldsFromAbsolute(bpm.absolutePos),
+      span: commandSpan(),
+      kinds: Object.freeze({ game: GameNoteType.LongEndFlick, front: FrontNoteType.None, after: AfterNoteType.None }),
+      additional: GameNoteAdditionalType.None,
+      bpm: bpm.value,
+      bpmString: bpm.text,
+      ccNum: 8,
+    });
+    if (bpm.storedAbsolutePos !== bpm.absolutePos) Object.assign(note, { storedAbsolutePos: bpm.storedAbsolutePos });
+    records.push(Object.freeze({
+      absolutePos: bpm.absolutePos,
+      sourceOrder: bpm.sourceOrder,
+      localOrder: 0x7fffffff,
+      note,
+    }));
+  }
+  // CreateNoteBatchInformationList sorts groups by AbsolutePos, then each
+  // group's members by buttonType with the original Array.Sort introsort.
+  // Authored order is the members' input order.
   records.sort((left, right) =>
     left.absolutePos - right.absolutePos ||
     left.note.storedAbsolutePos - right.note.storedAbsolutePos ||
     left.sourceOrder - right.sourceOrder ||
     left.localOrder - right.localOrder);
+  for (let start = 0; start < records.length;) {
+    let end = start + 1;
+    while (end < records.length && records[end]!.absolutePos === records[start]!.absolutePos &&
+      records[end]!.note.storedAbsolutePos === records[start]!.note.storedAbsolutePos) end++;
+    originalIntroSort(records, start, end - 1, (left, right) => Math.sign(memberLaneKey(left.note) - memberLaneKey(right.note)));
+    start = end;
+  }
   for (const record of records) extensions.originalSourceOrder.set(record.note, record.sourceOrder);
   const noteBatches = createBatches(records);
   const roots = new Map(records.filter((record) => record.localOrder === 0).map((record) => [record.sourceOrder, record.note]));
@@ -281,16 +320,16 @@ function constructGarupaNoteGraphs(
       ? root : root.slideNoteList[node.connectionIndex - 1];
     if (source !== undefined) originalSources.set(node.identity, source);
   }
-  const changeItems = tempo.folded ? [] : bpmItems.filter((item) => item.absolutePos > 0);
   const result = freezeChartConstructionResult({
     noteBatches,
     startBpm: baseBpm.value,
     startBpmString: baseBpm.text,
     bpmChangeRealValueList: changeItems.map((item) => item.value),
     bpmChangeStringRealValueList: changeItems.map((item) => item.text),
-    // Garupa JSON has no #HABAHIRO mode marker; note widths are independent geometry.
-    isMultiRangeNotes: false,
-    habahiroChangeAbsolutePos: -1,
+    // The Header item is the original #HABAHIRO header; the System lane change
+    // is the original lane_change command position on the runtime clock.
+    isMultiRangeNotes: chart.some((item) => item.type === "Header"),
+    habahiroChangeAbsolutePos: laneChange.value,
   });
   registerSignedTempo(result, tempo);
   registerConstructedChartRuntimeMetadata(result);
@@ -300,6 +339,7 @@ function constructGarupaNoteGraphs(
 function buildGarupaProductChartProfile(
   chart: GarupaChartJson,
   tempo: SignedTempo,
+  noteArrivalSeconds: number,
 ): SimulatorResult<GarupaProductChartProfile> {
   const svEvents: GarupaProductSvEvent[] = [];
   const nodes: GarupaProductNode[] = [];
@@ -308,7 +348,7 @@ function buildGarupaProductChartProfile(
 
   for (let sourceOrder = 0; sourceOrder < chart.length; sourceOrder += 1) {
     const item = chart[sourceOrder]!;
-    if (item.type === "BPM") continue;
+    if (item.type === "BPM" || item.type === "Header" || item.type === "System") continue;
     if (item.type === "SV") {
       const position = garupaBeatToAbsolutePosition(item.beat);
       if (position.status !== "ok") return position;
@@ -377,25 +417,43 @@ function buildGarupaProductChartProfile(
   }
 
   // A group name or a neutral SV does not change note behaviour. Only notes
-  // whose own geometry, topology or effective axis needs an extension use it.
-  const needsAxisExtension = (group: GarupaProductTimingGroupId): boolean =>
-    svEvents.some((event) => (event.timingGroup === "#Global" || event.timingGroup === group) && event.value !== 1);
+  // whose own geometry, topology or effective axis needs an extension use it;
+  // SV affects a node only if it can change that node's visible motion.
+  const changesByGroup = new Map<GarupaProductTimingGroupId, readonly GarupaProductAxisChange[]>();
+  const groupChanges = (group: GarupaProductTimingGroupId): SimulatorResult<readonly GarupaProductAxisChange[]> => {
+    const cached = changesByGroup.get(group);
+    if (cached !== undefined) return ok(cached);
+    const changes = mergeTimingGroupChanges(svEvents, group, (event) => ok(tempo.secondsAt(event.absolutePosition) * 1000));
+    if (changes.status === "ok") changesByGroup.set(group, changes.value);
+    return changes;
+  };
+  const svItemIndices = new Set<number>();
+  for (const [index, item] of chart.entries()) {
+    if (item.type === "BPM" || item.type === "SV" || item.type === "Header" || item.type === "System") continue;
+    const owner = productTimingGroup(item.timingGroup);
+    for (const node of item.type === "Slide" ? item.connections : [item]) {
+      const changes = groupChanges(node.timingGroup === undefined ? owner : productTimingGroup(node.timingGroup));
+      if (changes.status !== "ok") return changes;
+      if (timingGroupAxisAffectsNote(changes.value, tempo.secondsAt(node.beat * GARUPA_JSON_POSITION_UNITS_PER_BEAT) * 1000,
+        noteArrivalSeconds * 1000, MANUAL_MISS_SECONDS * 1000)) {
+        svItemIndices.add(index);
+        break;
+      }
+    }
+  }
   const independentItems = new Set(slideChains.filter(chain => chain.independentTiming).map(chain => chain.chartItemIndex));
   const originalItemIndices = new Set<number>();
   for (const [index, item] of chart.entries()) {
-    if (item.type === "BPM" || item.type === "SV") continue;
-    const group = productTimingGroup(item.timingGroup);
+    if (item.type === "BPM" || item.type === "SV" || item.type === "Header" || item.type === "System") continue;
     const compatible = item.type === "Slide"
-      ? item.connections.slice(0, -1).every(node => node.type !== "Flick" && node.type !== "Directional") &&
-        item.connections[0]!.type !== "Hidden" && item.connections[item.connections.length - 1]!.type !== "Hidden" &&
-        item.connections.every((node) =>
-          canUseFixedLaneGeometry(node) && !needsAxisExtension(
-            node.timingGroup === undefined ? group : productTimingGroup(node.timingGroup)))
-      : canUseFixedLaneGeometry(item) && !needsAxisExtension(group);
-    if (compatible && !independentItems.has(index)) originalItemIndices.add(index);
+      ? item.connections[0]!.type !== "Hidden" && item.connections[item.connections.length - 1]!.type !== "Hidden" &&
+        item.connections.every(canUseFixedLaneGeometry)
+      : canUseFixedLaneGeometry(item);
+    if (compatible && !independentItems.has(index) && !svItemIndices.has(index)) originalItemIndices.add(index);
   }
   return ok(freezeGarupaProductChartProfile({
     originalItemIndices,
+    svItemIndices,
     svEvents,
     nodes,
     slideChains: slideChains.filter((chain) => !originalItemIndices.has(chain.chartItemIndex)),
@@ -465,6 +523,19 @@ function canUseFixedLaneGeometry(connection: GarupaChartJsonSlideConnection): bo
     start >= 0 && start + connection.width <= LANE_COUNT;
 }
 
+function habahiroLaneChangePosition(chart: GarupaChartJson, tempo: SignedTempo): SimulatorResult<number> {
+  const laneChanges = chart.filter((item) => item.type === "System");
+  if (laneChanges.length === 0) return ok(-1);
+  if (!chart.some((item) => item.type === "Header")) {
+    return invalidPosition("A #LANE_CHANGE requires the #HABAHIRO Header.");
+  }
+  // convertResultDictionary overwrites the position for every retained command
+  // in bar/position order, so the latest beat wins; equal positions are one command.
+  const latest = laneChanges.reduce((best, item) => item.beat > best.beat ? item : best);
+  const authored = garupaBeatToAbsolutePosition(latest.beat);
+  return authored.status === "ok" ? ok(tempo.runtimePosition(authored.value)) : authored;
+}
+
 export function garupaBeatToAbsolutePosition(beat: number): SimulatorResult<number> {
   if (!Number.isFinite(beat) || beat < 0) {
     return invalidPosition("Garupa JSON beat must be finite and nonnegative.");
@@ -475,19 +546,6 @@ export function garupaBeatToAbsolutePosition(beat: number): SimulatorResult<numb
   }
   // Approved precision extension of the common position unit, not a second clock.
   return ok(scaled);
-}
-
-/** Garupa intentionally normalizes the indistinguishable straight Slide case.
- * Hidden/interior nodes and multi-lane directional gestures retain their Slide graph. */
-function isLongShape(slide: GarupaChartJsonSlideItem): boolean {
-  if (slide.connections.length !== 2) return false;
-  const head = slide.connections[0]!, tail = slide.connections[1]!;
-  return (head.type === "Single" || head.type === "Skill") &&
-    (tail.type === "Single" || tail.type === "Skill" || tail.type === "Flick" ||
-      tail.type === "Directional" && tail.width === 1) &&
-    head.lane === tail.lane && head.width === tail.width &&
-    tail.beat * GARUPA_JSON_POSITION_UNITS_PER_BEAT >
-      head.beat * GARUPA_JSON_POSITION_UNITS_PER_BEAT;
 }
 
 function createLong(slide: GarupaChartJsonSlideItem, firstIndex: number, projected = false) {
@@ -556,7 +614,10 @@ function createSlide(
     const span = connection.type === "Directional"
       ? projectedSpan(connection.lane, 1, projected)
       : fullSpan.value;
-    const terminalKinds = isTerminal
+    // Approved extension: an intermediate Flick/Directional carries the original
+    // Slide end kinds; only its position before the last node is new.
+    const gesture = connection.type === "Flick" || connection.type === "Directional";
+    const terminalKinds = isTerminal || gesture
       ? slideTerminalKinds(connection, familyA, connection.width > 1)
       : Object.freeze({ game: familyGame, front: familyFront, after: AfterNoteType.None });
     const child = createBaseNote({
@@ -566,7 +627,7 @@ function createSlide(
       kinds: terminalKinds,
       additional: connection.type === "Skill" ? GameNoteAdditionalType.Skill : GameNoteAdditionalType.None,
       invisible: connection.type === "Hidden",
-      ...(!isTerminal ? slideGestureFields(connection) : {}),
+      ...(!isTerminal ? slideExitFields(connection) : {}),
     });
     children.push(child);
   }
@@ -587,7 +648,9 @@ function createSlide(
     }),
     additional: head.type === "Skill" ? GameNoteAdditionalType.Skill : GameNoteAdditionalType.None,
     isSlideNoteHead: true,
-    ...slideGestureFields(head),
+    ...(head.type === "Flick" || head.type === "Directional"
+      ? { slideHeadGestureGameType: slideTerminalKinds(head, familyA, head.width > 1).game } : {}),
+    ...slideExitFields(head),
     invisible: head.type === "Hidden",
     ...(head.type === "Hidden" || tail.type === "Hidden" ? { hiddenSlideEndpoints: true as const } : {}),
     slideNoteList: children,
@@ -632,7 +695,7 @@ function createSlide(
         directionalSlideConnection: { rootIndex: root.index, connectionIndex, memberOffset },
         index: nextIndex + slide.connections.length + additionalRoots.length,
         position: positions[connectionIndex]!,
-        span: projectedSpan(start + memberOffset, 1, true),
+        span: projectedSpan(start + memberOffset, 1, projected),
         kinds: { game: familyA
           ? node.direction === "Left" ? GameNoteType.SlideADirectionalFlickLeftAdd : GameNoteType.SlideADirectionalFlickRightAdd
           : node.direction === "Left" ? GameNoteType.SlideBDirectionalFlickLeftAdd : GameNoteType.SlideBDirectionalFlickRightAdd,
@@ -657,11 +720,9 @@ function createSlide(
   }));
 }
 
-function slideGestureFields(node: GarupaChartJsonSlideItem["connections"][number]): Pick<NoteInformation, "slideGesture" | "slideExitOffset"> {
-  if (node.type !== "Flick" && node.type !== "Directional") return {};
-  return { slideGesture: Object.freeze({ direction: node.type === "Directional" ? node.direction : null,
-    width: node.width, noteType: node.type === "Flick" ? 3 : node.width > 1 ? 10 : 9 }),
-    ...(node.type === "Directional" ? { slideExitOffset: (node.direction === "Left" ? -1 : 1) * (node.width - 1) } : {}) };
+/** Approved extension geometry: a gesture Directional continues from its far end. */
+function slideExitFields(node: GarupaChartJsonSlideItem["connections"][number]): Pick<NoteInformation, "slideExitOffset"> {
+  return node.type === "Directional" ? { slideExitOffset: (node.direction === "Left" ? -1 : 1) * (node.width - 1) } : {};
 }
 
 function createBaseNote(input: {
@@ -672,7 +733,7 @@ function createBaseNote(input: {
   readonly additional: GameNoteAdditionalTypeValue;
   readonly invisible?: boolean;
   readonly hiddenSlideEndpoints?: true;
-  readonly slideGesture?: NoteInformation["slideGesture"];
+  readonly slideHeadGestureGameType?: NoteInformation["slideHeadGestureGameType"];
   readonly slideExitOffset?: number;
   readonly isSlideNoteHead?: boolean;
   readonly slideNoteList?: readonly NoteInformation[];
@@ -690,7 +751,7 @@ function createBaseNote(input: {
     ...(input.directionalSlideConnection === undefined ? {} : { directionalSlideConnection: input.directionalSlideConnection }),
     ...(input.directionalMemberRootIndex === undefined ? {} : { directionalMemberRootIndex: input.directionalMemberRootIndex, directionalMemberOffset: input.directionalMemberOffset }),
     ...(input.hiddenSlideEndpoints ? { hiddenSlideEndpoints: true as const } : {}),
-    ...(input.slideGesture === undefined ? {} : { slideGesture: input.slideGesture }),
+    ...(input.slideHeadGestureGameType === undefined ? {} : { slideHeadGestureGameType: input.slideHeadGestureGameType }),
     ...(input.slideExitOffset === undefined ? {} : { slideExitOffset: input.slideExitOffset }),
     index: input.index,
     isResult: false,
@@ -726,6 +787,82 @@ function createBaseNote(input: {
   };
   registerMultiRangeSourceIdentity(note, { ccNums: input.span.ccNums, afterCcNums: [] });
   return note;
+}
+
+/** ArraySortHelper IntroSort as shipped: length 2/3 swaps, insertion sort up to 16,
+ * median-of-three partitioning, then heapsort once 2*FloorLog2PlusOne(length) is spent. */
+function originalIntroSort<T>(items: T[], lo: number, hi: number, compare: (left: T, right: T) => number): void {
+  const swap = (a: number, b: number) => { const value = items[a]!; items[a] = items[b]!; items[b] = value; };
+  const swapIfGreater = (a: number, b: number) => { if (a !== b && compare(items[a]!, items[b]!) > 0) swap(a, b); };
+  const insertionSort = (from: number, to: number) => {
+    for (let i = from; i < to; i++) {
+      let j = i;
+      const value = items[i + 1]!;
+      while (j >= from && compare(value, items[j]!) < 0) { items[j + 1] = items[j]!; j--; }
+      items[j + 1] = value;
+    }
+  };
+  const downHeap = (start: number, n: number, from: number) => {
+    let i = start;
+    const value = items[from + i - 1]!;
+    while (i <= n >> 1) {
+      let child = 2 * i;
+      if (child < n && compare(items[from + child - 1]!, items[from + child]!) < 0) child++;
+      if (!(compare(value, items[from + child - 1]!) < 0)) break;
+      items[from + i - 1] = items[from + child - 1]!;
+      i = child;
+    }
+    items[from + i - 1] = value;
+  };
+  const heapsort = (from: number, to: number) => {
+    const n = to - from + 1;
+    for (let i = n >> 1; i >= 1; i--) downHeap(i, n, from);
+    for (let i = n; i > 1; i--) { swap(from, from + i - 1); downHeap(1, i - 1, from); }
+  };
+  const partition = (from: number, to: number) => {
+    const middle = from + ((to - from) >> 1);
+    swapIfGreater(from, middle);
+    swapIfGreater(from, to);
+    swapIfGreater(middle, to);
+    const pivot = items[middle]!;
+    swap(middle, to - 1);
+    let left = from, right = to - 1;
+    while (left < right) {
+      while (compare(items[++left]!, pivot) < 0) { /* advance */ }
+      while (compare(pivot, items[--right]!) < 0) { /* retreat */ }
+      if (left >= right) break;
+      swap(left, right);
+    }
+    swap(left, to - 1);
+    return left;
+  };
+  const sort = (from: number, to: number, depth: number) => {
+    while (to > from) {
+      const size = to - from + 1;
+      if (size <= 16) {
+        if (size === 2) swapIfGreater(from, to);
+        else if (size === 3) { swapIfGreater(from, to - 1); swapIfGreater(from, to); swapIfGreater(to - 1, to); }
+        else insertionSort(from, to);
+        return;
+      }
+      if (depth === 0) { heapsort(from, to); return; }
+      depth--;
+      const pivot = partition(from, to);
+      sort(pivot + 1, to, depth);
+      to = pivot - 1;
+    }
+  };
+  const length = hi - lo + 1;
+  if (length < 2) return;
+  let floorLog2PlusOne = 0;
+  for (let n = length; n >= 1; n = Math.floor(n / 2)) floorLog2PlusOne++;
+  sort(lo, hi, 2 * floorLog2PlusOne);
+}
+
+/** buttonType is the original member key; a projected span extends it with its lane centre. */
+function memberLaneKey(note: NoteInformation): number {
+  const span = note.laneSpan;
+  return span === undefined ? note.buttonType : (span.start + span.end) / 2;
 }
 
 function createBatches(records: readonly PositionedRecord[]): NoteBatchInformation[] {

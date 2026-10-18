@@ -41,18 +41,25 @@ export interface OriginalSuddenLayout {
   };
 }
 
+/** NoteLane and SuddenArea are RhythmGameLines children under UI_Root_Back; the wide-screen
+ * adjuster moves and scales that parent. */
 export function originalSuddenLayout(percent: number, laneFit: boolean, viewportWidth: number,
-  viewportHeight: number, uiPixelScale: number, safeChildScale: number): OriginalSuddenLayout {
+  viewportHeight: number, backRootPixelScale: number,
+  rhythmLinesY = 0, rhythmLinesScale = 1): OriginalSuddenLayout {
   const ratio = originalSuddenRatio(percent);
-  if (typeof laneFit !== "boolean" || ![viewportWidth, viewportHeight, uiPixelScale, safeChildScale]
-    .every(value => Number.isFinite(value) && value > 0)) throw new Error("Invalid Sudden surface parameters.");
+  if (typeof laneFit !== "boolean" || ![viewportWidth, viewportHeight, backRootPixelScale, rhythmLinesScale]
+    .every(value => Number.isFinite(value) && value > 0) || !Number.isFinite(rhythmLinesY))
+    throw new Error("Invalid Sudden surface parameters.");
   const centerY = viewportHeight / 2;
-  const top = centerY + (source.noteLane.bottomY + source.noteLane.height) * safeChildScale;
-  const bottom = centerY + source.noteLane.bottomY * safeChildScale;
+  const top = centerY + (rhythmLinesY + (source.noteLane.bottomY + source.noteLane.height) * rhythmLinesScale) * backRootPixelScale;
+  const bottom = centerY + (rhythmLinesY + source.noteLane.bottomY * rhythmLinesScale) * backRootPixelScale;
   const mask = source.mask, bar = source.appearBar;
   const originY = mask.suddenAreaY + mask.parentY;
-  const maskWidth = mask.width * uiPixelScale, maskHeight = mask.height * ratio * uiPixelScale;
-  const maskTop = centerY - (originY + (mask.imageY + mask.height / 2) * ratio) * uiPixelScale;
+  // One SuddenArea unit in pixels, through RhythmGameLines and UI_Root_Back.
+  const unit = rhythmLinesScale * backRootPixelScale;
+  const displayY = (localY: number) => (rhythmLinesY + localY * rhythmLinesScale) * backRootPixelScale;
+  const maskWidth = mask.width * unit, maskHeight = mask.height * ratio * unit;
+  const maskTop = centerY - displayY(originY + (mask.imageY + mask.height / 2) * ratio);
   const fieldScale = laneFit ? Math.fround(1 - ratio) : 1;
   const barWidth = bar.minimumWidth + (bar.maximumWidth - bar.minimumWidth) * ratio;
   return Object.freeze({
@@ -61,11 +68,11 @@ export function originalSuddenLayout(percent: number, laneFit: boolean, viewport
     fieldScaleY: fieldScale, fieldUvHeight: fieldScale,
     maskBounds: Object.freeze([(viewportWidth - maskWidth) / 2, maskTop, maskWidth, maskHeight]) as readonly [number, number, number, number],
     bar: Object.freeze({ enabled: percent !== 0, centerX: viewportWidth / 2,
-      centerY: centerY - (originY + bar.localY * ratio) * uiPixelScale,
+      centerY: centerY - displayY(originY + bar.localY * ratio),
       sourceWidth: barWidth * bar.sprite.m_PixelsToUnits,
       sourceHeight: bar.height * bar.sprite.m_PixelsToUnits,
       sourceBorder: bar.sprite.m_Border.x,
-      scale: bar.localScale.x * uiPixelScale / bar.sprite.m_PixelsToUnits,
+      scale: bar.localScale.x * unit / bar.sprite.m_PixelsToUnits,
       alpha: bar.color.a, sortingOrder: bar.sortingOrder }),
   });
 }

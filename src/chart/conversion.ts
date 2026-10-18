@@ -3,9 +3,12 @@ import type {
   BestdoriV2ChartJsonBpmItem,
   BestdoriV2ChartJsonDirectionalNote,
   BestdoriV2ChartJsonItem,
+  BestdoriV2ChartJsonLongItem,
   BestdoriV2ChartJsonSingleNote,
   BestdoriV2ChartJsonSlideConnection,
+  BestdoriV2ChartJsonSlideItem,
 } from "./bestdori-v2";
+import { GARUPA_HEADER_HABAHIRO, GARUPA_SYSTEM_LANE_CHANGE, isGarupaLongSlideShape } from "./garupa";
 import type {
   GarupaChartJson,
   GarupaChartJsonBpmItem,
@@ -104,6 +107,7 @@ function normalizeGarupaBpmAtZero(items: GarupaChartJson): GarupaChartJson {
         return {
           type: "Slide",
           connections: item.connections.map((connection) => ({ ...connection })),
+          ...(item.long === true ? { long: true as const } : {}),
           ...(item.timingGroup === undefined ? {} : { timingGroup: item.timingGroup }),
         };
       }
@@ -113,14 +117,20 @@ function normalizeGarupaBpmAtZero(items: GarupaChartJson): GarupaChartJson {
 
   return items.map((item) => {
     if (item.type === "Slide") {
+      const connections = item.connections.map((connection) => ({
+        ...connection,
+        beat: shiftAndClampBeat(connection.beat, minBpmBeat),
+      }));
       return {
         type: "Slide",
-        connections: item.connections.map((connection) => ({
-          ...connection,
-          beat: shiftAndClampBeat(connection.beat, minBpmBeat),
-        })),
+        connections,
+        // Clamping both nodes to beat zero leaves no Long shape to flag.
+        ...(item.long === true && isGarupaLongSlideShape({ connections }) ? { long: true as const } : {}),
         ...(item.timingGroup === undefined ? {} : { timingGroup: item.timingGroup }),
       };
+    }
+    if (item.type === "Header") {
+      return { ...item };
     }
     return {
       ...item,
@@ -133,25 +143,25 @@ function normalizeBestdoriBpmAtZero(items: BestdoriV2ChartJson): BestdoriV2Chart
   const minBpmBeat = findMinBpmBeatFromBestdori(items);
   if (Math.abs(minBpmBeat) <= BEAT_ZERO_EPSILON) {
     return items.map((item) => {
-      if (item.type === "Slide") {
+      if (item.type === "Slide" || item.type === "Long") {
         return {
-          type: "Slide",
+          type: item.type,
           connections: item.connections.map((connection) => ({ ...connection })),
-        };
+        } as BestdoriV2ChartJsonSlideItem | BestdoriV2ChartJsonLongItem;
       }
       return { ...item };
     });
   }
 
   return items.map((item) => {
-    if (item.type === "Slide") {
+    if (item.type === "Slide" || item.type === "Long") {
       return {
-        type: "Slide",
+        type: item.type,
         connections: item.connections.map((connection) => ({
           ...connection,
           beat: shiftAndClampBeat(connection.beat, minBpmBeat),
         })),
-      };
+      } as BestdoriV2ChartJsonSlideItem | BestdoriV2ChartJsonLongItem;
     }
     return {
       ...item,
@@ -256,11 +266,41 @@ export function parseGarupaChartJson(input: unknown): GarupaChartJson {
         throw new Error(`${connectionLabel}.type is invalid: ${String(connectionType)}`);
       });
 
+      if (rawItem.long !== undefined && rawItem.long !== true) {
+        throw new Error(`${label}.long must be true when present`);
+      }
+      if (rawItem.long === true && !isGarupaLongSlideShape({ connections })) {
+        throw new Error(`${label}.long requires two nodes on one lane span with a Single/Skill head and a later Single/Skill/Flick/one-lane Directional tail`);
+      }
       const timingGroup = parseTimingGroup(rawItem.timingGroup, `${label}.timingGroup`);
       items.push({
         type: "Slide",
         connections,
+        ...(rawItem.long === true ? { long: true as const } : {}),
         ...(timingGroup === undefined ? {} : { timingGroup }),
+      });
+      return;
+    }
+
+    if (rawType === "Header") {
+      if (rawItem.beat !== undefined) {
+        throw new Error(`${label}: Header has no beat`);
+      }
+      if (rawItem.data !== GARUPA_HEADER_HABAHIRO) {
+        throw new Error(`${label}.data is invalid: ${String(rawItem.data)}`);
+      }
+      items.push({ type: "Header", data: GARUPA_HEADER_HABAHIRO });
+      return;
+    }
+
+    if (rawType === "System") {
+      if (rawItem.data !== GARUPA_SYSTEM_LANE_CHANGE) {
+        throw new Error(`${label}.data is invalid: ${String(rawItem.data)}`);
+      }
+      items.push({
+        type: "System",
+        beat: parseFiniteNumber(rawItem.beat, `${label}.beat`),
+        data: GARUPA_SYSTEM_LANE_CHANGE,
       });
       return;
     }
@@ -286,8 +326,21 @@ export function parseGarupaChartJson(input: unknown): GarupaChartJson {
   if (bpmCount === 0) {
     throw new Error("Garupa chart JSON must include at least one BPM item.");
   }
+  validateGarupaChartHeaders(items);
 
   return items;
+}
+
+/** One HABAHIRO header at most; any lane change requires the header. */
+export function validateGarupaChartHeaders(items: GarupaChartJson): void {
+  const headerCount = items.filter((item) => item.type === "Header").length;
+  const laneChangeCount = items.filter((item) => item.type === "System").length;
+  if (headerCount > 1) {
+    throw new Error(`Garupa chart JSON allows at most one ${GARUPA_HEADER_HABAHIRO} Header.`);
+  }
+  if (laneChangeCount > 0 && headerCount === 0) {
+    throw new Error(`${GARUPA_SYSTEM_LANE_CHANGE} requires the ${GARUPA_HEADER_HABAHIRO} Header.`);
+  }
 }
 
 export function parseBestdoriV2ChartJson(input: unknown): BestdoriV2ChartJson {
@@ -375,7 +428,7 @@ export function parseBestdoriV2ChartJson(input: unknown): BestdoriV2ChartJson {
         } as BestdoriV2ChartJsonSlideConnection;
       });
       items.push({
-        type: "Slide",
+        type,
         connections,
       });
       return;
@@ -470,6 +523,12 @@ function convertBestdoriItemToGarupa(item: BestdoriV2ChartJsonItem): GarupaChart
   }
 
   const connections = item.connections.map((connection) => convertBestdoriSlideConnectionToGarupa(connection));
+  if (item.type === "Long") {
+    if (!isGarupaLongSlideShape({ connections })) {
+      throw new Error("Bestdori V2 Long requires two visible nodes on one lane with the tail after the head.");
+    }
+    return { type: "Slide", connections, long: true };
+  }
   if (connections.length === 1) {
     const only = connections[0]!;
     return only.type === "Hidden" ? null : { ...only, type: only.type };
@@ -543,6 +602,19 @@ function convertGarupaHeadOrTailVisibleToBestdori(
 }
 
 function convertGarupaSlideToBestdori(item: GarupaChartJsonSlideItem): BestdoriV2ChartJsonItem | null {
+  if (item.long === true) {
+    const [head, tail] = item.connections as readonly [
+      Exclude<GarupaChartJsonSlideConnection, { type: "Hidden" }>,
+      Exclude<GarupaChartJsonSlideConnection, { type: "Hidden" }>,
+    ];
+    return {
+      type: "Long",
+      connections: [
+        convertGarupaHeadOrTailVisibleToBestdori(head, true, false),
+        convertGarupaHeadOrTailVisibleToBestdori(tail, false, true),
+      ],
+    };
+  }
   const original = item.connections;
   if (original.length === 0) {
     return null;
@@ -655,7 +727,8 @@ export function convertGarupaChartJsonToBestdoriV2(
       });
       continue;
     }
-    if (item.type === "SV") {
+    // Bestdori V2 has no SV, chart header or lane-change command.
+    if (item.type === "SV" || item.type === "Header" || item.type === "System") {
       continue;
     }
     if (item.type === "Slide") {

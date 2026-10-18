@@ -108,6 +108,10 @@ export interface OrdinaryNoteMotionState {
   readonly noteStartPosition: RenderVector2;
   readonly currentPositionZ: RenderFloat32;
   readonly noteParentScale: RenderFloat32;
+  /** MusicObjects scale; goalPosition is the target button world position under it. */
+  readonly musicObjectsScale: RenderFloat32;
+  /** NoteBatchInformationListFactory.IsMultiRangeNotes. */
+  readonly multiRangeNotes: boolean;
   readonly noteSettingScale: RenderFloat32;
   readonly launcherY: RenderFloat32;
   readonly targetCenterY: RenderFloat32;
@@ -153,22 +157,24 @@ export interface OrdinaryNoteActivationAdjustmentResult {
 
 export function getHabahiroMeshWidthRate(
   noteLength: number,
-  explicitSetting: RenderFloat32,
+  highAspectRatio: RenderFloat32,
 ): SimulatorResult<RenderFloat32> {
   if (
     !Number.isInteger(noteLength) || noteLength < 1 ||
-    !validateRenderFloat32(explicitSetting)
+    !validateRenderFloat32(highAspectRatio)
   ) {
     return reject(
       "render.geometry.invalid-habahiro-mesh-width-input",
-      "The current static HABAHIRO width formula requires a positive integer note length and explicit Float32 host setting.",
+      "The current static HABAHIRO width formula requires a positive integer note length and the Float32 HighAspectRatio.",
     );
   }
-  let value = noteLength === 1 ? Math.fround(1) : HABAHIRO_MESH_WIDTH_BASE;
-  if (noteLength >= 3 && explicitSetting.value >= 0) {
+  // GetMeshWidthRate: width 2 is 1.05, widths 3..7 add 0.03 * HighAspectRatio,
+  // every other width is 1.
+  let value = noteLength >= 2 && noteLength <= 7 ? HABAHIRO_MESH_WIDTH_BASE : Math.fround(1);
+  if (noteLength >= 3 && noteLength <= 7 && highAspectRatio.value >= 0) {
     value = Math.fround(
       HABAHIRO_MESH_WIDTH_BASE +
-        Math.fround(Math.min(explicitSetting.value, Math.fround(1)) * HABAHIRO_MESH_WIDTH_COEFFICIENT),
+        Math.fround(Math.min(highAspectRatio.value, Math.fround(1)) * HABAHIRO_MESH_WIDTH_COEFFICIENT),
     );
   }
   return createRenderFloat32(value);
@@ -373,18 +379,39 @@ export function noteMotionCurveExponent(progress: number): number {
   return (Number.isFinite(packed) ? packed : raw) * Math.log2(NOTE_POSITION_BASE);
 }
 
-export type OrdinaryNoteGoalScale = "perspective" | "target-button" | RenderVector3;
+/**
+ * "perspective": NoteFrontBase.repositionToJudgeLine writes the target button's
+ * local X/Y into the note's local position under NoteParentTrans; calcNoteScale
+ * reads world Y only for multi-range notes covering at least two buttons.
+ * "stop-state": NoteFrontBase.StopState writes the target world position and
+ * target-button scale; NoteLong.StopState then rescales multi-range notes at world Y.
+ */
+export type OrdinaryNoteGoalScale = "perspective" | "target-button" | "stop-state" | RenderVector3;
 
 export function repositionOrdinaryNoteToJudgeLine(
   state: OrdinaryNoteMotionState,
   goalScale: OrdinaryNoteGoalScale = "perspective",
 ): SimulatorResult<OrdinaryNoteMotionResult> {
-  const position = vector3(state.goalPosition.x.value, state.goalPosition.y.value, state.currentPositionZ.value);
+  if (!validateRenderFloat32(state.musicObjectsScale) || state.musicObjectsScale.value <= 0 ||
+    typeof state.multiRangeNotes !== "boolean") {
+    return reject("render.geometry.invalid-note-parent-chain",
+      "Judge-line placement requires the positive MusicObjects scale and the multi-range flag.");
+  }
+  let x = state.goalPosition.x.value, y = state.goalPosition.y.value, scaleY = y;
+  if (goalScale === "perspective") {
+    const localX = Math.fround(x / state.musicObjectsScale.value);
+    const localY = Math.fround(y / state.musicObjectsScale.value);
+    x = Math.fround(localX * state.noteParentScale.value);
+    y = Math.fround(localY * state.noteParentScale.value);
+    scaleY = state.multiRangeNotes && state.buttonCount >= 2 ? y : localY;
+  }
+  const position = vector3(x, y, state.currentPositionZ.value);
   if (position.status !== "ok") return position;
   // The scene's thirteen gameplay target transforms have unit local scale.
-  const scale = typeof goalScale === "object" ? ok(goalScale) : goalScale === "target-button"
-    ? vector3(state.noteSettingScale.value, state.noteSettingScale.value, state.noteSettingScale.value)
-    : calculateOrdinaryNoteScaleAtY(state, state.goalPosition.y.value);
+  const scale = typeof goalScale === "object" ? ok(goalScale)
+    : goalScale === "target-button" || (goalScale === "stop-state" && !state.multiRangeNotes)
+      ? vector3(state.noteSettingScale.value, state.noteSettingScale.value, state.noteSettingScale.value)
+      : calculateOrdinaryNoteScaleAtY(state, scaleY);
   return scale.status === "ok" ? ok(Object.freeze({
     progressRate: state.progressRate,
     position: position.value,

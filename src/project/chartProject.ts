@@ -101,7 +101,11 @@ export function validateProject(value: unknown): asserts value is ChartProject {
     && ["EASY", "NORMAL", "HARD", "EXPERT", "SPECIAL"].includes(m.difficulty)
     && typeof m.isFullLength === "boolean" && [m.bpm, m.offsetMs, m.mvOffsetMs].every(finite) && m.bpm > 0, "元信息");
   requireValue(record(c) && record(c.settings) && [c.settings.laneCount, c.settings.timeSignatureNumerator,
-    c.settings.timeSignatureDenominator].every(n => finite(n) && n > 0), "谱面设置");
+    c.settings.timeSignatureDenominator].every(n => finite(n) && n > 0)
+    && (c.settings.habahiro === undefined || c.settings.habahiro === true)
+    && (c.settings.laneChangeBeats === undefined
+      || (c.settings.habahiro === true && Array.isArray(c.settings.laneChangeBeats)
+        && c.settings.laneChangeBeats.every((beat: unknown) => finite(beat) && beat >= 0))), "谱面设置");
   requireValue(Array.isArray(c.notes) && Array.isArray(c.slideChains) && Array.isArray(c.bpmEvents)
     && record(c.timingGroups), "谱面结构");
   const unique = (items: any[], label: string) => {
@@ -121,7 +125,8 @@ export function validateProject(value: unknown): asserts value is ChartProject {
   }
   for (const chain of c.slideChains) requireValue(Array.isArray(chain.noteIds) && chain.noteIds.length >= 2
     && chain.noteIds.every((id: unknown) => text(id) && noteIds.has(id))
-    && (chain.timingGroup === undefined || timingGroupId(chain.timingGroup)), "Slide 连接");
+    && (chain.timingGroup === undefined || timingGroupId(chain.timingGroup))
+    && (chain.long === undefined || chain.long === true), "Slide 连接");
   for (const b of c.bpmEvents) requireValue(finite(b.beat) && finite(b.bpm) && b.bpm !== 0, "BPM 数据");
   let lastBeat = 0, lastBpm = m.bpm;
   for (const b of c.bpmEvents) if (b.beat >= lastBeat) { lastBeat = b.beat; lastBpm = b.bpm; }

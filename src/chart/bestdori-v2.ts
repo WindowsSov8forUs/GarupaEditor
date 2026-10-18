@@ -35,10 +35,17 @@ export interface BestdoriV2ChartJsonSlideItem {
   readonly connections: readonly BestdoriV2ChartJsonSlideConnection[];
 }
 
+/** Bestdori's two-node Long; it maps to a Garupa Slide flagged `long`. */
+export interface BestdoriV2ChartJsonLongItem {
+  readonly type: "Long";
+  readonly connections: readonly BestdoriV2ChartJsonSlideConnection[];
+}
+
 export type BestdoriV2ChartJsonItem =
   | BestdoriV2ChartJsonBpmItem
   | BestdoriV2ChartJsonSingleNote
   | BestdoriV2ChartJsonDirectionalNote
-  | BestdoriV2ChartJsonSlideItem;
+  | BestdoriV2ChartJsonSlideItem
+  | BestdoriV2ChartJsonLongItem;
 
 export type BestdoriV2ChartJson = readonly BestdoriV2ChartJsonItem[];

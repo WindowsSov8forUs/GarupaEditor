@@ -1,5 +1,5 @@
 import { noteSpatialY, noteUnclippedSyncTarget, type OrdinaryNoteMotionResult } from "../rendering/ordinaryNoteGeometry";
-import { projectedNodeLane } from "./productChartProfile";
+import { isProductGestureNode, projectedNodeLane } from "./productChartProfile";
 import { NoteState, type NoteBase } from "../notes/noteBase";
 import { NoteLong, NoteSlide, NoteMultipleDirectionalVisual } from "../notes/noteTypes";
 import type { NoteInformation, NoteBatchInformation } from "../chart/types";
@@ -17,7 +17,7 @@ import type {
 } from "../../backends/renderingContracts";
 import { createRenderFloat32 } from "../../backends/renderingValidation";
 import type { GarupaProductSceneLayout } from "../../scene/simulatorSceneLayout";
-import { advanceOrdinaryNoteMotion, type OrdinaryNoteMotionState, advanceOrdinaryNoteVerticalMotion, repositionOrdinaryNoteToJudgeLine, calculateNoteMotionCurve, calculateOrdinaryNoteWorldScaleAxis, getOrdinaryNoteArrivalSeconds, type OrdinarySyncLineTargetState } from "../rendering/ordinaryNoteGeometry";
+import { advanceOrdinaryNoteMotion, advanceOrdinaryNoteActivationAdjustment, type OrdinaryNoteMotionState, advanceOrdinaryNoteVerticalMotion, repositionOrdinaryNoteToJudgeLine, calculateNoteMotionCurve, calculateOrdinaryNoteWorldScaleAxis, getOrdinaryNoteArrivalSeconds, type OrdinarySyncLineTargetState } from "../rendering/ordinaryNoteGeometry";
 import { resolveProjectedNoteAnimationBinding, resolveProjectedNoteBinding, RenderCommandProducer, type NotePresentation, type RenderOwnerTransaction, type RenderEngineResourceBindings, type OrdinaryFixedNoteSceneInput } from "../rendering/renderCommandProducer";
 import { createExtensionSlideState, advanceExtensionSlide, advanceExtensionMotion, noteRenderInput, bpmAtNode, type ExtensionSlideState, type ExtensionRenderFrame } from "./slideRenderExtension";
 import { applySlideRenderHides, type OrdinarySlideFrameResult } from "../rendering/ordinarySlideChildLifecycle";
@@ -136,7 +136,7 @@ export class GarupaRenderInputAdapter {
     };
   }
 
-  private advanceShared(note: NoteBase, delta: number, placement: "perspective" | "target-button" | "preserve" | null,
+  private advanceShared(note: NoteBase, delta: number, placement: "perspective" | "target-button" | "stop-state" | "preserve" | null,
     children: boolean, controlledRealMoveSecond?: OrdinaryNoteMotionState["realMoveSecond"]): SimulatorResult<void> {
     const source = note.noteInformation;
     const authored = source === null ? undefined : this.sourceNodes.get(source);
@@ -151,9 +151,19 @@ export class GarupaRenderInputAdapter {
         if (state === undefined) {
           const motion = this.scene.motionStateAtLane(projectedNodeLane(node), 1, node.absolutePosition);
           if (motion.status !== "ok") return motion;
-          const created = createOrdinaryLongNormalChildState(motion.value, node.absolutePosition, f32(bpmAtNode(this.axis, node.absolutePosition)));
+          const bpm = f32(bpmAtNode(this.axis, node.absolutePosition));
+          const created = createOrdinaryLongNormalChildState(motion.value, node.absolutePosition, bpm);
           if (created.status !== "ok") return created;
           state = created.value;
+          // NoteBase.activateAdjust: the Add clock starts from the launch music position,
+          // as on the original path; axis-driven nodes place by time instead.
+          if (!this.usesNodeAxis(node)) {
+            const adjusted = advanceOrdinaryNoteActivationAdjustment(state.motionState, frame.launcherMusicPosition,
+              node.absolutePosition, bpm);
+            if (adjusted.status !== "ok") return adjusted;
+            state = { ...state, motionState: { ...state.motionState, progressRate: adjusted.value.progressRate,
+              realMoveSecond: adjusted.value.realMoveSecond } };
+          }
         }
         const motionState = { ...state.motionState, deltaTime: f32(delta),
           realMoveSecond: controlledRealMoveSecond ?? f32(state.motionState.realMoveSecond.value + delta) };
@@ -244,11 +254,10 @@ export class GarupaRenderInputAdapter {
   private readonly renderNodesByChain = new Map<string, readonly GarupaProductNode[]>();
   private readonly slideStates = new Map<string, ProductSlideState>();
   private readonly singleStates = new Map<string, OrdinaryLongNormalChildState>();
-  private readonly axisGroups: ReadonlySet<string>;
   private readonly axisChains: ReadonlySet<string>;
   private readonly firstLinearChainPosition = new Map<string, number>();
   private usesNodeAxis(node: GarupaProductNode): boolean {
-    return this.axisGroups.has(node.timingGroup) || node.chainIdentity !== null &&
+    return this.chart.svItemIndices.has(node.chartItemIndex) || node.chainIdentity !== null &&
       this.chainByIdentity.get(node.chainIdentity)?.independentTiming === true;
   }
 
@@ -271,11 +280,10 @@ export class GarupaRenderInputAdapter {
     this.chainByIdentity = new Map(chart.slideChains.map((chain) => [chain.identity, chain]));
     for (const chain of chart.slideChains) this.renderNodesByChain.set(chain.identity,
       Object.freeze(chain.connectionIdentities.map(id => noteRenderInput(chart.nodeByIdentity.get(id)!))));
-    this.axisGroups = new Set(axis.groups.filter(group => group.changes.some(change => change.speed !== 1)).map(group => group.id));
-    this.axisChains = new Set(chart.slideChains.filter(chain => chain.independentTiming || chain.connectionIdentities.some(id =>
-      this.axisGroups.has(chart.nodeByIdentity.get(id)!.timingGroup))).map(chain => chain.identity));
+    this.axisChains = new Set(chart.slideChains.filter(chain => chain.independentTiming ||
+      chart.svItemIndices.has(chain.chartItemIndex)).map(chain => chain.identity));
     for (const chain of chart.slideChains) {
-      if (chain.connectionIdentities.every(id => !this.axisGroups.has(chart.nodeByIdentity.get(id)!.timingGroup))) {
+      if (!chart.svItemIndices.has(chain.chartItemIndex)) {
         this.firstLinearChainPosition.set(chain.identity, chain.connectionIdentities.reduce(
           (first, id) => Math.min(first, chart.nodeByIdentity.get(id)!.absolutePosition), Infinity));
       }
@@ -433,7 +441,10 @@ export class GarupaRenderInputAdapter {
         if (projected.status !== "ok") {
           if (curve >= this.scene.visibleCurveRange[0] && curve <= this.scene.visibleCurveRange[1]) return projected;
         } else {
-          position = projected.value;
+          // NoteBase.getStartPos assigns each note its own depth; Move keeps it.
+          const own = this.scene.motionStateAtLane(projectedNodeLane(node), node.width, node.absolutePosition);
+          if (own.status !== "ok") return own;
+          position = { ...projected.value, z: own.value.currentPositionZ };
           if (scale.status !== "ok") {
             if (curve >= this.scene.visibleCurveRange[0] && curve <= this.scene.visibleCurveRange[1]) return scale;
           } else {
@@ -509,7 +520,7 @@ export class GarupaRenderInputAdapter {
         const lifecycle = index === 0 ? state.root : state.children[index - 1]!.lifecycle;
         const transform = lifecycle.renderedTransform;
         const visible = index === 0 ? state.rootVisible : state.children[index - 1]!.visible &&
-          !(node.scoringSource?.slideGesture && owner instanceof NoteSlide && owner.afterNotes[index - 1]?.judged);
+          !(isProductGestureNode(node) && owner instanceof NoteSlide && owner.afterNotes[index - 1]?.judged);
         const stopped = lifecycle.phase === "stop";
         samples.set(node.identity, { ...previous, position: transform.position, unclipped: transform.unclipped,
           uniformScale: transform.localScale.x,
@@ -523,7 +534,7 @@ export class GarupaRenderInputAdapter {
     const plans: NotePresentation[] = [];
     const retired = new Set<string>();
     for (const node of this.chart.nodes) {
-      if (plannedJudged.has(node.identity) && node.scoringSource?.slideGesture && this.connectionMembers.has(node.identity))
+      if (plannedJudged.has(node.identity) && isProductGestureNode(node) && this.connectionMembers.has(node.identity))
         retired.add(node.identity);
       const state = node.chainIdentity === null ? undefined : plannedSlides.get(node.chainIdentity);
       if (state === undefined ? plannedJudged.has(node.identity) : state.finished ||
@@ -538,7 +549,7 @@ export class GarupaRenderInputAdapter {
         ?? noteRenderInput(authored);
       visualNodes.push(node);
       visualOwners.set(node.identity, authored);
-      if (node.connectionIndex === 0 && node.scoringSource?.slideGesture && plannedSlides.get(node.chainIdentity!)?.headCompleted &&
+      if (node.connectionIndex === 0 && isProductGestureNode(node) && plannedSlides.get(node.chainIdentity!)?.headCompleted &&
           !this.connectionMembers.has(node.identity)) continue;
       if (node.type !== "Directional" || authored.width === 1) { iconOwners.add(node.identity); continue; }
       const baseSample = samples.get(node.identity)!;
@@ -635,7 +646,7 @@ export class GarupaRenderInputAdapter {
         this.resources, node.width, this.resources.habahiroAtlasLogicalAssetIds !== undefined);
       const binding = frontBinding(node, this.resources, this.noteColor, this.chainByIdentity,
         node.connectionIndex === 0 && plannedSlides.get(node.chainIdentity!)?.root.phase === "stop" &&
-          (!node.scoringSource?.slideGesture || plannedSlides.get(node.chainIdentity!)?.headCompleted === true),
+          (!isProductGestureNode(node) || plannedSlides.get(node.chainIdentity!)?.headCompleted === true),
         visualOwners.get(node.identity)!);
       if (binding.status !== "ok") return binding;
       plans.push({ id: objectId, lifetime: visualOwners.get(node.identity)!.identity, kind: "body", visible: sample.visible,
@@ -675,7 +686,8 @@ export class GarupaRenderInputAdapter {
         direction: line.materialDirection, visible, state: visible ? { targetA: target(a), targetB: target(b) } : null });
     }
     for (const chain of renderChains) {
-      const materialRole = slideLineMaterialRole(chain.connectionIdentities
+      // NoteSlide.Activate tests Any(child.isInvisible) over after nodes only.
+      const materialRole = slideLineMaterialRole(chain.connectionIdentities.slice(1)
         .some(id => !this.chart.nodeByIdentity.get(id)!.visible));
       for (let index = 1; index < chain.connectionIdentities.length; index += 1) {
         const from = samples.get(chain.connectionIdentities[index - 1]!)!;

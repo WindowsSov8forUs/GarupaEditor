@@ -1,9 +1,9 @@
-import { getSignedTempo } from "./signedTempo";
 import { findBatchBpmCommand } from "../chart/noteGraph";
 import type { ChartConstructionResult } from "../chart/types";
 import { integrityFailure, ok, type SimulatorResult } from "../result";
 import type {
   GarupaProductChartProfile,
+  GarupaProductSvEvent,
   GarupaProductTimingGroupId,
 } from "./productChartProfile";
 
@@ -67,50 +67,20 @@ export function createGarupaProductTimingGroupAxisProfile(
   const bpmSegmentsResult = buildBpmSegments(chart);
   if (bpmSegmentsResult.status !== "ok") return bpmSegmentsResult;
   const bpmSegments = bpmSegmentsResult.value;
-  const tempo = getSignedTempo(chart);
   const positionToMilliseconds = (position: number): SimulatorResult<number> =>
-    tempo?.folded ? (Number.isFinite(position) ? ok(tempo.secondsAtRuntimePosition(position) * 1000) : invalidAxis("Non-finite runtime position."))
-      : positionToMillisecondsFromSegments(bpmSegments, position);
+    positionToMillisecondsFromSegments(bpmSegments, position);
 
   const usedGroups = new Set<GarupaProductTimingGroupId>(["#Global"]);
   for (const node of product.nodes) usedGroups.add(node.timingGroup);
   for (const event of product.svEvents) usedGroups.add(event.timingGroup);
   const orderedGroups = [...usedGroups].sort(compareTimingGroup);
-  const globalEvents = product.svEvents.filter((event) => event.timingGroup === "#Global");
   const groups: GarupaProductTimingGroupAxis[] = [];
 
   for (const groupId of orderedGroups) {
-    const ownedEvents = groupId === "#Global"
-      ? []
-      : product.svEvents.filter((event) => event.timingGroup === groupId);
-    const merged = [
-      ...ownedEvents.map((event) => ({ event, owner: "group" as const })),
-      ...globalEvents.map((event) => ({ event, owner: "global" as const })),
-    ].sort((left, right) =>
-      left.event.absolutePosition - right.event.absolutePosition ||
-      (left.event.authoredPosition ?? left.event.absolutePosition) - (right.event.authoredPosition ?? right.event.absolutePosition) ||
-      ownerOrder(left.owner) - ownerOrder(right.owner) ||
-      left.event.sourceOrder - right.event.sourceOrder);
-    let speed = 1;
-    let intercept = 0;
-    const changes: GarupaProductAxisChange[] = [];
-    for (const mergedEvent of merged) {
-      const at = positionToMilliseconds(mergedEvent.event.absolutePosition);
-      if (at.status !== "ok") return at;
-      const nextSpeed = mergedEvent.event.value;
-      if (!Number.isFinite(nextSpeed)) return invalidAxis("SV speed must remain finite.");
-      intercept = intercept + at.value * speed - at.value * nextSpeed;
-      speed = nextSpeed;
-      changes.push(Object.freeze({
-        absolutePosition: mergedEvent.event.absolutePosition,
-        atMilliseconds: at.value,
-        speed,
-        intercept,
-        sourceOrder: mergedEvent.event.sourceOrder,
-        owner: mergedEvent.owner,
-      }));
-    }
-    groups.push(Object.freeze({ id: groupId, changes: Object.freeze(changes) }));
+    const changes = mergeTimingGroupChanges(product.svEvents, groupId,
+      (event) => positionToMilliseconds(event.absolutePosition));
+    if (changes.status !== "ok") return changes;
+    groups.push(Object.freeze({ id: groupId, changes: changes.value }));
   }
 
   const frozenGroups = Object.freeze(groups);
@@ -152,6 +122,76 @@ export function createGarupaProductTimingGroupAxisProfile(
   }));
 }
 
+/** Group-owned and global SV events in time order; the last event at a time wins. */
+export function mergeTimingGroupChanges(
+  events: readonly GarupaProductSvEvent[],
+  groupId: GarupaProductTimingGroupId,
+  timeOf: (event: GarupaProductSvEvent) => SimulatorResult<number>,
+): SimulatorResult<readonly GarupaProductAxisChange[]> {
+  const timed: { event: GarupaProductSvEvent; owner: "group" | "global"; at: number }[] = [];
+  for (const event of events) {
+    if (event.timingGroup !== "#Global" && (groupId === "#Global" || event.timingGroup !== groupId)) continue;
+    const at = timeOf(event);
+    if (at.status !== "ok") return at;
+    timed.push({ event, owner: event.timingGroup === "#Global" ? "global" : "group", at: at.value });
+  }
+  timed.sort((left, right) =>
+    left.at - right.at ||
+    (left.event.authoredPosition ?? left.event.absolutePosition) - (right.event.authoredPosition ?? right.event.absolutePosition) ||
+    ownerOrder(left.owner) - ownerOrder(right.owner) ||
+    left.event.sourceOrder - right.event.sourceOrder);
+  let speed = 1;
+  let intercept = 0;
+  const changes: GarupaProductAxisChange[] = [];
+  for (const { event, owner, at } of timed) {
+    const nextSpeed = event.value;
+    if (!Number.isFinite(nextSpeed)) return invalidAxis("SV speed must remain finite.");
+    intercept = intercept + at * speed - at * nextSpeed;
+    speed = nextSpeed;
+    changes.push(Object.freeze({
+      absolutePosition: event.absolutePosition,
+      atMilliseconds: at,
+      speed,
+      intercept,
+      sourceOrder: event.sourceOrder,
+      owner,
+    }));
+  }
+  return ok(Object.freeze(changes));
+}
+
+/** True when SV can draw a note differently from the original linear axis:
+ * a non-unit speed while it can be visible, or an earlier axis value that
+ * would bring it into the field before its original launch. */
+export function timingGroupAxisAffectsNote(
+  changes: readonly GarupaProductAxisChange[],
+  noteMilliseconds: number,
+  arrivalMilliseconds: number,
+  afterMilliseconds: number,
+): boolean {
+  const start = noteMilliseconds - arrivalMilliseconds;
+  const end = noteMilliseconds + afterMilliseconds;
+  const axisAt = (time: number): number => {
+    let value = time;
+    for (const change of changes) if (change.atMilliseconds <= time) value = change.intercept + change.speed * time;
+    return value;
+  };
+  let supremum = changes.length === 0 ? start : Math.min(changes[0]!.atMilliseconds, start);
+  for (let index = 0; index < changes.length; index++) {
+    const change = changes[index]!;
+    const next = changes[index + 1]?.atMilliseconds ?? Infinity;
+    if (next <= change.atMilliseconds) continue;
+    if (change.speed !== 1 && change.atMilliseconds < end && next > start) return true;
+    if (change.atMilliseconds < start) {
+      const until = Math.min(next, start);
+      const value = change.speed > 0 ? change.intercept + change.speed * until
+        : change.speed < 0 ? change.intercept + change.speed * change.atMilliseconds : change.intercept;
+      supremum = Math.max(supremum, value);
+    }
+  }
+  return supremum > axisAt(start) + 1e-6;
+}
+
 function buildBpmSegments(
   chart: ChartConstructionResult,
 ): SimulatorResult<readonly GarupaProductBpmSegment[]> {
@@ -188,8 +228,9 @@ function positionToMillisecondsFromSegments(
   segments: readonly GarupaProductBpmSegment[],
   absolutePosition: number,
 ): SimulatorResult<number> {
-  if (!Number.isFinite(absolutePosition) || absolutePosition < 0) {
-    return invalidAxis("Product visual position must be finite and nonnegative.");
+  // Negative runtime positions are events folded before music start.
+  if (!Number.isFinite(absolutePosition)) {
+    return invalidAxis("Product visual position must be finite.");
   }
   let low = 0;
   let high = segments.length - 1;

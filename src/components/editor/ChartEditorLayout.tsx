@@ -1330,6 +1330,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
           onCoverUpload={vm.handleCoverUpload}
           onMvUpload={vm.handleMvUpload}
           optionSettings={appOptionSettings}
+          habahiro={isHabahiroEnabled}
           onError={vm.setStatusMessage}
         setMetadata={setMetadata}
       />
@@ -2146,11 +2147,11 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         onClose={() => setIsSkinSettingsOpen(false)}
         pendingSkinSelection={pendingSkinSelection}
         catalogStatus={bestdoriCatalogStatus}
-        rhythmTypeTitle={appOptionSettings.habahiro ? "节奏图示样式（幅广）" : "节奏图示样式"}
-        rhythmCatalogKind={appOptionSettings.habahiro ? "habahiroRhythm" : "rhythm"}
+        rhythmTypeTitle={isHabahiroEnabled ? "节奏图示样式（幅广）" : "节奏图示样式"}
+        rhythmCatalogKind={isHabahiroEnabled ? "habahiroRhythm" : "rhythm"}
         onRhythmTypeChange={(value) =>
           setPendingSkinSelection((current: any) => {
-            const kind = appOptionSettings.habahiro ? "habahiroRhythm" : "rhythm";
+            const kind = isHabahiroEnabled ? "habahiroRhythm" : "rhythm";
             const resource = catalogResource(kind, value);
             return normalizeSkinSelection({
               ...current,

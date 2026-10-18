@@ -24,14 +24,17 @@ export function advanceSlideGestureContact(decision: SlideJudgeDecision, inside:
 }
 
 export function slideHeadTimeoutDue(over: boolean, position: number, sourcePosition: number, nextPosition: number | undefined): boolean {
-  const remaining = (nextPosition ?? 0) - position;
+  // Only a Hidden tail leaves a node without a visible successor.
+  if (nextPosition === undefined) return over;
+  const remaining = nextPosition - position;
   return over || remaining <= 0 || (position - sourcePosition) > remaining;
 }
 
 export function slideAfterTimeoutDue(over: boolean, position: number, sourcePosition: number,
-  terminal: boolean, nextPosition: number | undefined, nextStopped: boolean): boolean {
+  nextPosition: number | undefined, nextStopped: boolean): boolean {
   if (over) return true;
-  if (nextPosition === undefined) return !terminal;
+  // The terminal, or the last visible node of a Hidden tail, has no successor window.
+  if (nextPosition === undefined) return false;
   const remaining = nextPosition - position;
   return nextStopped || remaining > 0 && (position - sourcePosition) > remaining;
 }

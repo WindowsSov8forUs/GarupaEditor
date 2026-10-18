@@ -11,6 +11,8 @@ import {
   createOriginalSurfaceLayout,
   ORIGINAL_NOTE_LANE_BOTTOM_Y,
   originalBottomLeftScreenToWorld,
+  originalButtonWorldX,
+  originalButtonWorldZ,
   originalWorldToBottomLeftScreen,
   type OriginalSurfaceLayout,
 } from "./originalSurfaceLayout";
@@ -45,6 +47,8 @@ import type {
 } from "../engine/rendering/renderCommandProducer";
 
 const LAUNCH_DISTANCE_RATE = Math.fround(0.05000000074505806);
+/** Extension projection depth only; original objects take their own depth (button
+ * hierarchy or NoteBase.getStartPos), never this value. */
 const NOTE_WORLD_Z = Math.fround(-13.5);
 const DEFAULT_COLLISION_SQUARED = Math.fround(0.23136097192764282);
 const COLLISION_DISTANCE_RATE = Math.fround(1.1679999828338623);
@@ -70,7 +74,6 @@ export interface SimulatorSceneVisualConfig {
   readonly noteSize: number;
   readonly judgementAdjustValueB: number;
   readonly displayComboPosition: number;
-  readonly habahiroMeshWidthSetting: number;
   readonly syncLineEdgeMargin: number;
 }
 
@@ -126,24 +129,25 @@ export function createSimulatorSceneLayout(
   if (
     !isOriginalLongNoteLineBrightness(config.longNoteLineBrightness) ||
     !exactPositiveFloat32(config.specificSpeed) ||
-    !exactFloat32(config.noteSize) || config.noteSize < 80 || config.noteSize > 150 ||
+    !exactFloat32(config.noteSize) || config.noteSize < 10 || config.noteSize > 200 ||
     !Number.isInteger(config.judgementAdjustValueB) || config.judgementAdjustValueB < -5 || config.judgementAdjustValueB > 5 ||
-    !exactFloat32(config.habahiroMeshWidthSetting) ||
     !exactFloat32(config.syncLineEdgeMargin)
   ) {
     return reject(
       "scene.invalid-visual-config",
-      "Scene assembly requires exact Float32 speed, evidence-bounded 80..150 note size, [-5,5] judge offset and explicit HABAHIRO mesh width; HighAspectRatio is derived only from the platform surface.",
+      "Scene assembly requires exact Float32 speed, 10..200 note size, and [-5,5] judge offset; HighAspectRatio is derived only from the platform surface.",
     );
   }
-  const originalLayout = createOriginalSurfaceLayout(checkedSurface.value, config.noteSize, config.displayComboPosition, config.suddenRate, config.suddenLane);
+  // ButtonManager.initButtonScale clamps the percentage to [80,150] only for multi-range notes.
+  const noteSize = renderingKind === "habahiro" ? Math.min(150, Math.max(80, config.noteSize)) : config.noteSize;
+  const originalLayout = createOriginalSurfaceLayout(checkedSurface.value, noteSize, config.displayComboPosition, config.suddenRate, config.suddenLane);
   if (originalLayout.status !== "ok") return originalLayout;
-  const values = createSceneValues(config, originalLayout.value);
+  const values = createSceneValues(config, originalLayout.value, renderingKind === "habahiro");
   if (values.status !== "ok") return values;
   const arrival = getOrdinaryNoteArrivalSeconds(values.value.specificSpeed);
   if (arrival.status !== "ok") return arrival;
   const habahiro = renderingKind === "habahiro"
-    ? createPortableHabahiroScene(resources, config.habahiroMeshWidthSetting, originalLayout.value)
+    ? createPortableHabahiroScene(resources, originalLayout.value)
     : ok<HabahiroSceneInput | undefined>(undefined);
   if (habahiro.status !== "ok") return habahiro;
   const field = renderingKind === "ordinary" && fieldBindings !== null
@@ -153,6 +157,9 @@ export function createSimulatorSceneLayout(
     specificSpeed: values.value.specificSpeed,
     noteSettingScale: values.value.noteSettingScale,
     noteParentScale: values.value.noteParentScale,
+    musicObjectsScale: values.value.musicObjectsScale,
+    multiRangeNotes: values.value.multiRangeNotes,
+    buttonWorldZ: f32(originalButtonWorldZ(originalLayout.value)),
     launcherY: values.value.launcherY,
     targetCenterY: values.value.targetCenterY,
     highAspectRatio: values.value.highAspectRatio,
@@ -164,9 +171,9 @@ export function createSimulatorSceneLayout(
     goalPositions: values.value.goalPositions,
     tapLaneEffectPositions: Object.freeze(AUTHORED_BUTTON_X.filter((_, index) => index % 2 === 0).map((authoredX) =>
       vector3(
-        Math.fround(authoredX * originalLayout.value.gameplay.screenWidthAdjustRate),
+        originalButtonWorldX(originalLayout.value, authoredX),
         originalLayout.value.gameplay.targetCenterY,
-        NOTE_WORLD_Z,
+        originalButtonWorldZ(originalLayout.value),
       ))),
     noteTint: white(),
     noteDomainLayer: 3,
@@ -203,6 +210,8 @@ interface SceneValues {
   readonly specificSpeed: RenderFloat32;
   readonly noteSettingScale: RenderFloat32;
   readonly noteParentScale: RenderFloat32;
+  readonly musicObjectsScale: RenderFloat32;
+  readonly multiRangeNotes: boolean;
   readonly launcherY: RenderFloat32;
   readonly targetCenterY: RenderFloat32;
   readonly highAspectRatio: RenderFloat32;
@@ -213,6 +222,7 @@ interface SceneValues {
 function createSceneValues(
   config: SimulatorSceneVisualConfig,
   layout: OriginalSurfaceLayout,
+  multiRangeNotes: boolean,
 ): SimulatorResult<SceneValues> {
   const targetCenterY = layout.gameplay.targetCenterY;
   const launcherY = layout.gameplay.launcherY;
@@ -228,7 +238,7 @@ function createSceneValues(
           Math.fround(vanishingY - targetCenterY),
       ),
     );
-    goalPositions.push(vector3(goalX, targetCenterY, NOTE_WORLD_Z));
+    goalPositions.push(vector3(goalX, targetCenterY, originalButtonWorldZ(layout)));
     // SORT-C43: initLauncher publishes Z=0; activation adds the per-note depth.
     noteStartPositions.push(vector3(startX, startY, 0));
   }
@@ -237,6 +247,8 @@ function createSceneValues(
     specificSpeed: f32(config.specificSpeed),
     noteSettingScale: f32(layout.gameplay.noteSettingScale),
     noteParentScale: f32(layout.gameplay.noteParentScale),
+    musicObjectsScale: f32(layout.gameplay.musicObjectsScale),
+    multiRangeNotes,
     launcherY: f32(launcherY),
     targetCenterY: f32(targetCenterY),
     highAspectRatio: f32(layout.starUi.highAspectRatio),
@@ -470,7 +482,7 @@ class CurrentSimulatorManualGeometry implements SimulatorManualInputGeometryBack
       ? this.scene.goalPositions[3]!.x.value + ((span.start + span.end) / 2 - 3) *
         (this.scene.goalPositions[4]!.x.value - this.scene.goalPositions[3]!.x.value)
       : source.halfButtonIndex >= 0
-        ? Math.fround(AUTHORED_BUTTON_X[source.halfButtonIndex * 2 + 1]! * this.surfaceLayout.gameplay.screenWidthAdjustRate)
+        ? originalButtonWorldX(this.surfaceLayout, AUTHORED_BUTTON_X[source.halfButtonIndex * 2 + 1]!)
         : goal.x.value;
     const screen = originalWorldToBottomLeftScreen(this.surfaceLayout, x, goal.y.value);
     return screen.status === "ok" ? ok({ x: screen.value[0], y: screen.value[1] }) : screen;
@@ -569,6 +581,8 @@ function motionState(
     currentPositionZ: start.z,
     noteSettingScale: scene.noteSettingScale,
     noteParentScale: scene.noteParentScale,
+    musicObjectsScale: scene.musicObjectsScale,
+    multiRangeNotes: scene.multiRangeNotes,
     launcherY: scene.launcherY,
     targetCenterY: scene.targetCenterY,
     highAspectRatio: scene.highAspectRatio,
@@ -589,7 +603,7 @@ function createParticleScene(
     const buttonType = isHalfButton ? index - 7 : index;
     const goal = goals[buttonType]!;
     const x = isHalfButton
-      ? Math.fround(AUTHORED_BUTTON_X[buttonType * 2 + 1]! * layout.gameplay.screenWidthAdjustRate)
+      ? originalButtonWorldX(layout, AUTHORED_BUTTON_X[buttonType * 2 + 1]!)
       : goal.x.value;
     const xBits = particleFloat32ToBits(x);
     const yBits = particleFloat32ToBits(goal.y.value);
@@ -695,9 +709,12 @@ function createOriginalSkinFieldScene(
   },
   layout: OriginalSurfaceLayout,
 ) {
-  const judgeScale = Math.fround(
+  // judgeLine is a Button4 child, so MusicObjects scale reaches it.
+  const judgeScale = Math.fround(Math.fround(
     layout.gameplay.noteSettingScale * Math.fround(0.9900000095367432),
-  );
+  ) * layout.gameplay.musicObjectsScale);
+  const noteLaneY = noteLaneLocalY(layout);
+  const noteLaneScale = layout.gameplay.rhythmLinesScale;
   return Object.freeze({
     objects: Object.freeze([
       fieldObject(
@@ -706,10 +723,11 @@ function createOriginalSkinFieldScene(
         bindings.backgroundLineLogicalAssetId,
         "bg_line_rhythm",
         0,
-        ORIGINAL_NOTE_LANE_BOTTOM_Y,
+        noteLaneY,
         null,
-        1,
+        noteLaneScale,
         0,
+        noteLaneScale,
       ),
       fieldObject(
         "render:skin-field:judge-line",
@@ -732,25 +750,27 @@ function createOriginalSkinFieldScene(
 
 function createPortableHabahiroScene(
   resources: RenderEngineResourceBindings,
-  meshWidthSetting: number,
   layout: OriginalSurfaceLayout,
 ): SimulatorResult<HabahiroSceneInput> {
   const bindings = resources.habahiroPackage;
   if (bindings === undefined) {
     return reject("scene.habahiro-resource-binding-missing", "HABAHIRO requires its exact flash, field-before and field-after package bindings.");
   }
-  const judgeScale = Math.fround(
+  // judgeLine is a Button4 child, so MusicObjects scale reaches it.
+  const judgeScale = Math.fround(Math.fround(
     layout.gameplay.noteSettingScale * Math.fround(0.9900000095367432),
-  );
+  ) * layout.gameplay.musicObjectsScale);
+  const noteLaneY = noteLaneLocalY(layout);
+  const noteLaneScale = layout.gameplay.rhythmLinesScale;
   const plans = (field: typeof bindings.fieldBefore): readonly RenderFieldObjectPlan[] => Object.freeze([
     fieldObject(
       "render:habahiro:rhythm-lines", "field-line",
-      field.backgroundLineLogicalAssetId, "bg_line_rhythm", 0, ORIGINAL_NOTE_LANE_BOTTOM_Y, null, 1, 0,
+      field.backgroundLineLogicalAssetId, "bg_line_rhythm", 0, noteLaneY, null, noteLaneScale, 0, noteLaneScale,
     ),
     fieldObject(
       "render:habahiro:sudden-area-lines", "field-line",
-      field.backgroundLineLogicalAssetId, "bg_line_rhythm", 0, ORIGINAL_NOTE_LANE_BOTTOM_Y, null, 1, 1,
-      1, 1, 1, false,
+      field.backgroundLineLogicalAssetId, "bg_line_rhythm", 0, noteLaneY, null, noteLaneScale, 1,
+      noteLaneScale, 1, 1, false,
     ),
     fieldObject(
       "render:habahiro:judge-line", "judge-line",
@@ -764,7 +784,8 @@ function createPortableHabahiroScene(
     ),
   ]);
   return ok(Object.freeze({
-    meshWidthSetting: f32(meshWidthSetting),
+    // NoteMesh.GetMeshWidthRate reads StarUIManager.HighAspectRatio.
+    highAspectRatio: f32(layout.starUi.highAspectRatio),
     suddenLane: false as const,
     changeLaneSeconds: f32(Math.fround(0.4166666567325592)),
     animationCompleteSeconds: f32(Math.fround(1)),
@@ -772,6 +793,12 @@ function createPortableHabahiroScene(
     fieldAfter: plans(bindings.fieldAfter),
     fieldMasks: Object.freeze([] as RenderFieldMaskPlan[]),
   }));
+}
+
+/** NoteLane local Y in Display units after its RhythmGameLines parent transform. */
+function noteLaneLocalY(layout: OriginalSurfaceLayout): number {
+  return Math.fround(layout.gameplay.rhythmLinesY +
+    Math.fround(ORIGINAL_NOTE_LANE_BOTTOM_Y * layout.gameplay.rhythmLinesScale));
 }
 
 function fieldObject(

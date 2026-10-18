@@ -119,8 +119,9 @@ export interface NoteInformation {
   readonly directionalMemberOffset?: number;
   /** Approved Garupa semantics: retain hidden endpoints in the shared Slide owner. */
   readonly hiddenSlideEndpoints?: true;
-  /** Approved nonterminal Slide gesture; one authored node, owned by NoteSlide. */
-  readonly slideGesture?: Readonly<{ direction: "Left" | "Right" | null; width: number; noteType: 3 | 9 | 10 }>;
+  /** Approved Garupa gesture head: the original Slide end game type it carries. Intermediate
+   * gesture nodes carry the same tail game types directly in gameNoteType. */
+  readonly slideHeadGestureGameType?: GameNoteTypeValue;
   /** Signed lane distance from this node's incoming point to its outgoing point. */
   readonly slideExitOffset?: number;
   readonly index: number;
@@ -148,6 +149,8 @@ export interface NoteInformation {
   readonly bpmString: string;
   readonly storedAbsolutePos: number;
   readonly authoredAfterAbsolutePos?: number;
+  /** Root of a Slide whose node times run backwards under negative BPM. */
+  readonly foldedTiming?: true;
   readonly slideNoteList: readonly NoteInformation[];
   readonly soundValueList: readonly string[];
   readonly gameNoteAdditionalType: GameNoteAdditionalTypeValue;

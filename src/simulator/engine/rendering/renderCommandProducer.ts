@@ -2,6 +2,7 @@ import { noteUnclippedTransform } from "./ordinaryNoteGeometry";
 import { noteBodyBinding, noteFlickIconBinding, noteLongFlashBinding, noteSlideFlashBinding, noteSlideHeldBodyBinding, slideLineMaterialRole, advanceNoteAnimationClock } from "./noteVisualBinding";
 import type { SlideNodeHideRequest } from "../notes/noteTypes";
 import { virtualLaneUnit } from "../chart/virtualLane";
+import { slideGestureAfterType } from "../chart/slideFlickNodes";
 import type {
   RenderColor,
   RenderCommand,
@@ -168,7 +169,7 @@ export interface PreparedOrdinaryNoteMotion {
 }
 
 export interface HabahiroSceneInput {
-  readonly meshWidthSetting: RenderFloat32;
+  readonly highAspectRatio: RenderFloat32;
   readonly suddenLane: false;
   readonly changeLaneSeconds: RenderFloat32;
   readonly animationCompleteSeconds: RenderFloat32;
@@ -190,6 +191,10 @@ export interface OrdinaryFixedNoteSceneInput {
   readonly specificSpeed: RenderFloat32;
   readonly noteSettingScale: RenderFloat32;
   readonly noteParentScale: RenderFloat32;
+  readonly musicObjectsScale: RenderFloat32;
+  readonly multiRangeNotes: boolean;
+  /** Button world Z: MusicObjects Z -15 plus its scale times the button local Z 15. */
+  readonly buttonWorldZ: RenderFloat32;
   readonly launcherY: RenderFloat32;
   readonly targetCenterY: RenderFloat32;
   readonly highAspectRatio: RenderFloat32;
@@ -221,6 +226,7 @@ export interface PreparedOrdinaryLongChildFrame {
 export interface PreparedOrdinarySlideChildFrame {
   readonly frontTransform: OrdinaryNoteMotionResult;
   readonly childStates: readonly OrdinarySlideChildState[];
+  readonly rootExitApplied: boolean;
   readonly transaction: RenderOwnerTransaction;
 }
 
@@ -466,7 +472,7 @@ export class RenderCommandProducer {
         hudRole: "add-score", state: Object.freeze({
           value: 1,
           alpha: 0,
-          localXOffset: 0,
+          localYOffset: 0,
           poolIndex: poolIndex as 0 | 1 | 2 | 3,
           depth: 0 as const,
         }),
@@ -832,11 +838,14 @@ export class RenderCommandProducer {
         ? HUD_OBJECTS.combo
         : HUD_OBJECTS.comboAllPerfect;
       const animationRole = owner === "ap-alpha" ? "all-perfect" as const : "combo" as const;
-      if (animationRole === "combo" && nextElapsed >= 1) {
+      // ComboNumber.showCoroutine checks the previous timer against its one
+      // second duration, then calls Hide (gameObject.SetActive(false)).
+      if (animationRole === "combo" && elapsed >= 1) {
         commands.push({
           ...base(commands.length), kind: "stop-animation", renderObjectId,
           animationRole, restart: false,
         });
+        commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
       } else {
         const sample = createRenderFloat32(nextElapsed);
         if (sample.status !== "ok") return sample;
@@ -1176,7 +1185,8 @@ export class RenderCommandProducer {
         renderObjectId,
       });
       if (!this.isCompleteHabahiro()) {
-        if (pool.family === "flick" || pool.family === "directional-flick" ||
+        // A Slide root icon serves an approved gesture head; other roots never start it.
+        if (pool.family === "flick" || pool.family === "directional-flick" || pool.family === "slide" ||
           pool.family === "multiple-directional-flick" || pool.family === "multiple-directional-visual") {
           appendHiddenChild(
             commands,
@@ -1521,10 +1531,18 @@ export class RenderCommandProducer {
       ? resolveHabahiroMotionLaneIndex(information)
       : resolveOrdinaryMotionLaneIndex(information, r7Slide);
     if (lane.status !== "ok") return lane;
-    const binding = habahiro
+    // Approved gesture head: the original Slide end sprite of its tail game type.
+    const headGesture = information.slideHeadGestureGameType;
+    const binding = headGesture !== undefined
+      ? habahiro
+        ? resolveHabahiroSlideChildBinding({ ...information, gameNoteType: headGesture }, true, this.resources)
+        : resolveSlideChildSpriteBinding({ ...information, gameNoteType: headGesture }, true, this.resources)
+      : habahiro
       ? resolveHabahiroFrontSpriteBinding(information, this.resources, noteColor)
       : resolveFrontSpriteBinding(information, this.resources, noteColor);
     if (binding.status !== "ok") return binding;
+    if (headGesture !== undefined && binding.value === null) return integrityFailure("render.note.gesture-head-binding-missing",
+      "A gesture head requires the original Slide end sprite of its tail game type.");
     const renderObjectId = rootRenderObjectId(poolObjectId);
     const creationSequence = this.creationSequenceByObjectId.get(renderObjectId);
     if (creationSequence === undefined) {
@@ -1553,6 +1571,8 @@ export class RenderCommandProducer {
       noteStartPosition: Object.freeze({ x: start.x, y: start.y }),
       currentPositionZ: placedStart.z,
       noteParentScale: scene.noteParentScale,
+      musicObjectsScale: scene.musicObjectsScale,
+      multiRangeNotes: scene.multiRangeNotes,
       noteSettingScale: scene.noteSettingScale,
       launcherY: scene.launcherY,
       targetCenterY: scene.targetCenterY,
@@ -1596,14 +1616,17 @@ export class RenderCommandProducer {
     const ordinaryFrontAnimation = habahiro
       ? null
       : resolveNoteAnimationBinding(information, renderObjectId, this.resources);
-    if (ordinaryFrontAnimation !== null) {
+    const gestureHeadFlash = !habahiro && headGesture !== undefined
+      ? resolveLongFlashAnimationBinding(information, renderObjectId, this.resources) : null;
+    for (const animation of [ordinaryFrontAnimation, gestureHeadFlash]) {
+      if (animation === null) continue;
       const ownerValidation = validateOrdinaryAnimationOwner(
-        ordinaryFrontAnimation,
+        animation,
         this.creationSequenceByObjectId,
       );
       if (ownerValidation.status !== "ok") return ownerValidation;
-      appendOrdinaryAnimationStart(commands, base, ordinaryFrontAnimation,
-        scene.noteDomainLayer, this.creationSequenceByObjectId.get(ordinaryFrontAnimation.ownerObjectId)!);
+      appendOrdinaryAnimationStart(commands, base, animation,
+        scene.noteDomainLayer, this.creationSequenceByObjectId.get(animation.ownerObjectId)!);
     }
     const habahiroIcon = completeHabahiro
       ? resolveHabahiroIconBinding(information, this.resources)
@@ -1665,7 +1688,7 @@ export class RenderCommandProducer {
       const widthRate = completeHabahiro
         ? getHabahiroMeshWidthRate(
             motionState.buttonCount,
-            scene.habahiro!.meshWidthSetting,
+            scene.habahiro!.highAspectRatio,
           )
         : createRenderFloat32(Math.fround(1));
       const meshZ = createRenderFloat32(Math.fround(0.9900000095367432));
@@ -1816,17 +1839,10 @@ export class RenderCommandProducer {
         appendNoteTransform(commands, base, childObjectId, childTransform.position,
           childTransform.localScale, scene.noteParentScale, scene.noteTint, scene.noteDomainLayer, childCreationSequence, childTransform.unclipped);
         if (created.value.visible) {
+          const flickEnd = index === information.slideNoteList.length - 1 || usesGestureEndBody(source);
           const childBinding = completeHabahiro
-            ? resolveHabahiroSlideChildBinding(
-                source,
-                index === information.slideNoteList.length - 1,
-                this.resources,
-              )
-            : resolveSlideChildSpriteBinding(
-                source,
-                index === information.slideNoteList.length - 1,
-                this.resources,
-              );
+            ? resolveHabahiroSlideChildBinding(source, flickEnd, this.resources)
+            : resolveSlideChildSpriteBinding(source, flickEnd, this.resources);
           if (childBinding.status !== "ok") return childBinding;
           appendNoteSpriteBinding(commands, base, childObjectId, childBinding.value);
           const childAnimation = resolveNoteAnimationBinding(
@@ -1845,7 +1861,7 @@ export class RenderCommandProducer {
         const segmentWidthRate = completeHabahiro
           ? getHabahiroMeshWidthRate(
               Math.max(previousButtonCount, childButtonCount),
-              scene.habahiro!.meshWidthSetting,
+              scene.habahiro!.highAspectRatio,
             )
           : createRenderFloat32(Math.fround(1));
         if (segmentWidthRate.status !== "ok") return segmentWidthRate;
@@ -1876,11 +1892,12 @@ export class RenderCommandProducer {
       slideChildStates = Object.freeze(states);
     }
     const transaction = this.preflight(commands, () => {
-      if (ordinaryFrontAnimation !== null) {
-        this.noteAnimationElapsedSeconds.set(ordinaryFrontAnimation.ownerObjectId, Object.freeze({
-          role: ordinaryFrontAnimation.animationRole,
+      for (const animation of [ordinaryFrontAnimation, gestureHeadFlash]) {
+        if (animation === null) continue;
+        this.noteAnimationElapsedSeconds.set(animation.ownerObjectId, Object.freeze({
+          role: animation.animationRole,
           elapsed: 0,
-          playbackRevision: ordinaryFrontAnimation.animationRole === "note-long-flash" ? null : undefined,
+          playbackRevision: animation.animationRole === "note-long-flash" ? null : undefined,
         }));
       }
       if (habahiroIcon !== null) this.noteAnimationElapsedSeconds.set(
@@ -2061,7 +2078,7 @@ export class RenderCommandProducer {
       );
     }
     const frame = advanceLongChildFrame(childState, frontTransform, input, scene.screenToSafeAreaRatio,
-      scene.longMeshColor, this.isCompleteHabahiro() ? scene.habahiro!.meshWidthSetting : undefined);
+      scene.longMeshColor, this.isCompleteHabahiro() ? scene.habahiro!.highAspectRatio : undefined);
     if (frame.status !== "ok") return frame;
     const next = ok(frame.value.childState);
     const mesh = ok(frame.value.mesh);
@@ -2161,7 +2178,7 @@ export class RenderCommandProducer {
       scene.longMeshColor,
       stopControl,
       this.isCompleteHabahiro()
-        ? scene.habahiro!.meshWidthSetting
+        ? scene.habahiro!.highAspectRatio
         : undefined,
     );
     if (advanced.status !== "ok") return advanced;
@@ -2209,7 +2226,8 @@ export class RenderCommandProducer {
     }
     const transaction = this.preflight(commands);
     return transaction.status === "ok"
-      ? ok(Object.freeze({ frontTransform: advanced.value.frontTransform, childStates: nextChildStates, transaction: transaction.value }))
+      ? ok(Object.freeze({ frontTransform: advanced.value.frontTransform, childStates: nextChildStates,
+        rootExitApplied: advanced.value.rootExitApplied, transaction: transaction.value }))
       : transaction;
   }
 
@@ -2217,7 +2235,7 @@ export class RenderCommandProducer {
     poolObjectId: string,
     previous: readonly OrdinarySlideChildState[],
     requests: ReadonlyMap<number, SlideNodeHideRequest>,
-  ): SimulatorResult<Omit<PreparedOrdinarySlideChildFrame, "frontTransform">> {
+  ): SimulatorResult<Omit<PreparedOrdinarySlideChildFrame, "frontTransform" | "rootExitApplied">> {
     const childStates = applySlideRenderHides(previous, previous, requests);
     const commands: RenderCommand[] = [];
     this.appendOrdinarySlideHides(commands, poolObjectId, previous, childStates, requests);
@@ -2785,7 +2803,7 @@ export function validateHabahiroScene(
 ): scene is HabahiroSceneInput {
   if (
     scene === undefined ||
-    !validateRenderFloat32(scene.meshWidthSetting) ||
+    !validateRenderFloat32(scene.highAspectRatio) ||
     scene.suddenLane !== false ||
     !validateRenderFloat32(scene.changeLaneSeconds) ||
     scene.changeLaneSeconds.value !== HABAHIRO_CHANGE_LANE_SECONDS ||
@@ -2837,6 +2855,10 @@ export function validateOrdinaryFixedNoteSceneInput(
     scene.noteLineClipY.value < 0 ||
     !validateRenderFloat32(scene.noteParentScale) ||
     scene.noteParentScale.value <= 0 ||
+    !validateRenderFloat32(scene.musicObjectsScale) ||
+    scene.musicObjectsScale.value <= 0 ||
+    !validateRenderFloat32(scene.buttonWorldZ) ||
+    typeof scene.multiRangeNotes !== "boolean" ||
     !validateRenderFloat32(scene.noteSettingScale) ||
     scene.noteSettingScale.value < 0 ||
     !validateRenderFloat32(scene.launcherY) ||
@@ -3313,14 +3335,20 @@ interface NoteBindingGeometry {
 export function resolveProjectedNoteBinding(root: NoteInformation, source: NoteInformation,
   phase: "head" | "intermediate" | "tail", resources: RenderEngineResourceBindings, noteColor: boolean,
   geometry: NoteBindingGeometry, habahiro: boolean): SimulatorResult<NoteSpriteBinding | null> {
-  if (phase === "head" && source.slideGesture) return ok(noteBodyBinding(resources, "note_flick", geometry.suffix,
-    geometry.width, habahiro, source.slideGesture.direction === null ? null : source.slideGesture.direction === "Left" ? "l" : "r"));
+  // Approved gesture head/intermediate: the original Slide end sprite of its tail game type.
+  const headGesture = phase === "head" ? source.slideHeadGestureGameType : undefined;
+  if (headGesture !== undefined) {
+    const tail = { ...source, gameNoteType: headGesture };
+    return habahiro ? resolveHabahiroSlideChildBinding(tail, true, resources, geometry)
+      : resolveSlideChildSpriteBinding(tail, true, resources, geometry);
+  }
   if (phase === "head") return habahiro ? resolveHabahiroFrontSpriteBinding(source, resources, noteColor, geometry)
     : resolveFrontSpriteBinding(source, resources, noteColor, geometry);
   if (root.fireNoteType === FrontNoteType.Long) return habahiro ? resolveHabahiroAfterSpriteBinding(root, resources, geometry)
     : resolveAfterSpriteBinding(root, resources, geometry);
-  return habahiro ? resolveHabahiroSlideChildBinding(source, phase === "tail", resources, geometry)
-    : resolveSlideChildSpriteBinding(source, phase === "tail", resources, geometry);
+  const flickEnd = phase === "tail" || usesGestureEndBody(source);
+  return habahiro ? resolveHabahiroSlideChildBinding(source, flickEnd, resources, geometry)
+    : resolveSlideChildSpriteBinding(source, flickEnd, resources, geometry);
 }
 
 /** Coordinate/gesture inputs still resolve icons through the original front/after functions. */
@@ -3608,6 +3636,13 @@ function resolveAfterSpriteBinding(
   }));
 }
 
+/** An intermediate Directional gesture shows its Slide end body; an intermediate
+ * Flick keeps the intermediate body and carries only the flick icon. */
+function usesGestureEndBody(source: NoteInformation): boolean {
+  const gesture = slideGestureAfterType(source);
+  return gesture !== AfterNoteType.None && gesture !== AfterNoteType.SlideFlickEnd;
+}
+
 function resolveSlideChildSpriteBinding(
   information: NoteInformation,
   terminal: boolean,
@@ -3640,11 +3675,11 @@ function resolveNoteAnimationBinding(
 ): OrdinaryAnimationBinding | null {
   const role = resolveNoteAnimationRole(information);
   if (role !== null) {
-    const direction = information.slideGesture !== undefined
-      ? information.slideGesture.direction === null ? "up" : information.slideGesture.direction === "Left" ? "left" : "right"
-      : gameTypeIsDirectional(information.gameNoteType)
-      ? gameTypeIsLeft(information.gameNoteType) ? "left" : "right"
-      : afterTypeIsDirectional(information.afterNoteType)
+    const headGesture = information.slideHeadGestureGameType;
+    const game = headGesture ?? information.gameNoteType;
+    const direction = gameTypeIsDirectional(game)
+      ? gameTypeIsLeft(game) ? "left" : "right"
+      : headGesture === undefined && afterTypeIsDirectional(information.afterNoteType)
       ? afterTypeIsLeft(information.afterNoteType) ? "left" : "right"
       : "up";
     return Object.freeze({
@@ -3653,7 +3688,16 @@ function resolveNoteAnimationBinding(
       animationRole: role,
     });
   }
-  if (!allowLongFlash || (
+  return allowLongFlash ? resolveLongFlashAnimationBinding(information, parentObjectId, resources) : null;
+}
+
+/** Long/Slide hold flash; a gesture head carries it beside its flick icon. */
+function resolveLongFlashAnimationBinding(
+  information: NoteInformation,
+  parentObjectId: string,
+  resources: RenderEngineResourceBindings,
+): OrdinaryAnimationBinding | null {
+  if ((
     information.fireNoteType !== FrontNoteType.Long &&
     information.fireNoteType !== FrontNoteType.SlideA &&
     information.fireNoteType !== FrontNoteType.SlideB &&
@@ -3716,8 +3760,10 @@ function resolveAfterAnimationRole(
 function resolveNoteAnimationRole(
   information: NoteInformation,
 ): "note-flick" | "note-directional-flick" | null {
-  if (information.slideGesture !== undefined)
-    return information.slideGesture.noteType === 3 ? "note-flick" : "note-directional-flick";
+  const headGesture = information.slideHeadGestureGameType;
+  if (headGesture !== undefined)
+    return headGesture === GameNoteType.SlideEndFlickA || headGesture === GameNoteType.SlideEndFlickB
+      ? "note-flick" : "note-directional-flick";
   if (
     information.fireNoteType === FrontNoteType.Flick ||
     information.gameNoteType === GameNoteType.Flick ||

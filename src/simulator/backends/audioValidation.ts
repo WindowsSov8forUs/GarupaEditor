@@ -23,6 +23,7 @@ const FIXED_SE_LOGICAL_IDS = Object.freeze({
   SE_RESULT_FAILED: "sound/common",
   SE_RESULT_SCORE_COUNT: "sound/common",
   SE_RHYTHM_CLEAR: "sound/common",
+  SE_RHYTHM_CLEAR_VO: "sound/common",
   SE_RHYTHM_FULLCOMBO: "sound/common",
   SE_RHYTHM_GAYA: "sound/common",
   SE_RHYTHM_TAP_SKILL: "sound/common",

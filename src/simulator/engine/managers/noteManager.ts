@@ -1,7 +1,7 @@
 import { authoredEndpointPosition } from "../chart/noteGraph";
 import { findBatchBpmCommand, isBpmCommand } from "../chart/noteGraph";
 import { connectDirectionalMemberBatch, connectionDirection, directionalConnectionEndpoints, directionalConnectionPresentation, reconnectDirectionalSyncConnections, slideDirectionalAnchorEndpoint } from "../rendering/directionalConnectionRules";
-import { noteMotionY, noteSpatialY, noteUnclippedSyncTarget } from "../rendering/ordinaryNoteGeometry";
+import { advanceOrdinaryNoteVerticalMotion, noteMotionY, noteSpatialY, noteUnclippedSyncTarget } from "../rendering/ordinaryNoteGeometry";
 import type { TapLaneEffectInputEvent } from "./tapLaneEffectOwner";
 import { SyncLineConnectionRules } from "../rendering/syncLineConnectionRules";
 import { virtualLaneUnit } from "../chart/virtualLane";
@@ -72,10 +72,12 @@ import {
   type OrdinarySyncLineOwnerState,
 } from "../rendering/ordinaryNoteGeometry";
 import { createRenderFloat32 } from "../../backends/renderingValidation";
+import { isSlideGestureNode, slideFlickDirection, slideGestureAfterType, slideGestureWidth } from "../chart/slideFlickNodes";
 
 const BPM_POOL_LENGTH = 30;
 const SYNC_LINE_POOL_LENGTH = 80;
-const MULTIPLE_DIRECTIONAL_LINE_POOL_LENGTH = 60;
+// NoteInstanceContainer creates 80 sync lines and 80 Multiple Directional back lines.
+const MULTIPLE_DIRECTIONAL_LINE_POOL_LENGTH = 80;
 
 export interface NoteManagerClock {
   validateAdvanceSequence(
@@ -85,6 +87,7 @@ export interface NoteManagerClock {
   setExecuteFrame(executeFrame: number): void;
   advance(deltaTimeSeconds: number): SimulatorResult<void>;
   canActivateBatch(batch: NoteBatchInformation): SimulatorResult<boolean>;
+  isLateBatch(batch: NoteBatchInformation): boolean;
   usesIndependentVisualAxis(batch: NoteBatchInformation): boolean;
 }
 
@@ -173,7 +176,7 @@ interface DirectionalVisualTailOwner {
 export interface ProjectedNoteGeometry {
   connectionBatchActivated(sources: readonly NoteInformation[]): void;
   candidateY(source: NoteInformation): ReturnType<typeof noteSpatialY> | undefined;
-  advance(note: NoteBase, delta: number, placement: "perspective" | "target-button" | "preserve" | null, children: boolean,
+  advance(note: NoteBase, delta: number, placement: "perspective" | "target-button" | "stop-state" | "preserve" | null, children: boolean,
     controlledRealMoveSecond?: OrdinaryNoteMotionState["realMoveSecond"]): SimulatorResult<void>;
   hasConnectionOwner(source: NoteInformation): boolean;
   connectionState(source: NoteInformation, after: NoteConnectionEndpoint): OrdinaryLongNormalChildState | undefined;
@@ -214,7 +217,6 @@ export class NoteManager {
     0, 0, 0, 0,
   ];
   private nextBatchIndexValue = 0;
-  private catchingStartup = false;
   private bpmPoolCursorValue = 0;
   private outerFrameIndexValue = 0;
   private setupComplete = false;
@@ -256,6 +258,10 @@ export class NoteManager {
     NoteBase,
     OrdinaryLongNormalChildState
   >();
+  /** Bound gesture heads not yet judged; their held body appears on judgement. */
+  private readonly pendingGestureHeads = new Set<NoteSlide>();
+  /** Approved exit offset already applied to an ordinary Slide head. */
+  private readonly ordinarySlideRootExitApplied = new Set<NoteBase>();
   private readonly ordinarySlideRenderStates = new Map<
     NoteBase,
     readonly OrdinarySlideChildState[]
@@ -394,7 +400,7 @@ export class NoteManager {
             laneSpan: slideGestureSpan(noteInformation),
             sourceIndex: -1,
             phase: "head",
-            allowedNoteTypes: Object.freeze([noteInformation.slideGesture?.noteType ?? 8]),
+            allowedNoteTypes: Object.freeze(manualSlideTerminalNoteTypes(slideGestureAfterType(noteInformation))),
             absolutePosition: noteInformation.absolutePos,
             buttonTypes: Object.freeze([...noteInformation.buttonTypesArray]),
           }));
@@ -407,7 +413,7 @@ export class NoteManager {
             const terminal = slideIndex === noteInformation.slideNoteList.length - 1;
             const allowedNoteTypes = terminal
               ? manualSlideTerminalNoteTypes(noteInformation.afterNoteType)
-              : [source.slideGesture?.noteType ?? 8];
+              : manualSlideTerminalNoteTypes(slideGestureAfterType(source));
             this.manualSlideSources.set(source, Object.freeze({
               laneSpan: terminal && slideAfterGroup !== undefined ? directionalGroupSpan(slideAfterGroup) : slideGestureSpan(source) ?? source.laneSpan,
               sourceIndex: slideIndex,
@@ -491,6 +497,7 @@ export class NoteManager {
         const note = this.createPoolObject(family, `${family}:${index}`);
         if (source.laneSpan !== undefined) this.projectedNotes.add(note);
         note.onTapLaneEffect = event => this.enqueueTapLaneEffect(event);
+        if (note instanceof NoteSlide) note.onManualOwnershipReleased = (released) => this.manualNoteDeactivatedOwner?.(released);
         if (note instanceof NoteSlide || note instanceof NoteLong) note.onTouchKeepSound = (index, action) => {
           if (action === "start" && this.isMoveTime()) return;
           this.pendingHoldSounds.push({ ownerKey: `${note instanceof NoteSlide ? "slide" : "long"}:${index}`, action });
@@ -509,6 +516,8 @@ export class NoteManager {
             }
             this.ordinaryLongRenderStates.delete(inactiveNote);
             this.ordinarySlideRenderStates.delete(inactiveNote);
+            this.ordinarySlideRootExitApplied.delete(inactiveNote);
+            if (inactiveNote instanceof NoteSlide) this.pendingGestureHeads.delete(inactiveNote);
             this.ordinaryRenderMotionStates.delete(inactiveNote);
             this.manualNoteDeactivatedOwner?.(inactiveNote);
           },
@@ -521,8 +530,7 @@ export class NoteManager {
           submitJudgement: this.submitAutoLiveJudgement,
         });
         note.registerManualRuntime({
-          usesFoldedTime: this.musicScoreController.signedTempo?.folded === true,
-          isStartupExpired: position => this.musicScoreController.signedTempo?.folded === true && position < this.musicScoreController.signedTempo.positionAtSeconds(0),
+          get usesFoldedTime() { return note.noteInformation?.foldedTiming === true; },
           getExecuteFrame: () => this.musicScoreController.executeFrame,
           getSlideChildPhase: (index) => {
             if (note.noteInformation?.laneSpan !== undefined && this.projectedGeometry !== null)
@@ -573,10 +581,6 @@ export class NoteManager {
             return snapped.status === "ok" ? ok(true) : snapped;
           },
           judgeSlide: (source) => {
-            const tempo = this.musicScoreController.signedTempo;
-            if (tempo?.folded && !source.isInvisible && !this.inGameCalculatedData.isAutoPlay && !this.isMoveTime() &&
-              source.absolutePos < tempo.positionAtSeconds(0))
-              return ok({ result: -1 as const, correction: 0, hasReachedPerfectLine: false });
             if (note.noteInformation?.laneSpan !== undefined && this.projectedGeometry !== null) {
               const y = this.projectedGeometry.judgeY(source);
               return y.status === "ok" ? this.slideNoteManager.judge(source, y.value) : y;
@@ -687,19 +691,11 @@ export class NoteManager {
     this.clock.setExecuteFrame(substepExecuteFrame);
     const renderFrame = this.renderProducer?.beginOuterFrame(this.outerFrameIndexValue);
     if (renderFrame?.status === "integrity-failure") return renderFrame;
-    const firstFrame = this.outerFrameIndexValue === 0;
     this.outerFrameIndexValue += 1;
 
     for (let substepIndex = 0; substepIndex < substepCount; substepIndex += 1) {
       const renderSubstep = this.renderProducer?.beginSubstep(substepIndex);
       if (renderSubstep?.status === "integrity-failure") return renderSubstep;
-      if (firstFrame && substepIndex === 0) {
-        this.catchingStartup = true;
-        try {
-          const caughtUp = this.catchUpStartup(substepIndex);
-          if (caughtUp.status !== "ok") return caughtUp;
-        } finally { this.catchingStartup = false; }
-      }
       const advanceResult = this.clock.advance(substepDelta);
       if (advanceResult.status !== "ok") {
         return advanceResult;
@@ -742,15 +738,39 @@ export class NoteManager {
           );
         }
         if (selected !== undefined && !selected.has(note)) { activeIndex -= 1; continue; }
+        if (this.renderProducer !== null && note instanceof NoteSlide && this.pendingGestureHeads.has(note) && !note.gestureHeadPending) {
+          // The gesture head was judged: show the held body from now on.
+          this.pendingGestureHeads.delete(note);
+          if (note.headJudged && note.state === NoteState.Stop && note.noteInformation?.laneSpan === undefined) {
+            const held = this.advanceOrdinaryRenderMotion(note, Math.fround(0), "preserve");
+            if (held.status !== "ok") return held;
+          }
+        }
         if (this.renderProducer !== null && note instanceof NoteSlide && note.pendingBeganPlacement) {
           const placed = this.advanceOrdinaryRenderMotion(note, Math.fround(0), "preserve", true);
           if (placed.status !== "ok") return placed;
           note.commitBeganPlacement();
+          if (note.gestureHeadPending) this.pendingGestureHeads.add(note);
+          // The placement keeps the clock; a bound gesture head's judgement still moves this frame.
+          if (note.gestureHeadPending && note.noteInformation?.laneSpan === undefined) {
+            const advanced = this.advanceGestureHeadJudgement(note, deltaTimeSeconds);
+            if (advanced.status !== "ok") return advanced;
+          }
+        } else if (note instanceof NoteSlide && note.gestureHeadPending && note.noteInformation?.laneSpan === undefined) {
+          const advanced = this.advanceGestureHeadJudgement(note, deltaTimeSeconds);
+          if (advanced.status !== "ok") return advanced;
         }
         const stateBefore = note.state;
         const updateResult = note.executeUpdate(deltaTimeSeconds);
         if (updateResult.status !== "ok") {
           return updateResult;
+        }
+        // NoteLong.StopState runs every frame the Long begins in Stop: the head
+        // returns to the target world position before the end judgement.
+        if (this.renderProducer !== null && note instanceof NoteLong && stateBefore === NoteState.Stop &&
+          note.state !== NoteState.Deactive) {
+          const stopped = this.advanceOrdinaryRenderMotion(note, Math.fround(0), "stop-state");
+          if (stopped.status !== "ok") return stopped;
         }
         if (this.renderProducer !== null && stateBefore === NoteState.Move && note.state === NoteState.Stop &&
           (note instanceof NoteLong || note instanceof NoteSlide) &&
@@ -806,32 +826,6 @@ export class NoteManager {
     return ok(undefined);
   }
 
-  private catchUpStartup(substepIndex: number): SimulatorResult<void> {
-    const tempo = this.musicScoreController.signedTempo;
-    if (!tempo?.folded) return ok(undefined);
-    const cutoff = tempo.positionAtSeconds(0);
-    while ((this.batches[this.nextBatchIndexValue]?.absolutePos ?? Infinity) < cutoff) {
-      const batch = this.batches[this.nextBatchIndexValue]!;
-      const activated = this.activateCurrentBatch(substepIndex);
-      if (activated.status !== "ok") return activated;
-      // Drain the shared state machines at the same clock instant, in connection order.
-      // A graph-derived bound allows Move -> Wait -> Stop and each child exactly once.
-      const owners = new Set(batch.informationList.flatMap(source => {
-        const note = this.getActiveNote(source); return note === null ? [] : [note];
-      }));
-      const progress = () => [...owners].map(note => `${note.state}:${note instanceof NoteSlide ?
-        `${note.headJudged}:${note.afterNotes.filter(child => child.judged).length}` : ""}`).join(";");
-      const steps = batch.informationList.reduce((count, source) => count + 2 * source.slideNoteList.length + 4, 0);
-      for (let step = 0; step < steps; step++) {
-        const before = progress();
-        const updated = this.updateActiveNotes(0, owners);
-        if (updated.status !== "ok") return updated;
-        if (progress() === before) break;
-      }
-    }
-    return ok(undefined);
-  }
-
   advanceNoteAnimations(deltaTimeSeconds: number): SimulatorResult<void> {
     if (this.renderProducer !== null) {
       const animation = this.renderProducer.preflightNoteAnimationFrame(Math.fround(deltaTimeSeconds),
@@ -848,7 +842,6 @@ export class NoteManager {
   get hasPendingNotes(): boolean { return this.nextBatchIndexValue < this.batches.length || this.activeNotesValue.length > 0; }
 
   getAdjustedMusicPosition(): number {
-    if (this.catchingStartup && this.musicScoreController.signedTempo?.folded) return this.musicScoreController.signedTempo.positionAtSeconds(0);
     return this.musicScoreController.getAdjustedMusicPosition(
       this.judgementAdjustValueB,
     );
@@ -928,6 +921,12 @@ export class NoteManager {
     }
     this.manualNoteDeactivatedOwner = owner;
     return ok(undefined);
+  }
+
+  /** Active Hidden-head Slides whose first visible node can still register a finger. */
+  hiddenHeadRegistrationCandidates(): readonly NoteSlide[] {
+    return this.activeNotesValue.filter((note): note is NoteSlide =>
+      note instanceof NoteSlide && note.awaitsHiddenHeadRegistration);
   }
 
   selectManualCandidateBeforeJudgement(
@@ -1061,6 +1060,8 @@ export class NoteManager {
   }
 
   private clearRuntimeForDispose(): void {
+    this.connectionPoolCursors.sync = 0;
+    this.connectionPoolCursors.directional = 0;
     this.activeBySource.clear();
     this.pendingHoldSounds.length = 0;
     for (const bpm of this.bpmPoolValue) {
@@ -1078,6 +1079,8 @@ export class NoteManager {
     this.completedSlidePresentationRoots.clear();
     this.ordinaryLongRenderStates.clear();
     this.ordinarySlideRenderStates.clear();
+    this.ordinarySlideRootExitApplied.clear();
+    this.pendingGestureHeads.clear();
     this.bpmPoolCursorValue = 0;
     this.outerFrameIndexValue = 0;
     this.slideNoteManager.dispose();
@@ -1202,10 +1205,32 @@ export class NoteManager {
     return ok(group);
   }
 
+  /** A bound gesture head's sprite stays on the line while its judgement keeps
+   * moving toward the virtual line, as on the extension projection path. */
+  private advanceGestureHeadJudgement(note: NoteSlide, deltaTimeSeconds: number): SimulatorResult<void> {
+    const current = this.ordinaryRenderMotionStates.get(note);
+    if (current === undefined || note.noteInformation === null) return integrityFailure(
+      "manual.slide-gesture-head-motion-unavailable", "A bound gesture head requires its committed motion.");
+    const line = this.slideNoteManager.getVirtualPerfectLine(note.noteInformation);
+    if (line.status !== "ok") return line;
+    if (current.slideJudgeY !== undefined && current.slideJudgeY <= line.value) return ok(undefined);
+    const deltaTime = createRenderFloat32(Math.fround(deltaTimeSeconds));
+    if (deltaTime.status !== "ok") return deltaTime;
+    const realMoveSecond = createRenderFloat32(Math.fround(current.motionState.realMoveSecond.value + deltaTime.value.value));
+    if (realMoveSecond.status !== "ok") return realMoveSecond;
+    const motionState = { ...current.motionState, deltaTime: deltaTime.value, realMoveSecond: realMoveSecond.value };
+    const vertical = advanceOrdinaryNoteVerticalMotion(motionState);
+    if (vertical.status !== "ok") return vertical;
+    this.ordinaryRenderMotionStates.set(note, Object.freeze({ ...current,
+      motionState: Object.freeze({ ...motionState, progressRate: vertical.value.progressRate }),
+      slideJudgeY: Math.max(vertical.value.y, line.value) }));
+    return ok(undefined);
+  }
+
   private advanceOrdinaryRenderMotion(
     note: NoteBase,
     deltaTimeSeconds: number,
-    placement: "perspective" | "target-button" | "preserve" | null = null,
+    placement: "perspective" | "target-button" | "stop-state" | "preserve" | null = null,
     useGoalDepth = false,
     controlledRealMoveSecond?: OrdinaryNoteMotionState["realMoveSecond"],
   ): SimulatorResult<void> {
@@ -1213,7 +1238,7 @@ export class NoteManager {
       const advanced = this.projectedGeometry?.advance(note, deltaTimeSeconds, placement, false, controlledRealMoveSecond) ?? ok(undefined);
       if (advanced.status !== "ok") return advanced;
       if (placement === null && note instanceof NoteSlide && this.slidePresentationRoots.has(note.noteInformation.index) &&
-          note.noteInformation.slideGesture?.direction != null && !note.headJudged) {
+          slideFlickDirection(slideGestureAfterType(note.noteInformation)) !== null && !note.headJudged) {
         const head = this.projectedGeometry?.connectionState(note.noteInformation, false);
         if (head !== undefined) return this.advanceDirectionalVisualsForEndpoint(note, deltaTimeSeconds, head.motionState.realMoveSecond, false);
       }
@@ -1253,12 +1278,14 @@ export class NoteManager {
         deltaTime: deltaTime.value,
         realMoveSecond: realMoveSecond.value,
         ...(useGoalDepth ? {
-          currentPositionZ: this.ordinaryNoteScene.goalPositions[note.noteInformation!.buttonType]!.z,
+          // ExecTouchBegan writes the cached target world XYZ, including the button world Z.
+          currentPositionZ: this.ordinaryNoteScene.buttonWorldZ,
         } : {}),
       }),
       this.ordinaryNoteScene,
       placement === "preserve" ? current.renderedTransform.localScale : placement,
-      note instanceof NoteSlide && placement !== null && note.state === NoteState.Stop ? note.noteInformation : null,
+      // A bound gesture head keeps its gesture sprite until it is judged.
+      note instanceof NoteSlide && placement !== null && note.state === NoteState.Stop && !note.gestureHeadPending ? note.noteInformation : null,
     );
     if (prepared.status !== "ok") return prepared;
     const committed = prepared.value.transaction.commit();
@@ -1276,6 +1303,11 @@ export class NoteManager {
       }),
       renderedTransform: prepared.value.motion,
     }));
+    // An unjudged Directional gesture head carries its Add members, as on the projection path.
+    if (placement === null && note instanceof NoteSlide && this.slidePresentationRoots.has(note.noteInformation!.index) &&
+        slideFlickDirection(slideGestureAfterType(note.noteInformation!)) !== null && !note.headJudged) {
+      return this.advanceDirectionalVisualsForEndpoint(note, deltaTimeSeconds, realMoveSecond.value, false);
+    }
     return ok(undefined);
   }
 
@@ -1343,7 +1375,9 @@ export class NoteManager {
     const endpoints: NoteConnectionEndpoint[] = [true];
     if (this.slidePresentationRoots.has(source.index) && this.hasConnectionOwner(source)) for (let index = 1; index < source.slideNoteList.length; index += 1) {
       const node = source.slideNoteList[index - 1]!;
-      if (node.slideGesture?.direction != null && node.slideGesture.width > 1) endpoints.push(index || false);
+      const gesture = slideGestureAfterType(node);
+      if (gesture === AfterNoteType.SlideMultipleDirectionalFlickLeft || gesture === AfterNoteType.SlideMultipleDirectionalFlickRight)
+        endpoints.push(index || false);
     }
     const previous = endpoints.map(endpoint => this.projectedGeometry?.connectionState(source, endpoint));
     const advanced = this.projectedGeometry?.advance(note, delta, null, true) ?? ok(undefined);
@@ -1462,13 +1496,20 @@ export class NoteManager {
           judgementAdjustValueB: this.judgementAdjustValueB,
           virtualPerfectLine: virtualLine.value,
           rootSource: note.noteInformation!,
+          rootExitApplied: this.ordinarySlideRootExitApplied.has(note),
           rootMotionState: front.motionState,
           currentBpm: this.musicScoreController.currentBpm,
           virtualLaneDeltaX: virtualLaneUnit(
             this.ordinaryNoteScene.goalPositions[0]!.x.value, this.ordinaryNoteScene.goalPositions[1]!.x.value,
           ),
+          laneSpacingX: Math.fround(this.ordinaryNoteScene.goalPositions[1]!.x.value - this.ordinaryNoteScene.goalPositions[0]!.x.value),
+          startLaneSpacingX: Math.fround(this.ordinaryNoteScene.noteStartPositions[1]!.x.value - this.ordinaryNoteScene.noteStartPositions[0]!.x.value),
           stoppedChildWaited: note instanceof NoteSlide
             ? note.afterNotes.map((after) => after.stopAdjustmentWaited) : [],
+          ...(note instanceof NoteSlide ? { unjudgedGestures: new Set([
+            ...(isSlideGestureNode(note.noteInformation!) && !note.headJudged ? [-1] : []),
+            ...note.afterNotes.flatMap((after, index) => after.isGesture && !after.judged ? [index] : []),
+          ]) } : {}),
         },
         note instanceof NoteSlide ? note.pendingRenderHides : undefined,
       );
@@ -1476,7 +1517,19 @@ export class NoteManager {
       const committed = prepared.value.transaction.commit();
       if (committed.status !== "ok") return committed;
       this.ordinarySlideRenderStates.set(note, prepared.value.childStates);
+      if (prepared.value.rootExitApplied) this.ordinarySlideRootExitApplied.add(note);
       this.ordinaryRenderMotionStates.set(note, Object.freeze({ ...front, renderedTransform: prepared.value.frontTransform }));
+      // Approved gesture intermediates carry their Add members like the tail does.
+      if (advanceMotion && note instanceof NoteSlide && this.slidePresentationRoots.has(note.noteInformation!.index)) {
+        for (let index = 0; index < childStates.length - 1; index += 1) {
+          const gesture = slideGestureAfterType(note.noteInformation!.slideNoteList[index]!);
+          if ((gesture !== AfterNoteType.SlideMultipleDirectionalFlickLeft && gesture !== AfterNoteType.SlideMultipleDirectionalFlickRight) ||
+            childStates[index]!.lifecycle.phase !== "move") continue;
+          const moved = this.advanceDirectionalVisualsForEndpoint(note, deltaTimeSeconds,
+            prepared.value.childStates[index]!.lifecycle.motionState.realMoveSecond, index + 1);
+          if (moved.status !== "ok") return moved;
+        }
+      }
       const previousTail = childStates[childStates.length - 1];
       const currentTail = prepared.value.childStates[prepared.value.childStates.length - 1];
       if (advanceMotion && previousTail?.lifecycle.phase === "move" && currentTail !== undefined) {
@@ -1619,8 +1672,10 @@ export class NoteManager {
       (note.noteInformation?.laneSpan === undefined ||
         this.projectedGeometry?.connectionState(note.noteInformation, false)?.phase === "move");
     if (note.state === NoteState.Deactive) return false;
-    return typeof after === "number" ? this.projectedGeometry?.connectionState(note.noteInformation!, after)?.phase === "move"
-      : this.syncTailState(note)?.phase === "move";
+    if (typeof after === "number") return note.noteInformation?.laneSpan !== undefined
+      ? this.projectedGeometry?.connectionState(note.noteInformation, after)?.phase === "move"
+      : this.ordinarySlideRenderStates.get(note)?.[after - 1]?.lifecycle.phase === "move";
+    return this.syncTailState(note)?.phase === "move";
   }
 
   private syncLineForEndpoint(note: NoteBase, after: NoteConnectionEndpoint): ActiveOrdinarySyncLine | null {
@@ -1636,10 +1691,20 @@ export class NoteManager {
     return owned ?? incoming;
   }
 
+  private readonly connectionPoolCursors = { sync: 0, directional: 0 };
+
   private acquireConnectionPoolSlot<T>(pool: Array<T | null>, kind: "sync" | "directional"): SimulatorResult<number> {
-    const inactive = pool.findIndex(line => line === null);
-    if (inactive >= 0) return ok(inactive);
+    // GetInitialize scans from the pool cursor to the end, then from the start,
+    // and stores index + 1. A full original pool returns null; the extension
+    // grows it so dense product charts keep every connection.
+    const cursor = this.connectionPoolCursors[kind];
+    for (const index of [...Array(pool.length).keys()].slice(cursor).concat([...Array(Math.min(cursor, pool.length)).keys()])) {
+      if (pool[index] !== null) continue;
+      this.connectionPoolCursors[kind] = index + 1;
+      return ok(index);
+    }
     const index = pool.length;
+    this.connectionPoolCursors[kind] = index + 1;
     const sync = kind === "sync";
     const prepared = this.renderProducer!.preflightPoolSetup([], sync ? index + 1 : 0, sync ? 0 : index + 1,
       { syncLine: sync ? index : 0, multipleDirectionalLine: sync ? 0 : index });
@@ -1837,7 +1902,11 @@ export class NoteManager {
       if (!(owner instanceof NoteSlide)) return NoteState.Wait;
       if (binding.connectionIndex === 0 ? owner.headJudged : owner.afterNotes[binding.connectionIndex - 1]?.judged)
         return NoteState.Deactive;
-      const phase = this.projectedGeometry?.connectionState(root, binding.connectionIndex || false)?.phase;
+      const phase = root.laneSpan !== undefined
+        ? this.projectedGeometry?.connectionState(root, binding.connectionIndex || false)?.phase
+        : binding.connectionIndex === 0
+          ? owner.state === NoteState.Move ? "move" : owner.state === NoteState.Wait ? "wait" : "stop"
+          : this.ordinarySlideRenderStates.get(owner)?.[binding.connectionIndex - 1]?.lifecycle.phase;
       return phase === "move" ? NoteState.Move : phase === "stop" ? NoteState.Stop : NoteState.Wait;
     }
     const owners = this.directionalVisualTailOwners.get(visual);
@@ -1885,10 +1954,13 @@ export class NoteManager {
       const batch = this.batches[index];
       const activated = this.activateCurrentBatch(substepIndex);
       if (activated.status !== "ok") return activated;
-      // SV and folded time can have several due batches in one update.
+      if (this.nextBatchIndexValue === index || batch === undefined) return ok(undefined);
+      // SV axes can have several due batches in one update, and batches
+      // already reached by the music clock launch without waiting.
       // Drain them through the same activation path.
-      if (this.nextBatchIndexValue === index || batch === undefined ||
-        !this.clock.usesIndependentVisualAxis(batch)) return ok(undefined);
+      const following = this.batches[this.nextBatchIndexValue];
+      if (!this.clock.usesIndependentVisualAxis(batch) &&
+        (following === undefined || !this.clock.isLateBatch(following))) return ok(undefined);
     }
   }
 
@@ -1902,7 +1974,7 @@ export class NoteManager {
     if (activationDecision.status !== "ok") {
       return activationDecision;
     }
-    if (!activationDecision.value) {
+    if (!activationDecision.value && !this.clock.isLateBatch(batch)) {
       return ok(undefined);
     }
 
@@ -2308,8 +2380,7 @@ function manualLongAfterNoteType(afterNoteType: number): 2 | 5 | 6 | 7 | null {
 
 class MultipleDirectionalGroupOwner implements MultipleDirectionalRuntimeGroup {
   private usedValue = false;
-  private activeManualFingerId = -1;
-  private readonly projectedManualFingers = new WeakMap<object, number>();
+  private readonly reservedTransactions = new WeakSet<object>();
   readonly members: readonly NoteInformation[];
   readonly count: number;
   readonly buttonTypes: readonly ButtonTypeValue[];
@@ -2328,38 +2399,10 @@ class MultipleDirectionalGroupOwner implements MultipleDirectionalRuntimeGroup {
     return this.usedValue;
   }
 
-  preflightManualFinger(transaction: object, fingerId: number): SimulatorResult<void> {
-    const projectedFinger = this.projectedManualFingers.get(transaction) ?? -1;
-    if (
-      this.usedValue ||
-      (this.activeManualFingerId >= 0 && this.activeManualFingerId !== fingerId) ||
-      (projectedFinger >= 0 && projectedFinger !== fingerId)
-    ) {
-      return integrityFailure(
-        "manual.multiple-directional-finger-owner-conflict",
-        "A Multiple Directional group accepts one owner finger before side consumption.",
-      );
-    }
-    this.projectedManualFingers.set(transaction, fingerId);
-    return ok(undefined);
-  }
-
-  commitManualFinger(transaction: object, fingerId: number): void {
-    if (
-      this.projectedManualFingers.get(transaction) !== fingerId ||
-      (this.activeManualFingerId >= 0 && this.activeManualFingerId !== fingerId) ||
-      this.usedValue
-    ) {
-      throw new Error("Multiple Directional manual finger owner changed after preflight");
-    }
-    this.activeManualFingerId = fingerId;
-    this.projectedManualFingers.delete(transaction);
-  }
-
-  clearManualFinger(fingerId: number): void {
-    if (this.activeManualFingerId === fingerId) {
-      this.activeManualFingerId = -1;
-    }
+  reserveUse(transaction: object): boolean {
+    if (this.usedValue || this.reservedTransactions.has(transaction)) return false;
+    this.reservedTransactions.add(transaction);
+    return true;
   }
 
   markUsed(): SimulatorResult<void> {
@@ -2387,9 +2430,8 @@ function directionalGroupSpan(group: MultipleDirectionalRuntimeGroup | undefined
 
 /** Preserve the authored full target while Directional's Slide mesh uses its incoming member. */
 function slideGestureSpan(source: NoteInformation) {
-  const gesture = source.slideGesture;
-  if (gesture?.direction == null) return source.laneSpan;
+  if (source.slideExitOffset === undefined) return source.laneSpan;
   const incoming = source.laneSpan?.start ?? source.buttonType;
-  const exit = incoming + (source.slideExitOffset ?? 0);
-  return { start: Math.min(incoming, exit), end: Math.max(incoming, exit), width: gesture.width };
+  const exit = incoming + source.slideExitOffset;
+  return { start: Math.min(incoming, exit), end: Math.max(incoming, exit), width: slideGestureWidth(source) };
 }

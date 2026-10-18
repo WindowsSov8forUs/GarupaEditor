@@ -51,9 +51,8 @@ export class InGameMusicScoreController {
     this.signedTempo = getSignedTempo(chart);
     const profile = getGarupaProductChartProfile(chart);
     const axisSources = new Set<NoteInformation>();
-    const axisGroups = new Set(profile?.svEvents.filter(event => event.value !== 1).map(event => event.timingGroup));
     for (const node of profile?.nodes ?? []) {
-      if (axisGroups.has("#Global") || axisGroups.has(node.timingGroup)) {
+      if (profile!.svItemIndices.has(node.chartItemIndex)) {
         for (const source of node.runtimeMembers ?? []) axisSources.add(source);
       }
     }
@@ -70,12 +69,11 @@ export class InGameMusicScoreController {
     // Keep position precision until projection; both input formats use this clock.
     this.launcherMusicBarProgressValue = Math.floor(launcherLead / MUSIC_BAR_DIVISION_COUNT);
     this.launcherMusicBeatProgressValue = launcherLead % MUSIC_BAR_DIVISION_COUNT;
-    if (this.signedTempo?.folded) {
-      const start = this.signedTempo.positionAtSeconds(0);
-      this.musicBarProgressValue = Math.floor(start / MUSIC_BAR_DIVISION_COUNT);
-      this.musicBeatProgressValue = start % MUSIC_BAR_DIVISION_COUNT;
-      this.launcherMusicBarProgressValue = Math.floor((start + launcherLead) / MUSIC_BAR_DIVISION_COUNT);
-      this.launcherMusicBeatProgressValue = (start + launcherLead) % MUSIC_BAR_DIVISION_COUNT;
+    const start = this.signedTempo?.startPosition ?? 0;
+    if (start > 0) {
+      // Whole bars added in front of events folded before music start.
+      this.musicBarProgressValue = start / MUSIC_BAR_DIVISION_COUNT;
+      this.launcherMusicBarProgressValue += start / MUSIC_BAR_DIVISION_COUNT;
     }
     this.tempoCommands = chart.noteBatches.flatMap((batch) => {
       const command = findBatchBpmCommand(batch.informationList);
@@ -182,23 +180,23 @@ export class InGameMusicScoreController {
     return ok(undefined);
   }
 
-  usesIndependentVisualAxis(batch: NoteBatchInformation): boolean { return this.signedTempo?.folded === true || this.axisBatches.has(batch); }
+  usesIndependentVisualAxis(batch: NoteBatchInformation): boolean { return this.axisBatches.has(batch); }
 
+  /** Stage beats follow the authored bar grid on the tempo frontier. */
   get stageTiming(): { bpm: number; position: number; beatProgress: number } {
     if (!this.signedTempo?.folded) return {
       bpm: this.currentBpm, position: this.musicPosition, beatProgress: this.currentBeatProgress,
     };
-    const stage = this.signedTempo.stageAtSeconds(this.signedTempo.secondsAtRuntimePosition(this.musicPosition));
-    return { ...stage, beatProgress: ((stage.position % MUSIC_BAR_DIVISION_COUNT) + MUSIC_BAR_DIVISION_COUNT) % MUSIC_BAR_DIVISION_COUNT };
+    const position = this.signedTempo.frontierAuthoredPosition(this.musicPosition);
+    return { bpm: this.currentBpm, position,
+      beatProgress: ((position % MUSIC_BAR_DIVISION_COUNT) + MUSIC_BAR_DIVISION_COUNT) % MUSIC_BAR_DIVISION_COUNT };
   }
 
   canActivateBatch(batch: NoteBatchInformation): SimulatorResult<boolean> {
     if (this.usesIndependentVisualAxis(batch)) {
       return ok(batch.absolutePos <= this.launcherMusicPosition);
     }
-    const first = batch.informationList.find(
-      (note) => note.buttonType !== ButtonType.None || note.laneSpan !== undefined || isBpmCommand(note),
-    );
+    const first = activationRepresentative(batch);
     if (first === undefined) {
       return ok(true);
     }
@@ -209,6 +207,16 @@ export class InGameMusicScoreController {
       this.musicPosition < batch.absolutePos &&
         batch.absolutePos <= this.launcherMusicPosition,
     );
+  }
+
+  /** IsNoteActivateJustNow rejects a batch the music clock has already reached;
+   * the original chart never reaches that branch because bar 0 is skipped. A
+   * Garupa chart may place notes there, so such a batch is launched late. */
+  isLateBatch(batch: NoteBatchInformation): boolean {
+    if (this.usesIndependentVisualAxis(batch)) return false;
+    const first = activationRepresentative(batch);
+    return first !== undefined &&
+      (first.barIndex < this.musicBarProgressValue || batch.absolutePos <= this.musicPosition);
   }
 
   getAdjustedMusicPosition(offsetFrames: number): number {
@@ -229,22 +237,34 @@ export class InGameMusicScoreController {
       bar: this.musicBarProgressValue,
       beatProgress: this.musicBeatProgressValue,
     };
+    const keys = [...this.tempoCommands].sort((left, right) => left.absolutePos - right.absolutePos);
     if (offsetFrames > 0) {
+      // FastAbsolutePos: each step starts from currentBPM and takes the first
+      // cached key with originalPosition <= key < simulatedPosition.
+      const origin = this.musicPosition;
       for (let index = 0; index < offsetFrames; index += 1) {
+        const simulated = absolutePosition(cursor);
+        const crossed = keys.find((command) => origin <= command.absolutePos && simulated > command.absolutePos);
         cursor = advancePosition(
           cursor.bar,
           cursor.beatProgress,
-          this.bpmAtPosition(absolutePosition(cursor)),
+          crossed === undefined ? this.currentBpmValue : Math.fround(crossed.bpm),
           JUDGE_OFFSET_STEP_SECONDS,
         );
       }
     } else {
-      const committedBpm = this.currentBpmValue;
+      // SlowAbsolutePos: each step takes the last cached key not after the
+      // simulated position, otherwise it keeps currentBPM.
       for (let index = 0; index < -offsetFrames; index += 1) {
+        const simulated = absolutePosition(cursor);
+        let reached: (typeof keys)[number] | undefined;
+        for (let key = keys.length - 1; key >= 0; key -= 1) {
+          if (!(simulated < keys[key]!.absolutePos)) { reached = keys[key]; break; }
+        }
         cursor = rewindPosition(
           cursor.bar,
           cursor.beatProgress,
-          committedBpm,
+          reached === undefined ? this.currentBpmValue : Math.fround(reached.bpm),
           JUDGE_OFFSET_STEP_SECONDS,
         );
       }
@@ -320,6 +340,12 @@ export class InGameMusicScoreController {
     }
     return bpm;
   }
+}
+
+function activationRepresentative(batch: NoteBatchInformation): NoteInformation | undefined {
+  return batch.informationList.find(
+    (note) => note.buttonType !== ButtonType.None || note.laneSpan !== undefined || isBpmCommand(note),
+  );
 }
 
 export function advancePosition(

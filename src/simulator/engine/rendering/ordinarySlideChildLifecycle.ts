@@ -1,6 +1,6 @@
 import { EMPTY_NOTE_STRIP } from "./noteMeshClipping";
 import { noteMotionY, noteSpatialX, noteSpatialY } from "./ordinaryNoteGeometry";
-import { coordinate, coordinateAdd, coordinateCompare, coordinateValue, type ExponentialCoordinate } from "./exponentialCoordinates";
+import { coordinate, coordinateAdd, coordinateCompare, coordinateScale, coordinateValue, type ExponentialCoordinate } from "./exponentialCoordinates";
 import { virtualLaneNoteX } from "../chart/virtualLane";
 import type {
   RenderColor,
@@ -68,11 +68,17 @@ export interface OrdinarySlideStopControl {
   readonly rootMotionState: OrdinaryNoteMotionState;
   readonly currentBpm: number;
   readonly virtualLaneDeltaX: number;
+  /** One full lane at the judgement line: the unit of an approved exit offset. */
+  readonly laneSpacingX: number;
+  /** One full lane at the launcher; the original-path exit offset scales between the two. */
+  readonly startLaneSpacingX?: number;
+  /** Approved gesture head (-1) and nodes that are not judged yet: the Slide cannot leave them. */
+  readonly unjudgedGestures?: ReadonlySet<number>;
   readonly stoppedChildWaited: readonly boolean[];
 }
 
 export type SlideGeometrySource = Pick<NoteInformation,
-  "absolutePos" | "isInvisible" | "virtualLaneDirection" | "virtualLaneDistance" | "slideExitOffset" | "authoredAfterAbsolutePos">;
+  "absolutePos" | "isInvisible" | "virtualLaneDirection" | "virtualLaneDistance" | "slideExitOffset" | "authoredAfterAbsolutePos" | "foldedTiming">;
 
 /** Extensions supply motion inputs, not a second Slide lifecycle. */
 export interface SlideMotionExtension {
@@ -172,7 +178,7 @@ export function advanceOrdinarySlideChildren(
   screenToSafeAreaRatio: RenderFloat32,
   color: RenderColor,
   stopControl: OrdinarySlideStopControl,
-  habahiroMeshWidthSetting?: RenderFloat32,
+  habahiroHighAspectRatio?: RenderFloat32,
   extension?: SlideMotionExtension,
 ): SimulatorResult<OrdinarySlideFrameResult> {
   if (childStates.length === 0) {
@@ -198,33 +204,37 @@ export function advanceOrdinarySlideChildren(
       ? nextMoving[index + 1]! : index;
   }
   const first = childStates[0]!;
-  let frontCanFollow = stopControl.rootWaiting && (extension?.canLeaveNode?.(-1) ?? true);
+  let frontCanFollow = stopControl.rootWaiting && (extension?.canLeaveNode?.(-1) ?? !stopControl.unjudgedGestures?.has(-1));
   if (stopControl.advanceMotion && frontCanFollow) {
     if (!rootExitApplied && stopControl.rootSource.slideExitOffset) {
       const shifted = withSlidePosition(frontTransform, addSpatial(noteSpatialX(frontTransform),
-        stopControl.rootSource.slideExitOffset * stopControl.virtualLaneDeltaX), noteSpatialY(frontTransform));
+        stopControl.rootSource.slideExitOffset * stopControl.laneSpacingX), noteSpatialY(frontTransform));
       if (shifted.status !== "ok") return shifted;
       frontTransform = shifted.value;
       rootExitApplied = true;
     }
+    // NoteSlide.slidingMove writes the head's local position from target-local
+    // coordinates; the virtual-lane correction applies to the local X.
+    const head = slideHeadSpace(stopControl.rootMotionState);
     if (first.lifecycle.phase === "stop") {
       const target = first.lifecycle.motionState.goalPosition;
-      const x = slideGoalX(sources[0]!, target.x.value, stopControl.virtualLaneDeltaX);
-      const moved = withSlidePosition(frontTransform, x, target.y.value, stopControl.rootMotionState.noteSettingScale);
+      const x = head.world(slideGoalX(sources[0]!, head.local(target.x.value), stopControl.virtualLaneDeltaX));
+      const moved = withSlidePosition(frontTransform, x, head.world(head.local(target.y.value)),
+        stopControl.rootMotionState.noteSettingScale);
       if (moved.status !== "ok") return moved;
       frontTransform = moved.value;
     } else {
       const moved = moveSlideEndpoint(frontTransform, stopControl.rootMotionState,
         stopControl.rootSource, first.lifecycle.motionState, sources[first.segmentStartIndex]!,
         input.deltaTime.value, stopControl.currentBpm, stopControl.virtualLaneDeltaX,
-        stopControl.rootSource, stopControl.rootSource.authoredAfterAbsolutePos !== undefined);
+        stopControl.rootSource, stopControl.rootSource.foldedTiming === true, head, stopControl.laneSpacingX);
       if (moved.status !== "ok") return moved;
       frontTransform = moved.value;
     }
   }
   let killNextMesh = false;
   for (const [index, state] of childStates.entries()) {
-    const canLeaveNode = extension?.canLeaveNode?.(index) ?? true;
+    const canLeaveNode = extension?.canLeaveNode?.(index) ?? !stopControl.unjudgedGestures?.has(index);
     // A later node may stop first under folded time or independent SV. Only
     // a contiguous stopped, released prefix may move the shared Slide head.
     frontCanFollow = frontCanFollow && state.lifecycle.phase === "stop" && canLeaveNode;
@@ -287,7 +297,7 @@ export function advanceOrdinarySlideChildren(
         }
         if (!exitApplied && sources[index]!.slideExitOffset) {
           const shifted = withSlidePosition(lifecycle.renderedTransform, addSpatial(noteSpatialX(lifecycle.renderedTransform),
-            sources[index]!.slideExitOffset! * stopControl.virtualLaneDeltaX), noteSpatialY(lifecycle.renderedTransform));
+            sources[index]!.slideExitOffset! * stopControl.laneSpacingX), noteSpatialY(lifecycle.renderedTransform));
           if (shifted.status !== "ok") return shifted;
           lifecycle = { ...lifecycle, renderedTransform: shifted.value };
           exitApplied = true;
@@ -319,10 +329,12 @@ export function advanceOrdinarySlideChildren(
             currentTransform = shifted.value;
           }
           const origin = childStates[segmentStartIndex]!;
+          // executeStopStateByExistAfterNote, moving successor: MoveToNextAfterNoteButton
+          // reads and writes localPosition; SetPosition then copies local X/Y to the head.
           const moved = moveSlideEndpoint(currentTransform, origin.lifecycle.motionState,
             sources[segmentStartIndex]!, childStates[nextChild.segmentStartIndex]!.lifecycle.motionState, sources[nextChild.segmentStartIndex]!,
             input.deltaTime.value, stopControl.currentBpm, stopControl.virtualLaneDeltaX,
-            sources[index]!, stopControl.rootSource.authoredAfterAbsolutePos !== undefined);
+            sources[index]!, stopControl.rootSource.foldedTiming === true, slideHeadSpace(lifecycle.motionState), stopControl.laneSpacingX);
           if (moved.status !== "ok") return moved;
           lifecycle = Object.freeze({ ...lifecycle, renderedTransform: moved.value });
           if (frontCanFollow) {
@@ -343,17 +355,19 @@ export function advanceOrdinarySlideChildren(
   let previousExitApplied = rootExitApplied;
   let previousIndex = -1;
   for (const state of nextStates) {
-    const widthRate = habahiroMeshWidthSetting === undefined
+    const widthRate = habahiroHighAspectRatio === undefined
       ? createRenderFloat32(Math.fround(1))
       : getHabahiroMeshWidthRate(
           Math.max(previousButtonCount, state.buttonCount),
-          habahiroMeshWidthSetting,
+          habahiroHighAspectRatio,
         );
     if (widthRate.status !== "ok") return widthRate;
     const afterScale = getOrdinaryNoteMeshAfterScale(state.lifecycle, previousMotionState.goalPosition.y, screenToSafeAreaRatio);
     if (afterScale.status !== "ok") return afterScale;
-    const outgoing = !previousExitApplied && extension?.outgoingTransform
-      ? extension.outgoingTransform(previousTransform, previousIndex) : ok(previousTransform);
+    const outgoing = previousExitApplied ? ok(previousTransform)
+      : extension !== undefined ? extension.outgoingTransform?.(previousTransform, previousIndex) ?? ok(previousTransform)
+      : ordinaryExitOutgoing(previousTransform, previousIndex === -1 ? stopControl.rootSource : sources[previousIndex]!,
+        previousMotionState, stopControl);
     if (outgoing.status !== "ok") return outgoing;
     const meshInput = {
       front: outgoing.value,
@@ -442,31 +456,86 @@ function moveSlideEndpoint(
   laneDelta: number,
   originalSource = source,
   foldedTime = false,
+  space: SlideHeadSpace = WORLD_SLIDE_SPACE,
+  exitLaneSpacing = laneDelta,
 ): SimulatorResult<OrdinaryNoteMotionResult> {
   const seconds = getSecondsWithDistance(targetSource.absolutePos - source.absolutePos, bpm);
   if (seconds.status !== "ok") return seconds;
+  const originGoalX = space.local(origin.goalPosition.x.value);
   const originX = source.isInvisible
-    ? slideGoalX(originalSource, origin.goalPosition.x.value, laneDelta, true)
-    : origin.goalPosition.x.value + (source.slideExitOffset ?? 0) * laneDelta;
-  const targetX = slideGoalX(targetSource, target.goalPosition.x.value, laneDelta);
+    ? slideGoalX(originalSource, originGoalX, laneDelta, true)
+    : originGoalX + (source.slideExitOffset ?? 0) * space.local(exitLaneSpacing);
+  const targetX = slideGoalX(targetSource, space.local(target.goalPosition.x.value), laneDelta);
+  const y = space.world(space.local(origin.goalPosition.y.value));
   const dx = targetX - originX;
   // Coincident goals have no horizontal displacement, including at zero duration.
   // Skip both division and target clamping to preserve the current X.
-  if (dx === 0) return withSlidePosition(current, noteSpatialX(current), origin.goalPosition.y.value);
+  if (dx === 0) return withSlidePosition(current, noteSpatialX(current), y);
   // A folded successor whose deadline precedes this stopped endpoint is
   // already due. It cannot acquire a negative-duration outward motion.
-  if (foldedTime && seconds.value < 0) return withSlidePosition(current, targetX, origin.goalPosition.y.value);
+  if (foldedTime && seconds.value < 0) return withSlidePosition(current, space.world(targetX), y);
   const step = Math.fround(dx / (seconds.value / deltaTime));
-  if (step === Infinity || step === -Infinity) return withSlidePosition(current, targetX, origin.goalPosition.y.value);
-  const currentX = noteSpatialX(current);
+  if (step === Infinity || step === -Infinity) return withSlidePosition(current, space.world(targetX), y);
+  const currentX = space.toLocal(noteSpatialX(current));
   if (typeof currentX !== "number") {
     const next = coordinateAdd(currentX, coordinate(step)), target = coordinate(targetX);
     const reached = step < 0 ? coordinateCompare(next, target) <= 0 : coordinateCompare(next, target) >= 0;
-    return withSlidePosition(current, reached ? targetX : next, origin.goalPosition.y.value);
+    return withSlidePosition(current, reached ? space.world(targetX) : space.fromLocal(next), y);
   }
   const nextX = current.unclipped ? currentX + step : Math.fround(currentX + step);
   const x = step < 0 ? Math.max(targetX, nextX) : Math.min(targetX, nextX);
-  return withSlidePosition(current, x, origin.goalPosition.y.value);
+  return withSlidePosition(current, space.world(x), y);
+}
+
+/** Conversions between published world coordinates and a Slide node's local space under NoteParentTrans. */
+interface SlideHeadSpace {
+  /** Target button world value to its MusicObjects-local value. */
+  local(value: number): number;
+  /** Head local value to world under NoteParentTrans. */
+  world(value: number): number;
+  toLocal(value: number | ExponentialCoordinate): number | ExponentialCoordinate;
+  fromLocal(value: ExponentialCoordinate): ExponentialCoordinate;
+}
+
+const WORLD_SLIDE_SPACE: SlideHeadSpace = Object.freeze({
+  local: (value: number) => value, world: (value: number) => value,
+  toLocal: (value: number | ExponentialCoordinate) => value, fromLocal: (value: ExponentialCoordinate) => value,
+});
+
+function slideHeadSpace(state: OrdinaryNoteMotionState): SlideHeadSpace {
+  const music = state.musicObjectsScale.value, parent = state.noteParentScale.value;
+  if (music === 1 && parent === 1) return WORLD_SLIDE_SPACE;
+  return Object.freeze({
+    local: (value: number) => Math.fround(value / music),
+    world: (value: number) => Math.fround(value * parent),
+    toLocal: (value: number | ExponentialCoordinate) => typeof value === "number"
+      ? Math.fround(value / parent) : coordinateScale(value, 1 / parent),
+    fromLocal: (value: ExponentialCoordinate) => coordinateScale(value, parent),
+  });
+}
+
+/** Approved exit offset on the original path: the outgoing strip starts at the far
+ * end of a Directional, offset lanes away at the same depth. X is linear in curve. */
+function ordinaryExitOutgoing(
+  transform: OrdinaryNoteMotionResult,
+  source: SlideGeometrySource,
+  state: OrdinaryNoteMotionState,
+  stopControl: Pick<OrdinarySlideStopControl, "laneSpacingX" | "startLaneSpacingX">,
+): SimulatorResult<OrdinaryNoteMotionResult> {
+  const offset = source.slideExitOffset ?? 0;
+  if (offset === 0) return ok(transform);
+  if (stopControl.startLaneSpacingX === undefined) return reject("render.slide.exit-offset-scale-missing",
+    "An original-path exit offset requires the launcher lane spacing.");
+  const startY = state.noteStartPosition.y.value, goalY = state.goalPosition.y.value;
+  const startShift = offset * stopControl.startLaneSpacingX, goalShift = offset * stopControl.laneSpacingX;
+  const shiftAt = (y: number) => startShift + (goalShift - startShift) * ((y - startY) / (goalY - startY));
+  const raw = transform.unclipped;
+  const unclipped = raw === undefined ? undefined : { ...raw, x: raw.x + shiftAt(raw.y),
+    ...(raw.exponential ? { exponential: { ...raw.exponential, x: coordinateAdd(raw.exponential.x, coordinate(startShift),
+      coordinateScale(coordinateAdd(raw.exponential.y, coordinate(-startY)), (goalShift - startShift) / (goalY - startY))) } } : {}) };
+  const x = createRenderFloat32(Math.fround(transform.position.x.value + shiftAt(transform.position.y.value)));
+  if (x.status !== "ok") return x;
+  return ok({ ...transform, unclipped, position: { ...transform.position, x: x.value } });
 }
 
 function addSpatial(value: number | ExponentialCoordinate, delta: number): number | ExponentialCoordinate {

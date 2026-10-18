@@ -172,7 +172,7 @@ function decodeSourcePackage(
       }));
     }
   }
-  const spriteRows = buildSpriteRows(role, view, textureIds);
+  const spriteRows = buildSpriteRows(role, view, textureIds, bundle.value);
   if (spriteRows.status === "rejected") return spriteRows;
   const decodedAudio = readPortableAudio(view, files);
   if (decodedAudio.status === "rejected") return decodedAudio;
@@ -267,20 +267,22 @@ function validateSourceBundle(
   logicalResource: string,
   particle: ParticleSemanticResource | null,
   role: CurrentSkinResourceRole,
-): SimulatorAssemblyResult<void> {
+): SimulatorAssemblyResult<Record<string, unknown>> {
   const bundles = view.pathsWithSuffix(".bundle");
   if (bundles.length === 0) return invalid("simulator.skin.source-bundle-missing", `${logicalResource} requires its source .bundle manifest.`);
   let matchingContainer: Record<string, unknown> | null = null;
+  let matchingBase: Record<string, unknown> | null = null;
   for (const path of bundles) {
     const parsed = view.requireJson(path);
     if (parsed.status === "rejected") return invalid(parsed.failure.capability, parsed.failure.boundary);
     const base = record(record(parsed.value)?.Base);
     if (base?.m_AssetBundleName === logicalResource) {
       matchingContainer = record(base.m_Container);
+      matchingBase = base;
       break;
     }
   }
-  if (matchingContainer === null) {
+  if (matchingContainer === null || matchingBase === null) {
     return invalid("simulator.skin.source-bundle-identity", `${logicalResource} has no .bundle manifest with its exact logical Bundle identity.`);
   }
   if (role === "habahiro-change-flash") {
@@ -308,13 +310,37 @@ function validateSourceBundle(
       }
     }
   }
-  return accepted(undefined);
+  return accepted(matchingBase);
+}
+
+/** Texture2D PathID -> texture name, from each PNG container entry's preload range. */
+function bundleTexturePathIds(
+  bundle: Record<string, unknown>,
+  textureNames: readonly string[],
+): ReadonlyMap<string, string> {
+  const preload = Array.isArray(bundle.m_PreloadTable) ? bundle.m_PreloadTable : [];
+  const container = record(bundle.m_Container) ?? {};
+  const byName = new Map(textureNames.map((name) => [name.toLocaleLowerCase("en-US"), name]));
+  const result = new Map<string, string>();
+  for (const [path, value] of Object.entries(container)) {
+    const entry = record(value);
+    const name = byName.get(basenameWithoutExtension(path).toLocaleLowerCase("en-US"));
+    if (name === undefined || !path.toLocaleLowerCase("en-US").endsWith(".png") ||
+      !Number.isInteger(entry?.preloadIndex) || !Number.isInteger(entry?.preloadSize)) continue;
+    const start = entry!.preloadIndex as number;
+    for (const item of preload.slice(start, start + (entry!.preloadSize as number))) {
+      const pathId = record(item)?.m_PathID;
+      if (typeof pathId === "string") result.set(pathId, name);
+    }
+  }
+  return result;
 }
 
 function buildSpriteRows(
   role: CurrentSkinResourceRole,
   view: OriginalResourcePackageView,
   textureIds: ReadonlyMap<string, number | string>,
+  bundle: Record<string, unknown>,
 ): SimulatorAssemblyResult<{
   readonly sprites: readonly Readonly<Record<string, unknown>>[];
   readonly ngui: readonly Readonly<Record<string, unknown>>[];
@@ -341,16 +367,21 @@ function buildSpriteRows(
   if (!Array.isArray(source.value) || source.value.length === 0) {
     return invalid("simulator.skin.source-sprite-array", `${view.logicalResource} .sprites must be one non-empty array.`);
   }
-  const atlasTexture = role === "field"
-    ? null
-    : Array.from(textureIds.keys()).find((name) => name.toLocaleLowerCase("en-US").includes("sprites")) ?? null;
+  const atlasTextures = role === "field"
+    ? []
+    : Array.from(textureIds.keys()).filter((name) => name.toLocaleLowerCase("en-US").includes("sprites"));
+  // A multi-atlas package (HABAHIRO) binds each Sprite through its own texture reference.
+  const texturePathIds = atlasTextures.length > 1 ? bundleTexturePathIds(bundle, Array.from(textureIds.keys())) : null;
   const rows: Array<Readonly<Record<string, unknown>>> = [];
   for (const item of source.value) {
     const base = record(record(item)?.Base);
     const rect = record(base?.m_Rect);
     const pivot = record(base?.m_Pivot);
     const name = base?.m_Name;
-    const textureName = role === "field" && typeof name === "string" ? name : atlasTexture;
+    const texturePathId = record(record(record(base?.m_RD)?.texture))?.m_PathID;
+    const textureName = role === "field" && typeof name === "string" ? name
+      : texturePathIds === null ? atlasTextures[0] ?? null
+      : typeof texturePathId === "string" ? texturePathIds.get(texturePathId) ?? null : null;
     const textureId = typeof textureName === "string" ? textureIds.get(textureName) : undefined;
     if (typeof name !== "string" || rect === null || pivot === null || textureId === undefined ||
       !positive(rect.width) || !positive(rect.height) || !positive(base?.m_PixelsToUnits)) {

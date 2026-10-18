@@ -3,20 +3,24 @@ export type {
   GarupaChartJsonBpmItem,
   GarupaChartJsonDirection,
   GarupaChartJsonDirectionalNote,
+  GarupaChartJsonHeaderItem,
   GarupaChartJsonItem,
   GarupaChartJsonSimpleNote,
   GarupaChartJsonSimpleNoteType,
   GarupaChartJsonSlideConnection,
   GarupaChartJsonSlideItem,
   GarupaChartJsonSvItem,
+  GarupaChartJsonSystemItem,
   GarupaChartJsonTopLevelNote,
 } from "./garupa";
+export { GARUPA_HEADER_HABAHIRO, GARUPA_SYSTEM_LANE_CHANGE, isGarupaLongSlideShape } from "./garupa";
 
 export type {
   BestdoriV2ChartJson,
   BestdoriV2ChartJsonBpmItem,
   BestdoriV2ChartJsonDirectionalNote,
   BestdoriV2ChartJsonItem,
+  BestdoriV2ChartJsonLongItem,
   BestdoriV2ChartJsonSingleNote,
   BestdoriV2ChartJsonSlideConnection,
   BestdoriV2ChartJsonSlideItem,

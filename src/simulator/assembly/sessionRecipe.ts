@@ -457,8 +457,7 @@ function copyLaunchRequest(
     request.config.visual === null || typeof request.config.visual !== "object" || Array.isArray(request.config.visual) ||
     !isPositiveFinite(request.config.visual.specificSpeed) ||
     !isFiniteNumber(request.config.visual.noteSize) ||
-    request.config.visual.noteSize < 80 || request.config.visual.noteSize > 150 ||
-    !isFiniteNumber(request.config.visual.habahiroMeshWidthSetting) ||
+    request.config.visual.noteSize < 10 || request.config.visual.noteSize > 200 ||
     request.config.audio === null || typeof request.config.audio !== "object" || Array.isArray(request.config.audio) ||
     ![request.config.audio.masterGain, request.config.audio.bgmGain, request.config.audio.seGain].every(isUnitGain)
   ) {
@@ -508,7 +507,6 @@ function copyLaunchRequest(
       visual: Object.freeze({
         specificSpeed: Math.fround(request.config.visual.specificSpeed),
         noteSize: Math.fround(request.config.visual.noteSize),
-        habahiroMeshWidthSetting: Math.fround(request.config.visual.habahiroMeshWidthSetting),
       }),
       audio: Object.freeze({
         masterGain: Math.fround(request.config.audio.masterGain),

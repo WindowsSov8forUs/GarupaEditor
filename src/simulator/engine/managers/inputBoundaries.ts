@@ -20,6 +20,7 @@ import {
   type ManualNoteContinuationPlan,
   type ManualNoteTouchInput,
 } from "../notes/noteBase";
+import type { NoteSlide } from "../notes/noteTypes";
 import type { NoteManager } from "./noteManager";
 import type { TapLaneEffectInputEvent } from "./tapLaneEffectOwner";
 
@@ -240,10 +241,26 @@ interface GamePlayButtonTouchPlan {
   readonly bindNote: boolean;
 }
 
+/** A finger registered by a Hidden-head Slide, in addition to its button owner. */
+interface HiddenHeadOwner {
+  readonly note: NoteSlide;
+  readonly beganPosition: ManualInputPosition;
+}
+
+interface HiddenHeadTouchPlan {
+  readonly kind: "register" | "moved" | "ended";
+  readonly note: NoteSlide;
+  readonly input: ManualNoteTouchInput;
+  readonly notePlan: ManualNoteContinuationPlan;
+  readonly beganPosition: ManualInputPosition;
+}
+
 interface GamePlayInputOperation {
   readonly inputButton: GamePlayButton | null;
   readonly fingerId: number;
+  readonly touchPhase: PreparedManualInputTouch["phase"];
   readonly buttonPlan: GamePlayButtonTouchPlan | null;
+  readonly hiddenHeadPlans: readonly HiddenHeadTouchPlan[];
   readonly tapLaneEffectEvent: TapLaneEffectInputEvent | null;
 }
 
@@ -275,6 +292,11 @@ export class GamePlayInputDispatcher implements ManualInputDispatcher {
     { length: FINGER_OWNER_CAPACITY },
     () => null,
   );
+  // One finger may also own several Hidden-head Slides.
+  private readonly hiddenHeadOwners: (readonly HiddenHeadOwner[])[] = Array.from(
+    { length: FINGER_OWNER_CAPACITY },
+    () => [],
+  );
 
   constructor(
     private readonly noteManager: NoteManager,
@@ -299,6 +321,11 @@ export class GamePlayInputDispatcher implements ManualInputDispatcher {
     for (const button of this.buttonsValue) {
       // A judged note releases its note reference; the physical finger still owns Ended.
       button.clearDeactivatedNote(note);
+    }
+    for (let fingerId = 0; fingerId < FINGER_OWNER_CAPACITY; fingerId += 1) {
+      const owners = this.hiddenHeadOwners[fingerId]!;
+      if (owners.some((owner) => owner.note === note))
+        this.hiddenHeadOwners[fingerId] = owners.filter((owner) => owner.note !== note);
     }
   }
 
@@ -336,6 +363,8 @@ export class GamePlayInputDispatcher implements ManualInputDispatcher {
     const projectedInputButtons = [...this.buttonWithFingerId];
     const projections = new Map<GamePlayButton, GamePlayButtonProjection>();
     const projectedFingerOwners = new Map<NoteBase, number>();
+    const projectedHiddenHeads = this.hiddenHeadOwners.map((owners) => [...owners]);
+    const registeredHiddenHeads = new Set<NoteSlide>();
     const operations: GamePlayInputOperation[] = [];
 
     for (const touch of frame.touches) {
@@ -373,6 +402,9 @@ export class GamePlayInputDispatcher implements ManualInputDispatcher {
         }
       }
       if (touch.phase === ManualTouchPhase.Ended) projectedInputButtons[touch.fingerId] = null;
+      const hiddenHeadPlans = this.preflightHiddenHeads(touch, projectedHiddenHeads,
+        registeredHiddenHeads, judgementTransaction, frame.deltaTimeSeconds);
+      if (hiddenHeadPlans.status !== "ok") return hiddenHeadPlans;
       const tapLaneEffectEvent: TapLaneEffectInputEvent | null = inputButton?.buttonType != null &&
         (touch.phase === ManualTouchPhase.Ended ||
           touch.phase === ManualTouchPhase.Began && !this.noteManager.inGameCalculatedData.isAutoPlay)
@@ -381,7 +413,9 @@ export class GamePlayInputDispatcher implements ManualInputDispatcher {
       operations.push(Object.freeze({
         inputButton: touch.phase === ManualTouchPhase.Began ? inputButton : null,
         fingerId: touch.fingerId,
+        touchPhase: touch.phase,
         buttonPlan,
+        hiddenHeadPlans: hiddenHeadPlans.value,
         tapLaneEffectEvent,
       }));
     }
@@ -414,9 +448,71 @@ export class GamePlayInputDispatcher implements ManualInputDispatcher {
         button?.commitTouch(operation.buttonPlan);
         if (operation.buttonPlan.touchPhase === ManualTouchPhase.Ended) this.buttonWithFingerId[operation.fingerId] = null;
       }
+      this.commitHiddenHeads(operation);
     }
     ownedPlan.judgementTransaction.finish();
     return ok(undefined);
+  }
+
+  /** Hidden-head registration ignores the finger's existing owner; registered
+   * Slides then receive the same finger's continuation and release. */
+  private preflightHiddenHeads(
+    touch: PreparedManualInputTouch,
+    projected: HiddenHeadOwner[][],
+    registered: Set<NoteSlide>,
+    judgementTransaction: ManualJudgementTransaction,
+    deltaTimeSeconds: number | null,
+  ): SimulatorResult<readonly HiddenHeadTouchPlan[]> {
+    const plans: HiddenHeadTouchPlan[] = [];
+    if (touch.phase === ManualTouchPhase.Began) {
+      projected[touch.fingerId] = [];
+    } else {
+      for (const owner of projected[touch.fingerId] ?? []) {
+        if (owner.note.state === NoteState.Deactive) continue;
+        const input = manualNoteInput(touch, owner.beganPosition, touch.phase, judgementTransaction, deltaTimeSeconds);
+        const ended = touch.phase === ManualTouchPhase.Ended;
+        const planned = ended ? owner.note.preflightManualTouchEnded(input) : owner.note.preflightManualTouchMoved(input);
+        if (planned.status !== "ok") return planned;
+        plans.push(Object.freeze({ kind: ended ? "ended" : "moved", note: owner.note, input,
+          notePlan: planned.value, beganPosition: owner.beganPosition }));
+      }
+      if (touch.phase === ManualTouchPhase.Ended) {
+        projected[touch.fingerId] = [];
+        return ok(Object.freeze(plans));
+      }
+    }
+    for (const note of this.noteManager.hiddenHeadRegistrationCandidates()) {
+      if (registered.has(note)) continue;
+      const input = manualNoteInput(touch, touch.position, touch.phase, judgementTransaction, deltaTimeSeconds);
+      const planned = note.preflightHiddenHeadRegistration(input);
+      if (planned.status !== "ok") return planned;
+      if (planned.value === null) continue;
+      registered.add(note);
+      projected[touch.fingerId]!.push(Object.freeze({ note, beganPosition: touch.position }));
+      plans.push(Object.freeze({ kind: "register", note, input, notePlan: planned.value, beganPosition: touch.position }));
+    }
+    return ok(Object.freeze(plans));
+  }
+
+  private commitHiddenHeads(operation: GamePlayInputOperation): void {
+    if (operation.touchPhase === ManualTouchPhase.Began) this.hiddenHeadOwners[operation.fingerId] = [];
+    for (const plan of operation.hiddenHeadPlans) {
+      if (plan.kind === "moved") {
+        plan.note.commitManualTouchMoved(plan.input, plan.notePlan);
+        continue;
+      }
+      if (plan.kind === "ended") {
+        plan.note.commitManualTouchEnded(plan.input, plan.notePlan);
+        continue;
+      }
+      plan.note.commitHiddenHeadRegistration(plan.input, plan.notePlan);
+      // Completion or tail handling may already have released the finger.
+      if (plan.note.state !== NoteState.Deactive && plan.note.fingerId === operation.fingerId) {
+        this.hiddenHeadOwners[operation.fingerId] = [...this.hiddenHeadOwners[operation.fingerId]!,
+          Object.freeze({ note: plan.note, beganPosition: plan.beganPosition })];
+      }
+    }
+    if (operation.touchPhase === ManualTouchPhase.Ended) this.hiddenHeadOwners[operation.fingerId] = [];
   }
 
   snapshot(): GamePlayInputDispatcherSnapshot {
@@ -430,6 +526,7 @@ export class GamePlayInputDispatcher implements ManualInputDispatcher {
 
   dispose(): void {
     this.buttonWithFingerId.fill(null);
+    this.hiddenHeadOwners.fill([]);
     for (const button of this.buttonsValue) {
       button.dispose();
     }

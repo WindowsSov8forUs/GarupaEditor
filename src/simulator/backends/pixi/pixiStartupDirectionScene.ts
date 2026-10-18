@@ -178,8 +178,8 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
     const viewportHeight = surfaceLayout.surface.viewportHeight;
     if (includeStandardStage) {
       // level3 BgCover: Simple center-pivot sprite, 2000x2000, scale 2.5,
-      // local X=80 under the width-fitted UI_Root_Back (not the safe-area HUD).
-      const scale = surfaceLayout.ui.pixelsPerAuthoredUnit;
+      // local X=80 under the integer-activeHeight UI_Root_Back (not the safe-area HUD).
+      const scale = surfaceLayout.ui.backRootPixelsPerUnit;
       const cover = new Sprite({ texture: common.stageCover, label: "StartupStageCover", anchor: 0.5 });
       cover.position.set(viewportWidth / 2 + 80 * scale, viewportHeight / 2);
       cover.width = 5000 * scale; cover.height = 5000 * scale; cover.tint = 0x000000;
@@ -245,7 +245,7 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
     if (includeStandardStage) {
       // Queue3490 is independent of BgCover (3400): ShowScreenALittle fades
       // this widget's RGB from white to quarter-gray while retaining alpha1.
-      const scale = surfaceLayout.ui.pixelsPerAuthoredUnit;
+      const scale = surfaceLayout.ui.backRootPixelsPerUnit;
       const subtraction = new Sprite({ texture: common.stageDarkCover, label: "StageDarkCover", anchor: 0.5 });
       subtraction.position.set(viewportWidth / 2, viewportHeight / 2 - 190 * scale);
       subtraction.width = 1334 * scale; subtraction.height = 1500 * scale;
@@ -276,13 +276,13 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
     if (this.stageBackdrop !== null) {
       const layout = this.surfaceLayout;
       const highAspect = layout.starUi.highAspectRatio;
-      const rootScale = (1 - 0.23 * highAspect) * layout.ui.pixelsPerAuthoredUnit;
+      const rootScale = (1 - 0.23 * highAspect) * layout.ui.backRootPixelsPerUnit;
       const eased = state.stageProgress;
       const trsScale = 0.7 + (0.92 - 0.7) * eased;
       const trsY = 111 * (1 - eased);
       this.stageBackdrop.position.set(layout.surface.viewportWidth / 2,
         layout.surface.viewportHeight / 2 -
-          (14 * highAspect * layout.ui.pixelsPerAuthoredUnit + (trsY - 170 * trsScale) * rootScale));
+          (14 * highAspect * layout.ui.backRootPixelsPerUnit + (trsY - 170 * trsScale) * rootScale));
       this.stageBackdrop.width = 1920 * trsScale * rootScale;
       this.stageBackdrop.height = 1440 * trsScale * rootScale;
       const brightness = 0.5 + 0.5 * state.stageColorProgress;
@@ -293,7 +293,7 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
         if (root === undefined) continue;
         root.position.set(layout.surface.viewportWidth / 2,
           layout.surface.viewportHeight / 2 -
-            (14 * highAspect * layout.ui.pixelsPerAuthoredUnit + trsY * rootScale));
+            (14 * highAspect * layout.ui.backRootPixelsPerUnit + trsY * rootScale));
         root.scale.set(trsScale * rootScale);
       }
     }

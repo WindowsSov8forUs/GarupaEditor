@@ -7,6 +7,7 @@ import type { OrdinaryNoteMotionResult } from "./ordinaryNoteGeometry";
 import type { SyncConnection } from "./syncLineConnectionRules";
 import { selectDirectionalSyncEndpoints } from "./syncLineConnectionRules";
 import { createRenderFloat32 } from "../../backends/renderingValidation";
+import { slideFlickDirection, slideGestureAfterType, slideGestureWidth } from "../chart/slideFlickNodes";
 
 export type ConnectionEndpoint = boolean | number;
 export interface ConnectionNote { readonly noteInformation: NoteInformation | null }
@@ -28,8 +29,7 @@ export function isDirectionalVisual(note: ConnectionNote): boolean {
 }
 export function connectionDirection(note: ConnectionNote, after: ConnectionEndpoint): "left" | "right" {
   const source = connectionSource(note, after);
-  const gameType = source?.slideGesture?.direction != null
-    ? source.slideGesture.direction === "Left" ? 10 : 11 : source?.gameNoteType;
+  const gameType = source?.slideHeadGestureGameType ?? source?.gameNoteType;
   const left = gameType === undefined
     ? note.noteInformation!.afterNoteType === AfterNoteType.MultipleDirectionalFlickLeft ||
       note.noteInformation!.afterNoteType === AfterNoteType.SlideMultipleDirectionalFlickLeft
@@ -83,8 +83,8 @@ export function slideDirectionalAnchorEndpoint(visual: ConnectionNote, root: Con
   const binding = visual.noteInformation?.directionalSlideConnection;
   if (binding === undefined) return null;
   const after = binding.connectionIndex || false;
-  const gesture = connectionSource(root, after).slideGesture!;
-  const anchor = gesture.direction === "Left" ? gesture.width - 1 : 0;
+  const source = connectionSource(root, after);
+  const anchor = slideFlickDirection(slideGestureAfterType(source)) === "Left" ? slideGestureWidth(source) - 1 : 0;
   return Math.abs(binding.memberOffset - anchor) === 1 ? after : null;
 }
 

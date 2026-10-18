@@ -67,7 +67,7 @@ const COMMON_REQUIREMENTS: readonly SimulatorResourceRequirement[] = Object.free
   ]),
   requirement("render.game-clear", "prefabs/bms/gameclear", null),
   requirement("audio.common", "sound/common", [
-    "SE_RESULT_SUCCESS.mp3", "SE_RESULT_FAILED.mp3", "SE_RESULT_SCORE_COUNT.mp3", "SE_RHYTHM_CLEAR.mp3", "SE_RHYTHM_FULLCOMBO.mp3", "SE_RHYTHM_GAYA.mp3",
+    "SE_RESULT_SUCCESS.mp3", "SE_RESULT_FAILED.mp3", "SE_RESULT_SCORE_COUNT.mp3", "SE_RHYTHM_CLEAR.mp3", "SE_RHYTHM_CLEAR_VO.mp3", "SE_RHYTHM_FULLCOMBO.mp3", "SE_RHYTHM_GAYA.mp3",
     "SE_RHYTHM_TAP_SKILL.mp3", "bad.mp3", "miss.mp3",
   ]),
   requirement("audio.result", "sound/result", ["after_live.mp3"]),
@@ -93,7 +93,7 @@ export function selectSimulatorResourceRequirements(
   ];
   return Object.freeze({
     schemaVersion: 1 as const,
-    renderingKind: chart.habahiroChangeAbsolutePos >= 0 ? "habahiro" as const : "ordinary" as const,
+    renderingKind: chart.isMultiRangeNotes ? "habahiro" as const : "ordinary" as const,
     skin,
     requirements: Object.freeze(requirements),
   });

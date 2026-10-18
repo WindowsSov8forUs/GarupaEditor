@@ -69,7 +69,7 @@ export class OriginalPreviewParticleScene {
   constructor(private readonly pack: OriginalPreviewParticlePack, private readonly noteSize: number,
     private readonly textures: ReadonlyMap<string, Texture>, private readonly images: ReadonlySet<ImageBitmap>,
     setup?: OriginalParticleSceneSetup) {
-    if (!Number.isFinite(noteSize) || noteSize < 80 || noteSize > 150)
+    if (!Number.isFinite(noteSize) || noteSize < 10 || noteSize > 200)
       throw new Error("Preview particle size is outside the original setting domain.");
     this.profile = setup?.profile ?? previewProfile(pack.profile, noteSize);
     this.sourceProfile = this.profile;

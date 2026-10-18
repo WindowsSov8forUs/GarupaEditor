@@ -102,7 +102,6 @@ export interface SimulatorLaunchConfig extends SimulatorOriginalLiveSettings {
   readonly visual: {
     readonly specificSpeed: number;
     readonly noteSize: number;
-    readonly habahiroMeshWidthSetting: number;
   };
   readonly audio: {
     readonly masterGain: number;

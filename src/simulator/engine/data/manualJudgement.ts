@@ -68,6 +68,8 @@ export interface ManualJudgementRequest {
   readonly rawTiming: JudgeTimingValue;
   readonly absolutePosition: number;
   readonly multipleDirectionalFlickNoteCount?: number;
+  /** Miss damage divisor of NoteLong.execOverWaitState (2) and NoteSlide.onMiss (5). */
+  readonly damageDivisor?: 2 | 5;
 }
 
 export interface ManualJudgementOwnership {
@@ -178,6 +180,34 @@ export function hasFlickMovement(
   if (direction === null || width <= 1) return ok(true);
   const full = getManualScreenDistanceRate(geometry, { beganPosition, currentPosition, horizontalOnly: false });
   return full.status === "ok" ? ok(full.value > directionalGestureThreshold(width)) : full;
+}
+
+/**
+ * NoteSlide.ExecTouchMoved cached-result branches: the distance from
+ * cachedBeganPos is the only gate. Flick tails use the full rate, directional
+ * tails the horizontal rate, both strictly above 0.04; multi-directional tails
+ * require horizontal > 0.01 and full > the N-scaled threshold.
+ */
+export function cachedTailMovement(
+  geometry: SimulatorManualInputGeometryBackend,
+  beganPosition: ManualInputPosition,
+  currentPosition: ManualInputPosition,
+  afterNoteType: number,
+  multipleCount: number,
+): SimulatorResult<boolean> {
+  const flickUnit = float32FromBits(0x3d23d70a);
+  if (afterNoteType === 8 || afterNoteType === 9 || afterNoteType === 10) {
+    const rate = getManualScreenDistanceRate(geometry, { beganPosition, currentPosition, horizontalOnly: afterNoteType !== 8 });
+    return rate.status === "ok" ? ok(rate.value > flickUnit) : rate;
+  }
+  if (afterNoteType !== 11 && afterNoteType !== 12) {
+    return integrityFailure("manual.slide-cached-tail-type", "Only flick-family Slide tails cache a Began result.");
+  }
+  const horizontal = getManualScreenDistanceRate(geometry, { beganPosition, currentPosition, horizontalOnly: true });
+  if (horizontal.status !== "ok") return horizontal;
+  if (horizontal.value <= float32FromBits(0x3c23d70a)) return ok(false);
+  const full = getManualScreenDistanceRate(geometry, { beganPosition, currentPosition, horizontalOnly: false });
+  return full.status === "ok" ? ok(full.value > directionalGestureThreshold(multipleCount)) : full;
 }
 
 export function getSecondsWithDistance(
