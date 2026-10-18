@@ -1,8 +1,20 @@
 {
   "schemaVersion": 2,
   "sample": "jp.co.craftegg.band 10.2.0/231 arm64-v8a, resource catalog 10.2.0.160",
-  "boundary": "Same-cue playback limit (cue numLimits) per logical bundle, ACB and cue. A full cue keeps its newest playbacks: a new start stops the oldest live playback of that cue. 'unspecified' cues carry no cue limit in their ACB; cues and bundles not listed have no recovered configuration. Physical voice pools are not modelled.",
+  "boundary": "Same-cue playback limit (cue numLimits) per logical bundle, ACB and cue. A full cue keeps its newest playbacks: a new start stops the oldest live playback of that cue. 'unspecified' cues carry no cue limit in their ACB; cues and bundles not listed have no recovered configuration, except that tapSkinDefault covers every other sound/tapseskin/ bundle. Physical voice pools are not modelled.",
   "policy": "newest-replaces-oldest",
+  "tapSkinDefault": {
+    "scope": "Any sound/tapseskin/<bundle> without its own bank entry (special, collaboration and future tap SE skins).",
+    "basis": "Product decision: every evidenced tap SE skin (skin00-03) carries the same limits; unevidenced skins reuse them instead of being unlimited.",
+    "limits": {
+      "SE_RHYTHM_TAP_LONG": 4,
+      "flick": 4,
+      "game_button": 4,
+      "good": 4,
+      "great": 4,
+      "perfect": 4
+    }
+  },
   "banks": [
     {
       "logicalId": "sound/tapseskin/skin00",

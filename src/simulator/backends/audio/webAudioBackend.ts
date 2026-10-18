@@ -22,6 +22,8 @@ const CUE_LIMITS = new Map<string, Readonly<Record<string, number | undefined>>>
 for (const bank of cueLimitProfile.banks) {
   CUE_LIMITS.set(bank.logicalId, { ...CUE_LIMITS.get(bank.logicalId), ...bank.limits });
 }
+// Tap SE skins without their own entry reuse the evidenced skin limits.
+const TAP_SKIN_DEFAULT_LIMITS: Readonly<Record<string, number | undefined>> = cueLimitProfile.tapSkinDefault.limits;
 
 interface WebAudioVoiceFade {
   startValue: number;
@@ -204,7 +206,9 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
     this.cueLimitByCue.clear();
     for (const [cue, buffer] of decoded) this.decodedByCue.set(cue, buffer);
     for (const resource of profile.resources) {
-      const limit = resource.role === "se" ? CUE_LIMITS.get(resource.logicalId)?.[resource.cue] : undefined;
+      const limit = resource.role !== "se" ? undefined : CUE_LIMITS.has(resource.logicalId)
+        ? CUE_LIMITS.get(resource.logicalId)![resource.cue]
+        : resource.logicalId.startsWith("sound/tapseskin/") ? TAP_SKIN_DEFAULT_LIMITS[resource.cue] : undefined;
       if (limit !== undefined) this.cueLimitByCue.set(resource.cue, limit);
       if (resource.loop !== null) {
         const buffer = decoded.get(resource.cue)!;
