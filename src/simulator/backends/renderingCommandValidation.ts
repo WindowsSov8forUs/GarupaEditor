@@ -105,8 +105,8 @@ export function validateTypedRenderHudCommand(
     }
     case "add-score": {
       const state = command.state;
-      return objectRole === "hud-add-score" && exactKeys(state, ["alpha", "depth", "localYOffset", "poolIndex", "value"]) &&
-        Number.isFinite(state.alpha) && Number.isFinite(state.localYOffset) &&
+      return objectRole === "hud-add-score" && exactKeys(state, ["alpha", "depth", "localXOffset", "poolIndex", "value"]) &&
+        Number.isFinite(state.alpha) && Number.isFinite(state.localXOffset) &&
         isUInt32(state.value) && state.value > 0 &&
         Number.isInteger(state.poolIndex) && state.poolIndex >= 0 && state.poolIndex < 4 &&
         Number.isInteger(state.depth) && state.depth >= 0 && state.depth < 8;
@@ -176,7 +176,7 @@ function hudSemanticKeys(state: Record<string, unknown>): readonly string[] {
     "color", "currentLife", "label", "lifeUpperLimit", "playerMaxLife", "primaryFill", "secondaryFill",
     "singleGameOver", "warning",
   ];
-  if ("poolIndex" in state) return ["alpha", "depth", "localYOffset", "poolIndex", "value"];
+  if ("poolIndex" in state) return ["alpha", "depth", "localXOffset", "poolIndex", "value"];
   if ("clearStatus" in state) return ["clearStatus"];
   if ("phase" in state) return ["phase", "progress"];
   return "laneChangePhase" in state
