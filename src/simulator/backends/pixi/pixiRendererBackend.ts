@@ -299,6 +299,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
   private readonly decodedFonts = new Map<string, PixiDecodedFont>();
   private readonly deferredResultImages = new Map<string, { asset: RenderResourceAssetProfile; bytes: Uint8Array }>();
   private textureGeneration = 0;
+  private resultImageDecode: Promise<SimulatorResult<void>> | null = null;
+  private decodedResultImages = 0;
   private readonly pending = new Map<RenderCommandBatch, PendingPixiBatch>();
   private controlOverlayRoot: Container | null = null;
   private suddenBar: NineSliceSprite | null = null;
@@ -627,21 +629,40 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       return ready;
     }
     this.profile = frozenProfile.value;
+    // Result images stay out of startup; they decode off-thread during play so the
+    // result Loading only waits for the scene build and its first upload.
+    const generation = this.textureGeneration;
+    setTimeout(() => { if (generation === this.textureGeneration) this.startResultImageDecode(); }, 0);
     return ok(undefined);
   }
 
   get resultPreparationWorkCount(): number { return this.deferredResultImages.size + 1; }
 
+  private startResultImageDecode(): Promise<SimulatorResult<void>> {
+    this.resultImageDecode ??= (async () => {
+      for (const [identity, { asset, bytes }] of this.deferredResultImages) {
+        const decoded = await this.decodeImage(asset, bytes);
+        if (decoded.status !== "ok") return decoded;
+        this.deferredResultImages.delete(identity);
+        this.decodedResultImages += 1;
+      }
+      return ok(undefined);
+    })();
+    return this.resultImageDecode;
+  }
+
   async prepareResultResources(report: (completed: number) => Promise<void>): Promise<SimulatorResult<void>> {
     if (this.profile === null) return reject("render.result.renderer-unavailable", "Result resources require an active renderer generation.");
-    let completed = 0;
-    for (const [identity, { asset, bytes }] of this.deferredResultImages) {
-      const decoded = await this.decodeImage(asset, bytes);
-      if (decoded.status !== "ok") return decoded;
-      this.deferredResultImages.delete(identity);
-      await report(++completed);
+    const decoding = this.startResultImageDecode();
+    // Report the images that finish while Loading is shown; earlier ones are already done.
+    let reported = this.decodedResultImages;
+    while (this.deferredResultImages.size > 0) {
+      const decoded = await Promise.race([decoding, new Promise<null>(resolve => setTimeout(() => resolve(null), 16))]);
+      if (decoded !== null && decoded.status !== "ok") return decoded;
+      while (reported < this.decodedResultImages) await report(++reported);
+      if (decoded !== null) break;
     }
-    return ok(undefined);
+    return decoding;
   }
 
   private async decodeImage(asset: RenderResourceAssetProfile, bytes: Uint8Array): Promise<SimulatorResult<void>> {
@@ -1295,6 +1316,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
   dispose(): SimulatorResult<void> {
     this.textureGeneration++;
     this.deferredResultImages.clear();
+    this.resultImageDecode = null;
+    this.decodedResultImages = 0;
     const cleanupFailures: string[] = [];
     const release = (identity: string, action: () => void): void => {
       try {
@@ -2305,6 +2328,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     this.suddenFieldTextures.clear();
     this.textureGeneration++;
     this.deferredResultImages.clear();
+    this.resultImageDecode = null;
+    this.decodedResultImages = 0;
     for (const texture of this.spriteTextures.values()) texture.destroy(false);
     for (const texture of this.baseTextures.values()) texture.destroy(true);
     this.spriteTextures.clear();
