@@ -260,6 +260,7 @@ export class RenderOwnerTransaction {
     private readonly renderer: SimulatorRendererBackend,
     private readonly batch: RenderCommandBatch | null,
     private readonly onCommit: () => void = () => {},
+    private readonly onBackendCommit: () => void = () => {},
   ) {}
 
   commitBackend(): SimulatorResult<void> {
@@ -267,7 +268,10 @@ export class RenderOwnerTransaction {
     const committed = this.batch === null
       ? ok(undefined)
       : this.renderer.commit(this.batch);
-    if (committed.status === "ok") this.state = "backend-committed";
+    if (committed.status === "ok") {
+      this.state = "backend-committed";
+      this.onBackendCommit();
+    }
     return committed;
   }
 
@@ -347,6 +351,7 @@ const DEFAULT_RENDER_HUD_SESSION_MODE: RenderHudSessionMode = Object.freeze({
 export class RenderCommandProducer {
   private frame = 0;
   private substep = 0;
+  private readonly committedVisibility = new Map<string, "active" | "hidden">();
   private readonly createdObjectIds: string[] = [];
   private readonly fieldObjectIds = new Set<string>();
   private readonly creationSequenceByObjectId = new Map<string, number>();
@@ -2222,7 +2227,7 @@ export class RenderCommandProducer {
       }
       appendCurveMesh(commands, base, meshObjectId, segment.geometry, scene,
         this.creationSequenceByObjectId.get(meshObjectId)!, false,
-        materialRole, state.meshVisible);
+        materialRole, state.meshVisible, this.committedVisibility);
     }
     const transaction = this.preflight(commands);
     return transaction.status === "ok"
@@ -2783,8 +2788,25 @@ export class RenderCommandProducer {
   ): SimulatorResult<RenderOwnerTransaction> {
     const batch = this.renderer.preflight(commands);
     return batch.status === "ok"
-      ? ok(new RenderOwnerTransaction(this.renderer, batch.value, onCommit))
+      ? ok(new RenderOwnerTransaction(this.renderer, batch.value, onCommit, () => this.recordVisibility(commands)))
       : batch;
+  }
+
+  /** Tracks object visibility as the backend applied it; every visibility command passes through here. */
+  private recordVisibility(commands: readonly RenderCommand[]): void {
+    for (const command of commands) {
+      switch (command.kind) {
+        case "activate-object": this.committedVisibility.set(command.renderObjectId, "active"); break;
+        case "deactivate-object": this.committedVisibility.set(command.renderObjectId, "hidden"); break;
+        case "hide-object":
+          if (command.contentsOnly) this.committedVisibility.delete(command.renderObjectId);
+          else this.committedVisibility.set(command.renderObjectId, "hidden");
+          break;
+        case "create-object": case "acquire-object": case "release-object":
+          this.committedVisibility.delete(command.renderObjectId); break;
+        default: break;
+      }
+    }
   }
 
   private commandBase(substep: number) {
@@ -2915,6 +2937,7 @@ function appendCurveMesh(
   commands: RenderCommand[], base: RenderCommandBaseFactory, renderObjectId: string,
   geometry: OrdinaryBaseNoteMeshGeometry, scene: OrdinaryFixedNoteSceneInput, creationSequence: number, initialize: boolean,
   materialRole: "long-note" | "curve-note", visible = true,
+  committed?: ReadonlyMap<string, "active" | "hidden">,
 ): void {
   if (initialize) {
     const zero = float32State(0), one = float32State(1), z = float32State(0.9900000095367432);
@@ -2923,11 +2946,12 @@ function appendCurveMesh(
       ordering: { domainLayer: scene.noteDomainLayer, sourceDepthOrSortingOrder: 60, sourceZ: z, creationSequence }, maskObjectId: null });
   }
   if (initialize) commands.push({ ...base(commands.length), kind: "set-threshold", renderObjectId, threshold: scene.noteLineClipY });
+  // A visibility command that repeats the backend's committed state changes nothing and is omitted.
   if (geometry.vertices.length === 0 || !visible) {
-    commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
+    if (committed?.get(renderObjectId) !== "hidden") commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
     return;
   }
-  commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId });
+  if (committed?.get(renderObjectId) !== "active") commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId });
   commands.push({ ...base(commands.length), kind: "set-mesh", renderObjectId, ...geometry, materialRole });
 }
 
