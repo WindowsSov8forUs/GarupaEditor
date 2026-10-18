@@ -65,20 +65,46 @@ export class InGameMusicScoreController {
     this.currentBpmStringValue = this.basicBpmStringValue;
     this.nextBpmValue = this.basicBpmValue;
     this.nextBpmStringValue = this.basicBpmStringValue;
-    const launcherLead = noteArrivalSeconds * this.basicBpmValue / 240 * MUSIC_BAR_DIVISION_COUNT;
+    this.tempoCommands = chart.noteBatches.flatMap((batch) => {
+      const command = findBatchBpmCommand(batch.informationList);
+      return command === undefined ? [] : [command];
+    });
+    const start = this.signedTempo?.startPosition ?? 0;
+    const launcherLead = this.initialLauncherLead(noteArrivalSeconds, start);
     // Keep position precision until projection; both input formats use this clock.
     this.launcherMusicBarProgressValue = Math.floor(launcherLead / MUSIC_BAR_DIVISION_COUNT);
     this.launcherMusicBeatProgressValue = launcherLead % MUSIC_BAR_DIVISION_COUNT;
-    const start = this.signedTempo?.startPosition ?? 0;
     if (start > 0) {
       // Whole bars added in front of events folded before music start.
       this.musicBarProgressValue = start / MUSIC_BAR_DIVISION_COUNT;
       this.launcherMusicBarProgressValue += start / MUSIC_BAR_DIVISION_COUNT;
     }
-    this.tempoCommands = chart.noteBatches.flatMap((batch) => {
-      const command = findBatchBpmCommand(batch.informationList);
-      return command === undefined ? [] : [command];
-    });
+  }
+
+  /** SetupFirstGameProgress takes arrivalSeconds at the basic BPM. Extension:
+   * when a BPM command falls inside that first window, the original never
+   * rescales the launcher, so walk the tempo map to the arrival time instead. */
+  private initialLauncherLead(noteArrivalSeconds: number, start: number): number {
+    const original = noteArrivalSeconds * this.basicBpmValue / 240 * MUSIC_BAR_DIVISION_COUNT;
+    if (this.signedTempo?.folded) return original;
+    let position = start;
+    let bpm = this.basicBpmValue;
+    let remaining = noteArrivalSeconds;
+    let crossed = false;
+    const commands = this.tempoCommands
+      .filter((command) => command.absolutePos > start)
+      .sort((left, right) => left.absolutePos - right.absolutePos);
+    for (const command of commands) {
+      const seconds = (command.absolutePos - position) * 240 / bpm / MUSIC_BAR_DIVISION_COUNT;
+      if (seconds >= remaining) break;
+      const next = Math.fround(command.bpm);
+      if (!(next > 0)) return original;
+      remaining -= seconds;
+      position = command.absolutePos;
+      bpm = next;
+      crossed = true;
+    }
+    return crossed ? position - start + remaining * bpm / 240 * MUSIC_BAR_DIVISION_COUNT : original;
   }
 
   validateAdvanceSequence(
