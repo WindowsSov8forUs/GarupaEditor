@@ -78,6 +78,10 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
   private readonly retiredGenerations: RetiredParticleGeneration[] = [];
   private readonly liveMeshes: PixiParticleLinearColorMesh[] = [];
   private readonly livePrimitives: ParticleNativeRenderPrimitive[] = [];
+  // Detached meshes of retired particles, keyed by material, reused by later births instead of
+  // rebuilding geometry, shader and GPU state for every particle.
+  private readonly idleMeshes = new Map<string, PixiParticleLinearColorMesh[]>();
+  private idleMeshCount = 0;
   private pending: PendingParticleFrame | null = null;
   private nextFrame: number | null = null;
   private lastSampleCount = 0;
@@ -253,10 +257,21 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
         if (texture === undefined || texture.destroyed) throw new Error("missing primitive texture");
         const previous = reusable.get(primitive.particleId);
         let mesh: PixiParticleLinearColorMesh;
-        if (previous !== undefined && sameParticleMaterial(previous.primitive, primitive)) {
+        const matched = previous !== undefined && sameParticleMaterial(previous.primitive, primitive);
+        const idle = matched ? undefined : this.takeIdleMesh(primitive);
+        if (matched) {
           mesh = previous.mesh;
           updatePixiParticleNativePrimitiveMesh(mesh, texture, primitive);
           reusable.delete(primitive.particleId);
+        } else if (idle !== undefined) {
+          mesh = idle;
+          try {
+            updatePixiParticleNativePrimitiveMesh(mesh, texture, primitive);
+          } catch (error) {
+            destroyPixiParticleLinearColorMesh(mesh);
+            throw error;
+          }
+          mesh.label = primitive.particleId;
         } else mesh = createPixiParticleNativePrimitiveMesh(texture, primitive);
         // One native order sequence replaces the old sortingOrder>20 stage split
         // and arbitrary large-radix zIndex mapping.
@@ -264,9 +279,11 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
         meshes.push(mesh);
         generation.addChild(mesh);
       }
-      const cleanup = destroyMeshes([...reusable.values()].map(value => value.mesh), "recycled");
-      if (cleanup.length > 0) throw new Error(`Retired particle cleanup failed: ${cleanup.join(",")}`);
+      const retired = [...reusable.values()];
       reusable.clear();
+      const cleanup = destroyMeshes(retired.filter(({ mesh, primitive }) => !this.keepIdleMesh(mesh, primitive))
+        .map(value => value.mesh), "recycled");
+      if (cleanup.length > 0) throw new Error(`Retired particle cleanup failed: ${cleanup.join(",")}`);
     } catch (error) {
       const cleanupFailures = destroyGeneration(generation,
         [...meshes, ...[...reusable.values()].map(value => value.mesh)], "detached");
@@ -493,9 +510,33 @@ export class PixiParticleRendererBackend implements SimulatorParticleRendererBac
       this.liveGeneration = null;
     }
     failures.push(...this.clearRetiredGenerations());
+    failures.push(...this.clearIdleMeshes());
     this.liveMeshes.splice(0);
     this.livePrimitives.splice(0);
     return failures;
+  }
+
+  private takeIdleMesh(primitive: ParticleNativeRenderPrimitive): PixiParticleLinearColorMesh | undefined {
+    const mesh = this.idleMeshes.get(particleMaterialKey(primitive))?.pop();
+    if (mesh !== undefined) this.idleMeshCount -= 1;
+    return mesh;
+  }
+
+  private keepIdleMesh(mesh: PixiParticleLinearColorMesh, primitive: ParticleNativeRenderPrimitive): boolean {
+    if (mesh.destroyed || mesh.parent !== null || this.idleMeshCount >= MAX_IDLE_PARTICLE_MESHES) return false;
+    const key = particleMaterialKey(primitive);
+    const pool = this.idleMeshes.get(key);
+    if (pool === undefined) this.idleMeshes.set(key, [mesh]);
+    else pool.push(mesh);
+    this.idleMeshCount += 1;
+    return true;
+  }
+
+  private clearIdleMeshes(): readonly string[] {
+    const meshes = [...this.idleMeshes.values()].flat();
+    this.idleMeshes.clear();
+    this.idleMeshCount = 0;
+    return destroyMeshes(meshes, "idle");
   }
 
   private clearRetiredGenerations(): readonly string[] {
@@ -723,6 +764,14 @@ function destroyGeneration(
   try { generation.removeFromParent(); } catch { failures.push(`${ownerPrefix}-generation-parent`); }
   try { if (!generation.destroyed) generation.destroy({ children: false }); } catch { failures.push(`${ownerPrefix}-generation`); }
   return failures;
+}
+
+const MAX_IDLE_PARTICLE_MESHES = 1024;
+
+/** The fields sameParticleMaterial compares, so pooled meshes keep their texture/shader/blend binding. */
+function particleMaterialKey(primitive: ParticleNativeRenderPrimitive): string {
+  return [primitive.logicalTextureId, primitive.materialName, primitive.shader, primitive.fragment,
+    primitive.colorWriteMask, primitive.sourceBlendFactor, primitive.destinationBlendFactor].join("\u0000");
 }
 
 function sameParticleMaterial(a: ParticleNativeRenderPrimitive, b: ParticleNativeRenderPrimitive): boolean {
