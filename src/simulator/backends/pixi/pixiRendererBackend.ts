@@ -291,6 +291,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       this.excludeTapLaneEffectMaskFromOrdinaryDraw(); this.gameplayRenderOrder?.detach(mesh);
     });
   private readonly objectIdsByNode = new Map<Container, string>();
+  // Sibling ordering reads each node's record once per comparison.
+  private readonly recordsByNode = new Map<Container, PixiObjectRecord>();
   private readonly baseTextures = new Map<string, Texture>();
   private readonly spriteTextures = new Map<string, Texture>();
   private readonly spriteReferenceCounts = new Map<string, number>();
@@ -1306,6 +1308,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     this.unclippedNotes.clear();
     this.objects.clear();
     this.objectIdsByNode.clear();
+    this.recordsByNode.clear();
     for (const [renderObjectId, value] of records) {
       if (value.hudVisual?.scoreHighRankSoftClipFilter !== null &&
         value.hudVisual?.scoreHighRankSoftClipFilter !== undefined) {
@@ -1748,6 +1751,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           geometryUsesWorldCoordinates: false,
         });
         this.objectIdsByNode.set(node, command.renderObjectId);
+        this.recordsByNode.set(node, this.objects.get(command.renderObjectId)!);
         orderingParents.add(parent);
         this.markSiblingOrder(parent, node);
         return;
@@ -1780,6 +1784,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         object.node.removeFromParent();
         object.node.destroy({ children: true } as DestroyOptions);
         this.objectIdsByNode.delete(object.node);
+        this.recordsByNode.delete(object.node);
         this.objects.delete(command.renderObjectId);
         return;
       }
@@ -2040,8 +2045,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     return (left, right) => {
       if (left === this.controlOverlayRoot) return right === this.controlOverlayRoot ? 0 : 1;
       if (right === this.controlOverlayRoot) return -1;
-      const leftRecord = this.objects.get(this.objectIdsByNode.get(left as Container)!);
-      const rightRecord = this.objects.get(this.objectIdsByNode.get(right as Container)!);
+      const leftRecord = this.recordsByNode.get(left as Container);
+      const rightRecord = this.recordsByNode.get(right as Container);
       if (leftRecord === undefined || rightRecord === undefined) {
         const externalLayer = (node: Container): boolean =>
           node === spriteChild(parent) ||
@@ -2139,6 +2144,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     this.unclippedNotes.clear();
     this.objects.clear();
     this.objectIdsByNode.clear();
+    this.recordsByNode.clear();
     this.spriteReferenceCounts.clear();
     try {
       this.stage.removeChildren();
