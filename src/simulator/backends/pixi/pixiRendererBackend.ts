@@ -34,7 +34,13 @@ import {
   PIXI_GAMEPLAY_RENDER_ORDER_LABEL,
   type PixiGameplayRenderOrder,
 } from "./pixiGameplayRenderOrder";
-import { validateAndFreezeRenderProfile } from "../renderingValidation";
+import {
+  freezeRenderArray,
+  freezeRenderColor,
+  freezeRenderVector2,
+  freezeRenderVector3,
+  validateAndFreezeRenderProfile,
+} from "../renderingValidation";
 import { sampleOrdinaryVisibleClip } from "../ordinaryVisibleAnimation";
 import {
   sampleGameClearAdditionalAnimation,
@@ -5056,24 +5062,13 @@ function compareOrdering(
 
 function copyPixiCommand(command: RenderCommand): RenderCommand {
   if (command.kind === "set-mesh") {
+    // Frozen geometry is already an immutable snapshot and is shared, not deep-copied.
     return Object.freeze({
       ...command,
-      vertices: Object.freeze(command.vertices.map((value) => Object.freeze({
-        x: Object.freeze({ ...value.x }),
-        y: Object.freeze({ ...value.y }),
-        z: Object.freeze({ ...value.z }),
-      }))),
-      indices: Object.freeze([...command.indices]),
-      uv: Object.freeze(command.uv.map((value) => Object.freeze({
-        x: Object.freeze({ ...value.x }),
-        y: Object.freeze({ ...value.y }),
-      }))),
-      colors: Object.freeze(command.colors.map((value) => Object.freeze({
-        red: Object.freeze({ ...value.red }),
-        green: Object.freeze({ ...value.green }),
-        blue: Object.freeze({ ...value.blue }),
-        alpha: Object.freeze({ ...value.alpha }),
-      }))),
+      vertices: freezeRenderArray(command.vertices, freezeRenderVector3),
+      indices: freezeRenderArray(command.indices, (index) => index),
+      uv: freezeRenderArray(command.uv, freezeRenderVector2),
+      colors: freezeRenderArray(command.colors, freezeRenderColor),
     });
   }
   if (command.kind === "set-line") {
