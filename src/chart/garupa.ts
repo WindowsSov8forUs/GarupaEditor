@@ -27,6 +27,9 @@ export interface GarupaChartJsonSlideItem {
   readonly type: "Slide";
   /** At least two total nodes, including Hidden; singleton Slides are invalid. */
   readonly connections: readonly GarupaChartJsonSlideConnection[];
+  /** The original Long. Only valid on the Long shape (see isGarupaLongSlideShape);
+   * without it every Slide, including a straight two-node one, is an original Slide. */
+  readonly long?: true;
   readonly timingGroup?: string;
 }
 
@@ -77,3 +80,14 @@ export type GarupaChartJsonItem =
   | GarupaChartJsonSystemItem;
 
 export type GarupaChartJson = readonly GarupaChartJsonItem[];
+
+/** The original Long shape: exactly two nodes on one lane span, a Single/Skill head
+ * and a later Single/Skill/Flick/one-lane Directional tail. */
+export function isGarupaLongSlideShape(slide: Pick<GarupaChartJsonSlideItem, "connections">): boolean {
+  if (slide.connections.length !== 2) return false;
+  const head = slide.connections[0]!, tail = slide.connections[1]!;
+  return (head.type === "Single" || head.type === "Skill") &&
+    (tail.type === "Single" || tail.type === "Skill" || tail.type === "Flick" ||
+      tail.type === "Directional" && tail.width === 1) &&
+    head.lane === tail.lane && head.width === tail.width && tail.beat > head.beat;
+}

@@ -952,10 +952,14 @@ export function useEditorIoAndShortcuts(params: any) {
           noteIds.push(parsedConnection.note.id);
         });
 
+        if (rawItem.long !== undefined && rawItem.long !== true) {
+          throw new Error(`item[${itemIndex}].long must be true when present`);
+        }
         nextSlideChains.push({
           id: `import-slide-${itemIndex}`,
           noteIds,
           timingGroup: chainTimingGroup,
+          ...(rawItem.long === true ? { long: true as const } : {}),
         });
         return;
       }

@@ -23,6 +23,7 @@ export function buildSimulatorGarupaChart(
       return Object.freeze({
         type: "Slide" as const,
         connections: Object.freeze(item.connections.map(mirrorConnection)),
+        ...(item.long === true ? { long: true as const } : {}),
         ...(item.timingGroup === undefined ? {} : { timingGroup: item.timingGroup }),
       });
     }

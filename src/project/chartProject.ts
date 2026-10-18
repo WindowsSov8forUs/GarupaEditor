@@ -125,7 +125,8 @@ export function validateProject(value: unknown): asserts value is ChartProject {
   }
   for (const chain of c.slideChains) requireValue(Array.isArray(chain.noteIds) && chain.noteIds.length >= 2
     && chain.noteIds.every((id: unknown) => text(id) && noteIds.has(id))
-    && (chain.timingGroup === undefined || timingGroupId(chain.timingGroup)), "Slide 连接");
+    && (chain.timingGroup === undefined || timingGroupId(chain.timingGroup))
+    && (chain.long === undefined || chain.long === true), "Slide 连接");
   for (const b of c.bpmEvents) requireValue(finite(b.beat) && finite(b.bpm) && b.bpm !== 0, "BPM 数据");
   let lastBeat = 0, lastBpm = m.bpm;
   for (const b of c.bpmEvents) if (b.beat >= lastBeat) { lastBeat = b.beat; lastBpm = b.bpm; }

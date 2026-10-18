@@ -1,5 +1,5 @@
 // Simulator-owned validation and freezing for the shared Garupa chart schema.
-import { GARUPA_HEADER_HABAHIRO, GARUPA_SYSTEM_LANE_CHANGE } from "../../chart";
+import { GARUPA_HEADER_HABAHIRO, GARUPA_SYSTEM_LANE_CHANGE, isGarupaLongSlideShape } from "../../chart";
 import type {
   GarupaChartJson,
   GarupaChartJsonDirectionalNote,
@@ -104,9 +104,13 @@ function copyItem(
       connections.push(connection.value.connection);
       timingCount += connection.value.hasTimingGroup ? 1 : 0;
     }
+    if (input.long !== undefined && (input.long !== true || !isGarupaLongSlideShape({ connections }))) {
+      return invalid(`${label} Slide long is only true on two nodes of one lane span with a Single/Skill head and a later Single/Skill/Flick/one-lane Directional tail.`);
+    }
     return copied(Object.freeze({
       type: "Slide",
       connections: Object.freeze(connections),
+      ...(input.long === true ? { long: true as const } : {}),
       ...(timing.value === undefined ? {} : { timingGroup: timing.value }),
     }), 0, timingCount);
   }

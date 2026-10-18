@@ -185,7 +185,8 @@ function constructGarupaNoteGraphs(
       item.type === "Header" || item.type === "System") continue;
     const projected = !extensions.originalItemIndices.has(sourceOrder);
     if (item.type === "Slide") {
-      const long = isLongShape(item) && (!tempo.folded || tempo.secondsAt(item.connections[1]!.beat * 48) > tempo.secondsAt(item.connections[0]!.beat * 48));
+      // Only the authored `long` flag selects the original Long; a straight two-node Slide stays a Slide.
+      const long = item.long === true && (!tempo.folded || tempo.secondsAt(item.connections[1]!.beat * 48) > tempo.secondsAt(item.connections[0]!.beat * 48));
       const slide = long ? createLong(item, nextIndex, projected) : createSlide(item, sourceOrder, slideOrdinal, nextIndex, projected);
       if (slide.status !== "ok") return slide;
       records.push(Object.freeze({
@@ -545,19 +546,6 @@ export function garupaBeatToAbsolutePosition(beat: number): SimulatorResult<numb
   }
   // Approved precision extension of the common position unit, not a second clock.
   return ok(scaled);
-}
-
-/** Garupa intentionally normalizes the indistinguishable straight Slide case.
- * Hidden/interior nodes and multi-lane directional gestures retain their Slide graph. */
-function isLongShape(slide: GarupaChartJsonSlideItem): boolean {
-  if (slide.connections.length !== 2) return false;
-  const head = slide.connections[0]!, tail = slide.connections[1]!;
-  return (head.type === "Single" || head.type === "Skill") &&
-    (tail.type === "Single" || tail.type === "Skill" || tail.type === "Flick" ||
-      tail.type === "Directional" && tail.width === 1) &&
-    head.lane === tail.lane && head.width === tail.width &&
-    tail.beat * GARUPA_JSON_POSITION_UNITS_PER_BEAT >
-      head.beat * GARUPA_JSON_POSITION_UNITS_PER_BEAT;
 }
 
 function createLong(slide: GarupaChartJsonSlideItem, firstIndex: number, projected = false) {

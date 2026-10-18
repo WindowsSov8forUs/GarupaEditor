@@ -3,10 +3,12 @@ import type {
   BestdoriV2ChartJsonBpmItem,
   BestdoriV2ChartJsonDirectionalNote,
   BestdoriV2ChartJsonItem,
+  BestdoriV2ChartJsonLongItem,
   BestdoriV2ChartJsonSingleNote,
   BestdoriV2ChartJsonSlideConnection,
+  BestdoriV2ChartJsonSlideItem,
 } from "./bestdori-v2";
-import { GARUPA_HEADER_HABAHIRO, GARUPA_SYSTEM_LANE_CHANGE } from "./garupa";
+import { GARUPA_HEADER_HABAHIRO, GARUPA_SYSTEM_LANE_CHANGE, isGarupaLongSlideShape } from "./garupa";
 import type {
   GarupaChartJson,
   GarupaChartJsonBpmItem,
@@ -105,6 +107,7 @@ function normalizeGarupaBpmAtZero(items: GarupaChartJson): GarupaChartJson {
         return {
           type: "Slide",
           connections: item.connections.map((connection) => ({ ...connection })),
+          ...(item.long === true ? { long: true as const } : {}),
           ...(item.timingGroup === undefined ? {} : { timingGroup: item.timingGroup }),
         };
       }
@@ -114,12 +117,15 @@ function normalizeGarupaBpmAtZero(items: GarupaChartJson): GarupaChartJson {
 
   return items.map((item) => {
     if (item.type === "Slide") {
+      const connections = item.connections.map((connection) => ({
+        ...connection,
+        beat: shiftAndClampBeat(connection.beat, minBpmBeat),
+      }));
       return {
         type: "Slide",
-        connections: item.connections.map((connection) => ({
-          ...connection,
-          beat: shiftAndClampBeat(connection.beat, minBpmBeat),
-        })),
+        connections,
+        // Clamping both nodes to beat zero leaves no Long shape to flag.
+        ...(item.long === true && isGarupaLongSlideShape({ connections }) ? { long: true as const } : {}),
         ...(item.timingGroup === undefined ? {} : { timingGroup: item.timingGroup }),
       };
     }
@@ -137,25 +143,25 @@ function normalizeBestdoriBpmAtZero(items: BestdoriV2ChartJson): BestdoriV2Chart
   const minBpmBeat = findMinBpmBeatFromBestdori(items);
   if (Math.abs(minBpmBeat) <= BEAT_ZERO_EPSILON) {
     return items.map((item) => {
-      if (item.type === "Slide") {
+      if (item.type === "Slide" || item.type === "Long") {
         return {
-          type: "Slide",
+          type: item.type,
           connections: item.connections.map((connection) => ({ ...connection })),
-        };
+        } as BestdoriV2ChartJsonSlideItem | BestdoriV2ChartJsonLongItem;
       }
       return { ...item };
     });
   }
 
   return items.map((item) => {
-    if (item.type === "Slide") {
+    if (item.type === "Slide" || item.type === "Long") {
       return {
-        type: "Slide",
+        type: item.type,
         connections: item.connections.map((connection) => ({
           ...connection,
           beat: shiftAndClampBeat(connection.beat, minBpmBeat),
         })),
-      };
+      } as BestdoriV2ChartJsonSlideItem | BestdoriV2ChartJsonLongItem;
     }
     return {
       ...item,
@@ -260,10 +266,17 @@ export function parseGarupaChartJson(input: unknown): GarupaChartJson {
         throw new Error(`${connectionLabel}.type is invalid: ${String(connectionType)}`);
       });
 
+      if (rawItem.long !== undefined && rawItem.long !== true) {
+        throw new Error(`${label}.long must be true when present`);
+      }
+      if (rawItem.long === true && !isGarupaLongSlideShape({ connections })) {
+        throw new Error(`${label}.long requires two nodes on one lane span with a Single/Skill head and a later Single/Skill/Flick/one-lane Directional tail`);
+      }
       const timingGroup = parseTimingGroup(rawItem.timingGroup, `${label}.timingGroup`);
       items.push({
         type: "Slide",
         connections,
+        ...(rawItem.long === true ? { long: true as const } : {}),
         ...(timingGroup === undefined ? {} : { timingGroup }),
       });
       return;
@@ -415,7 +428,7 @@ export function parseBestdoriV2ChartJson(input: unknown): BestdoriV2ChartJson {
         } as BestdoriV2ChartJsonSlideConnection;
       });
       items.push({
-        type: "Slide",
+        type,
         connections,
       });
       return;
@@ -510,6 +523,12 @@ function convertBestdoriItemToGarupa(item: BestdoriV2ChartJsonItem): GarupaChart
   }
 
   const connections = item.connections.map((connection) => convertBestdoriSlideConnectionToGarupa(connection));
+  if (item.type === "Long") {
+    if (!isGarupaLongSlideShape({ connections })) {
+      throw new Error("Bestdori V2 Long requires two visible nodes on one lane with the tail after the head.");
+    }
+    return { type: "Slide", connections, long: true };
+  }
   if (connections.length === 1) {
     const only = connections[0]!;
     return only.type === "Hidden" ? null : { ...only, type: only.type };
@@ -583,6 +602,19 @@ function convertGarupaHeadOrTailVisibleToBestdori(
 }
 
 function convertGarupaSlideToBestdori(item: GarupaChartJsonSlideItem): BestdoriV2ChartJsonItem | null {
+  if (item.long === true) {
+    const [head, tail] = item.connections as readonly [
+      Exclude<GarupaChartJsonSlideConnection, { type: "Hidden" }>,
+      Exclude<GarupaChartJsonSlideConnection, { type: "Hidden" }>,
+    ];
+    return {
+      type: "Long",
+      connections: [
+        convertGarupaHeadOrTailVisibleToBestdori(head, true, false),
+        convertGarupaHeadOrTailVisibleToBestdori(tail, false, true),
+      ],
+    };
+  }
   const original = item.connections;
   if (original.length === 0) {
     return null;
