@@ -84,7 +84,7 @@ export async function createPixiStartupDirectionScene(
   }
   const prepared = [] as Texture[];
   const images = includeStandardStage
-    ? [presentation.stageBackdrop, presentation.jacket]
+    ? [presentation.stageBackdrop, ...presentation.stageEffect.map((widget) => widget.image), presentation.jacket]
     : [presentation.jacket];
   for (const image of images) {
     const profile: RenderResourceAssetProfile = Object.freeze({
@@ -135,6 +135,8 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
   private readonly darkCover: Sprite | Graphics;
   private readonly stageSubtraction: Sprite | null;
   private readonly stageBackdrop: Sprite | null;
+  /** Visible stage-effect widgets of a special background, in TRSRoot space. */
+  private readonly stageEffect: Container | null;
   private readonly stageLights: PixiStageLights | null;
   private readonly stageSpeakers: PixiStageSpeakers | null;
   private readonly stagePsyllium: PixiStagePsyllium | null;
@@ -157,21 +159,37 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
     const jacketTexture = dynamicTextures[dynamicTextures.length - 1]!;
     if (includeStandardStage) {
       const stageTexture = dynamicTextures[0]!;
-      const characterTextures = dynamicTextures.slice(1, -1);
+      const effectCount = presentation.stageEffect.length;
+      const characterTextures = dynamicTextures.slice(1 + effectCount, -1);
       this.stageBackdrop = informationSprite(
         stageTexture,
         "StartupStageBackdrop",
         0, -170, 1920, 1440,
       );
+      // The prefab draws its widgets in the stage's panel above the background
+      // image (documented assumption: its parent panel's queue is not in the
+      // evidence), so BgCover and the DarkCover subtraction cover them too.
+      this.stageEffect = effectCount === 0 ? null : new Container({ label: "StageSpecialBgEffect", sortableChildren: false });
+      presentation.stageEffect.forEach((widget, index) => {
+        const sprite = new Sprite({ texture: dynamicTextures[1 + index]!, label: `StageSpecialBgEffect${index}`, anchor: 0.5 });
+        sprite.position.set(widget.centerX, -widget.centerY);
+        sprite.width = widget.width;
+        sprite.height = widget.height;
+        sprite.alpha = widget.alpha;
+        this.stageEffect!.addChild(sprite);
+      });
       this.characters = Object.freeze(characterTextures.map((texture, index) => fullFrameSprite(
         texture,
         `StartupSdCharacter${index}`,
         surfaceLayout.surface.viewportWidth,
         surfaceLayout.surface.viewportHeight,
       )));
-      this.backgroundRoot.addChild(this.stageBackdrop, ...this.characters);
+      this.backgroundRoot.addChild(this.stageBackdrop);
+      if (this.stageEffect !== null) this.backgroundRoot.addChild(this.stageEffect);
+      this.backgroundRoot.addChild(...this.characters);
     } else {
       this.stageBackdrop = null;
+      this.stageEffect = null;
       this.characters = Object.freeze([]);
     }
     const viewportWidth = surfaceLayout.surface.viewportWidth;
@@ -289,7 +307,7 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
       this.stageBackdrop.tint = [brightness, brightness, brightness];
       // Ordinary SetStageStatus is a no-op; the stage stays behind BgCover
       // throughout the information view, wait and intro.
-      for (const root of [this.stageLights?.root, this.stageSpeakers?.root, this.stagePsyllium?.root]) {
+      for (const root of [this.stageEffect ?? undefined, this.stageLights?.root, this.stageSpeakers?.root, this.stagePsyllium?.root]) {
         if (root === undefined) continue;
         root.position.set(layout.surface.viewportWidth / 2,
           layout.surface.viewportHeight / 2 -

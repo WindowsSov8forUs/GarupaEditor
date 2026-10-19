@@ -39,7 +39,7 @@ import {
   prepareSkinParticleProvider,
   usesExactDefaultParticlePack,
 } from "./skinParticlePreparation";
-import { prepareSkinRenderOverlay } from "./skinRenderPreparation";
+import { prepareSkinRenderOverlay, type PreparedSkinRenderOverlay } from "./skinRenderPreparation";
 
 export interface SimulatorResourceAssemblyTargets {
   readonly sessionId: string;
@@ -81,11 +81,7 @@ export interface PreparedSimulatorResourceAssembly {
     readonly judgeLineLogicalAssetId: string;
   } | null;
   readonly backgroundLogicalAssetId: string | null;
-  readonly backgroundImage: {
-    readonly bytes: Uint8Array;
-    readonly width: number;
-    readonly height: number;
-  } | null;
+  readonly backgroundImage: PreparedSkinRenderOverlay["backgroundImage"];
   readonly renderBindings: RenderEngineResourceBindings;
   readonly audioBackend: SimulatorAudioBackend;
   readonly rendererBackend: SimulatorRendererBackend;

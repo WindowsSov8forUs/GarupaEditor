@@ -5,9 +5,10 @@ import {
   inspectStrictRgbaPng,
   STARTUP_JACKET_SIZE,
 } from "./startupPresentationContract";
+import type { PreparedSkinRenderOverlay } from "./skinRenderPreparation";
 
 export interface PreparedPresentationImage {
-  readonly role: "jacket" | "stage-backdrop" | "display-image";
+  readonly role: "jacket" | "stage-backdrop" | "stage-effect" | "display-image";
   readonly slot: number | null;
   readonly logicalId: string;
   readonly sha256: string;
@@ -18,11 +19,25 @@ export interface PreparedPresentationImage {
   readonly bytes: Uint8Array;
 }
 
+/** A stage-effect widget: its image and its centre and size in the stage TRSRoot space (y up). */
+export interface PreparedStageEffectWidget {
+  readonly image: PreparedPresentationImage;
+  readonly centerX: number;
+  readonly centerY: number;
+  readonly width: number;
+  readonly height: number;
+  readonly alpha: number;
+}
+
+type SkinBackgroundImage = NonNullable<PreparedSkinRenderOverlay["backgroundImage"]>;
+
 export interface PreparedSessionPresentation {
   readonly song: SimulatorPresentationPackage["song"];
   readonly difficulty: SimulatorPresentationPackage["difficulty"];
   readonly jacket: PreparedPresentationImage;
   readonly stageBackdrop: PreparedPresentationImage;
+  /** Visible stage-effect widgets of the selected special background. */
+  readonly stageEffect: readonly PreparedStageEffectWidget[];
   readonly displayImage: PreparedPresentationImage | null;
   readonly sdCharacters: readonly [];
 }
@@ -43,6 +58,7 @@ export async function deriveSessionPresentation(
     difficulty: presentation.difficulty,
     jacket: jacket.value,
     stageBackdrop: backdrop.value,
+    stageEffect: Object.freeze([]),
     displayImage: displayImage?.value ?? null,
     sdCharacters,
   }));
@@ -50,7 +66,7 @@ export async function deriveSessionPresentation(
 
 export function replacePreparedSessionStageBackdrop(
   presentation: PreparedSessionPresentation,
-  selected: { readonly bytes: Uint8Array; readonly width: number; readonly height: number } | null,
+  selected: SkinBackgroundImage | null,
 ): SimulatorAssemblyResult<PreparedSessionPresentation> {
   if (selected === null) return accepted(presentation);
   const backdrop = deriveImage(
@@ -60,9 +76,21 @@ export function replacePreparedSessionStageBackdrop(
     selected.width,
     selected.height,
   );
-  return backdrop.status === "rejected"
-    ? backdrop
-    : accepted(Object.freeze({ ...presentation, stageBackdrop: backdrop.value }));
+  if (backdrop.status === "rejected") return backdrop;
+  const stageEffect: PreparedStageEffectWidget[] = [];
+  for (const [slot, widget] of selected.stageEffect.entries()) {
+    const image = deriveImage("stage-effect", slot, widget.bytes, widget.pixelWidth, widget.pixelHeight);
+    if (image.status === "rejected") return image;
+    stageEffect.push(Object.freeze({
+      image: image.value,
+      centerX: widget.centerX,
+      centerY: widget.centerY,
+      width: widget.width,
+      height: widget.height,
+      alpha: widget.alpha,
+    }));
+  }
+  return accepted(Object.freeze({ ...presentation, stageBackdrop: backdrop.value, stageEffect: Object.freeze(stageEffect) }));
 }
 
 function deriveImage(
