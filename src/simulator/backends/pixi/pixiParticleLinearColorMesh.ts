@@ -159,25 +159,79 @@ function validateMeshData(texture: Texture, particleId: string, positions: Float
   uvs: Float32Array, indices: Uint32Array, color: readonly [number, number, number, number],
   vertexColors: Float32Array): readonly [number, number, number, number] {
   const values = [...color].map(Math.fround);
+  const vertexCount = positions.length / 2;
   if (texture.destroyed || typeof particleId !== "string" || particleId.length === 0 ||
     positions.length < 8 || positions.length % 2 !== 0 || uvs.length !== positions.length ||
     indices.length < 3 || indices.length % 3 !== 0 ||
-    [...positions, ...uvs].some((value) => !Number.isFinite(value)) ||
-    [...indices].some((value) => !Number.isSafeInteger(value) || value < 0 || value >= positions.length / 2) ||
+    !everyValue(positions, Number.isFinite) || !everyValue(uvs, Number.isFinite) ||
+    !everyValue(indices, (value) => Number.isSafeInteger(value) && value >= 0 && value < vertexCount) ||
     values.some((value) => !Number.isFinite(value) || value < 0 || value > 1) ||
     vertexColors.length !== positions.length * 2 ||
-    vertexColors.some((value) => !Number.isFinite(value) || value < 0 || value > 1)) {
+    !everyValue(vertexColors, (value) => Number.isFinite(value) && value >= 0 && value <= 1)) {
     throw new Error("Particle native mesh requires exact finite primitive, source texture and unit color fields.");
   }
   return Object.freeze(values) as readonly [number, number, number, number];
 }
 
+function everyValue(values: Float32Array | Uint32Array, check: (value: number) => boolean): boolean {
+  for (let index = 0; index < values.length; index += 1) if (!check(values[index]!)) return false;
+  return true;
+}
+
+/** Whether two adjacent sorted primitives may share one draw: identical material binding and the
+ * same per-system draw-order key, so no other gameplay draw can sort between them. */
+export function sameParticleDraw(a: ParticleNativeRenderPrimitive, b: ParticleNativeRenderPrimitive): boolean {
+  return a.logicalTextureId === b.logicalTextureId && a.materialName === b.materialName &&
+    a.shader === b.shader && a.fragment === b.fragment && a.colorWriteMask === b.colorWriteMask &&
+    a.sourceBlendFactor === b.sourceBlendFactor && a.destinationBlendFactor === b.destinationBlendFactor &&
+    a.sortingLayerId === b.sortingLayerId && a.sortingOrder === b.sortingOrder &&
+    a.sortingDistance === b.sortingDistance && a.rendererPriority === b.rendererPriority;
+}
+
+/** Concatenates a run of same-draw primitives in draw order. Triangles keep their order and every
+ * colour is per vertex, so one draw blends exactly as the sequential per-particle draws did. */
+export function mergeParticlePrimitives(run: readonly ParticleNativeRenderPrimitive[]): ParticleNativeRenderPrimitive {
+  const first = run[0]!;
+  if (run.length === 1) return first;
+  let positionLength = 0, indexLength = 0;
+  for (const primitive of run) { positionLength += primitive.positions.length; indexLength += primitive.indices.length; }
+  const positions = new Float32Array(positionLength), uvs = new Float32Array(positionLength);
+  const vertexColors = new Float32Array(positionLength * 2), indices = new Uint32Array(indexLength);
+  let positionOffset = 0, indexOffset = 0;
+  let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity, nearZ = Infinity, farZ = -Infinity;
+  for (const primitive of run) {
+    positions.set(primitive.positions, positionOffset);
+    uvs.set(primitive.uvs, positionOffset);
+    vertexColors.set(primitive.vertexColors, positionOffset * 2);
+    const vertexOffset = positionOffset / 2;
+    for (let index = 0; index < primitive.indices.length; index += 1) indices[indexOffset + index] = primitive.indices[index]! + vertexOffset;
+    positionOffset += primitive.positions.length;
+    indexOffset += primitive.indices.length;
+    left = Math.min(left, primitive.bounds.left); top = Math.min(top, primitive.bounds.top);
+    right = Math.max(right, primitive.bounds.right); bottom = Math.max(bottom, primitive.bounds.bottom);
+    nearZ = Math.min(nearZ, primitive.bounds.nearZ); farZ = Math.max(farZ, primitive.bounds.farZ);
+  }
+  return Object.freeze({ ...first, positions, uvs, vertexColors, indices,
+    bounds: Object.freeze({ left, top, right, bottom, nearZ, farZ }) });
+}
+
 export function updatePixiParticleNativePrimitiveMesh(mesh: PixiParticleLinearColorMesh,
   texture: Texture, primitive: ParticleNativeRenderPrimitive): void {
-  const color = validateMeshData(texture, primitive.particleId, primitive.positions, primitive.uvs,
-    primitive.indices, primitive.linearColor, primitive.vertexColors);
   // The caller supplies a hidden generation with the same texture/shader/blend
   // binding. Updating it cannot change the currently displayed generation.
+  applyPixiParticleNativePrimitiveMesh(mesh, primitive, validatePixiParticleNativePrimitive(texture, primitive));
+}
+
+/** Validates a primitive for a mesh bound to `texture`; the result is the mesh's linear colour. */
+export function validatePixiParticleNativePrimitive(texture: Texture,
+  primitive: ParticleNativeRenderPrimitive): readonly [number, number, number, number] {
+  return validateMeshData(texture, primitive.particleId, primitive.positions, primitive.uvs,
+    primitive.indices, primitive.linearColor, primitive.vertexColors);
+}
+
+/** Writes already validated primitive data into a mesh with the same material binding. */
+export function applyPixiParticleNativePrimitiveMesh(mesh: PixiParticleLinearColorMesh,
+  primitive: ParticleNativeRenderPrimitive, color: readonly [number, number, number, number]): void {
   mesh.geometry.uvs = primitive.uvs;
   mesh.geometry.positions = primitive.positions;
   mesh.geometry.indices = primitive.indices;

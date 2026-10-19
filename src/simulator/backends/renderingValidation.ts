@@ -19,7 +19,6 @@ import {
 } from "./renderingContracts";
 
 const SHA256_PATTERN = /^[0-9A-F]{64}$/;
-const FLOAT32_BITS_PATTERN = /^[0-9A-F]{8}$/;
 const RESOURCE_ROLES = new Set([
   "note-atlas", "directional-atlas", "judge-atlas", "field-atlas", "lane-effect",
   "hud-atlas", "font", "material-texture", "animation-clip", "startup-ui",
@@ -235,6 +234,15 @@ export function validateAndFreezeRenderProfile(
 }
 
 const renderFloat32View = new DataView(new ArrayBuffer(4));
+const renderFloat32Bytes = new Uint8Array(renderFloat32View.buffer);
+const HEX_BYTES = Array.from({ length: 256 }, (_, byte) => byte.toString(16).toUpperCase().padStart(2, "0"));
+
+/** Big-endian uppercase hex of a Float32 value; byte lookup avoids per-value string formatting. */
+function float32Bits(rounded: number): string {
+  renderFloat32View.setFloat32(0, rounded, false);
+  const bytes = renderFloat32Bytes;
+  return HEX_BYTES[bytes[0]!]! + HEX_BYTES[bytes[1]!]! + HEX_BYTES[bytes[2]!]! + HEX_BYTES[bytes[3]!]!;
+}
 const commonRenderFloats = [
   Object.freeze({ value: 0, bits: "00000000" }),
   Object.freeze({ value: -0, bits: "80000000" }),
@@ -243,22 +251,21 @@ const commonRenderFloats = [
 ] as const;
 
 export function createRenderFloat32(value: number): SimulatorResult<RenderFloat32> {
+  const float = tryRenderFloat32(value);
+  return float !== null ? ok(float) : reject(
+    "render.float32.invalid-value",
+    "Renderer values must be finite and representable by the output Float32 encoding.",
+  );
+}
+
+/** createRenderFloat32 without the result wrapper, for per-vertex hot paths; null when invalid. */
+export function tryRenderFloat32(value: number): RenderFloat32 | null {
   const rounded = Math.fround(value);
-  if (!Number.isFinite(value) || !Number.isFinite(rounded)) {
-    return reject(
-      "render.float32.invalid-value",
-      "Renderer values must be finite and representable by the output Float32 encoding.",
-    );
-  }
-  if (rounded === 0) return ok(commonRenderFloats[Object.is(rounded, -0) ? 1 : 0]);
-  if (rounded === 1) return ok(commonRenderFloats[2]);
-  if (rounded === -1) return ok(commonRenderFloats[3]);
-  const view = renderFloat32View;
-  view.setFloat32(0, rounded, false);
-  return ok(Object.freeze({
-    value: rounded,
-    bits: view.getUint32(0, false).toString(16).toUpperCase().padStart(8, "0"),
-  }));
+  if (!Number.isFinite(value) || !Number.isFinite(rounded)) return null;
+  if (rounded === 0) return commonRenderFloats[Object.is(rounded, -0) ? 1 : 0];
+  if (rounded === 1) return commonRenderFloats[2];
+  if (rounded === -1) return commonRenderFloats[3];
+  return Object.freeze({ value: rounded, bits: float32Bits(rounded) });
 }
 
 export function validateRenderFloat32(value: RenderFloat32): boolean {
@@ -267,37 +274,76 @@ export function validateRenderFloat32(value: RenderFloat32): boolean {
     typeof value !== "object" ||
     !Number.isFinite(value.value) ||
     Math.fround(value.value) !== value.value ||
-    !FLOAT32_BITS_PATTERN.test(value.bits)
+    typeof value.bits !== "string"
   ) {
     return false;
   }
-  const view = renderFloat32View;
-  view.setFloat32(0, value.value, false);
-  return view.getUint32(0, false) === Number.parseInt(value.bits, 16);
+  // The canonical encoding is exactly eight uppercase hex digits.
+  return value.bits === float32Bits(value.value);
+}
+
+// A frozen value cannot change after recording, so it is its own snapshot.
+export function freezeRenderFloat32(value: RenderFloat32): RenderFloat32 {
+  return Object.isFrozen(value) ? value : Object.freeze({ ...value });
 }
 
 export function freezeRenderVector2(value: RenderVector2): RenderVector2 {
-  return Object.freeze({
-    x: Object.freeze({ ...value.x }),
-    y: Object.freeze({ ...value.y }),
-  });
+  const x = freezeRenderFloat32(value.x), y = freezeRenderFloat32(value.y);
+  return Object.isFrozen(value) && x === value.x && y === value.y ? value : Object.freeze({ x, y });
 }
 
 export function freezeRenderVector3(value: RenderVector3): RenderVector3 {
-  return Object.freeze({
-    x: Object.freeze({ ...value.x }),
-    y: Object.freeze({ ...value.y }),
-    z: Object.freeze({ ...value.z }),
-  });
+  const x = freezeRenderFloat32(value.x), y = freezeRenderFloat32(value.y), z = freezeRenderFloat32(value.z);
+  return Object.isFrozen(value) && x === value.x && y === value.y && z === value.z ? value : Object.freeze({ x, y, z });
 }
 
 export function freezeRenderColor(value: RenderColor): RenderColor {
-  return Object.freeze({
-    red: Object.freeze({ ...value.red }),
-    green: Object.freeze({ ...value.green }),
-    blue: Object.freeze({ ...value.blue }),
-    alpha: Object.freeze({ ...value.alpha }),
-  });
+  const red = freezeRenderFloat32(value.red), green = freezeRenderFloat32(value.green),
+    blue = freezeRenderFloat32(value.blue), alpha = freezeRenderFloat32(value.alpha);
+  return Object.isFrozen(value) && red === value.red && green === value.green && blue === value.blue && alpha === value.alpha
+    ? value : Object.freeze({ red, green, blue, alpha });
+}
+
+// Frozen arrays of deep-frozen elements that were valid when constructed (Float32 values from
+// tryRenderFloat32/createRenderFloat32, or primitive indices). They cannot change afterwards, so
+// recording does not re-snapshot them; unbounded element validation is skipped too, while bounded
+// checks such as index ranges still run.
+const constructedRenderArrays = new WeakSet<readonly unknown[]>();
+
+/** Registers a frozen array of deep-frozen vectors/colours built only from validated Float32 values. */
+export function markConstructedRenderArray<T extends readonly unknown[]>(values: T): T {
+  if (Object.isFrozen(values)) constructedRenderArrays.add(values);
+  return values;
+}
+
+export function isConstructedRenderArray(values: readonly unknown[]): boolean {
+  return constructedRenderArrays.has(values);
+}
+
+// Float32Arrays whose producer hands them over and never writes them again (typed arrays cannot
+// be frozen). Snapshots share them instead of copying.
+const ownedFloat32Arrays = new WeakSet<Float32Array>();
+
+export function handOverFloat32Array(values: Float32Array): Float32Array {
+  ownedFloat32Arrays.add(values);
+  return values;
+}
+
+/** A snapshot of a packed mesh array: handed-over arrays are shared, others are copied. */
+export function snapshotFloat32Array(values: Float32Array): Float32Array {
+  return ownedFloat32Arrays.has(values) ? values : values.slice();
+}
+
+/** Reuses a frozen array whose elements are already their own snapshots. */
+export function freezeRenderArray<T>(values: readonly T[], freeze: (value: T) => T): readonly T[] {
+  if (constructedRenderArrays.has(values)) return values;
+  let copy: T[] | null = Object.isFrozen(values) ? null : [];
+  for (let index = 0; index < values.length; index += 1) {
+    const value = values[index]!, frozen = freeze(value);
+    if (copy === null && frozen !== value) copy = values.slice(0, index);
+    copy?.push(frozen);
+  }
+  return copy === null ? values : Object.freeze(copy);
 }
 
 function validateFidelity(

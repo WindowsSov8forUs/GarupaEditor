@@ -6,6 +6,7 @@ import type {
 } from "../../backends/renderingContracts";
 import {
   createRenderFloat32,
+  tryRenderFloat32,
   validateRenderFloat32,
 } from "../../backends/renderingValidation";
 import {
@@ -141,26 +142,25 @@ export function advanceOrdinaryLongNormalChild(
       renderedTransform,
     }));
   }
-  const realMoveSecond = createRenderFloat32(Math.fround(state.motionState.realMoveSecond.value + input.deltaTime.value));
-  if (realMoveSecond.status !== "ok") return realMoveSecond;
-  const motion = advanceOrdinaryNoteMotion(Object.freeze({
+  const realMoveSecondValue = Math.fround(state.motionState.realMoveSecond.value + input.deltaTime.value);
+  const realMoveSecond = tryRenderFloat32(realMoveSecondValue);
+  if (realMoveSecond === null) return createRenderFloat32(realMoveSecondValue) as SimulatorResult<never>;
+  // One copy serves as the motion input and, once its two results are written, the next state.
+  const motionState: { -readonly [Key in keyof OrdinaryNoteMotionState]: OrdinaryNoteMotionState[Key] } = {
     ...state.motionState,
     deltaTime: input.deltaTime,
-    realMoveSecond: realMoveSecond.value,
-  }));
+    realMoveSecond,
+  };
+  const motion = advanceOrdinaryNoteMotion(motionState);
   if (motion.status !== "ok") return motion;
+  motionState.progressRate = motion.value.progressRate;
+  motionState.currentPositionZ = motion.value.position.z;
   return ok(Object.freeze({
     ...state,
     phase: input.adjustedMusicPosition - state.afterAbsolutePosition >= 0
       ? "stop" as const
       : "move" as const,
-    motionState: Object.freeze({
-      ...state.motionState,
-      deltaTime: input.deltaTime,
-      realMoveSecond: realMoveSecond.value,
-      progressRate: motion.value.progressRate,
-      currentPositionZ: motion.value.position.z,
-    }),
+    motionState: Object.freeze(motionState),
     renderedTransform: motion.value,
   }));
 }
@@ -185,21 +185,22 @@ export function buildOrdinaryLongNormalMesh(
       endpoint(input.front, input.frontButtonCount, input.front.localScale.x.value),
       endpoint(input.after, input.afterButtonCount, input.afterScaleX.value));
   }
-  const state = Object.freeze({
-    front: Object.freeze({
-      position: Object.freeze({ x: input.front.position.x, y: input.front.position.y }),
+  // A transient owner state read only by the strip builder.
+  const state = {
+    front: {
+      position: { x: input.front.position.x, y: input.front.position.y },
       localScaleX: input.front.localScale.x,
       buttonCount: input.frontButtonCount,
-    }),
-    after: Object.freeze({
-      position: Object.freeze({ x: input.after.position.x, y: input.after.position.y }),
+    },
+    after: {
+      position: { x: input.after.position.x, y: input.after.position.y },
       localScaleX: input.afterScaleX,
       buttonCount: input.afterButtonCount,
-    }),
+    },
     screenToSafeAreaRatio: input.screenToSafeAreaRatio,
     widthRate: input.widthRate,
     color: input.color,
-  });
+  };
   return input.advanced === true
     ? buildOrdinaryAdvancedNoteMesh(state)
     : buildOrdinaryBaseNoteMesh(state);

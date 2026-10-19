@@ -58,6 +58,8 @@ import {
   calculateOrdinaryNoteStartDepth,
   calculateOrdinaryNoteWorldScaleAxis,
   getHabahiroMeshWidthRate,
+  noteMeshCommandFields,
+  noteMeshVertexCount,
   type OrdinaryBaseNoteMeshGeometry,
   type OrdinaryMultipleDirectionalLineOwnerState,
   type OrdinaryNoteMotionResult,
@@ -260,6 +262,7 @@ export class RenderOwnerTransaction {
     private readonly renderer: SimulatorRendererBackend,
     private readonly batch: RenderCommandBatch | null,
     private readonly onCommit: () => void = () => {},
+    private readonly onBackendCommit: () => void = () => {},
   ) {}
 
   commitBackend(): SimulatorResult<void> {
@@ -267,7 +270,10 @@ export class RenderOwnerTransaction {
     const committed = this.batch === null
       ? ok(undefined)
       : this.renderer.commit(this.batch);
-    if (committed.status === "ok") this.state = "backend-committed";
+    if (committed.status === "ok") {
+      this.state = "backend-committed";
+      this.onBackendCommit();
+    }
     return committed;
   }
 
@@ -347,6 +353,7 @@ const DEFAULT_RENDER_HUD_SESSION_MODE: RenderHudSessionMode = Object.freeze({
 export class RenderCommandProducer {
   private frame = 0;
   private substep = 0;
+  private readonly committedVisibility = new Map<string, "active" | "hidden">();
   private readonly createdObjectIds: string[] = [];
   private readonly fieldObjectIds = new Set<string>();
   private readonly creationSequenceByObjectId = new Map<string, number>();
@@ -838,14 +845,13 @@ export class RenderCommandProducer {
         ? HUD_OBJECTS.combo
         : HUD_OBJECTS.comboAllPerfect;
       const animationRole = owner === "ap-alpha" ? "all-perfect" as const : "combo" as const;
-      // ComboNumber.showCoroutine checks the previous timer against its one
-      // second duration, then calls Hide (gameObject.SetActive(false)).
-      if (animationRole === "combo" && elapsed >= 1) {
+      // The one-second scale clip settles at scale one; ComboNumber stays active at the
+      // latest positive value (its showCoroutine has no caller) until Combo reaches zero.
+      if (animationRole === "combo" && nextElapsed >= 1) {
         commands.push({
           ...base(commands.length), kind: "stop-animation", renderObjectId,
           animationRole, restart: false,
         });
-        commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
       } else {
         const sample = createRenderFloat32(nextElapsed);
         if (sample.status !== "ok") return sample;
@@ -1740,16 +1746,12 @@ export class RenderCommandProducer {
         }),
         maskObjectId: null,
       });
-      if (mesh.value.vertices.length === 0) commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: meshObjectId });
+      if (noteMeshVertexCount(mesh.value) === 0) commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: meshObjectId });
       else commands.push({
         ...base(commands.length),
         kind: "set-mesh",
         renderObjectId: meshObjectId,
-        viewportClipped: mesh.value.viewportClipped,
-        vertices: mesh.value.vertices,
-        indices: mesh.value.indices,
-        uv: mesh.value.uv,
-        colors: mesh.value.colors,
+        ...noteMeshCommandFields(mesh.value),
         materialRole: "long-note",
       });
       commands.push({
@@ -2118,17 +2120,13 @@ export class RenderCommandProducer {
         }
       }
     }
-    if (mesh.value !== null && mesh.value.vertices.length > 0) {
+    if (mesh.value !== null && noteMeshVertexCount(mesh.value) > 0) {
       commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: meshObjectId });
       commands.push({
         ...base(commands.length),
         kind: "set-mesh",
         renderObjectId: meshObjectId,
-        viewportClipped: mesh.value.viewportClipped,
-        vertices: mesh.value.vertices,
-        indices: mesh.value.indices,
-        uv: mesh.value.uv,
-        colors: mesh.value.colors,
+        ...noteMeshCommandFields(mesh.value),
         materialRole: "long-note",
       });
     } else {
@@ -2222,7 +2220,7 @@ export class RenderCommandProducer {
       }
       appendCurveMesh(commands, base, meshObjectId, segment.geometry, scene,
         this.creationSequenceByObjectId.get(meshObjectId)!, false,
-        materialRole, state.meshVisible);
+        materialRole, state.meshVisible, this.committedVisibility);
     }
     const transaction = this.preflight(commands);
     return transaction.status === "ok"
@@ -2783,8 +2781,25 @@ export class RenderCommandProducer {
   ): SimulatorResult<RenderOwnerTransaction> {
     const batch = this.renderer.preflight(commands);
     return batch.status === "ok"
-      ? ok(new RenderOwnerTransaction(this.renderer, batch.value, onCommit))
+      ? ok(new RenderOwnerTransaction(this.renderer, batch.value, onCommit, () => this.recordVisibility(commands)))
       : batch;
+  }
+
+  /** Tracks object visibility as the backend applied it; every visibility command passes through here. */
+  private recordVisibility(commands: readonly RenderCommand[]): void {
+    for (const command of commands) {
+      switch (command.kind) {
+        case "activate-object": this.committedVisibility.set(command.renderObjectId, "active"); break;
+        case "deactivate-object": this.committedVisibility.set(command.renderObjectId, "hidden"); break;
+        case "hide-object":
+          if (command.contentsOnly) this.committedVisibility.delete(command.renderObjectId);
+          else this.committedVisibility.set(command.renderObjectId, "hidden");
+          break;
+        case "create-object": case "acquire-object": case "release-object":
+          this.committedVisibility.delete(command.renderObjectId); break;
+        default: break;
+      }
+    }
   }
 
   private commandBase(substep: number) {
@@ -2915,6 +2930,7 @@ function appendCurveMesh(
   commands: RenderCommand[], base: RenderCommandBaseFactory, renderObjectId: string,
   geometry: OrdinaryBaseNoteMeshGeometry, scene: OrdinaryFixedNoteSceneInput, creationSequence: number, initialize: boolean,
   materialRole: "long-note" | "curve-note", visible = true,
+  committed?: ReadonlyMap<string, "active" | "hidden">,
 ): void {
   if (initialize) {
     const zero = float32State(0), one = float32State(1), z = float32State(0.9900000095367432);
@@ -2923,12 +2939,25 @@ function appendCurveMesh(
       ordering: { domainLayer: scene.noteDomainLayer, sourceDepthOrSortingOrder: 60, sourceZ: z, creationSequence }, maskObjectId: null });
   }
   if (initialize) commands.push({ ...base(commands.length), kind: "set-threshold", renderObjectId, threshold: scene.noteLineClipY });
-  if (geometry.vertices.length === 0 || !visible) {
-    commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
+  // A visibility command that repeats the backend's committed state changes nothing and is omitted.
+  if (noteMeshVertexCount(geometry) === 0 || !visible) {
+    if (committed?.get(renderObjectId) !== "hidden") commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
     return;
   }
-  commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId });
-  commands.push({ ...base(commands.length), kind: "set-mesh", renderObjectId, ...geometry, materialRole });
+  if (committed?.get(renderObjectId) !== "active") commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId });
+  if (geometry.packed !== undefined) {
+    // Same fields and order as the spread form, written onto the fresh base object.
+    const command = base(commands.length) as Record<string, unknown>;
+    command.kind = "set-mesh";
+    command.renderObjectId = renderObjectId;
+    command.viewportClipped = geometry.viewportClipped;
+    command.packed = geometry.packed;
+    command.indices = geometry.indices;
+    command.materialRole = materialRole;
+    commands.push(command as unknown as RenderCommand);
+    return;
+  }
+  commands.push({ ...base(commands.length), kind: "set-mesh", renderObjectId, ...noteMeshCommandFields(geometry), materialRole });
 }
 
 function appendNoteIconVisibility(commands: RenderCommand[], base: RenderCommandBaseFactory,

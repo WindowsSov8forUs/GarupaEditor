@@ -1,4 +1,4 @@
-import { noteSpatialY, noteUnclippedSyncTarget, type OrdinaryNoteMotionResult } from "../rendering/ordinaryNoteGeometry";
+import { noteSpatialY, noteUnclippedSyncTarget, type OrdinaryBaseNoteMeshGeometry, type OrdinaryNoteMotionResult } from "../rendering/ordinaryNoteGeometry";
 import { isProductGestureNode, projectedNodeLane } from "./productChartProfile";
 import { NoteState, type NoteBase } from "../notes/noteBase";
 import { NoteLong, NoteSlide, NoteMultipleDirectionalVisual } from "../notes/noteTypes";
@@ -12,6 +12,7 @@ import { createOrdinaryLongNormalChildState, type OrdinaryLongNormalChildState }
 import { slideAxisInterval, slideRenderedCurve } from "./slideAxisMesh";
 import { noteLongFlashBinding, noteSlideFlashBinding, noteSlideHeldBodyBinding, slideLineMaterialRole } from "../rendering/noteVisualBinding";
 import type {
+  RenderColor,
   RenderFloat32,
   RenderVector3,
 } from "../../backends/renderingContracts";
@@ -701,8 +702,7 @@ export class GarupaRenderInputAdapter {
         const geometry = lineVisible ? slideState.segments[index - 1]!.geometry : null;
         plans.push({ id: objectId, lifetime: chain.identity, kind: "curve-note", visible: lineVisible,
           materialRole,
-          geometry: geometry === null || !chain.allHidden ? geometry : { ...geometry,
-            colors: geometry.colors.map(color => ({ ...color, alpha: f32(color.alpha.value * 0.5) })) } });
+          geometry: geometry === null || !chain.allHidden ? geometry : halfAlphaGeometry(geometry) });
       }
     }
     return this.producer.preflightNotePresentation(plans, retired, this.ordinaryScene, () => {
@@ -858,4 +858,12 @@ function vector3(x: number, y: number, z: number): RenderVector3 {
 }
 function rejected<T>(capability: string, boundary: string): SimulatorResult<T> {
   return integrityFailure(capability, boundary);
+}
+
+/** Halves every vertex alpha; a packed strip carries the one colour all its vertices share. */
+function halfAlphaGeometry(geometry: OrdinaryBaseNoteMeshGeometry): OrdinaryBaseNoteMeshGeometry {
+  const half = (color: RenderColor): RenderColor => ({ ...color, alpha: f32(color.alpha.value * 0.5) });
+  return geometry.packed !== undefined
+    ? { ...geometry, packed: { ...geometry.packed, color: half(geometry.packed.color) } }
+    : { ...geometry, colors: geometry.colors.map(half) };
 }

@@ -34,7 +34,14 @@ import {
   PIXI_GAMEPLAY_RENDER_ORDER_LABEL,
   type PixiGameplayRenderOrder,
 } from "./pixiGameplayRenderOrder";
-import { validateAndFreezeRenderProfile } from "../renderingValidation";
+import {
+  freezeRenderArray,
+  freezeRenderColor,
+  freezeRenderVector2,
+  freezeRenderVector3,
+  snapshotFloat32Array,
+  validateAndFreezeRenderProfile,
+} from "../renderingValidation";
 import { sampleOrdinaryVisibleClip } from "../ordinaryVisibleAnimation";
 import {
   sampleGameClearAdditionalAnimation,
@@ -275,6 +282,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
   private readonly recording = new RecordingSimulatorRendererBackend(false);
   private readonly objects = new Map<string, PixiObjectRecord>();
   private readonly orderedParents = new WeakSet<Container>();
+  private readonly pendingSiblingOrders = new Map<Container, Set<Container>>();
   private readonly unclippedNotes = new Set<PixiObjectRecord>();
   private readonly noteClipper = new NoteViewportClipper(
     (sprite, mesh) => {
@@ -290,12 +298,16 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       this.excludeTapLaneEffectMaskFromOrdinaryDraw(); this.gameplayRenderOrder?.detach(mesh);
     });
   private readonly objectIdsByNode = new Map<Container, string>();
+  // Sibling ordering reads each node's record once per comparison.
+  private readonly recordsByNode = new Map<Container, PixiObjectRecord>();
   private readonly baseTextures = new Map<string, Texture>();
   private readonly spriteTextures = new Map<string, Texture>();
   private readonly spriteReferenceCounts = new Map<string, number>();
   private readonly decodedFonts = new Map<string, PixiDecodedFont>();
   private readonly deferredResultImages = new Map<string, { asset: RenderResourceAssetProfile; bytes: Uint8Array }>();
   private textureGeneration = 0;
+  private resultImageDecode: Promise<SimulatorResult<void>> | null = null;
+  private decodedResultImages = 0;
   private readonly pending = new Map<RenderCommandBatch, PendingPixiBatch>();
   private controlOverlayRoot: Container | null = null;
   private suddenBar: NineSliceSprite | null = null;
@@ -313,6 +325,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
   ) {
     this.stage = new Container({ label: "GarupaSimulatorRoot", sortableChildren: true });
     this.stage.sortableChildren = true;
+    this.stage.onRender = () => this.flushSiblingOrders();
   }
 
   bindOriginalSurfaceLayout(layout: OriginalSurfaceLayout): SimulatorResult<void> {
@@ -623,21 +636,40 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       return ready;
     }
     this.profile = frozenProfile.value;
+    // Result images stay out of startup; they decode off-thread during play so the
+    // result Loading only waits for the scene build and its first upload.
+    const generation = this.textureGeneration;
+    setTimeout(() => { if (generation === this.textureGeneration) this.startResultImageDecode(); }, 0);
     return ok(undefined);
   }
 
   get resultPreparationWorkCount(): number { return this.deferredResultImages.size + 1; }
 
+  private startResultImageDecode(): Promise<SimulatorResult<void>> {
+    this.resultImageDecode ??= (async () => {
+      for (const [identity, { asset, bytes }] of this.deferredResultImages) {
+        const decoded = await this.decodeImage(asset, bytes);
+        if (decoded.status !== "ok") return decoded;
+        this.deferredResultImages.delete(identity);
+        this.decodedResultImages += 1;
+      }
+      return ok(undefined);
+    })();
+    return this.resultImageDecode;
+  }
+
   async prepareResultResources(report: (completed: number) => Promise<void>): Promise<SimulatorResult<void>> {
     if (this.profile === null) return reject("render.result.renderer-unavailable", "Result resources require an active renderer generation.");
-    let completed = 0;
-    for (const [identity, { asset, bytes }] of this.deferredResultImages) {
-      const decoded = await this.decodeImage(asset, bytes);
-      if (decoded.status !== "ok") return decoded;
-      this.deferredResultImages.delete(identity);
-      await report(++completed);
+    const decoding = this.startResultImageDecode();
+    // Report the images that finish while Loading is shown; earlier ones are already done.
+    let reported = this.decodedResultImages;
+    while (this.deferredResultImages.size > 0) {
+      const decoded = await Promise.race([decoding, new Promise<null>(resolve => setTimeout(() => resolve(null), 16))]);
+      if (decoded !== null && decoded.status !== "ok") return decoded;
+      while (reported < this.decodedResultImages) await report(++reported);
+      if (decoded !== null) break;
     }
-    return ok(undefined);
+    return decoding;
   }
 
   private async decodeImage(asset: RenderResourceAssetProfile, bytes: Uint8Array): Promise<SimulatorResult<void>> {
@@ -808,11 +840,9 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
             this.sortSiblings(parent);
           };
         }
-        // Several command transactions update the same sibling list per frame.
-        // Pixi consumes the final original ordering once, when collecting draws.
+        // Several command transactions update the same sibling list per frame;
+        // the final ordering is checked once, before Pixi collects draws.
         parent.sortDirty = true;
-        const group = parent.renderGroup ?? parent.parentRenderGroup;
-        if (group !== null) group.structureDidChange = true;
       }
     } catch (error) {
       this.pending.delete(batch);
@@ -1293,6 +1323,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
   dispose(): SimulatorResult<void> {
     this.textureGeneration++;
     this.deferredResultImages.clear();
+    this.resultImageDecode = null;
+    this.decodedResultImages = 0;
     const cleanupFailures: string[] = [];
     const release = (identity: string, action: () => void): void => {
       try {
@@ -1306,6 +1338,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     this.unclippedNotes.clear();
     this.objects.clear();
     this.objectIdsByNode.clear();
+    this.recordsByNode.clear();
     for (const [renderObjectId, value] of records) {
       if (value.hudVisual?.scoreHighRankSoftClipFilter !== null &&
         value.hudVisual?.scoreHighRankSoftClipFilter !== undefined) {
@@ -1748,7 +1781,9 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           geometryUsesWorldCoordinates: false,
         });
         this.objectIdsByNode.set(node, command.renderObjectId);
+        this.recordsByNode.set(node, this.objects.get(command.renderObjectId)!);
         orderingParents.add(parent);
+        this.markSiblingOrder(parent, node);
         return;
       }
       case "activate-object":
@@ -1756,6 +1791,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         if (this.objects.get(command.renderObjectId)!.spriteContent !== null) {
           this.objects.get(command.renderObjectId)!.spriteContent!.visible = true;
         }
+        this.attachGameplayDraw(this.objects.get(command.renderObjectId)!);
         return;
       case "hide-object":
         if (command.contentsOnly) {
@@ -1764,9 +1800,15 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         }
         this.objects.get(command.renderObjectId)!.node.visible = false;
         return;
-      case "deactivate-object":
-        this.objects.get(command.renderObjectId)!.node.visible = false;
+      case "deactivate-object": {
+        const object = this.objects.get(command.renderObjectId)!;
+        object.node.visible = false;
+        // A pooled object draws nothing until activate-object re-registers it, so it
+        // leaves the gameplay order instead of being sorted with live draws every frame.
+        const drawOwner = gameplayDrawOwner(object);
+        if (drawOwner !== null) this.gameplayRenderOrder?.detach(drawOwner);
         return;
+      }
       case "release-object": {
         const object = this.objects.get(command.renderObjectId)!;
         if (object.spriteBindingKey !== null) this.decrementSpriteReference(object.spriteBindingKey);
@@ -1779,6 +1821,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         object.node.removeFromParent();
         object.node.destroy({ children: true } as DestroyOptions);
         this.objectIdsByNode.delete(object.node);
+        this.recordsByNode.delete(object.node);
         this.objects.delete(command.renderObjectId);
         return;
       }
@@ -1881,8 +1924,11 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         ];
         if (compareOrdering(object.ordering, ordering) !== 0) {
           object.ordering = Object.freeze(ordering);
-          node.zIndex = orderingZIndex(ordering);
+          // Pixi's zIndex setter forces an instruction rebuild; the sibling flush
+          // requests one only when the order actually changes.
+          (node as unknown as { _zIndex: number })._zIndex = orderingZIndex(ordering);
           orderingParents.add(node.parent as Container);
+          this.markSiblingOrder(node.parent as Container, node);
         }
         this.attachGameplayDraw(object);
         return;
@@ -1906,7 +1952,10 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
           this.spriteReferenceCounts,
           this.decodedFonts,
         );
-        if (applyHudOrdering(object, command)) orderingParents.add(object.node.parent as Container);
+        if (applyHudOrdering(object, command)) {
+          orderingParents.add(object.node.parent as Container);
+          this.markSiblingOrder(object.node.parent as Container, object.node);
+        }
         for (const role of object.activeAnimationRoles) {
           applyEvidenceAnimation(object, role, object.animationElapsedByRole.get(role) ?? 0);
         }
@@ -1918,7 +1967,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         applyGeometryMaterial(mesh, object, this.profile!);
         if (object.thresholdMaskContent !== null) mesh.mask = object.thresholdMaskContent;
         object.geometryContent = mesh;
-        object.geometryCenterZ = geometryCenterZ(command.vertices);
+        // Packed strips carry Z = +0 for every vertex.
+        object.geometryCenterZ = command.packed !== undefined ? 0 : geometryCenterZ(command.vertices);
         object.geometryUsesWorldCoordinates = command.coordinateSpace === "authored-ui";
         this.attachGameplayDraw(object);
         return;
@@ -1985,12 +2035,57 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     }
   }
 
+  private markSiblingOrder(parent: Container, node: Container): void {
+    const nodes = this.pendingSiblingOrders.get(parent);
+    if (nodes === undefined) this.pendingSiblingOrders.set(parent, new Set([node]));
+    else nodes.add(node);
+  }
+
+  /** Runs before Pixi decides whether to rebuild instructions. The sibling list was in order
+   * after the previous render, and only the marked nodes changed key or joined it, so the list
+   * stays in order exactly when each marked node still fits between its neighbours. */
+  private flushSiblingOrders(): void {
+    for (const [parent, nodes] of this.pendingSiblingOrders) {
+      if (parent.destroyed || !parent.sortDirty) continue;
+      const compare = this.siblingComparator(parent);
+      const children = parent.children;
+      let sorted = true;
+      // Locating a marked node scans the list, so beyond a few nodes one linear pass is cheaper.
+      if (nodes.size > 16) {
+        for (let index = 1; index < children.length && sorted; index += 1) {
+          sorted = compare(children[index - 1]!, children[index]!) <= 0;
+        }
+      } else {
+        for (const node of nodes) {
+          if (node.parent !== parent) continue;
+          const index = children.indexOf(node);
+          if ((index > 0 && compare(children[index - 1]!, node) > 0) ||
+            (index + 1 < children.length && compare(node, children[index + 1]!) > 0)) {
+            sorted = false;
+            break;
+          }
+        }
+      }
+      // Pixi still sorts a dirty list on any rebuild, covering children it added itself.
+      if (sorted) continue;
+      parent.sortDirty = false;
+      children.sort(compare);
+      const group = parent.renderGroup ?? parent.parentRenderGroup;
+      if (group !== null) group.structureDidChange = true;
+    }
+    this.pendingSiblingOrders.clear();
+  }
+
   private sortSiblings(parent: Container): void {
-    parent.children.sort((left, right) => {
+    parent.children.sort(this.siblingComparator(parent));
+  }
+
+  private siblingComparator(parent: Container): (left: Container, right: Container) => number {
+    return (left, right) => {
       if (left === this.controlOverlayRoot) return right === this.controlOverlayRoot ? 0 : 1;
       if (right === this.controlOverlayRoot) return -1;
-      const leftRecord = this.objects.get(this.objectIdsByNode.get(left as Container)!);
-      const rightRecord = this.objects.get(this.objectIdsByNode.get(right as Container)!);
+      const leftRecord = this.recordsByNode.get(left as Container);
+      const rightRecord = this.recordsByNode.get(right as Container);
       if (leftRecord === undefined || rightRecord === undefined) {
         const externalLayer = (node: Container): boolean =>
           node === spriteChild(parent) ||
@@ -2004,7 +2099,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         return left.zIndex - right.zIndex;
       }
       return compareOrdering(leftRecord.ordering, rightRecord.ordering);
-    });
+    };
   }
 
   private attachGameplayDraw(object: PixiObjectRecord): void {
@@ -2016,7 +2111,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     // child containers to the same RenderLayer would collect the child twice.
     // Current Note transforms are unmasked; their Sprite leaves retain the
     // logical transform/tint/visibility chain. Masked field/belt owners stay whole.
-    const drawOwner = noteSpatialRole(object.role) ? object.spriteContent : object.node;
+    const drawOwner = gameplayDrawOwner(object);
     if (drawOwner === null) return;
     order.attach(drawOwner, () => ({
       sortingOrder: object.ordering[1],
@@ -2088,6 +2183,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     this.unclippedNotes.clear();
     this.objects.clear();
     this.objectIdsByNode.clear();
+    this.recordsByNode.clear();
     this.spriteReferenceCounts.clear();
     try {
       this.stage.removeChildren();
@@ -2240,6 +2336,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     this.suddenFieldTextures.clear();
     this.textureGeneration++;
     this.deferredResultImages.clear();
+    this.resultImageDecode = null;
+    this.decodedResultImages = 0;
     for (const texture of this.spriteTextures.values()) texture.destroy(false);
     for (const texture of this.baseTextures.values()) texture.destroy(true);
     this.spriteTextures.clear();
@@ -4568,6 +4666,10 @@ function gameplayRendererType(role: RenderObjectRole): 1 | 3 | 6 | null {
   return null;
 }
 
+function gameplayDrawOwner(object: PixiObjectRecord): Container | null {
+  return noteSpatialRole(object.role) ? object.spriteContent : object.node;
+}
+
 function noteSpatialRole(role: RenderObjectRole): boolean {
   return role === "note-root" || role === "note-head" || role === "note-icon" ||
     role === "note-intermediate" || role === "note-side-visual";
@@ -4758,6 +4860,13 @@ function createEvidenceLineData(
 }
 
 function isEvidenceMesh(command: SetMeshCommand): boolean {
+  if (command.packed !== undefined) {
+    // One shared colour and Z = +0 hold by construction; topology matches the structured strips.
+    const vertexCount = command.packed.positions.length / 2;
+    return command.packed.uvs.length === command.packed.positions.length && command.materialRole !== "habahiro-flash" &&
+      ((vertexCount === 22 && command.indices.length === 60) || (vertexCount === 42 && command.indices.length === 120) ||
+        command.viewportClipped === true) && command.meshIdentity === undefined;
+  }
   if (command.uv.length !== command.vertices.length || command.colors.length !== command.vertices.length ||
     command.vertices.some((vertex) => vertex.z.bits !== "00000000")) return false;
   const first = command.colors[0];
@@ -4791,6 +4900,26 @@ function createEvidenceMeshData(
   surfaceLayout: OriginalSurfaceLayout,
 ): PixiGeometryData {
   if (!isEvidenceMesh(command)) throw new Error("mesh outside current source-bound profile");
+  if (command.packed !== undefined) {
+    const source = command.packed.positions;
+    const positions = new Float32Array(source.length);
+    // projectWorldPoint, inlined without a result array per vertex.
+    const halfWidth = projection.viewportWidth / 2, halfHeight = projection.viewportHeight / 2;
+    const { worldCenterX, worldCenterY, pixelsPerWorldUnit } = projection;
+    for (let index = 0; index < source.length; index += 2) {
+      positions[index] = Math.fround(halfWidth + Math.fround(Math.fround(source[index]! - worldCenterX) * pixelsPerWorldUnit));
+      positions[index + 1] = Math.fround(halfHeight - Math.fround(Math.fround(source[index + 1]! - worldCenterY) * pixelsPerWorldUnit));
+    }
+    const color = command.packed.color;
+    return {
+      positions,
+      // Pixi only uploads the UVs; a handed-over array is shared by every strip of its section count.
+      uvs: snapshotFloat32Array(command.packed.uvs),
+      indices: uint32Indices(command.indices),
+      tint: rgbTint(color.red.value, color.green.value, color.blue.value),
+      alpha: color.alpha.value,
+    };
+  }
   const positions = new Float32Array(command.vertices.length * 2);
   const uvs = new Float32Array(command.uv.length * 2);
   const authoredScale = surfaceLayout.ui.screenToSafeChildScale;
@@ -4814,6 +4943,16 @@ function createEvidenceMeshData(
     tint: rgbTint(firstColor(command).red.value, firstColor(command).green.value, firstColor(command).blue.value),
     alpha: firstColor(command).alpha.value,
   };
+}
+
+const frozenIndexBuffers = new WeakMap<readonly number[], Uint32Array>();
+
+/** Index data for Pixi; the frozen strip topologies are converted once and shared. */
+function uint32Indices(indices: readonly number[]): Uint32Array {
+  if (!Object.isFrozen(indices)) return Uint32Array.from(indices);
+  let converted = frozenIndexBuffers.get(indices);
+  if (converted === undefined) frozenIndexBuffers.set(indices, converted = Uint32Array.from(indices));
+  return converted;
 }
 
 function createGeometryMesh(data: PixiGeometryData): Mesh {
@@ -4841,7 +4980,7 @@ function commitGeometry(object: PixiObjectRecord, reservation: PixiGeometryReser
 }
 
 function firstColor(command: SetMeshCommand): RenderColor {
-  const color = command.colors[0];
+  const color = command.packed !== undefined ? command.packed.color : command.colors[0];
   if (color === undefined) throw new Error("validated mesh lost its uniform color");
   return color;
 }
@@ -4875,12 +5014,25 @@ function applyGeometryMaterial(
   if (texture === null) throw new Error("geometry material texture is missing after validated preflight");
   const asset = object.materialLogicalAssetId === null
     ? undefined
-    : profile.assets.find((candidate) => candidate.logicalAssetId === object.materialLogicalAssetId);
+    : profileAsset(profile, object.materialLogicalAssetId);
   if (asset === undefined || asset.textureSettings === null) {
     throw new Error("geometry material profile is missing after validated preflight");
   }
   mesh.texture = texture;
   mesh.blendMode = asset.textureSettings.blendMode;
+}
+
+const profileAssetIndexes = new WeakMap<RenderResourceProfile, ReadonlyMap<string, RenderResourceAssetProfile>>();
+
+/** The first asset with this identity, as Array.find would return it; indexed once per profile. */
+function profileAsset(profile: RenderResourceProfile, logicalAssetId: string): RenderResourceAssetProfile | undefined {
+  let index = profileAssetIndexes.get(profile);
+  if (index === undefined) {
+    const built = new Map<string, RenderResourceAssetProfile>();
+    for (const asset of profile.assets) if (!built.has(asset.logicalAssetId)) built.set(asset.logicalAssetId, asset);
+    profileAssetIndexes.set(profile, index = built);
+  }
+  return index.get(logicalAssetId);
 }
 
 function applyTextureSettings(texture: Texture, asset: RenderResourceAssetProfile): void {
@@ -4962,24 +5114,19 @@ function compareOrdering(
 
 function copyPixiCommand(command: RenderCommand): RenderCommand {
   if (command.kind === "set-mesh") {
+    if (command.packed !== undefined) return Object.freeze({
+      ...command,
+      packed: Object.freeze({ positions: snapshotFloat32Array(command.packed.positions), uvs: snapshotFloat32Array(command.packed.uvs),
+        color: freezeRenderColor(command.packed.color) }),
+      indices: freezeRenderArray(command.indices, (index) => index),
+    });
+    // Frozen geometry is already an immutable snapshot and is shared, not deep-copied.
     return Object.freeze({
       ...command,
-      vertices: Object.freeze(command.vertices.map((value) => Object.freeze({
-        x: Object.freeze({ ...value.x }),
-        y: Object.freeze({ ...value.y }),
-        z: Object.freeze({ ...value.z }),
-      }))),
-      indices: Object.freeze([...command.indices]),
-      uv: Object.freeze(command.uv.map((value) => Object.freeze({
-        x: Object.freeze({ ...value.x }),
-        y: Object.freeze({ ...value.y }),
-      }))),
-      colors: Object.freeze(command.colors.map((value) => Object.freeze({
-        red: Object.freeze({ ...value.red }),
-        green: Object.freeze({ ...value.green }),
-        blue: Object.freeze({ ...value.blue }),
-        alpha: Object.freeze({ ...value.alpha }),
-      }))),
+      vertices: freezeRenderArray(command.vertices, freezeRenderVector3),
+      indices: freezeRenderArray(command.indices, (index) => index),
+      uv: freezeRenderArray(command.uv, freezeRenderVector2),
+      colors: freezeRenderArray(command.colors, freezeRenderColor),
     });
   }
   if (command.kind === "set-line") {

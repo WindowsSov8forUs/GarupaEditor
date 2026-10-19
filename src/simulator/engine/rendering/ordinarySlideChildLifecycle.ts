@@ -249,8 +249,9 @@ export function advanceOrdinarySlideChildren(
     let segmentStartIndex = state.segmentStartIndex;
     let exitApplied = state.exitApplied;
     let judgeY = state.judgeY;
-    const judgementY = extension?.judgementY?.(lifecycle, index) ?? ok(noteMotionY(lifecycle.renderedTransform));
-    if (judgementY.status !== "ok") return judgementY;
+    const extensionJudgementY = extension?.judgementY?.(lifecycle, index);
+    if (extensionJudgementY !== undefined && extensionJudgementY.status !== "ok") return extensionJudgementY;
+    const judgementY = { value: extensionJudgementY?.value ?? noteMotionY(lifecycle.renderedTransform) };
     if (stopControl.advanceMotion && state.lifecycle.phase !== "stop") {
       judgeY = Math.max(judgementY.value, stopControl.virtualPerfectLine);
     }
@@ -292,7 +293,7 @@ export function advanceOrdinarySlideChildren(
           }) });
         }
         if (!canLeaveNode) {
-          nextStates.push(Object.freeze({ ...state, lifecycle, meshVisible, visible, segmentStartIndex, judgeY, exitApplied }));
+          nextStates.push(nextChildState(state, lifecycle, meshVisible, visible, segmentStartIndex, judgeY, exitApplied));
           continue;
         }
         if (!exitApplied && sources[index]!.slideExitOffset) {
@@ -345,8 +346,7 @@ export function advanceOrdinarySlideChildren(
         }
       }
     }
-    const next = Object.freeze({ ...state, lifecycle, meshVisible, visible, segmentStartIndex, judgeY, exitApplied });
-    nextStates.push(next);
+    nextStates.push(nextChildState(state, lifecycle, meshVisible, visible, segmentStartIndex, judgeY, exitApplied));
   }
   let previousTransform = frontTransform;
   let previousMotionState = stopControl.rootMotionState;
@@ -400,6 +400,22 @@ export function advanceOrdinarySlideChildren(
     childStates: Object.freeze(nextStates),
     segments: Object.freeze(segments),
   }));
+}
+
+/** The child state for this frame; an unchanged child keeps its previous immutable state. */
+function nextChildState(
+  state: OrdinarySlideChildState,
+  lifecycle: OrdinarySlideChildState["lifecycle"],
+  meshVisible: boolean,
+  visible: boolean,
+  segmentStartIndex: number,
+  judgeY: OrdinarySlideChildState["judgeY"],
+  exitApplied: OrdinarySlideChildState["exitApplied"],
+): OrdinarySlideChildState {
+  return lifecycle === state.lifecycle && meshVisible === state.meshVisible && visible === state.visible &&
+    Object.is(segmentStartIndex, state.segmentStartIndex) && Object.is(judgeY, state.judgeY) && exitApplied === state.exitApplied
+    ? state
+    : Object.freeze({ ...state, lifecycle, meshVisible, visible, segmentStartIndex, judgeY, exitApplied });
 }
 
 function slideGoalX(source: SlideGeometrySource, base: number, delta: number, apply = source.isInvisible): number {

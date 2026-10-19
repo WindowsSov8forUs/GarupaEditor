@@ -14,7 +14,6 @@ import type {
 import { HABAHIRO_PARTICLE_RANGE_PREFABS } from "../engine/particles/particleRangePrefabs";
 
 const SHA256_PATTERN = /^[0-9A-F]{64}$/;
-const FLOAT32_BITS_PATTERN = /^0x[0-9A-F]{8}$/;
 
 export const CURRENT_PARTICLE_ROOTS: readonly ParticleRootId[] = Object.freeze([
   "directional:effect_tap_directional_flick_l",
@@ -496,9 +495,17 @@ export function particleFloat32ToBits(value: number): string | null {
 }
 
 export function particleFloat32FromBits(bits: string): number | null {
-  if (!FLOAT32_BITS_PATTERN.test(bits)) return null;
+  // Exactly "0x" and eight uppercase hex digits, decoded without regex or substring allocation.
+  if (typeof bits !== "string" || bits.length !== 10 || bits.charCodeAt(0) !== 48 || bits.charCodeAt(1) !== 120) return null;
+  let word = 0;
+  for (let index = 2; index < 10; index += 1) {
+    const code = bits.charCodeAt(index);
+    const digit = code >= 48 && code <= 57 ? code - 48 : code >= 65 && code <= 70 ? code - 55 : -1;
+    if (digit < 0) return null;
+    word = word * 16 + digit;
+  }
   const view = particleFloat32View;
-  view.setUint32(0, Number.parseInt(bits.slice(2), 16), false);
+  view.setUint32(0, word, false);
   const value = view.getFloat32(0, false);
   return Number.isFinite(value) ? value : null;
 }

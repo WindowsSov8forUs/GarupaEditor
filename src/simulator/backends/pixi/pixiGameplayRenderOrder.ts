@@ -51,21 +51,37 @@ export class PixiGameplayRenderOrder {
     this.layer.label = PIXI_GAMEPLAY_RENDER_ORDER_LABEL;
     const sort = this.layer.sortRenderLayerChildren.bind(this.layer);
     this.layer.sortRenderLayerChildren = () => {
-      // World depth is stable during a sort. Sample each owner once instead of
-      // recomputing its entire parent transform for every comparator call.
-      for (const node of this.layer.renderLayerChildren) {
-        const order = this.orders.get(node);
-        if (order === undefined) throw new Error("Gameplay render layer received an unregistered draw owner.");
-        this.sortKeys.set(node, order());
-      }
+      this.sampleSortKeys();
       sort();
     };
+    // Runs before Pixi decides whether to rebuild instructions. Depth keys change every frame,
+    // but the cached instruction order stays valid while the layer remains sorted by them.
+    this.layer.onRender = () => {
+      this.sampleSortKeys();
+      const children = this.layer.renderLayerChildren;
+      for (let index = 1; index < children.length; index += 1) {
+        if (compareGameplayDrawOrder(this.sortKeys.get(children[index - 1]!)!, this.sortKeys.get(children[index]!)!) > 0) {
+          this.invalidate();
+          return;
+        }
+      }
+    };
+  }
+
+  private sampleSortKeys(): void {
+    // World depth is stable during a sort. Sample each owner once instead of
+    // recomputing its entire parent transform for every comparator call.
+    for (const node of this.layer.renderLayerChildren) {
+      const order = this.orders.get(node);
+      if (order === undefined) throw new Error("Gameplay render layer received an unregistered draw owner.");
+      this.sortKeys.set(node, order());
+    }
   }
 
   attach(node: Container, order: () => PixiGameplayDrawOrder): void {
     this.orders.set(node, order);
+    // A new member changes the structure; a re-registered key is checked before the next render.
     if (node.parentRenderLayer !== this.layer) this.layer.attach(node);
-    else this.invalidate();
   }
 
   attachReplacement(node: Container, source: Container): void {
