@@ -1,11 +1,11 @@
 {
   "schemaVersion": 2,
   "sample": "jp.co.craftegg.band 10.2.0/231 arm64-v8a, resource catalog 10.2.0.160",
-  "boundary": "Same-cue playback limit (cue numLimits) per logical bundle, ACB and cue. A full cue keeps its newest playbacks: a new start stops the oldest live playback of that cue. 'unspecified' cues carry no cue limit in their ACB; cues and bundles not listed have no recovered configuration, except that tapSkinDefault covers every other sound/tapseskin/ bundle. Physical voice pools are not modelled.",
+  "boundary": "Same-cue playback limit (cue numLimits) per logical bundle, ACB and cue. A full cue keeps its newest playbacks: a new start stops the oldest live playback of that cue. 'unspecified' cues carry no cue limit in their ACB and are omitted from limits (skin_delta's TapSE.acb specifies none). Banks without their own sample come from the main sample; the special tap SE skins were read from the official CDN resource version 10.1.0.200, whose TapSE / DirectionalFlickSE cue sheets for skin00-03 and directionalflickskin00 are byte-identical to the main sample's. Cues and bundles not listed have no recovered configuration, except that tapSkinDefault covers any other sound/tapseskin/ bundle. Physical voice pools are not modelled.",
   "policy": "newest-replaces-oldest",
   "tapSkinDefault": {
-    "scope": "Any sound/tapseskin/<bundle> without its own bank entry (special, collaboration and future tap SE skins).",
-    "basis": "Product decision: every evidenced tap SE skin (skin00-03) carries the same limits; unevidenced skins reuse them instead of being unlimited.",
+    "scope": "A sound/tapseskin/<bundle> without its own bank entry: every JP master tap SE skin has one, so this covers only the mainland-only skin10001 (its cue sheet is not on the official JP CDN) and future skins.",
+    "basis": "Product decision for skins without cue-sheet evidence: reuse the limits that every evidenced ordinary tap SE skin (skin00-03 and the special skins except skin_delta) carries instead of treating them as unlimited.",
     "limits": {
       "SE_RHYTHM_TAP_LONG": 4,
       "flick": 4,
@@ -86,6 +86,175 @@
         "directional_fl": 4,
         "directional_fl_2": 4,
         "directional_fl_3": 4
+      }
+    },
+    {
+      "logicalId": "sound/tapseskin/skin_april2018",
+      "acb": {
+        "name": "TapSE.acb",
+        "sha256": "c81339477181d891556f1dd2a5ff28eef807d90399648eb682e22ecb10b64c12"
+      },
+      "sample": "official content CDN Android resource version 10.1.0.200",
+      "limits": {
+        "SE_RHYTHM_TAP_LONG": 4,
+        "flick": 4,
+        "game_button": 4,
+        "good": 4,
+        "great": 4,
+        "perfect": 4
+      }
+    },
+    {
+      "logicalId": "sound/tapseskin/skin_april2019",
+      "acb": {
+        "name": "TapSE.acb",
+        "sha256": "74455473ed1f770fcf3fa57ebe462f6b602cc97ea07b133938a1ffffcbfa15d9"
+      },
+      "sample": "official content CDN Android resource version 10.1.0.200",
+      "limits": {
+        "SE_RHYTHM_TAP_LONG": 4,
+        "flick": 4,
+        "game_button": 4,
+        "good": 4,
+        "great": 4,
+        "perfect": 4
+      }
+    },
+    {
+      "logicalId": "sound/tapseskin/skin_cafe",
+      "acb": {
+        "name": "TapSE.acb",
+        "sha256": "1dabd9c4d102628307ecde049862ba0c8f52eeeda5dcb4d2a260c8c758620f86"
+      },
+      "sample": "official content CDN Android resource version 10.1.0.200",
+      "limits": {
+        "SE_RHYTHM_TAP_LONG": 4,
+        "flick": 4,
+        "game_button": 4,
+        "good": 4,
+        "great": 4,
+        "perfect": 4
+      }
+    },
+    {
+      "logicalId": "sound/tapseskin/skin_coin",
+      "acb": {
+        "name": "TapSE.acb",
+        "sha256": "49de1aeeb694c8dde8c23908a64b18eacdebcaf9a1fb3a73e3d67dc58c145a6f"
+      },
+      "sample": "official content CDN Android resource version 10.1.0.200",
+      "limits": {
+        "SE_RHYTHM_TAP_LONG": 4,
+        "flick": 4,
+        "game_button": 4,
+        "good": 4,
+        "great": 4,
+        "perfect": 4
+      }
+    },
+    {
+      "logicalId": "sound/tapseskin/skin_delta",
+      "acb": {
+        "name": "TapSE.acb",
+        "sha256": "485a876fda44094e43ea9c3282e71699d4a391b5114a1ba97138c9603ff1a2bb"
+      },
+      "sample": "official content CDN Android resource version 10.1.0.200",
+      "limits": {}
+    },
+    {
+      "logicalId": "sound/tapseskin/skin_maid",
+      "acb": {
+        "name": "TapSE.acb",
+        "sha256": "324a87e211f58a3b5a184f7c2371db14f051e7d8940380f3168c02d075b5c7d5"
+      },
+      "sample": "official content CDN Android resource version 10.1.0.200",
+      "limits": {
+        "SE_RHYTHM_TAP_LONG": 4,
+        "flick": 4,
+        "game_button": 4,
+        "good": 4,
+        "great": 4,
+        "perfect": 4
+      }
+    },
+    {
+      "logicalId": "sound/tapseskin/skin_miku",
+      "acb": {
+        "name": "TapSE.acb",
+        "sha256": "6faf3b0f2e8c519b34e382686d5b78c835f3945d3bfe78638dc04684a29f7ff5"
+      },
+      "sample": "official content CDN Android resource version 10.1.0.200",
+      "limits": {
+        "SE_RHYTHM_TAP_LONG": 4,
+        "flick": 4,
+        "game_button": 4,
+        "good": 4,
+        "great": 4,
+        "perfect": 4
+      }
+    },
+    {
+      "logicalId": "sound/tapseskin/skin_persona",
+      "acb": {
+        "name": "TapSE.acb",
+        "sha256": "42cea353891555eb1ef3917460436bdba73fa71ce0f0058c7df570bb05c8ce64"
+      },
+      "sample": "official content CDN Android resource version 10.1.0.200",
+      "limits": {
+        "SE_RHYTHM_TAP_LONG": 4,
+        "flick": 4,
+        "game_button": 4,
+        "good": 4,
+        "great": 4,
+        "perfect": 4
+      }
+    },
+    {
+      "logicalId": "sound/tapseskin/skin_stage",
+      "acb": {
+        "name": "TapSE.acb",
+        "sha256": "0c254dd03c6fb24f34e932122a299b28e52172fa6115ad2094fc4d6610d6cf7a"
+      },
+      "sample": "official content CDN Android resource version 10.1.0.200",
+      "limits": {
+        "SE_RHYTHM_TAP_LONG": 4,
+        "flick": 4,
+        "game_button": 4,
+        "good": 4,
+        "great": 4,
+        "perfect": 4
+      }
+    },
+    {
+      "logicalId": "sound/tapseskin/skin_witch",
+      "acb": {
+        "name": "TapSE.acb",
+        "sha256": "73506398b5840a97803c71f05a66b72aac1a7bfda94cad858c1c574493bce275"
+      },
+      "sample": "official content CDN Android resource version 10.1.0.200",
+      "limits": {
+        "SE_RHYTHM_TAP_LONG": 4,
+        "flick": 4,
+        "game_button": 4,
+        "good": 4,
+        "great": 4,
+        "perfect": 4
+      }
+    },
+    {
+      "logicalId": "sound/tapseskin/skinapril2021",
+      "acb": {
+        "name": "TapSE.acb",
+        "sha256": "a10fb3b3c3d74860ccc7fcdaf0f12dfd83155be300acbd4367ff1a48912e49af"
+      },
+      "sample": "official content CDN Android resource version 10.1.0.200",
+      "limits": {
+        "SE_RHYTHM_TAP_LONG": 4,
+        "flick": 4,
+        "game_button": 4,
+        "good": 4,
+        "great": 4,
+        "perfect": 4
       }
     },
     {
