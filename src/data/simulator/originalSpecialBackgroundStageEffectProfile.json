@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "sample": "official content CDN Android resource version 10.1.0.200_e019f5bbbae4e182041ed1731df6e08b7708aa3536aefaeaeec04b1951c4d048",
+  "boundary": "Widgets of a special background's stage-effect prefab (InGameStageBgEffector, instantiated by InGameStageManager.setupForSpecialBgSkin) that are visible during play: active, final NGUI alpha > 0, not clipped or depth-cut. Only skin_delta and skin_collabo23_winter_d have such widgets (speakerRoot/speaker_L and speaker_R); every other background's stage effect is empty, invisible during play, or a one-shot particle burst at load (skin_maid). Coordinates are the prefab root's space, taken as the stage TRSRoot space (x right, y up; widget centre and size); the texture is the background bundle's Texture2D of that name, stretched to the widget size, white, normal alpha blending.",
+  "assumption": "Render order: the widgets draw in the panel above InGameStageManager+0x30, whose render queue is not in the evidence. They are drawn with the stage directly above the background image, so BgCover and the queue-3490 DarkCover subtraction cover them like the rest of the stage; the prefab's own panels (queue 3100-3250) are below DarkCover as well.",
+  "backgrounds": [
+    {
+      "logicalId": "ingameskin/bgskin/skin_delta",
+      "bundleSha256": "9CF124D1150C84F386D1B6EF67F5AC3A5F262D1C1AA37DF901AC79B43F221951",
+      "widgets": [
+        {
+          "path": "speakerRoot/speaker_L",
+          "texture": "speaker_L",
+          "centerX": -627.0,
+          "centerY": 82.0,
+          "width": 228,
+          "height": 312,
+          "depth": 6,
+          "alpha": 1.0
+        },
+        {
+          "path": "speakerRoot/speaker_R",
+          "texture": "speaker_R",
+          "centerX": 627.0,
+          "centerY": 82.0,
+          "width": 228,
+          "height": 312,
+          "depth": 6,
+          "alpha": 1.0
+        }
+      ]
+    },
+    {
+      "logicalId": "ingameskin/bgskin/skin_collabo23_winter_d",
+      "bundleSha256": "40E3F4EAFF5CF0C72387299BF9A0E8B28FA77C1979B8B9F177DB31D8062C4E6B",
+      "widgets": [
+        {
+          "path": "speakerRoot/speaker_L",
+          "texture": "speaker_L",
+          "centerX": -627.0,
+          "centerY": 82.0,
+          "width": 228,
+          "height": 312,
+          "depth": 6,
+          "alpha": 1.0
+        },
+        {
+          "path": "speakerRoot/speaker_R",
+          "texture": "speaker_R",
+          "centerX": 627.0,
+          "centerY": 82.0,
+          "width": 228,
+          "height": 312,
+          "depth": 6,
+          "alpha": 1.0
+        }
+      ]
+    }
+  ]
+}

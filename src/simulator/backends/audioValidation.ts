@@ -10,9 +10,29 @@ import type {
   AudioSessionVoiceResourceProfile,
 } from "./audioContracts";
 
+import holdLoopProfile from "../../data/simulator/originalTapSeHoldLoopProfile.json";
 import resultMedia from "../../data/simulator/resultMediaProfile.json";
 
 const SHA256_PATTERN = /^[0-9A-F]{64}$/;
+
+/** The SE_RHYTHM_TAP_LONG waveform of one tap SE skin's cue sheet. */
+export interface OriginalHoldLoop {
+  readonly samplingRate: number;
+  readonly loop: { readonly start: number; readonly end: number } | null;
+}
+
+const HOLD_LOOPS = new Map<string, OriginalHoldLoop>(holdLoopProfile.bundles.map((bundle) => [
+  bundle.logicalId,
+  Object.freeze({ samplingRate: bundle.samplingRate, loop: bundle.loop === null ? null : Object.freeze({ ...bundle.loop }) }),
+]));
+
+/**
+ * The cue-sheet hold waveform of a tap SE skin, or undefined for a skin
+ * without cue-sheet evidence (it loops its complete decoded portable source).
+ */
+export function originalHoldLoop(logicalId: string): OriginalHoldLoop | undefined {
+  return HOLD_LOOPS.get(logicalId);
+}
 const FLOAT32_BITS_PATTERN = /^0x[0-9A-F]{8}$/;
 
 const FIXED_SE_LOGICAL_IDS = Object.freeze({
@@ -439,17 +459,24 @@ function validateFixedSeResource(
     : "portable-equivalent-lossy";
   if (!logicalIdentityAccepted || seen.has(resource.cue) || !Number.isSafeInteger(resource.byteLength) || resource.byteLength <= 0 ||
     !SHA256_PATTERN.test(resource.sha256) || resource.mime !== "audio/mpeg" || resource.codec !== "mp3" ||
-    !Number.isSafeInteger(resource.sampleRate) || ![8000, 44100, 48000].includes(resource.sampleRate) ||
+    !Number.isSafeInteger(resource.sampleRate) || ![8000, 32000, 44100, 48000].includes(resource.sampleRate) ||
     (resource.channels !== 1 && resource.channels !== 2) || !Number.isFinite(resource.durationSeconds) || resource.durationSeconds <= 0 ||
     !Number.isSafeInteger(resource.sampleFrames) || resource.sampleFrames <= 0 || resource.identity !== "semantic-exact" ||
     resource.signal !== expectedSignal) {
     return rejectProfile("audio.profile.invalid-leased-se", "Every leased SE requires one known cue/logical owner, observed bytes and positive decoded MP3 metadata without a fixed content hash allowlist.");
   }
   if (resource.cue === "SE_RHYTHM_TAP_LONG") {
-    if (!isRecord(resource.loop) || !hasExactKeys(resource.loop, ["start", "end"]) ||
-      resource.loop.start !== 0 ||
-      (resource.loop.end !== resource.sampleFrames && !(resource.logicalId === "sound/tapseskin/skin00" && resource.loop.end === 22997))) {
-      return rejectProfile("audio.profile.invalid-loop", "Selected Skin Long/Slide cues loop their complete decoded portable source; the isolated base profile retains the separately evidenced 22997-frame CRI loop." );
+    const original = originalHoldLoop(resource.logicalId);
+    const loopValid = original === undefined
+      ? isRecord(resource.loop) && hasExactKeys(resource.loop, ["start", "end"]) &&
+        resource.loop.start === 0 && resource.loop.end === resource.sampleFrames
+      : resource.sampleRate === original.samplingRate && (original.loop === null
+        ? resource.loop === null
+        : isRecord(resource.loop) && hasExactKeys(resource.loop, ["start", "end"]) &&
+          resource.loop.start === original.loop.start && resource.loop.end === original.loop.end &&
+          resource.loop.end <= resource.sampleFrames);
+    if (!loopValid) {
+      return rejectProfile("audio.profile.invalid-loop", "The Long/Slide cue follows its skin's cue-sheet waveform: the loop range, or a single play when it does not loop; a skin without cue-sheet evidence loops its complete decoded portable source.");
     }
   } else if (resource.cue === "SE_RHYTHM_GAYA" || resource.cue === "SE_RESULT_SCORE_COUNT") {
     if (!isRecord(resource.loop) || !hasExactKeys(resource.loop, ["start", "end"]) ||

@@ -6,7 +6,7 @@ import type {
   AudioResourceProfileSet,
   AudioResourceProvider,
 } from "../backends/audioContracts";
-import { audioAccepted } from "../backends/audioValidation";
+import { audioAccepted, originalHoldLoop } from "../backends/audioValidation";
 import type { PreparedSourceAudioPackage } from "../resources/sourcePackageDecoder";
 import { rejected, type SimulatorAssemblyResult } from "./result";
 import type { PreparedSessionBgmResource } from "./sessionBgmDerivation";
@@ -48,18 +48,28 @@ export async function prepareLeasedAudioResources(
         return rejected("resource-decode", inspected.failure.capability, inspected.failure.boundary);
       }
       const metadata = inspected.value;
-      if (metadata.codec !== "mp3" || ![8000, 44100, 48000].includes(metadata.sampleRate) ||
+      if (metadata.codec !== "mp3" || ![8000, 32000, 44100, 48000].includes(metadata.sampleRate) ||
         (metadata.channels !== 1 && metadata.channels !== 2) || metadata.sampleFrames <= 0 || metadata.durationSeconds <= 0) {
         return invalid("simulator.audio.leased-cue-metadata");
+      }
+      // The Long/Slide cue follows its skin's cue-sheet waveform (an intro
+      // before the loop, or a single play); a skin without cue-sheet evidence
+      // loops its complete decoded source.
+      const hold = value.cue === "SE_RHYTHM_TAP_LONG" ? originalHoldLoop(pack.logicalResource) : undefined;
+      if (hold !== undefined && (metadata.sampleRate !== hold.samplingRate ||
+        (hold.loop !== null && hold.loop.end > metadata.sampleFrames))) {
+        return invalid("simulator.audio.leased-hold-waveform");
       }
       const loop = value.cue === "after_live" ? Object.freeze({ ...resultMedia.bgm.loop })
         : value.cue === "SE_RESULT_SCORE_COUNT" ? Object.freeze({ start: 0, end: metadata.sampleFrames })
         : value.cue === "SE_RHYTHM_TAP_LONG"
-        ? Object.freeze({ start: 0, end: metadata.sampleFrames })
+        ? hold === undefined ? Object.freeze({ start: 0, end: metadata.sampleFrames })
+          : hold.loop === null ? null : Object.freeze({ ...hold.loop })
         : value.cue === "SE_RHYTHM_GAYA"
           ? Object.freeze({ start: 0, end: metadata.sampleFrames })
           : null;
-      if ((value.cue === "SE_RHYTHM_TAP_LONG" || value.cue === "SE_RHYTHM_GAYA") && loop === null) {
+      if (((value.cue === "SE_RHYTHM_TAP_LONG" && (hold === undefined || hold.loop !== null)) ||
+        value.cue === "SE_RHYTHM_GAYA") && loop === null) {
         return invalid("simulator.audio.leased-loop-range");
       }
       if (value.cue === "after_live" && pack.logicalResource !== "sound/result") return invalid("simulator.audio.leased-result-owner");
@@ -68,7 +78,7 @@ export async function prepareLeasedAudioResources(
         sha256: file.sha256,
         mime: "audio/mpeg" as const,
         codec: "mp3" as const,
-        sampleRate: metadata.sampleRate as 8000 | 44100 | 48000,
+        sampleRate: metadata.sampleRate as 8000 | 32000 | 44100 | 48000,
         channels: metadata.channels as 1 | 2,
         durationSeconds: metadata.durationSeconds,
         sampleFrames: metadata.sampleFrames,

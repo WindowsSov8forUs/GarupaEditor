@@ -12,6 +12,7 @@ import type { ResolvedOriginalSkinRecipe } from "../engine/skin/contracts";
 import { CURRENT_HABAHIRO_SEMANTIC_PROFILE } from "../engine/rendering/habahiroFlashAnimation";
 import type { PreparedSkinSourcePackage } from "../resources/sourcePackageContracts";
 import { rejected, type SimulatorAssemblyResult } from "./result";
+import stageEffectProfile from "../../data/simulator/originalSpecialBackgroundStageEffectProfile.json";
 
 export interface PreparedSkinRenderOverlay {
   readonly assets: readonly RenderResourceAssetProfile[];
@@ -26,7 +27,24 @@ export interface PreparedSkinRenderOverlay {
     readonly bytes: Uint8Array;
     readonly width: number;
     readonly height: number;
+    readonly stageEffect: readonly SkinBackgroundStageEffectWidget[];
   } | null;
+}
+
+/**
+ * One widget of a special background's stage-effect prefab that is visible
+ * during play: its texture (from the background package) and its centre and
+ * size in the stage TRSRoot space (y up).
+ */
+export interface SkinBackgroundStageEffectWidget {
+  readonly bytes: Uint8Array;
+  readonly pixelWidth: number;
+  readonly pixelHeight: number;
+  readonly centerX: number;
+  readonly centerY: number;
+  readonly width: number;
+  readonly height: number;
+  readonly alpha: number;
 }
 
 export async function prepareSkinRenderOverlay(
@@ -90,6 +108,29 @@ export async function prepareSkinRenderOverlay(
     (backgroundAsset !== null && (backgroundAsset.width === null || backgroundAsset.height === null))) {
     return invalid("simulator.skin.background-portable-image");
   }
+  // The stage-effect prefab of a special background draws its visible widgets
+  // with the stage; their textures come from the same background package.
+  const stageEffect: SkinBackgroundStageEffectWidget[] = [];
+  const effectWidgets = stageEffectProfile.backgrounds
+    .find((entry) => entry.logicalId === recipe.background.logicalResource)?.widgets ?? [];
+  for (const widget of backgroundAsset === null ? [] : effectWidgets) {
+    const assetId = background?.get(widget.texture);
+    const asset = assetId === undefined ? undefined : assets.find((candidate) => candidate.logicalAssetId === assetId);
+    const bytes = assetId === undefined ? undefined : local.find((candidate) => candidate.logicalAssetId === assetId)?.bytes;
+    if (asset === undefined || bytes === undefined || asset.width === null || asset.height === null) {
+      return invalid("simulator.skin.background-stage-effect-texture");
+    }
+    stageEffect.push(Object.freeze({
+      bytes: Uint8Array.from(bytes),
+      pixelWidth: asset.width,
+      pixelHeight: asset.height,
+      centerX: widget.centerX,
+      centerY: widget.centerY,
+      width: widget.width,
+      height: widget.height,
+      alpha: widget.alpha,
+    }));
+  }
   return accepted(Object.freeze({
     assets: Object.freeze(assets),
     provider: provider.value,
@@ -102,6 +143,7 @@ export async function prepareSkinRenderOverlay(
           bytes: Uint8Array.from(backgroundBytes),
           width: backgroundAsset.width!,
           height: backgroundAsset.height!,
+          stageEffect: Object.freeze(stageEffect),
         }),
   }));
 }

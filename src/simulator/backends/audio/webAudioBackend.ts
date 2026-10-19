@@ -63,7 +63,10 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
   private readonly decodedByCue = new Map<string, AudioBuffer>();
   private readonly loopByCue = new Map<string, { readonly startSeconds: number; readonly endSeconds: number }>();
   private readonly cueLimitByCue = new Map<string, number>();
-  /** Owned loops (Hold, startup) the cue limit stopped; their later owner commands are no-ops. */
+  /**
+   * Owned voices (Hold, startup) the cue limit stopped, or Hold cues that do
+   * not loop and played to their end; their later owner commands are no-ops.
+   */
   private readonly stolenOwners = new Set<string>();
   private readonly voices = new Map<string, WebAudioVoice>();
   private pending: PendingWebAudioBatch | null = null;
@@ -500,7 +503,8 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
           break;
         }
         case "hold.start-loop": {
-          const resource = this.requireLoopResource(command.cue);
+          // A Hold cue whose waveform does not loop plays once.
+          const resource = this.loopByCue.get(command.cue) ?? null;
           this.stolenOwners.delete(`hold:${command.owner_key}`);
           this.createVoice(
             `hold:${command.owner_key}`,
@@ -508,8 +512,8 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
             "se",
             audioFloat32FromBits(command.volume_bits)!,
             0,
-            resource.startSeconds,
-            resource.endSeconds,
+            resource?.startSeconds ?? null,
+            resource?.endSeconds ?? null,
           );
           break;
         }
@@ -639,6 +643,7 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
           voice.fade = null;
           voice.gain.disconnect();
           this.voices.delete(voice.voiceKey);
+          if (voice.voiceKey.startsWith("hold:") && voice.loopStart === null) this.stolenOwners.add(voice.voiceKey);
         } catch {
           this.recording.recordTerminalFault(
             "audio.web.async-ended-cleanup-threw",

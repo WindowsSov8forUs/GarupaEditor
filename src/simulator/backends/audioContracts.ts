@@ -89,7 +89,7 @@ export interface AudioSessionVoiceResourceProfile extends AudioResourceProfileBa
 export interface AudioFixedSeResourceProfile extends AudioResourceProfileBase {
   readonly role: "se";
   readonly logicalId: AudioFixedSeLogicalId;
-  readonly sampleRate: 8000 | 44100 | 48000;
+  readonly sampleRate: 8000 | 32000 | 44100 | 48000;
   readonly identity: "semantic-exact";
   readonly signal: "portable-equivalent-lossy" | "semantic-exact-silence";
 }
