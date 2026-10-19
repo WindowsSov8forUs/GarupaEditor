@@ -153,10 +153,5 @@ export const CURRENT_ORDINARY_HUD_PROFILE = Object.freeze({
       text: "ライフゼロ!\n獲得スコアDOWN!",
       tint: 0xff0000,
     }),
-    gameOverLabelTween: Object.freeze({
-      durationSeconds: 1,
-      fromAlpha: Math.fround(0.1080000028014183),
-      toAlpha: 1,
-    }),
   }),
 });

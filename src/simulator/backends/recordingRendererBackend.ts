@@ -548,7 +548,7 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
       if (role === "note-long-flash") return visible.noteAnimations.clips.some((clip) => clip.clipId === "note-long-flash");
       if (role === "combo") return visible.combo.clips.some((clip) => clip.clipId === "combo-scale");
       if (role === "all-perfect") return visible.combo.clips.some((clip) => clip.clipId === "combo-all-perfect");
-      if (role === "result" || role === "life-warning" || role === "life-game-over") return true;
+      if (role === "result" || role === "life-warning") return true;
     }
     return false;
   }

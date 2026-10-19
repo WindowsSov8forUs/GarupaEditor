@@ -213,7 +213,6 @@ type EvidenceAnimationRole =
   | "all-perfect"
   | "result"
   | "life-warning"
-  | "life-game-over"
   | "score-gauge-ss"
   | "game-clear"
   | "note-flick"
@@ -3669,7 +3668,9 @@ function applyLifeHud(
   clipLeftToRight(primary, state.primaryFill.value, "life-primary-fill-mask");
   add(CURRENT_ORDINARY_VISIBLE_BINDINGS.warningLogicalAssetId, "effect_health_caution_outline", "warning_outline", "life-warning-outline", state.warning);
   add(CURRENT_ORDINARY_VISIBLE_BINDINGS.warningLogicalAssetId, "effect_health_caution_inside", "warning_body", "life-warning-body", state.warning);
-  add(CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId, "bg_no_health", "game_over_background", "life-game-over", state.singleGameOver);
+  // GameOverMessage ("ライフゼロ!獲得スコアDOWN!") is opened only by the
+  // multi-live onGameOver branch; single play never shows it.
+  add(CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId, "bg_no_health", "game_over_background", "life-game-over", false);
   const font = decodedFonts.get(profile.life.label.fontLogicalAssetId);
   if (font === undefined || visual.lifeTextSegments === null || visual.gameOverText === null) {
     throw new Error("Life sgm label font is missing");
@@ -3703,11 +3704,11 @@ function applyLifeHud(
   layoutNguiText(visual.gameOverText, 0, 0.5, current.gameOverLabel.spacingY);
   visual.gameOverText.position.set(0, 0);
   visual.gameOverText.zIndex = current.gameOverLabel.depth;
-  visual.gameOverText.visible = state.singleGameOver;
+  visual.gameOverText.visible = false;
   serializedHudComponent(
     visual.serializedComponentNodes,
     "GamePlay/UI_Root/Display/LifeGauge/GameOverMessage/text",
-  ).visible = state.singleGameOver;
+  ).visible = false;
   visual.fillRatios = Object.freeze([state.primaryFill.value, state.secondaryFill.value]);
 }
 
@@ -3771,8 +3772,8 @@ function updatePersistentLifeHud(
   warningBody.visible = state.warning;
   serializedHudComponent(visual.serializedComponentNodes, "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/warning").visible = state.warning;
   serializedHudComponent(visual.serializedComponentNodes, "GamePlay/UI_Root/Display/LifeGauge/GaugeObject/warning/warningBody").visible = state.warning;
-  gameOver.visible = state.singleGameOver;
-  serializedHudComponent(visual.serializedComponentNodes, "GamePlay/UI_Root/Display/LifeGauge/GameOverMessage").visible = state.singleGameOver;
+  gameOver.visible = false; // multi-live only, see applyLifeHud
+  serializedHudComponent(visual.serializedComponentNodes, "GamePlay/UI_Root/Display/LifeGauge/GameOverMessage").visible = false;
   const font = decodedFonts.get(profile.life.label.fontLogicalAssetId);
   if (font === undefined) throw new Error("Life sgm label font is missing");
   const separator = state.label.indexOf("/");
@@ -3793,11 +3794,11 @@ function updatePersistentLifeHud(
     text.zIndex = current.lifeLabel.depth;
     text.visible = true;
   });
-  visual.gameOverText.visible = state.singleGameOver;
+  visual.gameOverText.visible = false;
   serializedHudComponent(
     visual.serializedComponentNodes,
     "GamePlay/UI_Root/Display/LifeGauge/GameOverMessage/text",
-  ).visible = state.singleGameOver;
+  ).visible = false;
   visual.fillRatios = Object.freeze([state.primaryFill.value, state.secondaryFill.value]);
 }
 
@@ -4444,12 +4445,6 @@ function applyEvidenceAnimation(
     }
     return;
   }
-  if (role === "life-game-over") {
-    const text = object.hudVisual?.gameOverText;
-    if (text === null || text === undefined) throw new Error("Life GameOver label animation owner is missing");
-    text.alpha = samplePingPongAlpha(CURRENT_ORDINARY_HUD_PROFILE.life.gameOverLabelTween, elapsedSeconds);
-    return;
-  }
   if (role === "note-flick" || role === "note-directional-flick" || role === "note-long-flash") {
     applyOrdinaryNoteAnimation(object, role, elapsedSeconds);
     return;
@@ -4484,12 +4479,6 @@ function stopEvidenceAnimation(object: PixiObjectRecord, role: EvidenceAnimation
   if (role === "life-warning") {
     for (const sprite of object.hudVisual?.digitSprites ?? []) {
       if (sprite.label === "life-warning-outline" || sprite.label === "life-warning-body") sprite.alpha = 1;
-    }
-    return;
-  }
-  if (role === "life-game-over") {
-    if (object.hudVisual?.gameOverText !== null && object.hudVisual?.gameOverText !== undefined) {
-      object.hudVisual.gameOverText.alpha = 1;
     }
     return;
   }
@@ -4637,7 +4626,7 @@ function boundSpriteExactKey(bindingKey: string | null): string | null {
 
 function isEvidenceAnimationRole(role: string): role is EvidenceAnimationRole {
   return role === "combo" || role === "all-perfect" ||
-    role === "result" || role === "life-warning" || role === "life-game-over" ||
+    role === "result" || role === "life-warning" ||
     role === "score-gauge-ss" || role === "game-clear" || role === "note-flick" ||
     role === "note-directional-flick" || role === "note-long-flash";
 }

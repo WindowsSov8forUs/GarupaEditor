@@ -146,7 +146,7 @@ export function animationRoleMatchesObject(
     role === "note-long-flash" ? objectRole === "note-intermediate" :
     (role === "combo" || role === "all-perfect") ? objectRole === "hud-combo" :
     role === "result" ? objectRole === "hud-result" :
-    (role === "life-warning" || role === "life-game-over") ? objectRole === "hud-life" :
+    role === "life-warning" ? objectRole === "hud-life" :
     role === "score-gauge-ss" ? objectRole === "hud-score" :
     role === "game-clear" ? objectRole === "hud-game-clear" : false;
 }

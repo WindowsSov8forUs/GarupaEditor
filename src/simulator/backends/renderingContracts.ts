@@ -45,7 +45,6 @@ export type RenderAnimationRole =
   | "all-perfect"
   | "result"
   | "life-warning"
-  | "life-game-over"
   | "score-gauge-ss"
   | "game-clear";
 
