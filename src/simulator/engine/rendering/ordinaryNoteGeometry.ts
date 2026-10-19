@@ -1,5 +1,6 @@
 import type {
   RenderColor,
+  RenderPackedMeshGeometry,
   RenderFloat32,
   RenderVector2,
   RenderVector3,
@@ -10,7 +11,6 @@ import { coordinate, coordinateAdd, coordinateCompare, coordinateScale, coordina
 import {
   createRenderFloat32,
   markConstructedRenderArray,
-  tryRenderFloat32,
   validateRenderFloat32,
 } from "../../backends/renderingValidation";
 import {
@@ -64,12 +64,34 @@ export interface OrdinaryBaseNoteMeshOwnerState {
   readonly color: RenderColor;
 }
 
-export interface OrdinaryBaseNoteMeshGeometry {
+export interface OrdinaryStructuredNoteMeshGeometry {
   readonly viewportClipped?: true;
+  readonly packed?: undefined;
   readonly vertices: readonly RenderVector3[];
   readonly indices: readonly number[];
   readonly uv: readonly RenderVector2[];
   readonly colors: readonly RenderColor[];
+}
+
+/** The ordinary strip as Float32 arrays: the same values the structured form would carry. */
+export interface OrdinaryPackedNoteMeshGeometry {
+  readonly viewportClipped?: true;
+  readonly packed: RenderPackedMeshGeometry;
+  readonly indices: readonly number[];
+}
+
+export type OrdinaryBaseNoteMeshGeometry = OrdinaryStructuredNoteMeshGeometry | OrdinaryPackedNoteMeshGeometry;
+
+export function noteMeshVertexCount(geometry: OrdinaryBaseNoteMeshGeometry): number {
+  return geometry.packed !== undefined ? geometry.packed.positions.length / 2 : geometry.vertices.length;
+}
+
+/** The set-mesh fields for either geometry form. */
+export function noteMeshCommandFields(geometry: OrdinaryBaseNoteMeshGeometry) {
+  return geometry.packed !== undefined
+    ? { viewportClipped: geometry.viewportClipped, packed: geometry.packed, indices: geometry.indices }
+    : { viewportClipped: geometry.viewportClipped, vertices: geometry.vertices, indices: geometry.indices,
+      uv: geometry.uv, colors: geometry.colors };
 }
 
 export interface OrdinarySyncLineTargetState {
@@ -538,30 +560,39 @@ function buildOrdinaryNoteMeshStrip(
   if (!validateColor(state.color)) {
     return reject("render.geometry.invalid-base-mesh-owner-state", "Note strips retain original section counts and finite colour.");
   }
-  // buildNoteMeshStrip over the interpolated boundary, written directly: the same Float32
-  // vertices without an intermediate vector and result object per point.
-  const vertices: RenderVector3[] = [];
-  const colors: RenderColor[] = [];
-  const vertexColor = copyColor(state.color);
-  const zero = createRenderFloat32(Math.fround(0));
-  if (zero.status !== "ok") return zero;
+  // buildNoteMeshStrip over the interpolated boundary, packed: the same Float32 world XY
+  // (Z = +0), the original UV and one shared colour, without an object per vertex.
+  const positions = new Float32Array((sectionCount + 1) * 4);
   for (let section = 0; section <= sectionCount; section += 1) {
     const rate = Math.fround(section / sectionCount);
     for (const side of [0, 1] as const) {
       const xValue = interpolate(front.value[side].x.value, after.value[side].x.value, rate);
       const yValue = interpolate(front.value[side].y.value, after.value[side].y.value, rate);
-      const x = tryRenderFloat32(xValue);
-      if (x === null) return createRenderFloat32(xValue) as SimulatorResult<never>;
-      const y = tryRenderFloat32(yValue);
-      if (y === null) return createRenderFloat32(yValue) as SimulatorResult<never>;
-      vertices.push(Object.freeze({ x, y, z: zero.value }));
-      colors.push(vertexColor);
+      // The createRenderFloat32 acceptance test, without encoding a value that is only stored.
+      if (!Number.isFinite(xValue) || !Number.isFinite(Math.fround(xValue))) return createRenderFloat32(xValue) as SimulatorResult<never>;
+      if (!Number.isFinite(yValue) || !Number.isFinite(Math.fround(yValue))) return createRenderFloat32(yValue) as SimulatorResult<never>;
+      const offset = (section * 2 + side) * 2;
+      positions[offset] = xValue;
+      positions[offset + 1] = yValue;
     }
   }
-  const uv = defaultStripUv(sectionCount);
-  if (uv.status !== "ok") return uv;
-  return ok(Object.freeze({ vertices: markConstructedRenderArray(Object.freeze(vertices)), indices, uv: uv.value,
-    colors: markConstructedRenderArray(Object.freeze(colors)) }));
+  const uvs = packedStripUv(sectionCount);
+  if (uvs.status !== "ok") return uvs;
+  return ok(Object.freeze({ packed: Object.freeze({ positions, uvs: uvs.value, color: copyColor(state.color) }), indices }));
+}
+
+const packedStripUvs = new Map<number, Float32Array>();
+
+/** Strip UVs (side, rate) per original section count, as Float32 pairs. */
+function packedStripUv(sectionCount: number): SimulatorResult<Float32Array> {
+  const cached = packedStripUvs.get(sectionCount);
+  if (cached !== undefined) return ok(cached);
+  const structured = defaultStripUv(sectionCount);
+  if (structured.status !== "ok") return structured;
+  const uvs = new Float32Array(structured.value.length * 2);
+  structured.value.forEach((uv, index) => { uvs[index * 2] = uv.x.value; uvs[index * 2 + 1] = uv.y.value; });
+  packedStripUvs.set(sectionCount, uvs);
+  return ok(uvs);
 }
 
 /** Extensions may supply clipped boundaries; topology, UV and colour stay original. */
@@ -571,7 +602,7 @@ export function buildNoteMeshStrip(
   color: RenderColor,
   indices: readonly number[] = sectionCount === BASE_SECTION_COUNT ? BASE_INDICES : ADVANCED_INDICES,
   uvRateAt?: (rate: number) => number,
-): SimulatorResult<OrdinaryBaseNoteMeshGeometry> {
+): SimulatorResult<OrdinaryStructuredNoteMeshGeometry> {
   if ((sectionCount !== BASE_SECTION_COUNT && sectionCount !== ADVANCED_SECTION_COUNT) || !validateColor(color)) {
     return reject("render.geometry.invalid-base-mesh-owner-state", "Note strips retain original section counts and finite colour.");
   }

@@ -1966,7 +1966,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         applyGeometryMaterial(mesh, object, this.profile!);
         if (object.thresholdMaskContent !== null) mesh.mask = object.thresholdMaskContent;
         object.geometryContent = mesh;
-        object.geometryCenterZ = geometryCenterZ(command.vertices);
+        // Packed strips carry Z = +0 for every vertex.
+        object.geometryCenterZ = command.packed !== undefined ? 0 : geometryCenterZ(command.vertices);
         object.geometryUsesWorldCoordinates = command.coordinateSpace === "authored-ui";
         this.attachGameplayDraw(object);
         return;
@@ -4858,6 +4859,13 @@ function createEvidenceLineData(
 }
 
 function isEvidenceMesh(command: SetMeshCommand): boolean {
+  if (command.packed !== undefined) {
+    // One shared colour and Z = +0 hold by construction; topology matches the structured strips.
+    const vertexCount = command.packed.positions.length / 2;
+    return command.packed.uvs.length === command.packed.positions.length && command.materialRole !== "habahiro-flash" &&
+      ((vertexCount === 22 && command.indices.length === 60) || (vertexCount === 42 && command.indices.length === 120) ||
+        command.viewportClipped === true) && command.meshIdentity === undefined;
+  }
   if (command.uv.length !== command.vertices.length || command.colors.length !== command.vertices.length ||
     command.vertices.some((vertex) => vertex.z.bits !== "00000000")) return false;
   const first = command.colors[0];
@@ -4891,6 +4899,23 @@ function createEvidenceMeshData(
   surfaceLayout: OriginalSurfaceLayout,
 ): PixiGeometryData {
   if (!isEvidenceMesh(command)) throw new Error("mesh outside current source-bound profile");
+  if (command.packed !== undefined) {
+    const source = command.packed.positions;
+    const positions = new Float32Array(source.length);
+    for (let index = 0; index < source.length; index += 2) {
+      const projected = projectWorldPoint(source[index]!, source[index + 1]!, projection);
+      positions[index] = projected[0];
+      positions[index + 1] = projected[1];
+    }
+    const color = command.packed.color;
+    return {
+      positions,
+      uvs: command.packed.uvs.slice(),
+      indices: Uint32Array.from(command.indices),
+      tint: rgbTint(color.red.value, color.green.value, color.blue.value),
+      alpha: color.alpha.value,
+    };
+  }
   const positions = new Float32Array(command.vertices.length * 2);
   const uvs = new Float32Array(command.uv.length * 2);
   const authoredScale = surfaceLayout.ui.screenToSafeChildScale;
@@ -4941,7 +4966,7 @@ function commitGeometry(object: PixiObjectRecord, reservation: PixiGeometryReser
 }
 
 function firstColor(command: SetMeshCommand): RenderColor {
-  const color = command.colors[0];
+  const color = command.packed !== undefined ? command.packed.color : command.colors[0];
   if (color === undefined) throw new Error("validated mesh lost its uniform color");
   return color;
 }
@@ -5062,6 +5087,12 @@ function compareOrdering(
 
 function copyPixiCommand(command: RenderCommand): RenderCommand {
   if (command.kind === "set-mesh") {
+    if (command.packed !== undefined) return Object.freeze({
+      ...command,
+      packed: Object.freeze({ positions: command.packed.positions.slice(), uvs: command.packed.uvs.slice(),
+        color: freezeRenderColor(command.packed.color) }),
+      indices: freezeRenderArray(command.indices, (index) => index),
+    });
     // Frozen geometry is already an immutable snapshot and is shared, not deep-copied.
     return Object.freeze({
       ...command,

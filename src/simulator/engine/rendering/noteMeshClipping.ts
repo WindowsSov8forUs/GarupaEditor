@@ -3,7 +3,7 @@ import { coordinateAdd, coordinateScale, type ExponentialCoordinate } from "./ex
 import { createRenderFloat32 } from "../../backends/renderingValidation";
 import type { RenderColor } from "../../backends/renderingContracts";
 import { ok, type SimulatorResult } from "../result";
-import { buildNoteMeshStrip, type OrdinaryBaseNoteMeshGeometry } from "./ordinaryNoteGeometry";
+import { buildNoteMeshStrip, type OrdinaryBaseNoteMeshGeometry, type OrdinaryStructuredNoteMeshGeometry } from "./ordinaryNoteGeometry";
 
 export const EMPTY_NOTE_STRIP: OrdinaryBaseNoteMeshGeometry = Object.freeze({
   vertices: Object.freeze([]), indices: Object.freeze([]), uv: Object.freeze([]), colors: Object.freeze([]),
@@ -34,8 +34,8 @@ export function buildClippedNoteStrip(input: { readonly advanced?: boolean; read
     return { x, y, halfWidth, uv: first === second ? rate : stableRatio(first, second, curve) };
   };
   if (input.horizontalRange) {
-    const vertices: OrdinaryBaseNoteMeshGeometry["vertices"][number][] = [],
-      uv: OrdinaryBaseNoteMeshGeometry["uv"][number][] = [], indices: number[] = [];
+    const vertices: OrdinaryStructuredNoteMeshGeometry["vertices"][number][] = [],
+      uv: OrdinaryStructuredNoteMeshGeometry["uv"][number][] = [], indices: number[] = [];
     const count = input.advanced ? 20 : 10;
     const row = (index: number): readonly [NoteClipVertex, NoteClipVertex] => {
       if (exponential) {

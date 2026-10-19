@@ -369,6 +369,14 @@ export type RenderObjectRole =
   | "habahiro-root-effect"
   | "habahiro-flash-mesh";
 
+/** A note strip as exact Float32 arrays: world XY per vertex (Z is +0), UV per vertex and the
+ * one colour every vertex shares. Equivalent to the structured vertices/uv/colors form. */
+export interface RenderPackedMeshGeometry {
+  readonly positions: Float32Array;
+  readonly uvs: Float32Array;
+  readonly color: RenderColor;
+}
+
 export type RenderCommand =
   | (RenderObjectCommandBase & {
       readonly kind: "create-object" | "acquire-object";
@@ -406,6 +414,7 @@ export type RenderCommand =
   | (RenderObjectCommandBase & {
       readonly kind: "set-mesh";
       readonly viewportClipped?: true;
+      readonly packed?: undefined;
       readonly vertices: readonly RenderVector3[];
       readonly indices: readonly number[];
       readonly uv: readonly RenderVector2[];
@@ -414,6 +423,16 @@ export type RenderCommand =
       /** Native HABAHIRO meshes use authored RhythmGameLines coordinates. */
       readonly coordinateSpace?: "world" | "authored-ui";
       readonly meshIdentity?: string;
+    })
+  | (RenderObjectCommandBase & {
+      readonly kind: "set-mesh";
+      readonly viewportClipped?: true;
+      /** The same world mesh as the structured form, carried as Float32 arrays. */
+      readonly packed: RenderPackedMeshGeometry;
+      readonly indices: readonly number[];
+      readonly materialRole: RenderMaterialRole;
+      readonly coordinateSpace?: "world";
+      readonly meshIdentity?: undefined;
     })
   | (RenderObjectCommandBase & {
       readonly kind: "set-line";

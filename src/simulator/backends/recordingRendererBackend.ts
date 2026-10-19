@@ -397,6 +397,28 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
         }
         return this.requireObject(objects, command.renderObjectId);
       case "set-mesh":
+        if (command.packed !== undefined) {
+          const { positions, uvs, color } = command.packed;
+          const vertexCount = positions instanceof Float32Array ? positions.length / 2 : 0;
+          if (
+            !(positions instanceof Float32Array) || !(uvs instanceof Float32Array) ||
+            vertexCount === 0 || !Number.isInteger(vertexCount) || uvs.length !== positions.length ||
+            !finiteFloat32Array(positions) || !finiteFloat32Array(uvs) || !validateColor(color) ||
+            command.indices.length === 0 ||
+            !validateEach(command.indices, (value) =>
+              isNonNegativeInteger(value) && value < vertexCount, vertexCount, () => true) ||
+            objects.get(command.renderObjectId)?.role === "habahiro-flash-mesh" ||
+            (command.materialRole !== "long-note" && command.materialRole !== "curve-note") ||
+            (command.coordinateSpace !== undefined && command.coordinateSpace !== "world") ||
+            command.meshIdentity !== undefined
+          ) {
+            return this.latchFault(
+              "render.command.invalid-mesh",
+              "Mesh topology, UV, colors and indices must be complete and in bounds.",
+            );
+          }
+          return this.requireObject(objects, command.renderObjectId);
+        }
         if (
           command.vertices.length === 0 ||
           command.indices.length === 0 ||
@@ -618,6 +640,13 @@ function freezeCommand(command: RenderCommand): RenderCommand {
         }),
       });
     case "set-mesh":
+      // Typed arrays cannot be frozen; the recorded command owns copies of them.
+      if (command.packed !== undefined) return Object.freeze({
+        ...command,
+        packed: Object.freeze({ positions: command.packed.positions.slice(), uvs: command.packed.uvs.slice(),
+          color: freezeRenderColor(command.packed.color) }),
+        indices: freezeRenderArray(command.indices, (index) => index),
+      });
       return Object.freeze({
         ...command,
         vertices: freezeRenderArray(command.vertices, freezeRenderVector3),
@@ -679,6 +708,12 @@ function validateEach<T>(
   if (bound !== undefined && deepFrozen !== undefined && Object.isFrozen(values) && values.every(deepFrozen)) {
     validatedFrozenArrays.set(values, bound);
   }
+  return true;
+}
+
+/** Every element is a finite Float32 value (a Float32Array holds only Float32 values). */
+function finiteFloat32Array(values: Float32Array): boolean {
+  for (let index = 0; index < values.length; index += 1) if (!Number.isFinite(values[index]!)) return false;
   return true;
 }
 

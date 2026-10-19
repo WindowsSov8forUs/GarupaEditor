@@ -58,6 +58,8 @@ import {
   calculateOrdinaryNoteStartDepth,
   calculateOrdinaryNoteWorldScaleAxis,
   getHabahiroMeshWidthRate,
+  noteMeshCommandFields,
+  noteMeshVertexCount,
   type OrdinaryBaseNoteMeshGeometry,
   type OrdinaryMultipleDirectionalLineOwnerState,
   type OrdinaryNoteMotionResult,
@@ -1744,16 +1746,12 @@ export class RenderCommandProducer {
         }),
         maskObjectId: null,
       });
-      if (mesh.value.vertices.length === 0) commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: meshObjectId });
+      if (noteMeshVertexCount(mesh.value) === 0) commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: meshObjectId });
       else commands.push({
         ...base(commands.length),
         kind: "set-mesh",
         renderObjectId: meshObjectId,
-        viewportClipped: mesh.value.viewportClipped,
-        vertices: mesh.value.vertices,
-        indices: mesh.value.indices,
-        uv: mesh.value.uv,
-        colors: mesh.value.colors,
+        ...noteMeshCommandFields(mesh.value),
         materialRole: "long-note",
       });
       commands.push({
@@ -2122,17 +2120,13 @@ export class RenderCommandProducer {
         }
       }
     }
-    if (mesh.value !== null && mesh.value.vertices.length > 0) {
+    if (mesh.value !== null && noteMeshVertexCount(mesh.value) > 0) {
       commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: meshObjectId });
       commands.push({
         ...base(commands.length),
         kind: "set-mesh",
         renderObjectId: meshObjectId,
-        viewportClipped: mesh.value.viewportClipped,
-        vertices: mesh.value.vertices,
-        indices: mesh.value.indices,
-        uv: mesh.value.uv,
-        colors: mesh.value.colors,
+        ...noteMeshCommandFields(mesh.value),
         materialRole: "long-note",
       });
     } else {
@@ -2946,12 +2940,24 @@ function appendCurveMesh(
   }
   if (initialize) commands.push({ ...base(commands.length), kind: "set-threshold", renderObjectId, threshold: scene.noteLineClipY });
   // A visibility command that repeats the backend's committed state changes nothing and is omitted.
-  if (geometry.vertices.length === 0 || !visible) {
+  if (noteMeshVertexCount(geometry) === 0 || !visible) {
     if (committed?.get(renderObjectId) !== "hidden") commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
     return;
   }
   if (committed?.get(renderObjectId) !== "active") commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId });
-  commands.push({ ...base(commands.length), kind: "set-mesh", renderObjectId, ...geometry, materialRole });
+  if (geometry.packed !== undefined) {
+    // Same fields and order as the spread form, written onto the fresh base object.
+    const command = base(commands.length) as Record<string, unknown>;
+    command.kind = "set-mesh";
+    command.renderObjectId = renderObjectId;
+    command.viewportClipped = geometry.viewportClipped;
+    command.packed = geometry.packed;
+    command.indices = geometry.indices;
+    command.materialRole = materialRole;
+    commands.push(command as unknown as RenderCommand);
+    return;
+  }
+  commands.push({ ...base(commands.length), kind: "set-mesh", renderObjectId, ...noteMeshCommandFields(geometry), materialRole });
 }
 
 function appendNoteIconVisibility(commands: RenderCommand[], base: RenderCommandBaseFactory,
