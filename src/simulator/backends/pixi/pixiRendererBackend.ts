@@ -39,6 +39,7 @@ import {
   freezeRenderColor,
   freezeRenderVector2,
   freezeRenderVector3,
+  snapshotFloat32Array,
   validateAndFreezeRenderProfile,
 } from "../renderingValidation";
 import { sampleOrdinaryVisibleClip } from "../ordinaryVisibleAnimation";
@@ -4910,7 +4911,8 @@ function createEvidenceMeshData(
     const color = command.packed.color;
     return {
       positions,
-      uvs: command.packed.uvs.slice(),
+      // Pixi only uploads the UVs; a handed-over array is shared by every strip of its section count.
+      uvs: snapshotFloat32Array(command.packed.uvs),
       indices: Uint32Array.from(command.indices),
       tint: rgbTint(color.red.value, color.green.value, color.blue.value),
       alpha: color.alpha.value,
@@ -5089,7 +5091,7 @@ function copyPixiCommand(command: RenderCommand): RenderCommand {
   if (command.kind === "set-mesh") {
     if (command.packed !== undefined) return Object.freeze({
       ...command,
-      packed: Object.freeze({ positions: command.packed.positions.slice(), uvs: command.packed.uvs.slice(),
+      packed: Object.freeze({ positions: snapshotFloat32Array(command.packed.positions), uvs: snapshotFloat32Array(command.packed.uvs),
         color: freezeRenderColor(command.packed.color) }),
       indices: freezeRenderArray(command.indices, (index) => index),
     });

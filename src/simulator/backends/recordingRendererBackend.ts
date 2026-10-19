@@ -33,6 +33,7 @@ import {
   freezeRenderVector3,
   freezeRenderArray,
   isConstructedRenderArray,
+  snapshotFloat32Array,
   validateAndFreezeRenderProfile,
   validateRenderFloat32,
 } from "./renderingValidation";
@@ -640,10 +641,10 @@ function freezeCommand(command: RenderCommand): RenderCommand {
         }),
       });
     case "set-mesh":
-      // Typed arrays cannot be frozen; the recorded command owns copies of them.
+      // Typed arrays cannot be frozen; the recorded command shares handed-over arrays and copies others.
       if (command.packed !== undefined) return Object.freeze({
         ...command,
-        packed: Object.freeze({ positions: command.packed.positions.slice(), uvs: command.packed.uvs.slice(),
+        packed: Object.freeze({ positions: snapshotFloat32Array(command.packed.positions), uvs: snapshotFloat32Array(command.packed.uvs),
           color: freezeRenderColor(command.packed.color) }),
         indices: freezeRenderArray(command.indices, (index) => index),
       });

@@ -320,6 +320,20 @@ export function isConstructedRenderArray(values: readonly unknown[]): boolean {
   return constructedRenderArrays.has(values);
 }
 
+// Float32Arrays whose producer hands them over and never writes them again (typed arrays cannot
+// be frozen). Snapshots share them instead of copying.
+const ownedFloat32Arrays = new WeakSet<Float32Array>();
+
+export function handOverFloat32Array(values: Float32Array): Float32Array {
+  ownedFloat32Arrays.add(values);
+  return values;
+}
+
+/** A snapshot of a packed mesh array: handed-over arrays are shared, others are copied. */
+export function snapshotFloat32Array(values: Float32Array): Float32Array {
+  return ownedFloat32Arrays.has(values) ? values : values.slice();
+}
+
 /** Reuses a frozen array whose elements are already their own snapshots. */
 export function freezeRenderArray<T>(values: readonly T[], freeze: (value: T) => T): readonly T[] {
   if (constructedRenderArrays.has(values)) return values;

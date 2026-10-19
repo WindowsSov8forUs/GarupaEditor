@@ -10,6 +10,7 @@ import { coordinate, coordinateAdd, coordinateCompare, coordinateScale, coordina
   type ExponentialCoordinate, type ExponentialLine, type ExponentialTransform } from "./exponentialCoordinates";
 import {
   createRenderFloat32,
+  handOverFloat32Array,
   markConstructedRenderArray,
   validateRenderFloat32,
 } from "../../backends/renderingValidation";
@@ -578,7 +579,8 @@ function buildOrdinaryNoteMeshStrip(
   }
   const uvs = packedStripUv(sectionCount);
   if (uvs.status !== "ok") return uvs;
-  return ok(Object.freeze({ packed: Object.freeze({ positions, uvs: uvs.value, color: copyColor(state.color) }), indices }));
+  return ok(Object.freeze({ packed: Object.freeze({ positions: handOverFloat32Array(positions), uvs: uvs.value,
+    color: copyColor(state.color) }), indices }));
 }
 
 const packedStripUvs = new Map<number, Float32Array>();
@@ -591,7 +593,7 @@ function packedStripUv(sectionCount: number): SimulatorResult<Float32Array> {
   if (structured.status !== "ok") return structured;
   const uvs = new Float32Array(structured.value.length * 2);
   structured.value.forEach((uv, index) => { uvs[index * 2] = uv.x.value; uvs[index * 2 + 1] = uv.y.value; });
-  packedStripUvs.set(sectionCount, uvs);
+  packedStripUvs.set(sectionCount, handOverFloat32Array(uvs));
   return ok(uvs);
 }
 
