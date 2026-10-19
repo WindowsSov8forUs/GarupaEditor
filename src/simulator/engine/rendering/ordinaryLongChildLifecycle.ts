@@ -185,21 +185,22 @@ export function buildOrdinaryLongNormalMesh(
       endpoint(input.front, input.frontButtonCount, input.front.localScale.x.value),
       endpoint(input.after, input.afterButtonCount, input.afterScaleX.value));
   }
-  const state = Object.freeze({
-    front: Object.freeze({
-      position: Object.freeze({ x: input.front.position.x, y: input.front.position.y }),
+  // A transient owner state read only by the strip builder.
+  const state = {
+    front: {
+      position: { x: input.front.position.x, y: input.front.position.y },
       localScaleX: input.front.localScale.x,
       buttonCount: input.frontButtonCount,
-    }),
-    after: Object.freeze({
-      position: Object.freeze({ x: input.after.position.x, y: input.after.position.y }),
+    },
+    after: {
+      position: { x: input.after.position.x, y: input.after.position.y },
       localScaleX: input.afterScaleX,
       buttonCount: input.afterButtonCount,
-    }),
+    },
     screenToSafeAreaRatio: input.screenToSafeAreaRatio,
     widthRate: input.widthRate,
     color: input.color,
-  });
+  };
   return input.advanced === true
     ? buildOrdinaryAdvancedNoteMesh(state)
     : buildOrdinaryBaseNoteMesh(state);
