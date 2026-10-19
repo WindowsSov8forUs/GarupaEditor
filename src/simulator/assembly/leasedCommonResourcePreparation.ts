@@ -168,7 +168,7 @@ function commonLogicalResource(file: string): string | null {
   if (["result-menu.png", "rhythmBG.png", "result-banner.png", "LoginBonus.png", "Tex_parSet_1.png", "Tex_parSet_2.png"].includes(file)) return "prefabs/bms/result";
   if (file === "rank-label-font.ttf") return "fonts/sgm";
   if (file === "startup-line-star.png" || file === "startup-title-base.png") return "prefabs/bms/information";
-  if (file === "stage-dark-cover.png" || file === "stage-light.png" || file === "stage-speaker.png" || file === "stage-speaker-glow.png" || file === "stage-psyllium.png") return "prefabs/bms/stage";
+  if (file === "stage-dark-cover.png" || file === "stage-game-over-cover.png" || file === "stage-light.png" || file === "stage-speaker.png" || file === "stage-speaker-glow.png" || file === "stage-psyllium.png") return "prefabs/bms/stage";
   if (file.startsWith("countdown-")) return "prefabs/bms/pause";
   if (file.startsWith("high-rank-")) return "prefabs/bms/rhythmgamegauge/score";
   if (/^(?:AllPerfect|FullCombo|Tex_parSet)_/.test(file)) return "prefabs/bms/gameclear";

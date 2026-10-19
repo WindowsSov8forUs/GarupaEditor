@@ -376,6 +376,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     const stagePsyllium = this.baseTextures.get("stage/psyllium");
     const stageCover = this.spriteTextures.get(spriteKey("hud/score/rhythm-game-ui-atlas", "point_charactor_shadow"));
     const stageDarkCover = this.baseTextures.get("stage/dark-cover");
+    const stageGameOverCover = this.baseTextures.get("stage/game-over-cover");
     const jacketFrame = sliced("bg_base_jacket_frame");
     const fullLiveLabel = this.spriteTextures.get(spriteKey(CURRENT_STARTUP_DIRECTION_BINDINGS.uiCommonLogicalAssetId, "icon_fullmusic_gray"));
     const font = this.decodedFonts.get(CURRENT_STARTUP_DIRECTION_BINDINGS.fontLogicalAssetId);
@@ -387,7 +388,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       SPECIAL: sliced("bg_jacket_frame_rank_1_special"),
     });
     if (titleBase === undefined || difficultyBackground === undefined || lineStar === undefined || stageLight === undefined ||
-      stageSpeaker === undefined || stageSpeakerGlow === undefined || stagePsyllium === undefined || stageCover === undefined || stageDarkCover === undefined || jacketFrame === undefined || fullLiveLabel === undefined || font === undefined ||
+      stageSpeaker === undefined || stageSpeakerGlow === undefined || stagePsyllium === undefined || stageCover === undefined || stageDarkCover === undefined || stageGameOverCover === undefined || jacketFrame === undefined || fullLiveLabel === undefined || font === undefined ||
       Object.values(difficultyFrames).some((texture) => texture === undefined)) {
       return integrityFailure(
         "render.startup-direction.common-resources-unavailable",
@@ -404,6 +405,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       stagePsyllium,
       stageCover,
       stageDarkCover,
+      stageGameOverCover,
       jacketFrame,
       difficultyFrames: difficultyFrames as PixiStartupDirectionCommonResources["difficultyFrames"],
       fullLiveLabel,

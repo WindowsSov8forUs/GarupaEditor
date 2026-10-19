@@ -1318,6 +1318,27 @@
           "materialRole": "hud",
           "animationRole": "none"
         }
+      },
+      {
+        "file": "stage-game-over-cover.png",
+        "profile": {
+          "logicalAssetId": "stage/game-over-cover",
+          "role": "startup-ui",
+          "mime": "image/png",
+          "width": 256,
+          "height": 256,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
       }
     ],
     "gameClear": [

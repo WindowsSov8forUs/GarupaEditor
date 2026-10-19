@@ -241,6 +241,9 @@ export class InGameManager {
         "InGameManager.ExecUpdate is only represented after initialization and before disposal.",
       );
     }
+    // A manual Pause keeps Unity time running (timeScale 1), so the cover's
+    // Normal-update DOScale also finishes while paused.
+    this.startupDirection?.advanceGameOverCover(deltaTimeSeconds);
     if (this.currentGameStateValue === GameState.GameOverMotionFirstStart) return ok(undefined);
     let enteredPlayingSound = false;
     if (this.startupDirection !== null && !this.startupDirection.snapshot().playable) {
@@ -406,6 +409,7 @@ export class InGameManager {
         const committedFrame = framePlan.value.commit();
         if (committedFrame.status !== "ok") return this.latchFault(committedFrame);
         this.startupDirection?.reflectStageJudgements(batch);
+        if (businessPlan?.status === "ok") this.startupDirection?.reflectLife(businessPlan.value.record.currentLife);
         particleAdvanced ||= particlePlan?.status === "ok";
         firstJudgementBatch = false;
 

@@ -10,6 +10,7 @@ import light3Url from "../../assets/game/portable/skins/cn/light/source.asset?ur
 import light4Url from "../../assets/game/portable/skins/cn/light/source.bundle?url&no-inline";
 import suddenLineUrl from "../../assets/game/prefabs/bms/sudden/sudden-line.png?url&no-inline";
 import stageDarkCoverUrl from "../../assets/game/prefabs/bms/stage/stage-dark-cover.png?url&no-inline";
+import stageGameOverCoverUrl from "../../assets/game/prefabs/bms/stage/stage-game-over-cover.png?url&no-inline";
 import resultBannerUrl from "../../assets/game/prefabs/bms/result/result-banner.png?url&no-inline";
 import resultRankLightUrl from "../../assets/game/prefabs/bms/result/LoginBonus.png?url&no-inline";
 import resultParticle1Url from "../../assets/game/prefabs/bms/result/Tex_parSet_1.png?url&no-inline";
@@ -202,6 +203,7 @@ const DEFINITIONS: readonly SimulatorBuiltinResourceDefinition[] = Object.freeze
   ]),
   resource("prefabs/bms/stage", "Ordinary stage resources", "image", [
     file("game/prefabs/bms/stage/stage-dark-cover.png", "stage-dark-cover.png", "image/png", stageDarkCoverUrl),
+    file("game/prefabs/bms/stage/stage-game-over-cover.png", "stage-game-over-cover.png", "image/png", stageGameOverCoverUrl),
     file("game/prefabs/bms/stage/stage-light.png", "stage-light.png", "image/png", stageLightUrl),
     file("game/prefabs/bms/stage/stage-speaker.png", "stage-speaker.png", "image/png", stageSpeakerUrl),
     file("game/prefabs/bms/stage/stage-speaker-glow.png", "stage-speaker-glow.png", "image/png", stageSpeakerGlowUrl),

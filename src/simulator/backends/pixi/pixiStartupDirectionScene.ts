@@ -46,6 +46,7 @@ export interface PixiStartupDirectionCommonResources {
   readonly stagePsyllium: Texture;
   readonly stageCover: Texture;
   readonly stageDarkCover: Texture;
+  readonly stageGameOverCover: Texture;
   readonly jacketFrame: PixiStartupSlicedImage;
   readonly difficultyFrames: Readonly<Record<"EASY" | "NORMAL" | "HARD" | "EXPERT" | "SPECIAL", PixiStartupSlicedImage>>;
   readonly fullLiveLabel: Texture;
@@ -134,6 +135,7 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
   private readonly information = new Container({ label: "StartupInformation", sortableChildren: false });
   private readonly darkCover: Sprite | Graphics;
   private readonly stageSubtraction: Sprite | null;
+  private readonly gameOverCover: Sprite;
   private readonly stageBackdrop: Sprite | null;
   /** Visible stage-effect widgets of a special background, in TRSRoot space. */
   private readonly stageEffect: Container | null;
@@ -271,11 +273,18 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
       this.backgroundRoot.addChild(subtraction);
       this.stageSubtraction = subtraction;
     } else this.stageSubtraction = null;
+    // GameOverCover/GameOverCover under UI_Root_Back/Display (queue 3490):
+    // UITexture sub_glow 1334x1500 at (0, 190) with CE/RevSubtraction; its
+    // white rim darkens the screen edges as the life level scales it down.
+    this.gameOverCover = new Sprite({ texture: common.stageGameOverCover, label: "GameOverCover", anchor: 0.5 });
+    this.gameOverCover.position.set(viewportWidth / 2, viewportHeight / 2 - 190 * surfaceLayout.ui.backRootPixelsPerUnit);
+    this.gameOverCover.blendMode = PIXI_STAGE_DARK_COVER_BLEND;
+    this.backgroundRoot.addChild(this.gameOverCover);
     this.publish({
       sequence: 0, informationPhase: "hidden", informationAlpha: 0,
       hudAlpha: 0, darkCoverAlpha: 1, stageSubtractionColor: 1, stagePhase: "dark", stageProgress: 0, stageColorProgress: 0, stagePsylliumFading: false, stagePsylliumSpeed: 1,
       characterAlpha: 0, linePhase: "hidden", lineAlpha: 0,
-      gameplayVisible: false, rehearsalControlsVisible: false,
+      gameplayVisible: false, rehearsalControlsVisible: false, gameOverCoverVisible: false, gameOverCoverScale: 3,
     });
   }
 
@@ -285,6 +294,10 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
     this.information.visible = state.informationPhase !== "hidden" && state.informationPhase !== "complete";
     this.darkCover.alpha = state.darkCoverAlpha;
     this.darkCover.visible = state.darkCoverAlpha > 0;
+    const coverScale = state.gameOverCoverScale * this.surfaceLayout.ui.backRootPixelsPerUnit;
+    this.gameOverCover.visible = state.gameOverCoverVisible;
+    this.gameOverCover.width = 1334 * coverScale;
+    this.gameOverCover.height = 1500 * coverScale;
     if (this.stageSubtraction !== null) {
       // UIDrawCall converts animated UIWidget RGB to Linear before subtraction.
       const color = srgbChannelToLinear(state.stageSubtractionColor);
