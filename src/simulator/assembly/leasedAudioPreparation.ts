@@ -48,7 +48,7 @@ export async function prepareLeasedAudioResources(
         return rejected("resource-decode", inspected.failure.capability, inspected.failure.boundary);
       }
       const metadata = inspected.value;
-      if (metadata.codec !== "mp3" || ![8000, 44100, 48000].includes(metadata.sampleRate) ||
+      if (metadata.codec !== "mp3" || ![8000, 32000, 44100, 48000].includes(metadata.sampleRate) ||
         (metadata.channels !== 1 && metadata.channels !== 2) || metadata.sampleFrames <= 0 || metadata.durationSeconds <= 0) {
         return invalid("simulator.audio.leased-cue-metadata");
       }
@@ -68,7 +68,7 @@ export async function prepareLeasedAudioResources(
         sha256: file.sha256,
         mime: "audio/mpeg" as const,
         codec: "mp3" as const,
-        sampleRate: metadata.sampleRate as 8000 | 44100 | 48000,
+        sampleRate: metadata.sampleRate as 8000 | 32000 | 44100 | 48000,
         channels: metadata.channels as 1 | 2,
         durationSeconds: metadata.durationSeconds,
         sampleFrames: metadata.sampleFrames,

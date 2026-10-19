@@ -439,7 +439,7 @@ function validateFixedSeResource(
     : "portable-equivalent-lossy";
   if (!logicalIdentityAccepted || seen.has(resource.cue) || !Number.isSafeInteger(resource.byteLength) || resource.byteLength <= 0 ||
     !SHA256_PATTERN.test(resource.sha256) || resource.mime !== "audio/mpeg" || resource.codec !== "mp3" ||
-    !Number.isSafeInteger(resource.sampleRate) || ![8000, 44100, 48000].includes(resource.sampleRate) ||
+    !Number.isSafeInteger(resource.sampleRate) || ![8000, 32000, 44100, 48000].includes(resource.sampleRate) ||
     (resource.channels !== 1 && resource.channels !== 2) || !Number.isFinite(resource.durationSeconds) || resource.durationSeconds <= 0 ||
     !Number.isSafeInteger(resource.sampleFrames) || resource.sampleFrames <= 0 || resource.identity !== "semantic-exact" ||
     resource.signal !== expectedSignal) {
