@@ -4903,17 +4903,19 @@ function createEvidenceMeshData(
   if (command.packed !== undefined) {
     const source = command.packed.positions;
     const positions = new Float32Array(source.length);
+    // projectWorldPoint, inlined without a result array per vertex.
+    const halfWidth = projection.viewportWidth / 2, halfHeight = projection.viewportHeight / 2;
+    const { worldCenterX, worldCenterY, pixelsPerWorldUnit } = projection;
     for (let index = 0; index < source.length; index += 2) {
-      const projected = projectWorldPoint(source[index]!, source[index + 1]!, projection);
-      positions[index] = projected[0];
-      positions[index + 1] = projected[1];
+      positions[index] = Math.fround(halfWidth + Math.fround(Math.fround(source[index]! - worldCenterX) * pixelsPerWorldUnit));
+      positions[index + 1] = Math.fround(halfHeight - Math.fround(Math.fround(source[index + 1]! - worldCenterY) * pixelsPerWorldUnit));
     }
     const color = command.packed.color;
     return {
       positions,
       // Pixi only uploads the UVs; a handed-over array is shared by every strip of its section count.
       uvs: snapshotFloat32Array(command.packed.uvs),
-      indices: Uint32Array.from(command.indices),
+      indices: uint32Indices(command.indices),
       tint: rgbTint(color.red.value, color.green.value, color.blue.value),
       alpha: color.alpha.value,
     };
@@ -4941,6 +4943,16 @@ function createEvidenceMeshData(
     tint: rgbTint(firstColor(command).red.value, firstColor(command).green.value, firstColor(command).blue.value),
     alpha: firstColor(command).alpha.value,
   };
+}
+
+const frozenIndexBuffers = new WeakMap<readonly number[], Uint32Array>();
+
+/** Index data for Pixi; the frozen strip topologies are converted once and shared. */
+function uint32Indices(indices: readonly number[]): Uint32Array {
+  if (!Object.isFrozen(indices)) return Uint32Array.from(indices);
+  let converted = frozenIndexBuffers.get(indices);
+  if (converted === undefined) frozenIndexBuffers.set(indices, converted = Uint32Array.from(indices));
+  return converted;
 }
 
 function createGeometryMesh(data: PixiGeometryData): Mesh {
@@ -5002,12 +5014,25 @@ function applyGeometryMaterial(
   if (texture === null) throw new Error("geometry material texture is missing after validated preflight");
   const asset = object.materialLogicalAssetId === null
     ? undefined
-    : profile.assets.find((candidate) => candidate.logicalAssetId === object.materialLogicalAssetId);
+    : profileAsset(profile, object.materialLogicalAssetId);
   if (asset === undefined || asset.textureSettings === null) {
     throw new Error("geometry material profile is missing after validated preflight");
   }
   mesh.texture = texture;
   mesh.blendMode = asset.textureSettings.blendMode;
+}
+
+const profileAssetIndexes = new WeakMap<RenderResourceProfile, ReadonlyMap<string, RenderResourceAssetProfile>>();
+
+/** The first asset with this identity, as Array.find would return it; indexed once per profile. */
+function profileAsset(profile: RenderResourceProfile, logicalAssetId: string): RenderResourceAssetProfile | undefined {
+  let index = profileAssetIndexes.get(profile);
+  if (index === undefined) {
+    const built = new Map<string, RenderResourceAssetProfile>();
+    for (const asset of profile.assets) if (!built.has(asset.logicalAssetId)) built.set(asset.logicalAssetId, asset);
+    profileAssetIndexes.set(profile, index = built);
+  }
+  return index.get(logicalAssetId);
 }
 
 function applyTextureSettings(texture: Texture, asset: RenderResourceAssetProfile): void {
