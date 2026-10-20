@@ -414,8 +414,12 @@ export class AudioCommandProducer {
         commands.push(fadeHold(holdOwner));
         activeHolds.delete(holdOwner);
       }
+      // judgeFrontNote / NoteLong.judgeAfterNote request the skill cue
+      // themselves before this note's onJudgeNote: it never consults or
+      // updates TapSEStatusData, and the normal cue below still follows it.
+      if (isSkillTapJudgement(entry, note)) commands.push(oneShot("SE_RHYTHM_TAP_SKILL", "one-shot-0"));
       if (!shouldSilent(nextTap, entry)) {
-        const cue = judgementCue(entry, note);
+        const cue = judgementCue(entry);
         if (cue.status !== "ok") return cue;
         if (cue.value !== null) commands.push(oneShot(cue.value, "one-shot-0"));
       }
@@ -539,13 +543,8 @@ export function mapAudioResult<T>(result: AudioOperationResult<T>): SimulatorRes
 
 function judgementCue(
   entry: OneFrameJudgementEntry,
-  note: NoteInformation,
 ): SimulatorResult<string | null> {
   if (entry.adjustedResult < 2) return ok(null);
-  const additionalType = entry.phase === "tail"
-    ? note.gameNoteAdditionalTypeLongNoteEnd
-    : note.gameNoteAdditionalType;
-  if (additionalType === GameNoteAdditionalType.Skill) return ok("SE_RHYTHM_TAP_SKILL");
   const flickMask = 0x6e8;
   if (((1 << entry.noteType) & flickMask) !== 0) {
     if (entry.noteType === 6 || entry.noteType === 9) return ok("directional_fl");
@@ -565,6 +564,14 @@ function judgementCue(
   if (entry.adjustedResult === 2) return ok("good");
   if (entry.adjustedResult === 3) return ok("great");
   return entry.adjustedResult === 4 ? ok("perfect") : ok(null);
+}
+
+/** A skill front note (Normal, Long or Slide head) or skill Long end judged Great or Perfect. */
+function isSkillTapJudgement(entry: OneFrameJudgementEntry, note: NoteInformation): boolean {
+  if (entry.adjustedResult < 3) return false;
+  if (entry.phase === "head") return note.gameNoteAdditionalType === GameNoteAdditionalType.Skill;
+  return entry.phase === "tail" && note.fireNoteType === 1 &&
+    note.gameNoteAdditionalTypeLongNoteEnd === GameNoteAdditionalType.Skill;
 }
 
 function shouldSilent(status: TapStatusSnapshot, entry: OneFrameJudgementEntry): boolean {
