@@ -313,11 +313,6 @@ export function advanceOrdinarySlideChildren(
           // NoteSlideAfter calls afterNote.KillMesh here, before the adjustment
           // delay. The next child owns this node's outgoing strip, not this child.
           killNextMesh = true;
-          if (frontCanFollow && (sources[index]!.slideExitOffset !== undefined || sources[visibleAfter.sourceIndex]!.slideExitOffset !== undefined)) {
-            const followed = withSlidePosition(frontTransform, goal.x.value, goal.y.value);
-            if (followed.status !== "ok") return followed;
-            frontTransform = followed.value;
-          }
           if (!stopControl.stoppedChildWaited[index]) visible = false;
         } else {
           const nextIndex = nextMoving[index + 1]!;
