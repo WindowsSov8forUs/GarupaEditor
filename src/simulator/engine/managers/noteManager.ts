@@ -72,7 +72,7 @@ import {
   type OrdinarySyncLineOwnerState,
 } from "../rendering/ordinaryNoteGeometry";
 import { createRenderFloat32 } from "../../backends/renderingValidation";
-import { isSlideGestureNode, slideFlickDirection, slideGestureAfterType, slideGestureWidth } from "../chart/slideFlickNodes";
+import { slideFlickDirection, slideGestureAfterType, slideGestureWidth } from "../chart/slideFlickNodes";
 
 const BPM_POOL_LENGTH = 30;
 const SYNC_LINE_POOL_LENGTH = 80;
@@ -1506,10 +1506,6 @@ export class NoteManager {
           startLaneSpacingX: Math.fround(this.ordinaryNoteScene.noteStartPositions[1]!.x.value - this.ordinaryNoteScene.noteStartPositions[0]!.x.value),
           stoppedChildWaited: note instanceof NoteSlide
             ? note.afterNotes.map((after) => after.stopAdjustmentWaited) : [],
-          ...(note instanceof NoteSlide ? { unjudgedGestures: new Set([
-            ...(isSlideGestureNode(note.noteInformation!) && !note.headJudged ? [-1] : []),
-            ...note.afterNotes.flatMap((after, index) => after.isGesture && !after.judged ? [index] : []),
-          ]) } : {}),
         },
         note instanceof NoteSlide ? note.pendingRenderHides : undefined,
       );

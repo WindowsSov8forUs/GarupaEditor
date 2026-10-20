@@ -189,10 +189,6 @@ export function advanceExtensionSlide(
         stoppedChildWaited: previous.children.map((_, index) =>
           owner instanceof NoteSlide && owner.afterNotes[index]?.stopAdjustmentWaited === true),
       }, ordinaryScene.habahiro?.highAspectRatio, {
-        canLeaveNode: index => {
-          return !isProductGestureNode(nodes[index + 1]!) || owner instanceof NoteSlide &&
-            (index === -1 ? owner.headJudged : owner.afterNotes[index]?.judged === true);
-        },
         outgoingTransform: (transform, index) => {
           const node = nodes[index + 1]!;
           const offset = node.scoringSource?.slideExitOffset ?? 0;
