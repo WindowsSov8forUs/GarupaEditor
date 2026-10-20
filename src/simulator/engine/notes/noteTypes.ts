@@ -1392,7 +1392,6 @@ export class NoteSlide extends NoteFrontBase {
     // Folded targets follow the connection cursor: a later node is not examined
     // while an earlier visible node is pending.
     if (runtime.value.usesFoldedTime && (target.judged ||
-        runtime.value.getAdjustedMusicPosition() < target.source.absolutePos ||
         target.sourceIndex > current.sourceIndex && this.afterNotesValue.slice(current.sourceIndex, target.sourceIndex)
           .some(after => !after.judged && !after.source.isInvisible)))
       return ok(this.noManualSlideJudgementPlan(origin, grace));
