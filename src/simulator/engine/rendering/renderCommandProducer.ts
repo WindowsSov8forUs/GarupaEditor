@@ -359,7 +359,7 @@ export class RenderCommandProducer {
   private readonly creationSequenceByObjectId = new Map<string, number>();
   private nextCreationSequence = 0;
   private readonly hudAnimationElapsedSeconds = new Map<"normal-combo" | "ap-combo" | "ap-alpha", number>();
-  private readonly lifeAnimationElapsedSeconds = new Map<"life-warning" | "life-game-over", number>();
+  private readonly lifeAnimationElapsedSeconds = new Map<"life-warning", number>();
   private readonly addScoreAnimations = new Map<string, AddScoreAnimationState>();
   private resultAnimation: Readonly<{ elapsedSeconds: number; visibilityElapsedSeconds: number }> | null = null;
   private scoreGaugeSsElapsedSeconds: number | null = null;
@@ -369,7 +369,6 @@ export class RenderCommandProducer {
   private lastCombo = 0;
   private lastAllPerfect = false;
   private lastLifeWarning = false;
-  private lastSingleGameOver = false;
   private readonly presentedObjects = new Map<string, PresentedObject>();
   private readonly noteAnimationElapsedSeconds = new Map<string, {
     readonly role: NoteVisualAnimationRole;
@@ -511,16 +510,10 @@ export class RenderCommandProducer {
       ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.life,
       animationRole: "life-warning", restart: true,
     });
-    if (initialLifeState.singleGameOver) commands.push({
-      ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.life,
-      animationRole: "life-game-over", restart: true,
-    });
     return this.preflight(commands, () => {
       this.recordCreatedObjects(created);
       this.lastLifeWarning = initialLifeState.warning;
-      this.lastSingleGameOver = initialLifeState.singleGameOver;
       if (initialLifeState.warning) this.lifeAnimationElapsedSeconds.set("life-warning", 0);
-      if (initialLifeState.singleGameOver) this.lifeAnimationElapsedSeconds.set("life-game-over", 0);
     });
   }
 
@@ -664,14 +657,6 @@ export class RenderCommandProducer {
       ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.life,
       animationRole: "life-warning", restart: false,
     });
-    if (nextLifeState.singleGameOver && !this.lastSingleGameOver) commands.push({
-      ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.life,
-      animationRole: "life-game-over", restart: true,
-    });
-    if (!nextLifeState.singleGameOver && this.lastSingleGameOver) commands.push({
-      ...base(commands.length), kind: "stop-animation", renderObjectId: HUD_OBJECTS.life,
-      animationRole: "life-game-over", restart: false,
-    });
     if (plan.record.singleGameOver) {
       for (const renderObjectId of [HUD_OBJECTS.combo, HUD_OBJECTS.comboAllPerfect, ...HUD_OBJECTS.addScore]) {
         commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
@@ -718,13 +703,7 @@ export class RenderCommandProducer {
       } else if (!nextLifeState.warning) {
         this.lifeAnimationElapsedSeconds.delete("life-warning");
       }
-      if (nextLifeState.singleGameOver && !this.lastSingleGameOver) {
-        this.lifeAnimationElapsedSeconds.set("life-game-over", 0);
-      } else if (!nextLifeState.singleGameOver) {
-        this.lifeAnimationElapsedSeconds.delete("life-game-over");
-      }
       this.lastLifeWarning = nextLifeState.warning;
-      this.lastSingleGameOver = nextLifeState.singleGameOver;
       if (plan.record.singleGameOver) {
         this.hudAnimationElapsedSeconds.clear();
         this.addScoreAnimations.clear();
@@ -743,7 +722,6 @@ export class RenderCommandProducer {
       [HUD_OBJECTS.comboAllPerfect, "all-perfect"],
       [HUD_OBJECTS.result, "result"],
       [HUD_OBJECTS.life, "life-warning"],
-      [HUD_OBJECTS.life, "life-game-over"],
     ] as const) commands.push({
       ...base(commands.length), kind: "stop-animation", renderObjectId, animationRole, restart: false,
     });
@@ -771,7 +749,6 @@ export class RenderCommandProducer {
       this.lastCombo = 0;
       this.lastAllPerfect = this.hud.combo.displayedAllPerfect(record.allPerfect);
       this.lastLifeWarning = life.warning;
-      this.lastSingleGameOver = false;
     });
   }
 
@@ -832,7 +809,7 @@ export class RenderCommandProducer {
       return ok(new RenderOwnerTransaction(this.renderer, null));
     }
     const next = new Map<"normal-combo" | "ap-combo" | "ap-alpha", number>();
-    const nextLife = new Map<"life-warning" | "life-game-over", number>();
+    const nextLife = new Map<"life-warning", number>();
     const nextAddScore = new Map<string, AddScoreAnimationState>();
     let nextResultAnimation = this.resultAnimation;
     let nextScoreGaugeSsElapsed = this.scoreGaugeSsElapsedSeconds;

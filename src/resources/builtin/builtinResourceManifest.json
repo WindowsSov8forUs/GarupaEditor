@@ -582,6 +582,11 @@
       "sha256": "64B828193CF4FC523412E56997A7C0A33AC0D2771395335B904A58D1333A146D"
     },
     {
+      "path": "game/prefabs/bms/stage/stage-game-over-cover.png",
+      "byteLength": 14059,
+      "sha256": "B4A7E9918107EA03707F75FAFA8E37393142992C752E9A478CA5C99616E4DB15"
+    },
+    {
       "path": "game/prefabs/bms/stage/stage-light.png",
       "byteLength": 4379,
       "sha256": "85A63218C2E23E8748DC223FC9C62B6B6FD3988E62954A187BEA362469F9AEFE"

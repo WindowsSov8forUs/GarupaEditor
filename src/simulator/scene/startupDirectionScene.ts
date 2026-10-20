@@ -24,6 +24,9 @@ export interface StartupDirectionSceneState {
   readonly lineAlpha: number;
   readonly gameplayVisible: boolean;
   readonly rehearsalControlsVisible: boolean;
+  /** GameOverCover UITexture enabled state and its life-level localScale (x = y). */
+  readonly gameOverCoverVisible: boolean;
+  readonly gameOverCoverScale: number;
 }
 
 export interface StartupDirectionSceneBackend {
@@ -49,6 +52,10 @@ export function freezeStartupDirectionSceneState(
   if (!Number.isFinite(value.stagePsylliumSpeed) || value.stagePsylliumSpeed <= 0) {
     throw new TypeError("Stage psyllium speed must be finite and positive.");
   }
+  if (!Number.isFinite(value.gameOverCoverScale) || value.gameOverCoverScale <= 0 ||
+    !Object.is(value.gameOverCoverScale, Math.fround(value.gameOverCoverScale))) {
+    throw new TypeError("GameOverCover scale must be a finite positive Float32 value.");
+  }
   if (!Number.isSafeInteger(value.sequence) || value.sequence < 0) {
     throw new TypeError("Startup scene sequence must be a non-negative safe integer.");
   }
@@ -72,4 +79,6 @@ export const INITIAL_STARTUP_DIRECTION_SCENE_STATE = freezeStartupDirectionScene
   lineAlpha: Math.fround(0),
   gameplayVisible: false,
   rehearsalControlsVisible: false,
+  gameOverCoverVisible: false,
+  gameOverCoverScale: 3,
 });

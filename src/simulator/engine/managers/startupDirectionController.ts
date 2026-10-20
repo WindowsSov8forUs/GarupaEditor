@@ -83,6 +83,8 @@ export class StartupDirectionController {
   private nextStageCommand = 0;
   private disposed = false;
   private stageOutro: { elapsed: number; from: number } | null = null;
+  private gameOverCoverLevel: 0 | 1 | 2 | 3 = 0;
+  private gameOverCoverTween: { elapsed: number; from: number; to: number } | null = null;
   private readonly startupAudio: StartupAudioOwner | null;
 
   constructor(
@@ -387,6 +389,31 @@ export class StartupDirectionController {
     } while (this.stageCommands[this.nextStageCommand]?.absolutePosition === first.absolutePosition);
   }
 
+  /**
+   * InGameLifeGauge.UpdateView passes min(life / 1000, 1) to
+   * GameOverManager.UpdateGameOverCover (Practice skips it). Only a level
+   * change enables the texture and starts a 0.5 s linear DOScale from the
+   * current scale; the standard manager's non-zero levels follow
+   * isEnableFearOfDeath, on at the default light and graphics settings.
+   */
+  reflectLife(currentLife: number): void {
+    if (this.mode.sessionMode === "rehearsal") return;
+    const level = gameOverCoverLevel(Math.fround(Math.min(Math.fround(currentLife / 1000), 1)));
+    if (level === this.gameOverCoverLevel) return;
+    this.gameOverCoverLevel = level;
+    this.gameOverCoverTween = { elapsed: 0, from: this.sceneValue.gameOverCoverScale, to: GAME_OVER_COVER_SCALES[level] };
+    if ((level !== 0) !== this.sceneValue.gameOverCoverVisible) this.publish({ gameOverCoverVisible: level !== 0 });
+  }
+
+  /** The cover tween runs on Unity time: it also finishes while paused and after GameOver stops ExecUpdate. */
+  advanceGameOverCover(deltaTimeSeconds: number): void {
+    const tween = this.gameOverCoverTween;
+    if (tween === null || !(deltaTimeSeconds > 0)) return;
+    const step = advance(tween.elapsed, GAME_OVER_COVER_SECONDS, deltaTimeSeconds);
+    this.gameOverCoverTween = step.ratio >= 1 ? null : { ...tween, elapsed: step.elapsed };
+    this.publish({ gameOverCoverScale: Math.fround(tween.from + (tween.to - tween.from) * step.ratio) });
+  }
+
   beginGameClearPresentation(bpm: number): void {
     if (this.mvBackground !== null || this.stageOutro !== null) return;
     this.stageOutro = { elapsed: 0, from: this.sceneValue.stageProgress };
@@ -455,6 +482,18 @@ export class StartupDirectionController {
     });
     this.scene?.publish(this.sceneValue);
   }
+}
+
+const GAME_OVER_COVER_SECONDS = 0.5;
+/** GameOverCoverManager localScale per level (x = y). */
+const GAME_OVER_COVER_SCALES = [3, Math.fround(1.7), Math.fround(1.35), 1] as const;
+
+/** GameOverCoverControllerBase.calcCoverLevel. */
+function gameOverCoverLevel(rate: number): 0 | 1 | 2 | 3 {
+  if (rate > Math.fround(0.3)) return 0;
+  if (rate <= 0) return 3;
+  if (rate <= Math.fround(0.15)) return 2;
+  return 1;
 }
 
 function advance(elapsed: number, duration: number, delta: number): Readonly<{ elapsed: number; ratio: number; done: boolean }> {
