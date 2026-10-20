@@ -2,6 +2,7 @@ import {
   AfterNoteType,
   GameNoteType,
   type AfterNoteTypeValue,
+  type ButtonTypeValue,
   type GameNoteTypeValue,
   type NoteInformation,
 } from "./types";
@@ -74,6 +75,20 @@ export function slideFlickDirection(afterNoteType: AfterNoteTypeValue): "Left" |
 /** Authored Directional width of a gesture node: its Add members plus the node itself. */
 export function slideGestureWidth(source: NoteInformation): number {
   return Math.abs(source.slideExitOffset ?? 0) + 1;
+}
+
+/**
+ * Buttons of a gesture node's own contact test. Flick and Directional use the
+ * node's own buttons; a Multiple-Directional gesture uses its whole group span,
+ * as the original Multiple-Directional tail tests its group buttons.
+ */
+export function slideGestureButtonTypes(source: NoteInformation): readonly ButtonTypeValue[] {
+  const after = slideGestureAfterType(source);
+  const offset = source.slideExitOffset ?? 0;
+  if (offset === 0 || source.buttonType < 0 || (after !== AfterNoteType.SlideMultipleDirectionalFlickLeft &&
+    after !== AfterNoteType.SlideMultipleDirectionalFlickRight)) return source.buttonTypesArray;
+  const start = Math.min(source.buttonType, source.buttonType + offset);
+  return Array.from({ length: Math.abs(offset) + 1 }, (_, index) => (start + index) as ButtonTypeValue);
 }
 
 /** Slide A/B family of an original Slide end game type. */

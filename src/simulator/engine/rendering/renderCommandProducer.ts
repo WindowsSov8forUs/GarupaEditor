@@ -78,6 +78,7 @@ import {
   advanceOrdinarySlideChildren,
   applySlideRenderHides,
   createOrdinarySlideChildState,
+  slideSpriteTransform,
   type OrdinarySlideChildState,
   type OrdinarySlideStopControl,
 } from "./ordinarySlideChildLifecycle";
@@ -229,6 +230,7 @@ export interface PreparedOrdinarySlideChildFrame {
   readonly frontTransform: OrdinaryNoteMotionResult;
   readonly childStates: readonly OrdinarySlideChildState[];
   readonly rootExitApplied: boolean;
+  readonly frontExitIndex: number | null;
   readonly transaction: RenderOwnerTransaction;
 }
 
@@ -1168,7 +1170,7 @@ export class RenderCommandProducer {
         renderObjectId,
       });
       if (!this.isCompleteHabahiro()) {
-        // A Slide root icon serves an approved gesture head; other roots never start it.
+        // A Slide root icon serves a gesture head (extension); other roots never start it.
         if (pool.family === "flick" || pool.family === "directional-flick" || pool.family === "slide" ||
           pool.family === "multiple-directional-flick" || pool.family === "multiple-directional-visual") {
           appendHiddenChild(
@@ -1514,7 +1516,7 @@ export class RenderCommandProducer {
       ? resolveHabahiroMotionLaneIndex(information)
       : resolveOrdinaryMotionLaneIndex(information, r7Slide);
     if (lane.status !== "ok") return lane;
-    // Approved gesture head: the original Slide end sprite of its tail game type.
+    // Gesture head (extension): the original Slide end sprite of its tail game type.
     const headGesture = information.slideHeadGestureGameType;
     const binding = headGesture !== undefined
       ? habahiro
@@ -2164,10 +2166,11 @@ export class RenderCommandProducer {
     const commands: RenderCommand[] = [];
     if (stopControl.advanceMotion && stopControl.rootWaiting) {
       const renderObjectId = rootRenderObjectId(poolObjectId);
-      const moved = advanced.value.frontTransform;
-      appendNoteTransform(commands, base, renderObjectId, moved.position, moved.localScale,
+      const moved = slideSpriteTransform(advanced.value.frontTransform, advanced.value.frontExitIndex, true, stopControl);
+      if (moved.status !== "ok") return moved;
+      appendNoteTransform(commands, base, renderObjectId, moved.value.position, moved.value.localScale,
         stopControl.rootMotionState.noteParentScale, scene.noteTint, scene.noteDomainLayer,
-        this.creationSequenceByObjectId.get(renderObjectId)!, moved.unclipped);
+        this.creationSequenceByObjectId.get(renderObjectId)!, moved.value.unclipped);
     }
     this.appendOrdinarySlideHides(commands, poolObjectId, childStates, nextChildStates, hideRequests);
     const materialRole = slideLineMaterialRole(stopControl.rootSource.slideNoteList.some(child => child.isInvisible));
@@ -2191,8 +2194,11 @@ export class RenderCommandProducer {
             }
           }
         }
-        appendNoteTransform(commands, base, childObjectId, state.lifecycle.renderedTransform.position,
-          state.lifecycle.renderedTransform.localScale, state.lifecycle.motionState.noteParentScale, scene.noteTint, scene.noteDomainLayer, childCreationSequence, state.lifecycle.renderedTransform.unclipped);
+        const sprite = slideSpriteTransform(state.lifecycle.renderedTransform, state.sourceIndex,
+          state.exitApplied && state.segmentStartIndex === state.sourceIndex, stopControl);
+        if (sprite.status !== "ok") return sprite;
+        appendNoteTransform(commands, base, childObjectId, sprite.value.position,
+          sprite.value.localScale, state.lifecycle.motionState.noteParentScale, scene.noteTint, scene.noteDomainLayer, childCreationSequence, sprite.value.unclipped);
 
       }
       appendCurveMesh(commands, base, meshObjectId, segment.geometry, scene,
@@ -2202,7 +2208,7 @@ export class RenderCommandProducer {
     const transaction = this.preflight(commands);
     return transaction.status === "ok"
       ? ok(Object.freeze({ frontTransform: advanced.value.frontTransform, childStates: nextChildStates,
-        rootExitApplied: advanced.value.rootExitApplied, transaction: transaction.value }))
+        rootExitApplied: advanced.value.rootExitApplied, frontExitIndex: advanced.value.frontExitIndex, transaction: transaction.value }))
       : transaction;
   }
 
@@ -2210,12 +2216,52 @@ export class RenderCommandProducer {
     poolObjectId: string,
     previous: readonly OrdinarySlideChildState[],
     requests: ReadonlyMap<number, SlideNodeHideRequest>,
-  ): SimulatorResult<Omit<PreparedOrdinarySlideChildFrame, "frontTransform" | "rootExitApplied">> {
+  ): SimulatorResult<Omit<PreparedOrdinarySlideChildFrame, "frontTransform" | "rootExitApplied" | "frontExitIndex">> {
     const childStates = applySlideRenderHides(previous, previous, requests);
     const commands: RenderCommand[] = [];
     this.appendOrdinarySlideHides(commands, poolObjectId, previous, childStates, requests);
     const transaction = this.preflight(commands);
     return transaction.status === "ok" ? ok({ childStates, transaction: transaction.value }) : transaction;
+  }
+
+  /**
+   * Extension: closes the gesture presentation of a Slide gesture head (-1) or
+   * intermediate node. Its flick icon stops; an intermediate node shows the plain
+   * intermediate body (note_slide_among). The held head body is bound by its placement.
+   */
+  preflightSlideGesturePresentationCloses(
+    poolObjectId: string,
+    root: NoteInformation,
+    indices: ReadonlySet<number>,
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    const base = this.commandBase(this.substep);
+    const commands: RenderCommand[] = [];
+    const icons: string[] = [];
+    for (const index of indices) {
+      const objectId = index === -1 ? rootRenderObjectId(poolObjectId) : slideChildRenderObjectId(poolObjectId, index);
+      if (index >= 0) {
+        const source = root.slideNoteList[index];
+        if (source === undefined || !this.creationSequenceByObjectId.has(objectId)) return integrityFailure(
+          "render.slide.gesture-close-owner-missing",
+          "A gesture node presentation closes on its activated Slide child.");
+        const binding = this.isCompleteHabahiro()
+          ? resolveHabahiroSlideChildBinding(source, false, this.resources)
+          : resolveSlideChildSpriteBinding(source, false, this.resources);
+        if (binding.status !== "ok") return binding;
+        appendNoteSpriteBinding(commands, base, objectId, binding.value);
+      }
+      const iconObjectId = ordinaryNoteIconRenderObjectId(objectId);
+      if (!this.creationSequenceByObjectId.has(iconObjectId)) continue;
+      const animation = this.noteAnimationElapsedSeconds.get(iconObjectId);
+      if (animation !== undefined && animation.playbackRevision !== null) commands.push({ ...base(commands.length),
+        kind: "stop-animation", renderObjectId: iconObjectId, animationRole: animation.role, restart: false });
+      commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: iconObjectId });
+      icons.push(iconObjectId);
+    }
+    const publish = () => { for (const icon of icons) this.noteAnimationElapsedSeconds.delete(icon); };
+    return commands.length === 0 ? ok(new RenderOwnerTransaction(this.renderer, null, publish)) : this.preflight(commands, publish);
   }
 
   private appendOrdinarySlideHides(
@@ -3337,11 +3383,12 @@ interface NoteBindingGeometry {
   readonly width: number;
 }
 
-/** Shared note-family routing; extensions supply only their resource-coordinate mapping. */
+/** Shared note-family routing; extensions supply only their resource-coordinate mapping.
+ * A gesture node whose presentation has closed resolves as a plain intermediate node. */
 export function resolveProjectedNoteBinding(root: NoteInformation, source: NoteInformation,
   phase: "head" | "intermediate" | "tail", resources: RenderEngineResourceBindings, noteColor: boolean,
-  geometry: NoteBindingGeometry, habahiro: boolean): SimulatorResult<NoteSpriteBinding | null> {
-  // Approved gesture head/intermediate: the original Slide end sprite of its tail game type.
+  geometry: NoteBindingGeometry, habahiro: boolean, gesturePresentation = true): SimulatorResult<NoteSpriteBinding | null> {
+  // Gesture head/intermediate (extension): the original Slide end sprite of its tail game type.
   const headGesture = phase === "head" ? source.slideHeadGestureGameType : undefined;
   if (headGesture !== undefined) {
     const tail = { ...source, gameNoteType: headGesture };
@@ -3352,7 +3399,7 @@ export function resolveProjectedNoteBinding(root: NoteInformation, source: NoteI
     : resolveFrontSpriteBinding(source, resources, noteColor, geometry);
   if (root.fireNoteType === FrontNoteType.Long) return habahiro ? resolveHabahiroAfterSpriteBinding(root, resources, geometry)
     : resolveAfterSpriteBinding(root, resources, geometry);
-  const flickEnd = phase === "tail" || usesGestureEndBody(source);
+  const flickEnd = phase === "tail" || gesturePresentation && usesGestureEndBody(source);
   return habahiro ? resolveHabahiroSlideChildBinding(source, flickEnd, resources, geometry)
     : resolveSlideChildSpriteBinding(source, flickEnd, resources, geometry);
 }

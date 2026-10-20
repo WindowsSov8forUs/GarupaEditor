@@ -119,7 +119,7 @@ export interface NoteInformation {
   readonly directionalMemberOffset?: number;
   /** Approved Garupa semantics: retain hidden endpoints in the shared Slide owner. */
   readonly hiddenSlideEndpoints?: true;
-  /** Approved Garupa gesture head: the original Slide end game type it carries. Intermediate
+  /** Garupa gesture head (extension): the original Slide end game type it carries. Intermediate
    * gesture nodes carry the same tail game types directly in gameNoteType. */
   readonly slideHeadGestureGameType?: GameNoteTypeValue;
   /** Signed lane distance from this node's incoming point to its outgoing point. */

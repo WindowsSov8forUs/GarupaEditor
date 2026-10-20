@@ -1064,7 +1064,7 @@ function judgementGameNoteType(
   entry: OneFrameJudgementEntry,
 ): NoteInformation["gameNoteType"] {
   if (entry.phase !== "tail") {
-    // Approved gesture head/intermediate: the original Slide tail mapping of its own family.
+    // Gesture head/intermediate (extension): the original Slide tail mapping of its own family.
     const gesture = slideGestureAfterType(note);
     if (gesture === AfterNoteType.None) return note.gameNoteType;
     const game = note.slideHeadGestureGameType ?? note.gameNoteType;
