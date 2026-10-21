@@ -1252,6 +1252,12 @@ export class NoteManager {
     if (prepared.status !== "ok") return prepared;
     const committed = prepared.value.transaction.commit();
     if (committed.status !== "ok") return committed;
+    if (placement !== null) {
+      // A placement writes the head's own target (a late Began included): an exit
+      // offset is applied again once the head follows the line.
+      this.ordinarySlideRootExitApplied.delete(note);
+      this.ordinarySlideFrontExitIndex.delete(note);
+    }
     this.ordinaryRenderMotionStates.set(note, Object.freeze({
       ...(note instanceof NoteSlide ? {
         slideJudgeY: placement !== null ? current.slideJudgeY! : noteMotionY(prepared.value.motion),

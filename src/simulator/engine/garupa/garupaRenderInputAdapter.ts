@@ -210,12 +210,15 @@ export class GarupaRenderInputAdapter {
       const vertical = advanceOrdinaryNoteVerticalMotion({ ...root.motionState, deltaTime: f32(0) });
       if (vertical.status !== "ok") return vertical;
       const rootJudgeY = state.root.phase === "stop" ? state.rootJudgeY : Math.max(vertical.value.y, this.scene.virtualPerfectLine);
+      let next: ExtensionSlideState = { ...state, root, rootJudgeY };
       if (placement !== null) {
         const placed = repositionOrdinaryNoteToJudgeLine(root.motionState, placement === "preserve" ? root.renderedTransform.localScale : placement);
         if (placed.status !== "ok") return placed;
         root = { ...root, phase: "stop", renderedTransform: placed.value };
+        // The head is back on its own target (a late Began included): an exit
+        // offset is applied again once it follows the line.
+        next = { ...state, root, rootJudgeY, rootExitApplied: false, frontExitIndex: null };
       }
-      const next = { ...state, root, rootJudgeY };
       if (previous === undefined) {
         // Activation follows child updates in NoteManager. Publish initial
         // geometry here without consuming another outer-frame delta.
