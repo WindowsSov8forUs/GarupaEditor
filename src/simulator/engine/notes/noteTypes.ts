@@ -900,6 +900,11 @@ export class NoteSlide extends NoteFrontBase {
     if (this.noteInformation !== null) this.onTouchKeepSound?.(this.noteInformation.index, action);
   });
   get flashAnimationRevision(): number | null { return this.feedback.revision; }
+  /** The current note after a Began (changeCurrentNote): the target of the Slide TapKeep
+   * that playSlideNoteParticle plays right after playFlashAnimation. */
+  get tapKeepTargetSource(): NoteInformation | null {
+    return this.manualCurrentNode?.source ?? this.noteInformation;
+  }
   private readonly pendingSpriteHides = new Map<number, SlideNodeHideRequest>();
   private readonly pendingGestureCloseIndices = new Set<number>();
   private beganPlacementPending = false;

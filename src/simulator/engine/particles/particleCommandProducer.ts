@@ -49,6 +49,8 @@ interface SlideSemanticIdentity {
 interface MutableParticleOwnerState {
   readonly buttonTapKeep: Map<number, Map<number, TapKeepOwner>>;
   readonly slideTapKeep: Map<string, TapKeepOwner>;
+  /** Last Slide flash revision that played a TapKeep, by Slide identity. */
+  readonly slideFlashRevisions: Map<string, number>;
   slidePoolCursor: number;
   suppressedUntilReplay: boolean;
   terminal: boolean;
@@ -125,6 +127,12 @@ export class ParticleCommandProducer {
     this.slidePresentation = reader;
   }
 
+  private slideFlashes: (() => Iterable<{ readonly root: NoteInformation; readonly revision: number; readonly target: NoteInformation }>) | null = null;
+
+  setSlideFlashReader(reader: NonNullable<ParticleCommandProducer["slideFlashes"]>): void {
+    this.slideFlashes = reader;
+  }
+
   preflightSlidePresentation(): SimulatorResult<ParticleCommandOwnerTransaction> {
     const available = this.validateAvailable();
     if (available.status !== "ok") return available;
@@ -149,7 +157,42 @@ export class ParticleCommandProducer {
       moveSlideTapKeep(identity, owner.instance.buttonType, owner.rangeLength, transform,
         this.particleScene!, projected, commands);
     }
+    // NoteSlide.ExecTouchBegan reaches changeCurrentNote, playFlashAnimation and
+    // playSlideNoteParticle on every successful Began (head, later node, flick-end cache),
+    // so a new flash revision plays the pooled Slide TapKeep at the current target.
+    for (const flash of this.slideFlashes?.() ?? []) {
+      const identity = slideIdentity(flash.root);
+      const key = slideSemanticKey(identity);
+      if (projected.slideFlashRevisions.get(key) === flash.revision) continue;
+      projected.slideFlashRevisions.set(key, flash.revision);
+      if (projected.suppressedUntilReplay) continue;
+      const placement = this.slideTapKeepPlacement(flash.root, flash.target);
+      if (placement.status !== "ok") return placement;
+      stopSlideTapKeep(identity, projected, commands);
+      playSlideTapKeep(identity, placement.value.button, placement.value.width, placement.value.transform,
+        this.particleScene!, projected, commands);
+    }
     return ok(undefined);
+  }
+
+  /** A Slide TapKeep's button, range and transform for its current target. */
+  private slideTapKeepPlacement(root: NoteInformation, targetSource: NoteInformation): SimulatorResult<{
+    readonly button: number; readonly width: number; readonly transform: ParticleOwnerTransform;
+  }> {
+    const span = targetSource.laneSpan;
+    const button = span === undefined ? targetCenterButtonType(targetSource) : (span.start + span.end) / 2;
+    const width = span === undefined ? targetSource.buttonTypesArray.length : span.width ?? span.end - span.start + 1;
+    if (button === null) return rejected("particle.producer.invalid-slide-current-node", "Slide movement requires its current target geometry.");
+    const actual = this.slidePresentation?.(root);
+    let transform: ParticleOwnerTransform | null;
+    if (actual != null) transform = slideTransform(actual.x, actual.y, this.particleScene!);
+    else if (span !== undefined && this.productScene !== null) {
+      const position = this.productScene.projectLaneAtCurve(button, 1);
+      if (position.status !== "ok") return position;
+      transform = slideTransform(position.value.x.value, position.value.y.value, this.particleScene!);
+    } else transform = originalSlideTransform(button, this.particleScene!);
+    if (transform === null) return rejected("particle.producer.invalid-slide-transform", "Slide movement requires a finite published transform.");
+    return ok({ button, width, transform });
   }
 
   constructor(
@@ -622,22 +665,11 @@ export class ParticleCommandProducer {
       return ok(undefined);
     }
     if (targetSource === null) return ok(undefined);
-    const span = targetSource.laneSpan;
-    const button = span === undefined ? targetCenterButtonType(targetSource) : (span.start + span.end) / 2;
-    const width = span === undefined ? targetSource.buttonTypesArray.length : span.width ?? span.end - span.start + 1;
-    if (button === null) return rejected("particle.producer.invalid-slide-current-node", "Slide movement requires its current target geometry.");
-    const actual = this.slidePresentation?.(root);
-    let transform: ParticleOwnerTransform | null;
-    if (actual != null) transform = slideTransform(actual.x, actual.y, this.particleScene!);
-    else if (span !== undefined && this.productScene !== null) {
-      const position = this.productScene.projectLaneAtCurve(button, 1);
-      if (position.status !== "ok") return position;
-      transform = slideTransform(position.value.x.value, position.value.y.value, this.particleScene!);
-    } else transform = originalSlideTransform(button, this.particleScene!);
-    if (transform === null) return rejected("particle.producer.invalid-slide-transform", "Slide movement requires a finite published transform.");
-    const head = entry.phase === "head";
-    if (head) playSlideTapKeep(identity, button, width, transform, this.particleScene!, projected, commands);
-    else moveSlideTapKeep(identity, button, width, transform, this.particleScene!, projected, commands);
+    const placement = this.slideTapKeepPlacement(root, targetSource);
+    if (placement.status !== "ok") return placement;
+    // Play belongs to the Began flash (synchronizeSlidePresentations); a judgement moves it.
+    moveSlideTapKeep(identity, placement.value.button, placement.value.width, placement.value.transform,
+      this.particleScene!, projected, commands);
     return ok(undefined);
   }
 
@@ -1225,6 +1257,7 @@ function createEmptyState(): MutableParticleOwnerState {
   return {
     buttonTapKeep: new Map(),
     slideTapKeep: new Map(),
+    slideFlashRevisions: new Map(),
     slidePoolCursor: 0,
     suppressedUntilReplay: false,
     terminal: false,
@@ -1236,6 +1269,7 @@ function cloneState(source: MutableParticleOwnerState): MutableParticleOwnerStat
   return {
     buttonTapKeep: new Map([...source.buttonTapKeep].map(([button, owners]) => [button, new Map(owners)])),
     slideTapKeep: new Map(source.slideTapKeep),
+    slideFlashRevisions: new Map(source.slideFlashRevisions),
     slidePoolCursor: source.slidePoolCursor,
     suppressedUntilReplay: source.suppressedUntilReplay,
     terminal: source.terminal,

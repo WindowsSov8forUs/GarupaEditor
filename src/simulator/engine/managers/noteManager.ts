@@ -276,6 +276,19 @@ export class NoteManager {
     lineFor: (note, after) => this.syncLineForEndpoint(note, after),
     connect: (a, afterA, b, afterB, existing) => this.connectSyncEndpoints(a, afterA, b, afterB, existing),
   });
+  /** Active Slides whose flash plays, with its revision. Every successful Slide Began
+   * runs changeCurrentNote, playFlashAnimation and playSlideNoteParticle together, so the
+   * particle owner plays the Slide TapKeep whenever this revision advances. */
+  slideFlashes(): { readonly root: NoteInformation; readonly revision: number; readonly target: NoteInformation }[] {
+    const flashes: { readonly root: NoteInformation; readonly revision: number; readonly target: NoteInformation }[] = [];
+    for (const note of this.activeNotesValue) {
+      if (!(note instanceof NoteSlide) || note.noteInformation === null) continue;
+      const revision = note.flashAnimationRevision, target = note.tapKeepTargetSource;
+      if (revision !== null && target !== null) flashes.push({ root: note.noteInformation, revision, target });
+    }
+    return flashes;
+  }
+
   getCommittedNotePresentation(source: NoteInformation, longAfter = false) {
     for (const note of this.activeNotesValue) {
       const root = note.noteInformation;

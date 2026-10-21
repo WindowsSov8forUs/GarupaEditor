@@ -1182,6 +1182,7 @@ export function createSimulatorEngine(
     return actual === null ? null : { x: actual.position.x.value, y: actual.position.y.value,
       active: actual.slideEffectActive };
   });
+  particleCoordinator?.producer.setSlideFlashReader(() => noteManager.slideFlashes());
   const inputDispatcherRegistration = inputManager.registerDispatcher(inputDispatcher);
   if (inputDispatcherRegistration.status !== "ok") {
     return inputDispatcherRegistration;
