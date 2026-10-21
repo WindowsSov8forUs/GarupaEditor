@@ -1087,7 +1087,12 @@ export class NoteSlide extends NoteFrontBase {
   }
 
   override isContainsButton(buttonType: ButtonTypeValue): boolean {
-    return this.manualCandidateSource?.buttonTypes.includes(buttonType) ?? false;
+    const source = this.manualCandidateSource;
+    if (source === null) return false;
+    // A gesture node binds a touch-down over the same span as its own contact test.
+    const current = this.manualCurrentNode;
+    const buttons = current?.isGesture === true && current.source === source ? slideGestureButtonTypes(source) : source.buttonTypes;
+    return buttons.includes(buttonType);
   }
 
   override activate(noteInformation: NoteInformation): SimulatorResult<void> {
@@ -2149,7 +2154,8 @@ export class NoteSlide extends NoteFrontBase {
     const runtime = this.manualRuntime;
     if (runtime.status !== "ok") return runtime;
     if (first === null || !this.awaitsHiddenHeadRegistration) return ok(null);
-    const inside = runtime.value.isInsideSource(input.currentPosition, first.source, first.source.buttonTypesArray);
+    const inside = runtime.value.isInsideSource(input.currentPosition, first.source,
+      first.isGesture ? slideGestureButtonTypes(first.source) : first.source.buttonTypesArray);
     if (inside.status !== "ok") return inside;
     if (!inside.value) return ok(null);
     const decision = runtime.value.judgeSlide(first.source);
