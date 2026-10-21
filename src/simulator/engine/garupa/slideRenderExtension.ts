@@ -13,7 +13,7 @@ import { advanceLongChildFrame, advanceOrdinaryLongNormalChild, createOrdinaryLo
 import { advanceOrdinaryNoteVerticalMotion, calculateNoteMotionCurve, getOrdinaryNoteArrivalSeconds, repositionOrdinaryNoteToJudgeLine } from "../rendering/ordinaryNoteGeometry";
 import { advanceOrdinarySlideChildren, applySlideRenderHides, createOrdinarySlideChildState, queueSlideRenderHideBefore, slideSpriteTransform, type OrdinarySlideChildState, type OrdinarySlideFrameResult, type SlideGeometrySource, type SlideRenderHideRequest } from "../rendering/ordinarySlideChildLifecycle";
 import type { OrdinaryNoteMotionResult } from "../rendering/ordinaryNoteGeometry";
-import type { OrdinaryFixedNoteSceneInput } from "../rendering/renderCommandProducer";
+import { longMeshColorFor, type OrdinaryFixedNoteSceneInput } from "../rendering/renderCommandProducer";
 import type { GarupaProductNode } from "./productChartProfile";
 import type { GarupaProductTimingGroupAxisProfile } from "./timingGroupAxis";
 
@@ -115,7 +115,8 @@ export function advanceExtensionSlide(
     const tail = nodes[1]!;
     const child = previous.children[0]!;
     const long = advanceLongChildFrame(child.lifecycle, root.renderedTransform, input,
-      ordinaryScene.screenToSafeAreaRatio!, ordinaryScene.longMeshColor!, ordinaryScene.habahiro?.highAspectRatio, {
+      ordinaryScene.screenToSafeAreaRatio!, longMeshColorFor(ordinaryScene, owner instanceof NoteLong && owner.isMeshTouched(0)),
+      ordinaryScene.habahiro?.highAspectRatio, {
         advance: () => {
           if (initializeGeometry && !chainUsesAxis) return ok(child.lifecycle);
           const moved = advanceExtensionMotion(child.lifecycle, tail, frame, input, axis, usesAxis(tail));
@@ -170,8 +171,9 @@ export function advanceExtensionSlide(
       }
     }
     const advanced = advanceOrdinarySlideChildren(root.renderedTransform, head.width, children,
-      input, ordinaryScene.screenToSafeAreaRatio!, ordinaryScene.longMeshColor!, {
+      input, ordinaryScene.screenToSafeAreaRatio!, { normal: ordinaryScene.longMeshColor!, touch: ordinaryScene.longMeshTouchColor! }, {
         advanceMotion: frame.deltaTimeSeconds > 0,
+        ...(owner instanceof NoteSlide ? { meshTouched: (index: number) => owner.isMeshTouched(index) } : {}),
         rootWaiting: root.phase === "stop", rootExitApplied, frontExitIndex, hiddenEndpoints: head.runtimeRoot?.hiddenSlideEndpoints,
         judgementAdjustValueB: frame.adjustment,
         virtualPerfectLine: scene.virtualPerfectLine,

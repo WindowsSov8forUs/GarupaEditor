@@ -208,7 +208,10 @@ export interface OrdinaryFixedNoteSceneInput {
   readonly noteDomainLayer: number;
   readonly syncLineEdgeMargin?: RenderFloat32;
   readonly screenToSafeAreaRatio?: RenderFloat32;
+  /** NoteAfterBase.meshColorNormal RGB with the saved body alpha. */
   readonly longMeshColor?: RenderColor;
+  /** NoteAfterBase.meshColorTouch RGB with the same alpha. */
+  readonly longMeshTouchColor?: RenderColor;
   readonly field?: OriginalSkinFieldSceneInput;
   readonly habahiro?: HabahiroSceneInput;
 }
@@ -1505,7 +1508,9 @@ export class RenderCommandProducer {
         !validateRenderFloat32(scene.screenToSafeAreaRatio) ||
         scene.screenToSafeAreaRatio.value <= 0 ||
         scene.longMeshColor === undefined ||
-        !validateColor(scene.longMeshColor))
+        !validateColor(scene.longMeshColor) ||
+        scene.longMeshTouchColor === undefined ||
+        !validateColor(scene.longMeshTouchColor))
     ) {
       return integrityFailure(
         "render.note.long-scene-unavailable",
@@ -1689,6 +1694,7 @@ export class RenderCommandProducer {
         afterButtonCount: motionState.buttonCount,
         screenToSafeAreaRatio: scene.screenToSafeAreaRatio!,
         widthRate: widthRate.value,
+        // NoteMesh.Activate (0x30E16B8): an activated body starts with meshColorNormal.
         color: scene.longMeshColor!,
         advanced: information.virtualLaneDirection !== 0,
       });
@@ -1856,6 +1862,7 @@ export class RenderCommandProducer {
           afterButtonCount: childButtonCount,
           screenToSafeAreaRatio: scene.screenToSafeAreaRatio!,
           widthRate: segmentWidthRate.value,
+          // NoteMesh.Activate (0x30E16B8): an activated segment starts with meshColorNormal.
           color: scene.longMeshColor!,
           advanced: information.virtualLaneDirection !== 0 || source.virtualLaneDirection !== 0,
         });
@@ -2035,6 +2042,7 @@ export class RenderCommandProducer {
     frontTransform: OrdinaryNoteMotionResult,
     input: OrdinaryLongNormalChildFrameInput,
     scene: OrdinaryFixedNoteSceneInput,
+    meshTouched: boolean,
   ): SimulatorResult<PreparedOrdinaryLongChildFrame> {
     const validation = this.validate();
     if (validation.status !== "ok") return validation;
@@ -2051,7 +2059,9 @@ export class RenderCommandProducer {
       !validateRenderFloat32(scene.screenToSafeAreaRatio) ||
       scene.screenToSafeAreaRatio.value <= 0 ||
       scene.longMeshColor === undefined ||
-      !validateColor(scene.longMeshColor)
+      !validateColor(scene.longMeshColor) ||
+      scene.longMeshTouchColor === undefined ||
+      !validateColor(scene.longMeshTouchColor)
     ) {
       return integrityFailure(
         "render.note.long-scene-unavailable",
@@ -2059,7 +2069,7 @@ export class RenderCommandProducer {
       );
     }
     const frame = advanceLongChildFrame(childState, frontTransform, input, scene.screenToSafeAreaRatio,
-      scene.longMeshColor, this.isCompleteHabahiro() ? scene.habahiro!.highAspectRatio : undefined);
+      longMeshColorFor(scene, meshTouched), this.isCompleteHabahiro() ? scene.habahiro!.highAspectRatio : undefined);
     if (frame.status !== "ok") return frame;
     const next = ok(frame.value.childState);
     const mesh = ok(frame.value.mesh);
@@ -2139,7 +2149,8 @@ export class RenderCommandProducer {
     }
     if (
       scene.screenToSafeAreaRatio === undefined ||
-      scene.longMeshColor === undefined
+      scene.longMeshColor === undefined ||
+      scene.longMeshTouchColor === undefined
     ) {
       return integrityFailure(
         "render.slide.scene-unavailable",
@@ -2152,7 +2163,7 @@ export class RenderCommandProducer {
       childStates,
       input,
       scene.screenToSafeAreaRatio,
-      scene.longMeshColor,
+      { normal: scene.longMeshColor, touch: scene.longMeshTouchColor },
       stopControl,
       this.isCompleteHabahiro()
         ? scene.habahiro!.highAspectRatio
@@ -2914,7 +2925,8 @@ export function validateOrdinaryFixedNoteSceneInput(
     (scene.screenToSafeAreaRatio !== undefined &&
       (!validateRenderFloat32(scene.screenToSafeAreaRatio) ||
         scene.screenToSafeAreaRatio.value <= 0)) ||
-    (scene.longMeshColor !== undefined && !validateColor(scene.longMeshColor))
+    (scene.longMeshColor !== undefined && !validateColor(scene.longMeshColor)) ||
+    (scene.longMeshTouchColor !== undefined && !validateColor(scene.longMeshTouchColor))
   ) {
     return integrityFailure(
       "render.producer.invalid-ordinary-fixed-note-scene",
@@ -2947,6 +2959,11 @@ function appendNoteTransform(
   commands.push({ ...base(commands.length), kind: "set-transform", renderObjectId,
     position, unclipped: noteUnclippedTransform({ unclipped }, parentScale), scale: noteWorldScale(localScale, parentScale), rotationDegrees: float32State(0), color,
     ordering: { domainLayer, sourceDepthOrSortingOrder: 70, sourceZ: position.z, creationSequence }, maskObjectId: null });
+}
+
+/** NoteMesh.SetupMeshColor keeps the body alpha; only the RGB follows the touched state. */
+export function longMeshColorFor(scene: OrdinaryFixedNoteSceneInput, touched: boolean): RenderColor {
+  return touched ? scene.longMeshTouchColor! : scene.longMeshColor!;
 }
 
 function appendCurveMesh(

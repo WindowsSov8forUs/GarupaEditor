@@ -66,6 +66,8 @@ export interface OrdinarySlideStopControl {
   readonly frontExitIndex?: number | null;
   /** Extension: whether a gesture node (-1 root) still shows its gesture presentation. */
   readonly gesturePresentationShown?: (index: number) => boolean;
+  /** Whether NoteAfterBase.Touch has switched after node `index`'s mesh to meshColorTouch. */
+  readonly meshTouched?: (index: number) => boolean;
   /** Approved hidden endpoints may have no later visible geometry anchor. */
   readonly hiddenEndpoints?: boolean;
   readonly judgementAdjustValueB: number;
@@ -179,7 +181,7 @@ export function advanceOrdinarySlideChildren(
   childStates: readonly OrdinarySlideChildState[],
   input: OrdinaryLongNormalChildFrameInput,
   screenToSafeAreaRatio: RenderFloat32,
-  color: RenderColor,
+  colors: { readonly normal: RenderColor; readonly touch: RenderColor },
   stopControl: OrdinarySlideStopControl,
   habahiroHighAspectRatio?: RenderFloat32,
   extension?: SlideMotionExtension,
@@ -375,7 +377,9 @@ export function advanceOrdinarySlideChildren(
       afterButtonCount: state.buttonCount,
       screenToSafeAreaRatio,
       widthRate: widthRate.value,
-      color,
+      // The segment ending at after node i is that node's NoteMesh; NoteAfterBase.Touch
+      // (0x3A74C58) switches its RGB from meshColorNormal to meshColorTouch.
+      color: stopControl.meshTouched?.(state.sourceIndex) === true ? colors.touch : colors.normal,
       advanced: state.lifecycle.motionState.virtualLaneControllerPresent,
     };
     const dormant = !state.meshVisible || extension === undefined && (

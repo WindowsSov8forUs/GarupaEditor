@@ -180,7 +180,10 @@ export function createSimulatorSceneLayout(
     syncLineEdgeMargin: f32(config.syncLineEdgeMargin),
     screenToSafeAreaRatio: f32(originalLayout.value.starUi.screenToSafeAreaRatio),
     // NoteMesh.initMesh initializes alpha from the saved percentage; RGB changes preserve it.
-    longMeshColor: color(1, 1, 1, config.longNoteLineBrightness / 100),
+    // NoteMesh.Activate (0x30E16B8) writes NoteAfterBase.meshColorNormal (0.9, 0.9, 0.9)
+    // to the RGB; NoteAfterBase.Touch (0x3A74C58) switches it to meshColorTouch (1, 1, 1).
+    longMeshColor: color(0.9, 0.9, 0.9, config.longNoteLineBrightness / 100),
+    longMeshTouchColor: color(1, 1, 1, config.longNoteLineBrightness / 100),
     ...(field === undefined ? {} : { field }),
     ...(habahiro.value === undefined ? {} : { habahiro: habahiro.value }),
   });

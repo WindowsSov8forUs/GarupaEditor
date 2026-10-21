@@ -459,7 +459,8 @@ export class NoteManager {
       requiresMeshChildren &&
       (this.ordinaryNoteScene === null ||
         this.ordinaryNoteScene.screenToSafeAreaRatio === undefined ||
-        this.ordinaryNoteScene.longMeshColor === undefined)
+        this.ordinaryNoteScene.longMeshColor === undefined ||
+        this.ordinaryNoteScene.longMeshTouchColor === undefined)
     ) {
       return integrityFailure(
         "render.note.long-scene-unavailable",
@@ -1408,6 +1409,7 @@ export class NoteManager {
           adjustedMusicPosition: adjustedMusicPosition,
         }),
         this.ordinaryNoteScene,
+        note instanceof NoteLong && note.isMeshTouched(0),
       );
       if (prepared.status !== "ok") return prepared;
       const committed = prepared.value.transaction.commit();
@@ -1480,7 +1482,10 @@ export class NoteManager {
           rootSource: note.noteInformation!,
           rootExitApplied: this.ordinarySlideRootExitApplied.has(note),
           frontExitIndex: this.ordinarySlideFrontExitIndex.get(note) ?? null,
-          ...(note instanceof NoteSlide ? { gesturePresentationShown: (index: number) => note.gesturePresentationShown(index) } : {}),
+          ...(note instanceof NoteSlide ? {
+            gesturePresentationShown: (index: number) => note.gesturePresentationShown(index),
+            meshTouched: (index: number) => note.isMeshTouched(index),
+          } : {}),
           rootMotionState: front.motionState,
           currentBpm: this.musicScoreController.currentBpm,
           virtualLaneDeltaX: virtualLaneUnit(

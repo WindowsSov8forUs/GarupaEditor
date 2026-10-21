@@ -271,6 +271,13 @@ export class NoteLong extends NoteFrontBase {
   private manualTouchOriginValue: ManualInputPosition | null = null;
   private manualMoveSucceededValue = false;
   private manualAfterMoveTimeValue = Math.fround(0);
+  /** NoteAfterBase.Touch (0x3A74C58) on the tail: its body mesh uses meshColorTouch. */
+  private meshTouchedValue = false;
+
+  /** Whether the body mesh of after node `index` (the tail, 0) has been touched. */
+  isMeshTouched(index: number): boolean {
+    return index === 0 && this.meshTouchedValue;
+  }
 
   registerLongAfterMultipleGroupResolver(
     resolver: (
@@ -322,6 +329,7 @@ export class NoteLong extends NoteFrontBase {
     this.manualTouchOriginValue = null;
     this.manualMoveSucceededValue = false;
     this.manualAfterMoveTimeValue = Math.fround(0);
+    this.meshTouchedValue = false;
     return ok(undefined);
   }
 
@@ -398,6 +406,8 @@ export class NoteLong extends NoteFrontBase {
     this.manualTouchOriginValue = input.currentPosition;
     this.manualMoveSucceededValue = false;
     this.manualAfterMoveTimeValue = Math.fround(0);
+    // NoteLong.ExecTouchBegan (0x30EB090) calls Touch on its tail.
+    this.meshTouchedValue = true;
     const changed = this.changeState(NoteState.Stop);
     if (changed.status !== "ok") {
       throw new Error("Long Began commit could not enter Stop state");
@@ -672,6 +682,8 @@ export class NoteLong extends NoteFrontBase {
       multipleDirectionalFlickNoteCount: 0,
     });
     if (submitted.status === "ok") {
+      // forcePerfectMoveState invokes Began, which touches the tail like a manual head.
+      this.meshTouchedValue = true;
       this.pulseAutoFrontTapLane(this.effectButtonLane());
       this.flashAnimationRevision = ++this.flashRestartSequence;
       this.onTouchKeepSound?.(noteInformation.index, "start");
@@ -853,6 +865,7 @@ export class NoteLong extends NoteFrontBase {
     this.manualTouchOriginValue = null;
     this.manualMoveSucceededValue = false;
     this.manualAfterMoveTimeValue = Math.fround(0);
+    this.meshTouchedValue = false;
   }
 
   protected override onResetForDispose(): void {
@@ -862,6 +875,7 @@ export class NoteLong extends NoteFrontBase {
     this.manualTouchOriginValue = null;
     this.manualMoveSucceededValue = false;
     this.manualAfterMoveTimeValue = Math.fround(0);
+    this.meshTouchedValue = false;
   }
 }
 
@@ -925,6 +939,20 @@ export class NoteSlide extends NoteFrontBase {
   private afterNotesValue: readonly SlideAfterRuntime[] = [];
   private currentAfterIndexValue = 0;
   private laneEffectTarget: number | null = null;
+  /** After nodes whose mesh NoteAfterBase.Touch (0x3A74C58) switched to meshColorTouch.
+   * Nothing switches a mesh back to meshColorNormal while the Slide is active. */
+  private readonly touchedMeshIndices = new Set<number>();
+
+  /** Whether the mesh of after node `index` (the segment ending at it) has been touched. */
+  isMeshTouched(index: number): boolean {
+    return this.touchedMeshIndices.has(index);
+  }
+
+  /** Touch(nextNote): the after node the Slide now moves toward takes meshColorTouch. */
+  private touchMesh(index: number): void {
+    if (this.state !== NoteState.Deactive && index >= 0 && index < this.afterNotesValue.length)
+      this.touchedMeshIndices.add(index);
+  }
 
   private replaceTapLaneTarget(source: NoteInformation | null): void {
     if (this.laneEffectTarget === null) return;
@@ -1175,6 +1203,7 @@ export class NoteSlide extends NoteFrontBase {
     this.allHiddenValue = noteInformation.isInvisible && this.firstVisibleAfterIndexValue < 0;
     this.afterNotesValue = afterNotes;
     this.currentAfterIndexValue = 0;
+    this.touchedMeshIndices.clear();
     this.laneEffectTarget = null;
     this.manualHeadJudgedValue = false;
     this.manualTailCacheValue = null;
@@ -1276,6 +1305,8 @@ export class NoteSlide extends NoteFrontBase {
       if (this.state !== NoteState.Deactive) {
         this.feedback.restartFlash();
         this.feedback.setSound("start");
+        // NoteSlide.ExecTouchBegan shared tail (0x321BFDC): Touch(nextNote).
+        this.touchMesh(this.currentAfterIndexValue);
       }
       this.enterTrailingGeometryIfFinished();
       return;
@@ -1296,6 +1327,9 @@ export class NoteSlide extends NoteFrontBase {
     }
     this.feedback.restartFlash();
     this.feedback.setSound("start");
+    // NoteSlide.ExecTouchBegan shared tail (0x321BFDC): Touch(nextNote), the first
+    // after node, so the segment from the head turns to meshColorTouch.
+    this.touchMesh(this.currentAfterIndexValue);
     this.enterTrailingGeometryIfFinished();
   }
 
@@ -1570,6 +1604,10 @@ export class NoteSlide extends NoteFrontBase {
         }
       }
       this.commitManualSlideNode(input, step, afterUpdate);
+      // NoteSlide.ExecTouchMoved (0x321CB3C): a successful intermediate progression
+      // touches the new next after node; forcePerfectPendingAfter reaches it too.
+      if (step.judgementPlan !== null || (step.familyData as { advanceHidden?: boolean }).advanceHidden === true)
+        this.touchMesh(this.currentAfterIndexValue);
       if (this.isGeometryOnly) break;
     }
     this.enterTrailingGeometryIfFinished();
@@ -1836,6 +1874,8 @@ export class NoteSlide extends NoteFrontBase {
       this.closeGesturePresentation(-1);
       this.feedback.restartFlash();
       this.feedback.setSound("start");
+      // The invoked Began touches its next after node like a manual head.
+      this.touchMesh(this.currentAfterIndexValue);
       return this.changeState(NoteState.Stop);
     }
     return submitted;
@@ -1950,6 +1990,8 @@ export class NoteSlide extends NoteFrontBase {
     }
     this.hideBeforeSlideNode(selected.sourceIndex, false);
     this.closeGesturePresentation(selected.sourceIndex);
+    // forcePerfectStopState invokes ExecTouchMoved, which touches the next after node.
+    if (!selected.isTerminal) this.touchMesh(selected.sourceIndex + 1);
     return selected.isTerminal ? this.changeState(NoteState.Deactive) : ok(undefined);
   }
 
@@ -2208,10 +2250,13 @@ export class NoteSlide extends NoteFrontBase {
       this.manualAfterMoveTimeValue = data.nextGrace;
       const gesture = (plan.familyData as { readonly gesture?: SlideGestureState }).gesture;
       this.gestureStateValue = gesture ?? null;
+      // Head handling ends like the ExecTouchBegan shared tail: Touch(nextNote).
+      this.touchMesh(this.currentAfterIndexValue);
       return;
     }
     this.hideBeforeSlideNode(first.sourceIndex, false);
     this.commitManualSlideNode(input, plan);
+    this.touchMesh(this.currentAfterIndexValue);
     this.enterTrailingGeometryIfFinished();
   }
 
@@ -2266,7 +2311,11 @@ export class NoteSlide extends NoteFrontBase {
       transaction.finish();
       return ok(undefined);
     }
-    if (current.source.isInvisible) return this.completeHiddenAfter(current, false);
+    if (current.source.isInvisible) {
+      const completed = this.completeHiddenAfter(current, false);
+      if (completed.status === "ok") this.touchMesh(this.currentAfterIndexValue);
+      return completed;
+    }
     const phase = current.isTerminal ? "tail" : "intermediate";
     let noteType = current.judgeNoteType;
     if (current.isTerminal) {
@@ -2299,6 +2348,8 @@ export class NoteSlide extends NoteFrontBase {
     this.hideBeforeSlideNode(this.currentAfterIndexValue, false, true);
     this.closeGesturePresentation(current.sourceIndex);
     this.currentAfterIndexValue += 1;
+    // The after-update ExecTouchMoved progression touches the new next after node.
+    if (!current.isTerminal) this.touchMesh(this.currentAfterIndexValue);
     return current.isTerminal
       ? this.changeState(NoteState.Deactive)
       : ok(undefined);
@@ -2316,6 +2367,7 @@ export class NoteSlide extends NoteFrontBase {
     this.pendingSpriteHides.clear();
     this.pendingGestureCloseIndices.clear();
     this.currentAfterIndexValue = 0;
+    this.touchedMeshIndices.clear();
     this.laneEffectTarget = null;
     this.manualHeadJudgedValue = false;
     this.slideAfterMultipleGroupValue = null;
@@ -2356,6 +2408,7 @@ export class NoteSlide extends NoteFrontBase {
     this.pendingSpriteHides.clear();
     this.pendingGestureCloseIndices.clear();
     this.currentAfterIndexValue = 0;
+    this.touchedMeshIndices.clear();
     this.laneEffectTarget = null;
     this.manualHeadJudgedValue = false;
     this.slideAfterMultipleGroupValue = null;
