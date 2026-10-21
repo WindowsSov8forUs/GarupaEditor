@@ -1,6 +1,6 @@
 import { noteMotionY, noteMotionCurveExponent, projectOrdinaryNoteMotion } from "../rendering/ordinaryNoteGeometry";
 import { coordinate, coordinateAdd, coordinateScale } from "../rendering/exponentialCoordinates";
-import { isProductGestureNode, projectedNodeLane } from "./productChartProfile";
+import { projectedNodeLane } from "./productChartProfile";
 import { FrontNoteType } from "../chart/types";
 import { NoteState } from "../notes/noteBase";
 import { NoteLong, NoteSlide } from "../notes/noteTypes";
@@ -11,8 +11,9 @@ import type { GarupaProductSceneLayout } from "../../scene/simulatorSceneLayout"
 import { ok, type SimulatorResult } from "../result";
 import { advanceLongChildFrame, advanceOrdinaryLongNormalChild, createOrdinaryLongNormalChildState, getOrdinaryNoteMeshAfterScale, type OrdinaryLongNormalChildFrameInput, type OrdinaryLongNormalChildState } from "../rendering/ordinaryLongChildLifecycle";
 import { advanceOrdinaryNoteVerticalMotion, calculateNoteMotionCurve, getOrdinaryNoteArrivalSeconds, repositionOrdinaryNoteToJudgeLine } from "../rendering/ordinaryNoteGeometry";
-import { advanceOrdinarySlideChildren, applySlideRenderHides, createOrdinarySlideChildState, queueSlideRenderHideBefore, type OrdinarySlideChildState, type OrdinarySlideFrameResult, type SlideGeometrySource, type SlideRenderHideRequest } from "../rendering/ordinarySlideChildLifecycle";
-import type { OrdinaryFixedNoteSceneInput } from "../rendering/renderCommandProducer";
+import { advanceOrdinarySlideChildren, applySlideRenderHides, createOrdinarySlideChildState, queueSlideRenderHideBefore, slideSpriteTransform, type OrdinarySlideChildState, type OrdinarySlideFrameResult, type SlideGeometrySource, type SlideRenderHideRequest } from "../rendering/ordinarySlideChildLifecycle";
+import type { OrdinaryNoteMotionResult } from "../rendering/ordinaryNoteGeometry";
+import { longMeshColorFor, type OrdinaryFixedNoteSceneInput } from "../rendering/renderCommandProducer";
 import type { GarupaProductNode } from "./productChartProfile";
 import type { GarupaProductTimingGroupAxisProfile } from "./timingGroupAxis";
 
@@ -32,9 +33,9 @@ export interface ExtensionSlideState {
   readonly root: OrdinaryLongNormalChildState;
   readonly rootJudgeY: number;
   readonly rootExitApplied?: boolean;
+  readonly frontExitIndex?: number | null;
   readonly children: readonly OrdinarySlideChildState[];
   readonly rootVisible: boolean;
-  readonly headCompleted?: boolean;
   readonly flashActive: boolean;
   readonly finished: boolean;
   readonly playableFinished: boolean;
@@ -102,17 +103,8 @@ export function advanceExtensionSlide(
   let root = advancedRoot.value;
   const rootJudgementY = usesAxis(head) ? slideJudgementY(root) : ok(noteMotionY(root.renderedTransform));
   if (rootJudgementY.status !== "ok") return rootJudgementY;
-  let rootJudgeY = previous.root.phase === "stop" ? previous.rootJudgeY
+  const rootJudgeY = previous.root.phase === "stop" ? previous.rootJudgeY
     : Math.max(rootJudgementY.value, scene.virtualPerfectLine);
-  // A gesture head binds before it judges. Its sprite can stop at the real line,
-  // but its spatial judgement must continue toward the virtual line like an after node.
-  if (isProductGestureNode(head) && owner instanceof NoteSlide && !owner.headJudged &&
-      previous.root.phase === "stop" && rootJudgeY > scene.virtualPerfectLine) {
-    const vertical = advanceOrdinaryNoteVerticalMotion({ ...root.motionState, deltaTime: input.deltaTime });
-    if (vertical.status !== "ok") return vertical;
-    rootJudgeY = Math.max(vertical.value.y, scene.virtualPerfectLine);
-    root = { ...root, motionState: { ...root.motionState, progressRate: vertical.value.progressRate } };
-  }
   if ((owner !== null && (owner.state === NoteState.Stop || owner.state === NoteState.Wait)) && previous.root.phase !== "stop") {
     const placed = repositionOrdinaryNoteToJudgeLine(root.motionState,
       frame.forcePerfect ? "perspective" : root.renderedTransform.localScale);
@@ -123,7 +115,8 @@ export function advanceExtensionSlide(
     const tail = nodes[1]!;
     const child = previous.children[0]!;
     const long = advanceLongChildFrame(child.lifecycle, root.renderedTransform, input,
-      ordinaryScene.screenToSafeAreaRatio!, ordinaryScene.longMeshColor!, ordinaryScene.habahiro?.highAspectRatio, {
+      ordinaryScene.screenToSafeAreaRatio!, longMeshColorFor(ordinaryScene, owner instanceof NoteLong && owner.isMeshTouched(0)),
+      ordinaryScene.habahiro?.highAspectRatio, {
         advance: () => {
           if (initializeGeometry && !chainUsesAxis) return ok(child.lifecycle);
           const moved = advanceExtensionMotion(child.lifecycle, tail, frame, input, axis, usesAxis(tail));
@@ -163,6 +156,7 @@ export function advanceExtensionSlide(
   }
   let children = previous.children;
   let rootExitApplied = previous.rootExitApplied ?? false;
+  let frontExitIndex = previous.frontExitIndex ?? null;
   let segments: OrdinarySlideFrameResult["segments"] = [];
   if (children.length > 0) {
     const curves: number[] = [];
@@ -177,9 +171,10 @@ export function advanceExtensionSlide(
       }
     }
     const advanced = advanceOrdinarySlideChildren(root.renderedTransform, head.width, children,
-      input, ordinaryScene.screenToSafeAreaRatio!, ordinaryScene.longMeshColor!, {
+      input, ordinaryScene.screenToSafeAreaRatio!, { normal: ordinaryScene.longMeshColor!, touch: ordinaryScene.longMeshTouchColor! }, {
         advanceMotion: frame.deltaTimeSeconds > 0,
-        rootWaiting: root.phase === "stop", rootExitApplied, hiddenEndpoints: head.runtimeRoot?.hiddenSlideEndpoints,
+        ...(owner instanceof NoteSlide ? { meshTouched: (index: number) => owner.isMeshTouched(index) } : {}),
+        rootWaiting: root.phase === "stop", rootExitApplied, frontExitIndex, hiddenEndpoints: head.runtimeRoot?.hiddenSlideEndpoints,
         judgementAdjustValueB: frame.adjustment,
         virtualPerfectLine: scene.virtualPerfectLine,
         rootSource,
@@ -189,10 +184,6 @@ export function advanceExtensionSlide(
         stoppedChildWaited: previous.children.map((_, index) =>
           owner instanceof NoteSlide && owner.afterNotes[index]?.stopAdjustmentWaited === true),
       }, ordinaryScene.habahiro?.highAspectRatio, {
-        canLeaveNode: index => {
-          return !isProductGestureNode(nodes[index + 1]!) || owner instanceof NoteSlide &&
-            (index === -1 ? owner.headJudged : owner.afterNotes[index]?.judged === true);
-        },
         outgoingTransform: (transform, index) => {
           const node = nodes[index + 1]!;
           const offset = node.scoringSource?.slideExitOffset ?? 0;
@@ -248,14 +239,31 @@ export function advanceExtensionSlide(
     children = applySlideRenderHides(children, advanced.value.childStates, hides);
     root = { ...root, renderedTransform: advanced.value.frontTransform };
     rootExitApplied = advanced.value.rootExitApplied;
+    frontExitIndex = advanced.value.frontExitIndex;
     segments = advanced.value.segments;
   }
   const playableFinished = previous.playableFinished || owner?.state === NoteState.Deactive;
   const finished = playableFinished;
   const flashActive = owner !== null && owner.flashAnimationRevision !== null && !playableFinished;
   if (playableFinished) children = children.map(child => ({ ...child, visible: false }));
-  return ok({ state: { headCompleted: owner instanceof NoteSlide ? owner.headJudged : previous.headCompleted, root, rootJudgeY, rootExitApplied, children, rootVisible: previous.rootVisible && !hides.has(-1) && !playableFinished,
+  return ok({ state: { root, rootJudgeY, rootExitApplied, frontExitIndex, children, rootVisible: previous.rootVisible && !hides.has(-1) && !playableFinished,
     flashActive, finished, playableFinished }, segments });
+}
+
+/** Sprite transform of chain node `connectionIndex`; see slideSpriteTransform. */
+export function extensionSlideSpriteTransform(
+  nodes: readonly GarupaProductNode[],
+  state: ExtensionSlideState,
+  connectionIndex: number,
+  owner: NoteLong | NoteSlide | null,
+  scene: GarupaProductSceneLayout,
+): SimulatorResult<OrdinaryNoteMotionResult> {
+  const control = { rootSource: chainGeometry(nodes), laneSpacingX: scene.laneSpacingWorld.value,
+    ...(owner instanceof NoteSlide ? { gesturePresentationShown: (index: number) => owner.gesturePresentationShown(index) } : {}) };
+  if (connectionIndex === 0) return slideSpriteTransform(state.root.renderedTransform, state.frontExitIndex ?? null, true, control);
+  const child = state.children[connectionIndex - 1]!;
+  return slideSpriteTransform(child.lifecycle.renderedTransform, child.sourceIndex,
+    child.exitApplied && child.segmentStartIndex === child.sourceIndex, control);
 }
 
 function slideJudgementY(state: OrdinaryLongNormalChildState): SimulatorResult<number> {

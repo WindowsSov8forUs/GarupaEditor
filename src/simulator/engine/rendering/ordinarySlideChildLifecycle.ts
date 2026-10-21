@@ -52,6 +52,8 @@ export interface OrdinarySlideSegmentGeometry {
 export interface OrdinarySlideFrameResult {
   readonly frontTransform: OrdinaryNoteMotionResult;
   readonly rootExitApplied: boolean;
+  /** The node (-1 root) whose applied exit offset the front currently carries, or null. */
+  readonly frontExitIndex: number | null;
   readonly childStates: readonly OrdinarySlideChildState[];
   readonly segments: readonly OrdinarySlideSegmentGeometry[];
 }
@@ -60,6 +62,12 @@ export interface OrdinarySlideStopControl {
   readonly advanceMotion: boolean;
   readonly rootWaiting: boolean;
   readonly rootExitApplied?: boolean;
+  /** frontExitIndex of the previous frame. */
+  readonly frontExitIndex?: number | null;
+  /** Extension: whether a gesture node (-1 root) still shows its gesture presentation. */
+  readonly gesturePresentationShown?: (index: number) => boolean;
+  /** Whether NoteAfterBase.Touch has switched after node `index`'s mesh to meshColorTouch. */
+  readonly meshTouched?: (index: number) => boolean;
   /** Approved hidden endpoints may have no later visible geometry anchor. */
   readonly hiddenEndpoints?: boolean;
   readonly judgementAdjustValueB: number;
@@ -72,8 +80,6 @@ export interface OrdinarySlideStopControl {
   readonly laneSpacingX: number;
   /** One full lane at the launcher; the original-path exit offset scales between the two. */
   readonly startLaneSpacingX?: number;
-  /** Approved gesture head (-1) and nodes that are not judged yet: the Slide cannot leave them. */
-  readonly unjudgedGestures?: ReadonlySet<number>;
   readonly stoppedChildWaited: readonly boolean[];
 }
 
@@ -83,7 +89,6 @@ export type SlideGeometrySource = Pick<NoteInformation,
 /** Extensions supply motion inputs, not a second Slide lifecycle. */
 export interface SlideMotionExtension {
   outgoingTransform?: (transform: OrdinaryNoteMotionResult, sourceIndex: number) => SimulatorResult<OrdinaryNoteMotionResult>;
-  canLeaveNode?: (sourceIndex: number) => boolean;
   advanceChild(state: OrdinaryLongNormalChildState, index: number): SimulatorResult<OrdinaryLongNormalChildState>;
   buildMesh?: (input: Parameters<typeof buildOrdinaryLongNormalMesh>[0], after: OrdinaryLongNormalChildState,
     before: OrdinaryLongNormalChildState | undefined, sourceIndex: number) => ReturnType<typeof buildOrdinaryLongNormalMesh>;
@@ -176,7 +181,7 @@ export function advanceOrdinarySlideChildren(
   childStates: readonly OrdinarySlideChildState[],
   input: OrdinaryLongNormalChildFrameInput,
   screenToSafeAreaRatio: RenderFloat32,
-  color: RenderColor,
+  colors: { readonly normal: RenderColor; readonly touch: RenderColor },
   stopControl: OrdinarySlideStopControl,
   habahiroHighAspectRatio?: RenderFloat32,
   extension?: SlideMotionExtension,
@@ -191,6 +196,7 @@ export function advanceOrdinarySlideChildren(
   const segments: OrdinarySlideSegmentGeometry[] = [];
   let frontTransform = front;
   let rootExitApplied = stopControl.rootExitApplied ?? false;
+  let frontExitIndex = stopControl.frontExitIndex ?? null;
   const sources = stopControl.rootSource.slideNoteList;
   // Successor lookup is invariant within this frame; do not rescan a long
   // hidden-node chain for every stopped child.
@@ -204,7 +210,8 @@ export function advanceOrdinarySlideChildren(
       ? nextMoving[index + 1]! : index;
   }
   const first = childStates[0]!;
-  let frontCanFollow = stopControl.rootWaiting && (extension?.canLeaveNode?.(-1) ?? !stopControl.unjudgedGestures?.has(-1));
+  // NoteSlide.slidingMove checks only the head and first after states, never a gesture.
+  let frontCanFollow = stopControl.rootWaiting;
   if (stopControl.advanceMotion && frontCanFollow) {
     if (!rootExitApplied && stopControl.rootSource.slideExitOffset) {
       const shifted = withSlidePosition(frontTransform, addSpatial(noteSpatialX(frontTransform),
@@ -223,6 +230,7 @@ export function advanceOrdinarySlideChildren(
         stopControl.rootMotionState.noteSettingScale);
       if (moved.status !== "ok") return moved;
       frontTransform = moved.value;
+      frontExitIndex = null;
     } else {
       const moved = moveSlideEndpoint(frontTransform, stopControl.rootMotionState,
         stopControl.rootSource, first.lifecycle.motionState, sources[first.segmentStartIndex]!,
@@ -230,14 +238,14 @@ export function advanceOrdinarySlideChildren(
         stopControl.rootSource, stopControl.rootSource.foldedTiming === true, head, stopControl.laneSpacingX);
       if (moved.status !== "ok") return moved;
       frontTransform = moved.value;
+      frontExitIndex = rootExitApplied ? -1 : null;
     }
   }
   let killNextMesh = false;
   for (const [index, state] of childStates.entries()) {
-    const canLeaveNode = extension?.canLeaveNode?.(index) ?? !stopControl.unjudgedGestures?.has(index);
     // A later node may stop first under folded time or independent SV. Only
-    // a contiguous stopped, released prefix may move the shared Slide head.
-    frontCanFollow = frontCanFollow && state.lifecycle.phase === "stop" && canLeaveNode;
+    // a contiguous stopped prefix may move the shared Slide head.
+    frontCanFollow = frontCanFollow && state.lifecycle.phase === "stop";
     const advanced = stopControl.advanceMotion
       ? extension?.advanceChild(state.lifecycle, index) ?? advanceOrdinaryLongNormalChild(state.lifecycle, input)
       : ok(state.lifecycle);
@@ -292,10 +300,6 @@ export function advanceOrdinarySlideChildren(
             ...lifecycle.motionState, progressRate: virtual.value.progressRate,
           }) });
         }
-        if (!canLeaveNode) {
-          nextStates.push(nextChildState(state, lifecycle, meshVisible, visible, segmentStartIndex, judgeY, exitApplied));
-          continue;
-        }
         if (!exitApplied && sources[index]!.slideExitOffset) {
           const shifted = withSlidePosition(lifecycle.renderedTransform, addSpatial(noteSpatialX(lifecycle.renderedTransform),
             sources[index]!.slideExitOffset! * stopControl.laneSpacingX), noteSpatialY(lifecycle.renderedTransform));
@@ -311,11 +315,6 @@ export function advanceOrdinarySlideChildren(
           // NoteSlideAfter calls afterNote.KillMesh here, before the adjustment
           // delay. The next child owns this node's outgoing strip, not this child.
           killNextMesh = true;
-          if (frontCanFollow && (sources[index]!.slideExitOffset !== undefined || sources[visibleAfter.sourceIndex]!.slideExitOffset !== undefined)) {
-            const followed = withSlidePosition(frontTransform, goal.x.value, goal.y.value);
-            if (followed.status !== "ok") return followed;
-            frontTransform = followed.value;
-          }
           if (!stopControl.stoppedChildWaited[index]) visible = false;
         } else {
           const nextIndex = nextMoving[index + 1]!;
@@ -342,6 +341,7 @@ export function advanceOrdinarySlideChildren(
             const movedFront = withSlidePosition(frontTransform, noteSpatialX(moved.value), noteSpatialY(moved.value), undefined, moved.value.unclipped);
             if (movedFront.status !== "ok") return movedFront;
             frontTransform = movedFront.value;
+            frontExitIndex = exitApplied && segmentStartIndex === index ? index : null;
           }
         }
       }
@@ -377,7 +377,9 @@ export function advanceOrdinarySlideChildren(
       afterButtonCount: state.buttonCount,
       screenToSafeAreaRatio,
       widthRate: widthRate.value,
-      color,
+      // The segment ending at after node i is that node's NoteMesh; NoteAfterBase.Touch
+      // (0x3A74C58) switches its RGB from meshColorNormal to meshColorTouch.
+      color: stopControl.meshTouched?.(state.sourceIndex) === true ? colors.touch : colors.normal,
       advanced: state.lifecycle.motionState.virtualLaneControllerPresent,
     };
     const dormant = !state.meshVisible || extension === undefined && (
@@ -397,6 +399,7 @@ export function advanceOrdinarySlideChildren(
   return ok(Object.freeze({
     frontTransform,
     rootExitApplied,
+    frontExitIndex,
     childStates: Object.freeze(nextStates),
     segments: Object.freeze(segments),
   }));
@@ -530,7 +533,27 @@ function slideHeadSpace(state: OrdinaryNoteMotionState): SlideHeadSpace {
   });
 }
 
-/** Approved exit offset on the original path: the outgoing strip starts at the far
+/**
+ * Extension exit offset: from the moment a node stops the line continues from the far
+ * end of its arrow, but while its gesture presentation is shown the node sprite (and a
+ * head riding with it) stays at front - exit. Once the presentation closes the node is
+ * drawn at the front like a plain node. index -1 is the root.
+ */
+export function slideSpriteTransform(
+  transform: OrdinaryNoteMotionResult,
+  index: number | null,
+  exitApplied: boolean,
+  stopControl: Pick<OrdinarySlideStopControl, "rootSource" | "laneSpacingX" | "gesturePresentationShown">,
+): SimulatorResult<OrdinaryNoteMotionResult> {
+  if (index === null || !exitApplied) return ok(transform);
+  const source = index === -1 ? stopControl.rootSource : stopControl.rootSource.slideNoteList[index];
+  const offset = source?.slideExitOffset ?? 0;
+  if (offset === 0 || stopControl.gesturePresentationShown?.(index) !== true) return ok(transform);
+  return withSlidePosition(transform, addSpatial(noteSpatialX(transform), -offset * stopControl.laneSpacingX),
+    noteSpatialY(transform));
+}
+
+/** Exit offset (extension) on the original path: the outgoing strip starts at the far
  * end of a Directional, offset lanes away at the same depth. X is linear in curve. */
 function ordinaryExitOutgoing(
   transform: OrdinaryNoteMotionResult,

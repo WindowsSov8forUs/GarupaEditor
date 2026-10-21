@@ -141,7 +141,7 @@ export function projectedNodeLane(node: GarupaProductNode): number {
     ? source.buttonType : node.spanStart + (node.width - 1) / 2;
 }
 
-/** Approved gesture head or intermediate node; a last node keeps the original tail path. */
+/** Gesture head or intermediate node (extension); a last node keeps the original tail path. */
 export function isProductGestureNode(node: Pick<GarupaProductNode, "scoringSource" | "scoringPhase">): boolean {
   return node.scoringPhase !== "tail" && node.scoringSource != null && isSlideGestureNode(node.scoringSource);
 }

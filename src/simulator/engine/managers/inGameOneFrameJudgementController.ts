@@ -660,7 +660,7 @@ export class InGameOneFrameJudgementController {
 function judgementDirectionalCount(request: AutoLiveJudgementRequest | ManualJudgementRequest,
   ownership: ManualJudgementOwnership | null | undefined): number {
   // A Slide Multiple-Directional family counts its owned judgement span, at the
-  // last node as in the original and at an approved gesture node alike.
+  // last node as in the original and at a gesture node (extension) alike.
   return request.noteType === 7 && ownership?.slidePhase != null
     ? ownership.judgementLaneSpan?.width ?? ownership.slideButtonTypes!.length
     : request.multipleDirectionalFlickNoteCount ?? 0;
@@ -859,7 +859,7 @@ function isClosedAutoLiveJudgementRequest(
   const source = request.noteInformation;
   const expectedMultipleDirectionalCount =
     ownership.multipleDirectionalFlickNoteCount;
-  // Approved gesture head/intermediate: the original Slide tail types (8 for Miss).
+  // Gesture head/intermediate (extension): the original Slide tail types (8 for Miss).
   if (request.phase !== "tail" && isSlideGestureNode(source)) return request.phase === (source.isSlideNoteHead ? "head" : "intermediate") &&
     request.absolutePosition === source.absolutePos &&
     (request.noteType === 8 || request.noteType === slideFlickJudgeNoteType(slideGestureAfterType(source))) &&

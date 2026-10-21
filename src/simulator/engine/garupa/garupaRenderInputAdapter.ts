@@ -20,7 +20,7 @@ import { createRenderFloat32 } from "../../backends/renderingValidation";
 import type { GarupaProductSceneLayout } from "../../scene/simulatorSceneLayout";
 import { advanceOrdinaryNoteMotion, advanceOrdinaryNoteActivationAdjustment, type OrdinaryNoteMotionState, advanceOrdinaryNoteVerticalMotion, repositionOrdinaryNoteToJudgeLine, calculateNoteMotionCurve, calculateOrdinaryNoteWorldScaleAxis, getOrdinaryNoteArrivalSeconds, type OrdinarySyncLineTargetState } from "../rendering/ordinaryNoteGeometry";
 import { resolveProjectedNoteAnimationBinding, resolveProjectedNoteBinding, RenderCommandProducer, type NotePresentation, type RenderOwnerTransaction, type RenderEngineResourceBindings, type OrdinaryFixedNoteSceneInput } from "../rendering/renderCommandProducer";
-import { createExtensionSlideState, advanceExtensionSlide, advanceExtensionMotion, noteRenderInput, bpmAtNode, type ExtensionSlideState, type ExtensionRenderFrame } from "./slideRenderExtension";
+import { createExtensionSlideState, advanceExtensionSlide, advanceExtensionMotion, extensionSlideSpriteTransform, noteRenderInput, bpmAtNode, type ExtensionSlideState, type ExtensionRenderFrame } from "./slideRenderExtension";
 import { applySlideRenderHides, type OrdinarySlideFrameResult } from "../rendering/ordinarySlideChildLifecycle";
 import { integrityFailure, ok, type SimulatorResult } from "../result";
 import type {
@@ -210,12 +210,15 @@ export class GarupaRenderInputAdapter {
       const vertical = advanceOrdinaryNoteVerticalMotion({ ...root.motionState, deltaTime: f32(0) });
       if (vertical.status !== "ok") return vertical;
       const rootJudgeY = state.root.phase === "stop" ? state.rootJudgeY : Math.max(vertical.value.y, this.scene.virtualPerfectLine);
+      let next: ExtensionSlideState = { ...state, root, rootJudgeY };
       if (placement !== null) {
         const placed = repositionOrdinaryNoteToJudgeLine(root.motionState, placement === "preserve" ? root.renderedTransform.localScale : placement);
         if (placed.status !== "ok") return placed;
         root = { ...root, phase: "stop", renderedTransform: placed.value };
+        // The head is back on its own target (a late Began included): an exit
+        // offset is applied again once it follows the line.
+        next = { ...state, root, rootJudgeY, rootExitApplied: false, frontExitIndex: null };
       }
-      const next = { ...state, root, rootJudgeY };
       if (previous === undefined) {
         // Activation follows child updates in NoteManager. Publish initial
         // geometry here without consuming another outer-frame delta.
@@ -516,12 +519,14 @@ export class GarupaRenderInputAdapter {
       const state: ProductSlideState = { ...advanced.value.state, segments: advanced.value.segments,
         ...(complete ? { finished: true, playableFinished: true, flashActive: false, rootVisible: false } : {}) };
       plannedSlides.set(chain.identity, state);
+      const chainOwner = owner instanceof NoteLong || owner instanceof NoteSlide ? owner : null;
       for (const [index, node] of nodes.entries()) {
         const previous = samples.get(node.identity)!;
         const lifecycle = index === 0 ? state.root : state.children[index - 1]!.lifecycle;
-        const transform = lifecycle.renderedTransform;
-        const visible = index === 0 ? state.rootVisible : state.children[index - 1]!.visible &&
-          !(isProductGestureNode(node) && owner instanceof NoteSlide && owner.afterNotes[index - 1]?.judged);
+        const sprite = extensionSlideSpriteTransform(nodes, state, index, chainOwner, this.scene);
+        if (sprite.status !== "ok") return sprite;
+        const transform = sprite.value;
+        const visible = index === 0 ? state.rootVisible : state.children[index - 1]!.visible;
         const stopped = lifecycle.phase === "stop";
         samples.set(node.identity, { ...previous, position: transform.position, unclipped: transform.unclipped,
           uniformScale: transform.localScale.x,
@@ -535,8 +540,6 @@ export class GarupaRenderInputAdapter {
     const plans: NotePresentation[] = [];
     const retired = new Set<string>();
     for (const node of this.chart.nodes) {
-      if (plannedJudged.has(node.identity) && isProductGestureNode(node) && this.connectionMembers.has(node.identity))
-        retired.add(node.identity);
       const state = node.chainIdentity === null ? undefined : plannedSlides.get(node.chainIdentity);
       if (state === undefined ? plannedJudged.has(node.identity) : state.finished ||
         (node.connectionIndex === 0 ? !state.rootVisible : !state.children[node.connectionIndex! - 1]!.visible)) retired.add(node.identity);
@@ -550,13 +553,14 @@ export class GarupaRenderInputAdapter {
         ?? noteRenderInput(authored);
       visualNodes.push(node);
       visualOwners.set(node.identity, authored);
-      if (node.connectionIndex === 0 && isProductGestureNode(node) && plannedSlides.get(node.chainIdentity!)?.headCompleted &&
-          !this.connectionMembers.has(node.identity)) continue;
+      // A closed gesture presentation has no flick icon, arrow or Add members.
+      const gestureClosed = this.gestureClosed(authored, plannedJudged);
+      if (gestureClosed && !this.connectionMembers.has(node.identity)) continue;
       if (node.type !== "Directional" || authored.width === 1) { iconOwners.add(node.identity); continue; }
       const baseSample = samples.get(node.identity)!;
       const sharedMembers = this.connectionMembers.get(authored.identity)!;
       for (const part of sharedMembers) {
-        if (!plannedJudged.has(authored.identity) && this.connectionIconVisibility.get(part.identity) !== false) iconOwners.add(part.identity);
+        if (!plannedJudged.has(authored.identity) && !gestureClosed && this.connectionIconVisibility.get(part.identity) !== false) iconOwners.add(part.identity);
         if (part.identity === node.identity) continue;
         const owner = this.sharedOwner(part.runtimeRoot!);
         let state = plannedSingles.get(part.identity);
@@ -571,7 +575,7 @@ export class GarupaRenderInputAdapter {
           state = advanced.value;
           plannedSingles.set(part.identity, state);
         }
-        const visible = state !== undefined && !plannedJudged.has(authored.identity) &&
+        const visible = state !== undefined && !plannedJudged.has(authored.identity) && !gestureClosed &&
           (!handedOff ? baseSample.visible
             : owner !== null && owner.state !== NoteState.Deactive && owner.state !== NoteState.Wait && state.phase !== "wait");
         samples.set(part.identity, { ...baseSample, node: part,
@@ -598,7 +602,8 @@ export class GarupaRenderInputAdapter {
       const presentation = directionalConnectionPresentation(line, this.connections!.neighbors(line), a.renderedTransform, b.renderedTransform);
       if (presentation.status !== "ok") return presentation;
       for (const [node, visible] of [[first, presentation.value.iconA], [second, presentation.value.iconB]] as const)
-        if (visible && !plannedJudged.has(node.identity)) iconOwners.add(node.identity); else iconOwners.delete(node.identity);
+        if (visible && !plannedJudged.has(node.identity) && !this.gestureClosed(node, plannedJudged)) iconOwners.add(node.identity);
+        else iconOwners.delete(node.identity);
       const sampleA = samples.get(first.identity)!, sampleB = samples.get(second.identity)!;
       if (!sampleA.visible || !sampleB.visible) { initializedEarly.delete(line.identity); continue; }
       if (initializedEarly.has(line.identity)) continue;
@@ -645,10 +650,11 @@ export class GarupaRenderInputAdapter {
       const objectId = nodeObjectId(node);
       const animation = resolveProjectedNoteAnimationBinding(node.runtimeRoot!, node.scoringSource!, node.scoringPhase!, objectId,
         this.resources, node.width, this.resources.habahiroAtlasLogicalAssetIds !== undefined);
+      const gestureClosed = this.gestureClosed(visualOwners.get(node.identity)!, plannedJudged);
       const binding = frontBinding(node, this.resources, this.noteColor, this.chainByIdentity,
         node.connectionIndex === 0 && plannedSlides.get(node.chainIdentity!)?.root.phase === "stop" &&
-          (!isProductGestureNode(node) || plannedSlides.get(node.chainIdentity!)?.headCompleted === true),
-        visualOwners.get(node.identity)!);
+          (!isProductGestureNode(node) || gestureClosed),
+        visualOwners.get(node.identity)!, !gestureClosed);
       if (binding.status !== "ok") return binding;
       plans.push({ id: objectId, lifetime: visualOwners.get(node.identity)!.identity, kind: "body", visible: sample.visible,
         position: sample.position, unclipped: sample.unclipped, localScale: sample.uniformScale === null ? null : vector3(sample.uniformScale.value, sample.uniformScale.value, 0),
@@ -661,6 +667,10 @@ export class GarupaRenderInputAdapter {
       if (state.finished) retired.add(chain.identity);
       if (chain.allHidden) continue;
       const rootNode = this.chart.nodeByIdentity.get(chain.connectionIdentities[0]!)!;
+      const rootOwner = rootNode.runtimeRoot === undefined ? null : this.sharedOwner(rootNode.runtimeRoot);
+      const rootSprite = extensionSlideSpriteTransform(this.renderNodesByChain.get(chain.identity)!, state, 0,
+        rootOwner instanceof NoteLong || rootOwner instanceof NoteSlide ? rootOwner : null, this.scene);
+      if (rootSprite.status !== "ok") return rootSprite;
       const id = nodeObjectId(rootNode);
       const index = plans.findIndex(plan => plan.id === id);
       const body = index < 0 ? undefined : plans[index];
@@ -668,7 +678,7 @@ export class GarupaRenderInputAdapter {
       const plan: NotePresentation = { id, lifetime: rootNode.identity, kind: "body",
         visible: (existing?.visible ?? false) || state.flashActive,
         contentVisible: existing?.visible ?? false,
-        position: state.root.renderedTransform.position, unclipped: state.root.renderedTransform.unclipped, localScale: state.root.renderedTransform.localScale,
+        position: rootSprite.value.position, unclipped: rootSprite.value.unclipped, localScale: rootSprite.value.localScale,
         binding: existing?.binding ?? null,
         animations: [...existing?.animations ?? [], { ownerObjectId: slideFlashObjectId(chain.identity),
           ...resolveProductSlideFlashBinding(rootNode, this.resources), animationRole: "note-long-flash",
@@ -735,6 +745,14 @@ export class GarupaRenderInputAdapter {
     this.connectionIconVisibility.clear();
   }
 
+  /** Extension: the gesture presentation of a gesture head or intermediate node has closed
+   * (judged or missed); the node is then drawn like a plain node. */
+  private gestureClosed(node: GarupaProductNode, judged: ReadonlySet<string>): boolean {
+    if (!isProductGestureNode(node) || node.connectionIndex === null || node.runtimeRoot === undefined) return false;
+    const owner = this.sharedOwner(node.runtimeRoot);
+    return owner instanceof NoteSlide ? !owner.gesturePresentationShown(node.connectionIndex - 1) : judged.has(node.identity);
+  }
+
   getSlidePresentation(identity: string) {
     const state = this.slideStates.get(identity);
     return state === undefined ? null : { transform: state.root.renderedTransform, active: state.flashActive };
@@ -774,6 +792,7 @@ function frontBinding(
   chains: ReadonlyMap<string, GarupaProductSlideChain>,
   heldSlideHead: boolean,
   authored: GarupaProductNode,
+  gesturePresentation: boolean,
 ) {
   const chain = node.chainIdentity === null ? undefined : chains.get(node.chainIdentity);
   const chainHead = chain !== undefined && node.connectionIndex === 0;
@@ -784,7 +803,7 @@ function frontBinding(
   if (node.runtimeRoot?.directionalSlideConnection !== undefined) return resolveProjectedNoteBinding(
     authored.runtimeRoot!, authored.scoringSource!, authored.scoringPhase!, resources, noteColor, geometry, habahiro);
   return resolveProjectedNoteBinding(node.runtimeRoot!, node.scoringSource!, node.scoringPhase!, resources, noteColor,
-    geometry, habahiro);
+    geometry, habahiro, gesturePresentation);
 }
 
 function resourceGeometry(node: GarupaProductNode, authored: GarupaProductNode, habahiro: boolean) {
