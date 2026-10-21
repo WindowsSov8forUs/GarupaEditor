@@ -907,12 +907,11 @@ export class NoteSlide extends NoteFrontBase {
   private gestureStateValue: SlideGestureState | null = null;
   get headJudged(): boolean { return this.manualHeadJudgedValue; }
   /** Extension: whether a gesture head (-1) or intermediate node still shows its gesture
-   * (flick icon, arrow, Add members). It closes when the node is judged or missed, or on
-   * a touch-down that caches its result; it then looks like a plain node at that position. */
+   * (flick icon, arrow, Add members). A touch-down that caches its result keeps it; it
+   * closes when the node is judged or missed, and the node then looks like a plain node. */
   gesturePresentationShown(index: number): boolean {
     const node = index === -1 ? this.manualHeadJudgedValue ? null : this.headGestureNode : this.afterNotesValue[index];
-    if (node === null || node === undefined || !node.isGesture || node.judged) return false;
-    return this.gestureStateValue?.index !== index || this.gestureStateValue.cache === null;
+    return node !== null && node !== undefined && node.isGesture && !node.judged;
   }
   private get manualCurrentNode(): SlideAfterRuntime | undefined {
     return !this.manualHeadJudgedValue && this.headGestureNode !== null ? this.headGestureNode
@@ -1279,10 +1278,7 @@ export class NoteSlide extends NoteFrontBase {
     this.manualTouchOriginValue = input.currentPosition;
     this.manualAfterMoveTimeValue = Math.fround(0);
     const gesture = (plan.familyData as { gesture?: SlideGestureState }).gesture;
-    if (gesture !== undefined) {
-      this.gestureStateValue = gesture;
-      this.closeGesturePresentation(-1);
-    }
+    if (gesture !== undefined) this.gestureStateValue = gesture;
     if (this.manualHeadJudgedValue) this.beginGestureStateIfCurrent(input.currentPosition);
     const changed = this.changeState(NoteState.Stop);
     if (changed.status !== "ok") {
@@ -1708,10 +1704,7 @@ export class NoteSlide extends NoteFrontBase {
     };
     this.manualTouchOriginValue = data.nextOrigin;
     this.manualAfterMoveTimeValue = data.nextGrace;
-    if (data.gesture !== undefined) {
-      this.gestureStateValue = data.gesture;
-      if (data.gesture.cache !== null) this.closeGesturePresentation(data.gesture.index);
-    }
+    if (data.gesture !== undefined) this.gestureStateValue = data.gesture;
     if (data.advanceHidden) {
       const current = this.afterNotesValue[data.currentIndex];
       if (data.currentIndex !== this.currentAfterIndexValue || current === undefined || !current.source.isInvisible)
@@ -2204,7 +2197,6 @@ export class NoteSlide extends NoteFrontBase {
       this.manualAfterMoveTimeValue = data.nextGrace;
       const gesture = (plan.familyData as { readonly gesture?: SlideGestureState }).gesture;
       this.gestureStateValue = gesture ?? null;
-      if (gesture?.cache != null) this.closeGesturePresentation(gesture.index);
       return;
     }
     this.hideBeforeSlideNode(first.sourceIndex, false);

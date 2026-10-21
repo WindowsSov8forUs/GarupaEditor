@@ -743,7 +743,7 @@ export class GarupaRenderInputAdapter {
   }
 
   /** Extension: the gesture presentation of a gesture head or intermediate node has closed
-   * (judged, missed or touch-down cached); the node is then drawn like a plain node. */
+   * (judged or missed); the node is then drawn like a plain node. */
   private gestureClosed(node: GarupaProductNode, judged: ReadonlySet<string>): boolean {
     if (!isProductGestureNode(node) || node.connectionIndex === null || node.runtimeRoot === undefined) return false;
     const owner = this.sharedOwner(node.runtimeRoot);

@@ -1509,7 +1509,7 @@ export class NoteManager {
     return ok(undefined);
   }
 
-  /** Extension: reflects gesture presentations that closed (judged, missed or touch-down cached). */
+  /** Extension: reflects gesture presentations that closed (judged or missed). */
   private closeOrdinaryGesturePresentations(note: NoteSlide): SimulatorResult<void> {
     if (note.pendingGestureCloses.size === 0 || this.renderProducer === null || note.noteInformation === null) return ok(undefined);
     const prepared = this.renderProducer.preflightSlideGesturePresentationCloses(note.poolObjectId, note.noteInformation,
@@ -1878,7 +1878,7 @@ export class NoteManager {
       if (this.completedSlidePresentationRoots.has(root)) return NoteState.Deactive;
       const owner = this.getActiveNote(root);
       if (!(owner instanceof NoteSlide)) return NoteState.Wait;
-      // Add members belong to the gesture presentation, which closes on judgement or touch-down.
+      // Add members belong to the gesture presentation, which closes on judgement.
       if (!owner.gesturePresentationShown(binding.connectionIndex - 1)) return NoteState.Deactive;
       const phase = root.laneSpan !== undefined
         ? this.projectedGeometry?.connectionState(root, binding.connectionIndex || false)?.phase
