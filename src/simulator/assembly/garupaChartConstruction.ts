@@ -557,11 +557,21 @@ function createLong(slide: GarupaChartJsonSlideItem, firstIndex: number, project
   if (start.status !== "ok") return start;
   const end = positionFields(tail.beat);
   if (end.status !== "ok") return end;
+  // A Directional tail wider than one lane is the original Long multiple directional
+  // end: the root's Multiple after type plus one LongMultipleDirectionalFlickAdd member
+  // per other lane at the tail, grouped as the Slide tail's members are.
+  const multiple = tail.type === "Directional" && tail.width > 1;
+  const left = tail.type === "Directional" && tail.direction === "Left";
+  const directionalMemberRootIndex = multiple && tail.width > 3 ? firstIndex : undefined;
   const root = createBaseNote({
+    directionalMemberRootIndex,
+    ...(directionalMemberRootIndex === undefined ? {} : { directionalMemberOffset: left ? tail.width - 1 : 0 }),
     index: firstIndex, position: start.value, span: span.value,
     kinds: { game: GameNoteType.Long, front: FrontNoteType.Long,
       after: tail.type === "Flick" ? AfterNoteType.Flick : tail.type === "Directional"
-        ? tail.direction === "Left" ? AfterNoteType.DirectionalFlickLeft : AfterNoteType.DirectionalFlickRight
+        ? multiple
+          ? left ? AfterNoteType.MultipleDirectionalFlickLeft : AfterNoteType.MultipleDirectionalFlickRight
+          : left ? AfterNoteType.DirectionalFlickLeft : AfterNoteType.DirectionalFlickRight
         : AfterNoteType.Normal },
     additional: head.type === "Skill" ? GameNoteAdditionalType.Skill : GameNoteAdditionalType.None,
     terminalAdditional: tail.type === "Skill" ? GameNoteAdditionalType.Skill : GameNoteAdditionalType.None,
@@ -569,9 +579,30 @@ function createLong(slide: GarupaChartJsonSlideItem, firstIndex: number, project
     afterNoteShortRhythmUnder8beat: end.value.shortRhythmUnder8beat,
     ccNum: ccForButton(span.value.primary) + 40,
   });
+  const additionalRoots: NoteInformation[] = [];
+  if (multiple) {
+    const tailStart = left ? tail.lane - tail.width + 1 : tail.lane;
+    for (let offset = 0; offset < tail.width; offset += 1) {
+      if (offset === (left ? tail.width - 1 : 0)) continue;
+      additionalRoots.push(createBaseNote({
+        directionalMemberRootIndex,
+        ...(directionalMemberRootIndex === undefined ? {} : { directionalMemberOffset: offset }),
+        index: firstIndex + 1 + additionalRoots.length,
+        position: end.value,
+        span: projectedSpan(tailStart + offset, 1, projected),
+        kinds: Object.freeze({
+          game: left ? GameNoteType.LongDirectionalFlickLeftAdd : GameNoteType.LongDirectionalFlickRightAdd,
+          front: FrontNoteType.LongMultipleDirectionalFlickAdd,
+          after: left ? AfterNoteType.MultipleDirectionalFlickLeft : AfterNoteType.MultipleDirectionalFlickRight,
+        }),
+        additional: GameNoteAdditionalType.None,
+        afterNoteAbsolutePos: end.value.absolutePos,
+      }));
+    }
+  }
   const longChannels = span.value.ccNums.map(cc => cc + 40);
   registerMultiRangeSourceIdentity(root, { ccNums: longChannels, afterCcNums: longChannels });
-  return ok({ root, additionalRoots: [] as readonly NoteInformation[], nextIndex: firstIndex + 1 });
+  return ok({ root, additionalRoots: Object.freeze(additionalRoots), nextIndex: firstIndex + 1 + additionalRoots.length });
 }
 
 function createSlide(

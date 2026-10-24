@@ -82,12 +82,13 @@ export type GarupaChartJsonItem =
 export type GarupaChartJson = readonly GarupaChartJsonItem[];
 
 /** The original Long shape: exactly two nodes on one lane span, a Single/Skill head
- * and a later Single/Skill/Flick/one-lane Directional tail. */
+ * and a later Single/Skill/Flick/Directional tail. A Directional tail starts from the
+ * head's lane (its `lane`) and may span several lanes toward its direction: the
+ * original Long multiple directional end (long_end_dir_flick plus add_long_dir_flick). */
 export function isGarupaLongSlideShape(slide: Pick<GarupaChartJsonSlideItem, "connections">): boolean {
   if (slide.connections.length !== 2) return false;
   const head = slide.connections[0]!, tail = slide.connections[1]!;
-  return (head.type === "Single" || head.type === "Skill") &&
-    (tail.type === "Single" || tail.type === "Skill" || tail.type === "Flick" ||
-      tail.type === "Directional" && tail.width === 1) &&
-    head.lane === tail.lane && head.width === tail.width && tail.beat > head.beat;
+  if ((head.type !== "Single" && head.type !== "Skill") || head.lane !== tail.lane || tail.beat <= head.beat) return false;
+  if (tail.type === "Directional") return head.width === 1;
+  return (tail.type === "Single" || tail.type === "Skill" || tail.type === "Flick") && head.width === tail.width;
 }
