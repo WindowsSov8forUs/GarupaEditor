@@ -650,17 +650,35 @@ pub fn resource_abort_workspace_media_import(
 }
 
 #[tauri::command]
-pub fn resource_reconcile_workspace_media(
+pub async fn resource_reconcile_workspace_media(
     app: tauri::AppHandle,
     refs: Vec<ResourceRefDto>,
-    state: tauri::State<'_, ApplicationResourceState>,
+) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let state = app.state::<ApplicationResourceState>();
+        reconcile_workspace_media(
+            &resource_root(&app)?,
+            &workspace_media_root(&app)?,
+            &crate::resolve_session_cache_root(&app)?,
+            refs,
+            state.inner(),
+        )
+    })
+    .await
+    .map_err(|error| format!("workspace reconciliation task failed: {error}"))?
+}
+
+fn reconcile_workspace_media(
+    root: &Path,
+    workspace: &Path,
+    session: &Path,
+    refs: Vec<ResourceRefDto>,
+    state: &ApplicationResourceState,
 ) -> Result<(), String> {
     let _guard = state
         .runtime
         .lock()
         .map_err(|error| format!("lock resource state failed: {error}"))?;
-    let root = resource_root(&app)?;
-    let workspace = workspace_media_root(&app)?;
     ensure_layout(&root)?;
     ensure_workspace_layout(&workspace)?;
     let mut retained = HashSet::new();
@@ -678,7 +696,6 @@ pub fn resource_reconcile_workspace_media(
     }
     // Retain both published project revisions: the backup must remain recoverable
     // even when the editor has already selected new media or another project.
-    let session = crate::resolve_session_cache_root(&app)?;
     for name in [crate::CHART_CACHE_FILE_NAME, crate::CHART_CACHE_BACKUP_FILE_NAME] {
         if let Ok(text) = fs::read_to_string(session.join(name)) {
             if let Ok(document) = serde_json::from_str::<Value>(&text) {
@@ -704,7 +721,7 @@ pub fn resource_reconcile_workspace_media(
             storage_schema: WORKSPACE_STORAGE_SCHEMA,
             resource_ids: resource_ids.clone(),
         },
-        &next_identity(state.inner(), "workspace-reconcile"),
+        &next_identity(state, "workspace-reconcile"),
     )?;
     for resource_id in previous.resource_ids {
         if !resource_ids.contains(&resource_id) {
@@ -717,7 +734,10 @@ pub fn resource_reconcile_workspace_media(
             }
         }
     }
-    collect_garbage_paths(&root, &workspace)
+    // Autosave only reconciles project references. Global blob/projection GC
+    // traverses the entire downloaded library; keep it in the existing explicit
+    // collection and shutdown paths, not on every chart save.
+    Ok(())
 }
 
 #[tauri::command]
