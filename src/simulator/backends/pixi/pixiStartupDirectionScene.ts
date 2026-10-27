@@ -53,6 +53,14 @@ export interface PixiStartupDirectionCommonResources {
   readonly fontFamily: string;
 }
 
+/**
+ * The Light background module (InGameGraphicsMode.Light): the presentation's
+ * stage backdrop is the card illustration, shown at this brightness (percent).
+ */
+export interface PixiStartupLightMode {
+  readonly brightness: number;
+}
+
 export interface PixiStartupDirectionScene extends StartupDirectionSceneBackend {
   readonly backgroundRoot: Container;
   readonly foregroundRoot: Container;
@@ -76,6 +84,7 @@ export async function createPixiStartupDirectionScene(
   surfaceLayout: OriginalSurfaceLayout,
   includeStandardStage = true,
   includeStageEffects = true,
+  lightMode: PixiStartupLightMode | null = null,
 ): Promise<SimulatorResult<PixiStartupDirectionScene>> {
   if (presentation.sdCharacters.length !== 0) {
     return integrityFailure(
@@ -119,6 +128,7 @@ export async function createPixiStartupDirectionScene(
       surfaceLayout,
       includeStandardStage,
       includeStageEffects,
+      lightMode,
     ));
   } catch {
     for (const texture of prepared) texture.destroy(true);
@@ -142,6 +152,7 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
   private readonly stageLights: PixiStageLights | null;
   private readonly stageSpeakers: PixiStageSpeakers | null;
   private readonly stagePsyllium: PixiStagePsyllium | null;
+  private readonly letterBox: readonly Graphics[];
   private stageProgress = 0;
   private readonly characters: readonly Sprite[];
   private disposed = false;
@@ -154,6 +165,7 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
     private readonly surfaceLayout: OriginalSurfaceLayout,
     includeStandardStage: boolean,
     includeStageEffects: boolean,
+    private readonly lightMode: PixiStartupLightMode | null,
   ) {
     this.backgroundRoot.sortableChildren = false;
     this.foregroundRoot.sortableChildren = false;
@@ -163,10 +175,12 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
       const stageTexture = dynamicTextures[0]!;
       const effectCount = presentation.stageEffect.length;
       const characterTextures = dynamicTextures.slice(1 + effectCount, -1);
+      // bgImage is at local y -170 under Stage/TRSRoot; BgManager.initLightMode
+      // and adjustPositionForLightMode move it to -164 for the card.
       this.stageBackdrop = informationSprite(
         stageTexture,
         "StartupStageBackdrop",
-        0, -170, 1920, 1440,
+        0, lightMode === null ? -170 : -164, 1920, 1440,
       );
       // The prefab draws its widgets in the stage's panel above the background
       // image (documented assumption: its parent panel's queue is not in the
@@ -186,12 +200,20 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
         surfaceLayout.surface.viewportWidth,
         surfaceLayout.surface.viewportHeight,
       )));
+      // Stage/TRSRoot/LetterBoxRoot: two enabled bg_rhythm_iPX_black widgets
+      // (388x1440, x ±875…±1263, y -164, depth 22) that no stage code toggles.
+      // Outside a 16:9 screen at the ordinary pose (scale 0.92); at the start
+      // pose kept by Light mode (0.7) their inner edges are at ±612.5.
+      this.letterBox = Object.freeze([-1, 1].map((side) => new Graphics({ label: `StageLetterBox${side < 0 ? "Left" : "Right"}` })
+        .rect(side < 0 ? -1263 : 875, -556, 388, 1440).fill({ color: 0x000000, alpha: 1 })));
       this.backgroundRoot.addChild(this.stageBackdrop);
       if (this.stageEffect !== null) this.backgroundRoot.addChild(this.stageEffect);
+      this.backgroundRoot.addChild(...this.letterBox);
       this.backgroundRoot.addChild(...this.characters);
     } else {
       this.stageBackdrop = null;
       this.stageEffect = null;
+      this.letterBox = Object.freeze([]);
       this.characters = Object.freeze([]);
     }
     const viewportWidth = surfaceLayout.surface.viewportWidth;
@@ -255,14 +277,19 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
       this.information.addChild(full);
     }
     this.foregroundRoot.addChild(this.information);
-    this.stageLights = includeStandardStage && includeStageEffects ? new PixiStageLights(common.stageLight) : null;
+    // LightBackgroundModule.LoadResources -> removeStageEffects: the psyllium,
+    // the bottom light and the speakers are destroyed.
+    const standardStageEffects = includeStandardStage && includeStageEffects && lightMode === null;
+    this.stageLights = standardStageEffects ? new PixiStageLights(common.stageLight) : null;
     if (this.stageLights !== null) this.backgroundRoot.addChild(this.stageLights.root);
-    this.stageSpeakers = includeStandardStage && includeStageEffects ? new PixiStageSpeakers(common.stageSpeaker, common.stageSpeakerGlow) : null;
+    this.stageSpeakers = standardStageEffects ? new PixiStageSpeakers(common.stageSpeaker, common.stageSpeakerGlow) : null;
     if (this.stageSpeakers !== null) this.backgroundRoot.addChild(this.stageSpeakers.root);
-    this.stagePsyllium = includeStandardStage && includeStageEffects ? new PixiStagePsyllium(common.stagePsyllium) : null;
+    this.stagePsyllium = standardStageEffects ? new PixiStagePsyllium(common.stagePsyllium) : null;
     if (this.stagePsyllium !== null) this.backgroundRoot.addChild(this.stagePsyllium.root);
     this.backgroundRoot.addChild(this.darkCover);
-    if (includeStandardStage) {
+    // InGameStageControllerBase.initDarkCoverTexture hides it in Light mode
+    // outside practice (Light mode is never chosen in practice).
+    if (includeStandardStage && lightMode === null) {
       // Queue3490 is independent of BgCover (3400): ShowScreenALittle fades
       // this widget's RGB from white to quarter-gray while retaining alpha1.
       const scale = surfaceLayout.ui.backRootPixelsPerUnit;
@@ -308,19 +335,26 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
       const layout = this.surfaceLayout;
       const highAspect = layout.starUi.highAspectRatio;
       const rootScale = (1 - 0.23 * highAspect) * layout.ui.backRootPixelsPerUnit;
-      const eased = state.stageProgress;
+      // Light mode: introAnimation returns before moveStageTRS and
+      // outroAnimation returns to the same start pose, so the stage stays at
+      // onInitialize's serialized pose (y 111, scale 0.7).
+      const eased = this.lightMode === null ? state.stageProgress : 0;
       const trsScale = 0.7 + (0.92 - 0.7) * eased;
       const trsY = 111 * (1 - eased);
+      const backdropY = this.lightMode === null ? -170 : -164;
       this.stageBackdrop.position.set(layout.surface.viewportWidth / 2,
         layout.surface.viewportHeight / 2 -
-          (14 * highAspect * layout.ui.backRootPixelsPerUnit + (trsY - 170 * trsScale) * rootScale));
+          (14 * highAspect * layout.ui.backRootPixelsPerUnit + (trsY + backdropY * trsScale) * rootScale));
       this.stageBackdrop.width = 1920 * trsScale * rootScale;
       this.stageBackdrop.height = 1440 * trsScale * rootScale;
-      const brightness = 0.5 + 0.5 * state.stageColorProgress;
+      // The same ColorFader from the serialized color; Light mode ends at
+      // LightModeIllustBrightness × 0.01 instead of white.
+      const target = this.lightMode === null ? 1 : this.lightMode.brightness / 100;
+      const brightness = 0.5 + (target - 0.5) * state.stageColorProgress;
       this.stageBackdrop.tint = [brightness, brightness, brightness];
       // Ordinary SetStageStatus is a no-op; the stage stays behind BgCover
       // throughout the information view, wait and intro.
-      for (const root of [this.stageEffect ?? undefined, this.stageLights?.root, this.stageSpeakers?.root, this.stagePsyllium?.root]) {
+      for (const root of [this.stageEffect ?? undefined, ...this.letterBox, this.stageLights?.root, this.stageSpeakers?.root, this.stagePsyllium?.root]) {
         if (root === undefined) continue;
         root.position.set(layout.surface.viewportWidth / 2,
           layout.surface.viewportHeight / 2 -

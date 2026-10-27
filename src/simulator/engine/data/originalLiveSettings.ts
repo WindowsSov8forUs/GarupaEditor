@@ -10,6 +10,11 @@ export const LONG_NOTE_LINE_BRIGHTNESS_MIN = 10;
 export const LONG_NOTE_LINE_BRIGHTNESS_MAX = 100;
 export const LONG_NOTE_LINE_BRIGHTNESS_DEFAULT = 80;
 export const MV_DARKNESS_VALUES = Object.freeze([0, 10, 20, 30, 40, 50, 60, 70] as const);
+// LiveCoreSettingsLightModeBrightness: ±10 per press, wrapping 30..100;
+// SettingDefaultValueLightModeBrightness = 80.
+export const LIGHT_MODE_BRIGHTNESS_MIN = 30;
+export const LIGHT_MODE_BRIGHTNESS_MAX = 100;
+export const LIGHT_MODE_BRIGHTNESS_DEFAULT = 80;
 
 export interface OriginalLiveCoreSettings {
   readonly highFrequencyMode: boolean;
@@ -17,6 +22,7 @@ export interface OriginalLiveCoreSettings {
   readonly judgementAdjustValueB: number;
   readonly mvDarkness: number;
   readonly longNoteLineBrightness: number;
+  readonly lightModeBrightness: number;
   readonly suddenRate: number;
   readonly suddenLane: boolean;
 }
@@ -39,6 +45,7 @@ export interface OriginalLiveSettingsInput {
   readonly judgementAdjustValueB: number;
   readonly mvDarkness: number;
   readonly longNoteLineBrightness: number;
+  readonly lightModeBrightness: number;
   readonly suddenRate: number;
   readonly suddenLane: boolean;
   readonly hideFastSlow: boolean;
@@ -66,6 +73,7 @@ export function createOriginalLiveSettings(
     !integerIn(input.judgementAdjustValueB, JUDGEMENT_ADJUST_VALUE_B_MIN, JUDGEMENT_ADJUST_VALUE_B_MAX) ||
     !MV_DARKNESS_VALUES.includes(input.mvDarkness as typeof MV_DARKNESS_VALUES[number]) ||
     !isOriginalLongNoteLineBrightness(input.longNoteLineBrightness) ||
+    !isOriginalLightModeBrightness(input.lightModeBrightness) ||
     !isOriginalSuddenRate(input.suddenRate) || typeof input.suddenLane !== "boolean" ||
     typeof input.hideFastSlow !== "boolean" ||
     typeof input.displayStageEffect !== "boolean" ||
@@ -85,6 +93,7 @@ export function createOriginalLiveSettings(
       judgementAdjustValueB: input.judgementAdjustValueB,
       mvDarkness: input.mvDarkness as number,
       longNoteLineBrightness: input.longNoteLineBrightness,
+      lightModeBrightness: input.lightModeBrightness,
       suddenRate: input.suddenRate, suddenLane: input.suddenLane,
     }),
     hideFastSlow: input.hideFastSlow,
@@ -115,6 +124,7 @@ export function validateOriginalLiveSettings(
     judgementAdjustValueB: core.judgementAdjustValueB,
     mvDarkness: core.mvDarkness,
     longNoteLineBrightness: core.longNoteLineBrightness,
+    lightModeBrightness: core.lightModeBrightness,
     suddenRate: core.suddenRate, suddenLane: core.suddenLane,
     hideFastSlow: settings.hideFastSlow,
     displayStageEffect: settings.displayStageEffect,
@@ -133,7 +143,7 @@ export function originalLiveSettingsIdentity(value: OriginalLiveSettings): strin
     value.core.judgementAdjustValue,
     value.core.judgementAdjustValueB,
     value.core.mvDarkness,
-    value.core.longNoteLineBrightness, value.core.suddenRate, value.core.suddenLane ? 1 : 0,
+    value.core.longNoteLineBrightness, value.core.lightModeBrightness, value.core.suddenRate, value.core.suddenLane ? 1 : 0,
     value.hideFastSlow ? 1 : 0,
     value.displayStageEffect ? 1 : 0,
     value.hideCombo ? 1 : 0,
@@ -165,6 +175,10 @@ export function isOriginalLongNoteLineBrightness(value: unknown): value is numbe
   return integerIn(value, LONG_NOTE_LINE_BRIGHTNESS_MIN, LONG_NOTE_LINE_BRIGHTNESS_MAX);
 }
 
+export function isOriginalLightModeBrightness(value: unknown): value is number {
+  return integerIn(value, LIGHT_MODE_BRIGHTNESS_MIN, LIGHT_MODE_BRIGHTNESS_MAX) && value % 10 === 0;
+}
+
 function integerIn(value: unknown, minimum: number, maximum: number): value is number {
   return Number.isInteger(value) && (value as number) >= minimum && (value as number) <= maximum;
 }
@@ -172,6 +186,6 @@ function integerIn(value: unknown, minimum: number, maximum: number): value is n
 function invalid(): ReturnType<typeof integrityFailure> {
   return integrityFailure(
     "runtime.invalid-original-live-settings",
-    "Original Live settings require exact booleans including コンボ状態表示, Primary -30..30, Secondary -5..5 one persisted MV darkness value 0..70 in steps of ten, integer long-note-line brightness 10..100, and integer Sudden rate 0..100 with an explicit lane-fit flag; aliases, defaults, clamp and rounding are forbidden.",
+    "Original Live settings require exact booleans including コンボ状態表示, Primary -30..30, Secondary -5..5 one persisted MV darkness value 0..70 in steps of ten, integer long-note-line brightness 10..100, Light mode background brightness 30..100 in steps of ten, and integer Sudden rate 0..100 with an explicit lane-fit flag; aliases, defaults, clamp and rounding are forbidden.",
   );
 }

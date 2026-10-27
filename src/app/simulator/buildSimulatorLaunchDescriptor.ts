@@ -22,6 +22,7 @@ export interface BuildSimulatorLaunchDescriptorInput extends SimulatorModeSelect
   readonly visibleTapLaneEffect: boolean;
   readonly mvDarkness: number;
   readonly longNoteLineBrightness: number;
+  readonly lightModeBrightness: number;
   readonly suddenRate: number;
   readonly suddenLane: boolean;
   readonly skin: SimulatorOriginalSkinSettings;
@@ -73,6 +74,7 @@ export async function buildSimulatorLaunchDescriptor(
     visibleTapLaneEffect: input.visibleTapLaneEffect,
     mvDarkness: input.mvDarkness,
     longNoteLineBrightness: input.longNoteLineBrightness,
+    lightModeBrightness: input.lightModeBrightness,
     suddenRate: input.suddenRate, suddenLane: input.suddenLane,
     skin: input.skin,
     masterGainPercent: input.masterGainPercent,
@@ -90,14 +92,11 @@ export async function buildSimulatorLaunchDescriptor(
     seGainPercent: input.seGainPercent,
   });
   const cover = media.cover ?? requireRef("builtin/ui/default-cover");
-  let stage = media.illustBackground;
-  if (stage === null) {
-    const refreshed = await input.manager.prepareCatalog("bestdori");
-    if (refreshed.status === "rejected") {
-      throw new Error(`${refreshed.failure.capability}: ${refreshed.failure.boundary}`);
-    }
-    stage = requireRef("bestdori/jp/ingameskin/bgskin/skin00");
+  const refreshed = await input.manager.prepareCatalog("bestdori");
+  if (refreshed.status === "rejected") {
+    throw new Error(`${refreshed.failure.capability}: ${refreshed.failure.boundary}`);
   }
+  const stage = requireRef("bestdori/jp/ingameskin/bgskin/skin00");
   if (input.mvEnabled && media.mv === null) {
     throw new Error("Simulator MV mode requires one explicit video resource.");
   }
@@ -106,6 +105,7 @@ export async function buildSimulatorLaunchDescriptor(
     [SIMULATOR_MEDIA_SLOTS.jacket]: cover,
     [SIMULATOR_MEDIA_SLOTS.stage]: stage,
     ...(input.mvEnabled ? { [SIMULATOR_MEDIA_SLOTS.mv]: media.mv! } : {}),
+    ...(media.illustBackground !== null ? { [SIMULATOR_MEDIA_SLOTS.illustBackground]: media.illustBackground } : {}),
   };
   bindings[SIMULATOR_MEDIA_SLOTS.displayImage] = input.manager.getDisplayImageRef();
   const snapshot = await input.manager.createSnapshotFromRefs(Object.freeze(bindings));

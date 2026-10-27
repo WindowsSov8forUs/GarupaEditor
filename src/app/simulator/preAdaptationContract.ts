@@ -13,6 +13,7 @@ export const SIMULATOR_PRE_ADAPTATION_DEFAULTS = Object.freeze({
   visibleTapLaneEffect: true,
   allPerfectStatusDisplayMode: true,
   mvDarkness: 20,
+  lightModeBrightness: 80,
   masterGain: Math.fround(1),
   skin: Object.freeze({
     noteSkin: 0,
@@ -35,6 +36,7 @@ export interface SimulatorPreAdaptationInput extends SimulatorModeSelection {
   readonly visibleTapLaneEffect: boolean;
   readonly mvDarkness: number;
   readonly longNoteLineBrightness: number;
+  readonly lightModeBrightness: number;
   readonly suddenRate: number;
   readonly suddenLane: boolean;
   readonly skin: SimulatorOriginalSkinSettings;
@@ -88,6 +90,7 @@ export function buildSimulatorPreAdaptedConfig(
     allPerfectStatusDisplayMode: input.allPerfectStatusDisplayMode,
     mvDarkness: input.mvDarkness,
     longNoteLineBrightness: input.longNoteLineBrightness,
+    lightModeBrightness: input.lightModeBrightness,
     suddenRate: input.suddenRate, suddenLane: input.suddenLane,
     skin: skin.value,
     visual: Object.freeze({

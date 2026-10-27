@@ -5936,6 +5936,7 @@ function ChartEditorController() {
         noteSize: appOptionSettings.rhythmNoteSizePercent,
         noteSpeed: appOptionSettings.rhythmNoteSpeed,
         longNoteLineBrightness: appOptionSettings.longLineBrightnessPercent,
+        lightModeBrightness: appOptionSettings.simulatorSettings.lightModeBrightness,
         suddenRate: appOptionSettings.simulatorSettings.suddenRate,
         suddenLane: appOptionSettings.simulatorSettings.suddenLane,
         hideFastSlow: appOptionSettings.simulatorSettings.hideFastSlow,

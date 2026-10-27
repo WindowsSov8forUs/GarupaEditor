@@ -281,6 +281,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       judgementAdjustValueB: recipe.request.config.judgementAdjustValueB,
       mvDarkness: recipe.request.config.mvDarkness,
       longNoteLineBrightness: recipe.request.config.longNoteLineBrightness,
+      lightModeBrightness: recipe.request.config.lightModeBrightness,
       suddenRate: recipe.request.config.suddenRate, suddenLane: recipe.request.config.suddenLane,
       hideFastSlow: recipe.request.config.hideFastSlow,
       displayStageEffect: recipe.request.config.displayStageEffect,
@@ -294,6 +295,12 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     if (originalLiveSettings.status !== "ok") {
       return rejectedWithCleanup(fromIntegrity(originalLiveSettings), releasePendingMovie());
     }
+    // RhythmGameStartData.BackgroundModuleType: after MV, the Light module
+    // (InGameGraphicsMode.Light; here, a chart with a custom background) is
+    // used outside practice on a #HABAHIRO chart or without a Collaboration
+    // skin (SeasonUtility.IsEnableCollaborationSkin).
+    const lightMode = presentation.value.illustBackground !== null && score.value.mode.sessionMode === "live" &&
+      mvResource.value === null && (chart.value.isMultiRangeNotes || recipe.request.config.skin.special.kind !== "collabo");
     const skin = await this.deriveSkin(recipe, score.value.mode, chart.value);
     if (skin.status === "rejected") {
       return rejectedWithCleanup(skin, releasePendingMovie());
@@ -357,7 +364,12 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
             onPrepared: async (scene, backgroundImage) => {
               const surfaceBound = renderer.bindOriginalSurfaceLayout(scene.surfaceLayout);
               if (surfaceBound.status !== "ok") return fromIntegrity(surfaceBound);
-              const effectivePresentation = replacePreparedSessionStageBackdrop(presentation.value, backgroundImage);
+              // BgManager.initLightMode puts the card in bgImage instead of the
+              // background skin; the special background's widgets are not loaded.
+              const effectivePresentation = lightMode
+                ? accepted(Object.freeze({ ...presentation.value, stageBackdrop: presentation.value.illustBackground!,
+                  stageEffect: Object.freeze([]) }))
+                : replacePreparedSessionStageBackdrop(presentation.value, backgroundImage);
               if (effectivePresentation.status === "rejected") return effectivePresentation;
               const common = renderer.getStartupDirectionCommonResources();
               if (common.status !== "ok") return fromIntegrity(common);
@@ -365,6 +377,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
                 effectivePresentation.value, common.value, new BrowserPixiTextureDecoder(),
                 recipe.request.chartData.isFullLength, scene.surfaceLayout, mvResource.value === null,
                 score.value.mode.sessionMode === "live" && originalLiveSettings.value.displayStageEffect,
+                lightMode ? Object.freeze({ brightness: originalLiveSettings.value.core.lightModeBrightness }) : null,
               );
               if (created.status !== "ok") return fromIntegrity(created);
               firstView.scene = created.value;
