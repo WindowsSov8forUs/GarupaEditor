@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { restoreOriginalFocus } from "./useOriginalDialogInput";
 import { OriginalPageHeader } from "./OriginalPageHeader";
-import { OriginalPageVisible } from "./OriginalPrefabView";
+import { OriginalPageExiting, OriginalPageVisible } from "./OriginalPrefabView";
 import { originalLoading } from "./originalLoadingState";
 import { PagePreparation } from "./PagePreparation";
 import { OverlayDialogModal } from "./OverlayDialogModal";
@@ -157,6 +157,7 @@ export function OriginalPageSwitch({ workspaceReady = true, open, title, section
         className="original-detail-page" data-original-page-motion tabIndex={-1} aria-label={slot.title} aria-hidden={displayed !== slot.pageId}
         style={{ visibility: displayed === slot.pageId ? "visible" : "hidden" }} inert={displayed !== slot.pageId || busy}>
         <OriginalPageVisible.Provider value={displayed === slot.pageId}>
+        <OriginalPageExiting.Provider value={targetReady && requested !== slot.pageId}>
           <PagePreparation onReady={() => {
             setReady(previous => new Set(previous).add(slot.pageId));
           }} onError={cause => {
@@ -164,6 +165,7 @@ export function OriginalPageSwitch({ workspaceReady = true, open, title, section
             setError(cause instanceof Error ? cause.message : String(cause));
             if (actions.current.onRestorePage) actions.current.onRestorePage(retained.current.find(slot => slot.pageId === visible.current)?.logicalId ?? null, visible.current); else actions.current.onBack();
           }}><div className="original-page-content">{slot.pageId === requested ? page : slot.content}</div></PagePreparation>
+        </OriginalPageExiting.Provider>
         </OriginalPageVisible.Provider>
       </div>)}
       {busy && <div className="original-page-input-cover" />}

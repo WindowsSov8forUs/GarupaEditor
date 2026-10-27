@@ -2492,8 +2492,8 @@
           },
           "rotation": {
             "x": 1,
-            "y": -4.371138828673793e-8,
-            "z": -4.371138828673793e-8,
+            "y": -4.371138828673793e-08,
+            "z": -4.371138828673793e-08,
             "w": 1.910685465164705e-15
           },
           "active": true
@@ -17560,6 +17560,81 @@
               "m_PathID": 0
             },
             "additionalParts": []
+          }
+        },
+        {
+          "id": 317,
+          "node": 68,
+          "kind": "StarUIAnchor",
+          "data": {
+            "m_Enabled": 1,
+            "widget": {
+              "m_FileID": 0,
+              "m_PathID": 377
+            },
+            "horizonalAnchor": 0,
+            "verticalAnchor": 1,
+            "enableOnValidate": 1
+          }
+        },
+        {
+          "id": 377,
+          "node": 68,
+          "kind": "UIWidget",
+          "data": {
+            "m_Enabled": 1,
+            "leftAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.5,
+              "absolute": 78
+            },
+            "rightAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 0.5,
+              "absolute": 78
+            },
+            "bottomAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 88
+            },
+            "topAnchor": {
+              "target": {
+                "m_FileID": 0,
+                "m_PathID": 0
+              },
+              "relative": 1.0,
+              "absolute": 88
+            },
+            "updateAnchors": 1,
+            "mColor": {
+              "r": 1.0,
+              "g": 1.0,
+              "b": 1.0,
+              "a": 1.0
+            },
+            "mPivot": 4,
+            "mWidth": 2,
+            "mHeight": 2,
+            "mDepth": 0,
+            "boundless": 0,
+            "mMat": {
+              "m_FileID": 0,
+              "m_PathID": 0
+            },
+            "autoResizeBoxCollider": 0,
+            "hideIfOffScreen": 0,
+            "keepAspectRatio": 0,
+            "aspectRatio": 1.0
           }
         }
       ]

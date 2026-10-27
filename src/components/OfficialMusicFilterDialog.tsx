@@ -4,8 +4,7 @@ import { OriginalMusicFilterDialog, MusicFilterSourceHeading as Heading, MusicFi
 import { resetOfficialFilter, officialLevelBounds, type OfficialMusicFilter } from "./officialMusicSelection";
 import typography from "../data/originalOfficialMusicFilter.json";
 import { OFFICIAL_DIFFICULTIES, officialText, type OfficialLibrary } from "../services/officialMusicLibrary";
-import { OriginalPrefabModel, ORIGINAL_PREFABS } from "./originalPrefabModel";
-import { OriginalPrefabView } from "./OriginalPrefabView";
+import { OriginalSquareRadioButton } from "./OriginalSquareRadioButton";
 import { useApplicationResourceUrl } from "../resources/applicationResourceContext";
 import type { ApplicationResourceSlot } from "../resources/selections";
 
@@ -14,20 +13,9 @@ const bands = [0, 1, 2, 4, 5, 3, 21, 18, 45, -1];
 function BandButton({ id, name, selected, onClick }: { id: number; name: string; selected: boolean; onClick(): void }) {
   const url = useApplicationResourceUrl(`ui.field-band-logo.${String(id > 0 ? id : 1).padStart(3, "0")}` as ApplicationResourceSlot);
   const label = id === 0 ? wording.word_all : id === -1 ? wording.word_other : name;
-  const model = new OriginalPrefabModel(ORIGINAL_PREFABS.staruisquareradiobutton!, {
-    nodes: { 1: { active: selected }, 3: { active: id > 0, x: 1, y: 0, scaleX: 0.45, scaleY: 0.45 },
-      4: { active: id <= 0, x: id === 0 ? 0 : 1, y: id === 0 ? -3 : -1 } },
-    // StarUISquareRadioButton.SetButtonActive/Inactive changes both backgrounds
-    // and the label color; showing the check sprite alone leaves gray text.
-    components: {
-      11: { m_Enabled: selected ? 0 : 1 },
-      13: { m_Enabled: selected ? 1 : 0 },
-      16: { mText: label, mFontSize: 20, mSpacingX: id === -1 ? 1 : 0,
-        ...(selected ? { mColor: { r: 1, g: 1, b: 1, a: 1 } } : {}) },
-    },
-  });
-  return <OriginalPrefabView model={model} bindings={{ buttons: { 14: { action: onClick, label, role: "radio", selected } },
-    textures: { 15: <img src={url} alt={label} style={{ width: "100%", height: "100%", objectFit: "contain" }} /> } }} />;
+  return <OriginalSquareRadioButton label={label} selected={selected} onClick={onClick}
+    textX={id === 0 ? 0 : 1} textY={id === 0 ? -3 : -1} spacing={id === -1 ? 1 : 0}
+    content={id > 0 ? <img src={url} alt={label} style={{ width: "100%", height: "100%", objectFit: "contain" }} /> : undefined} />;
 }
 export function OfficialMusicFilterDialog({ open, value, library, onChange, onClose, mode = "filter" }: {
   mode?: "search" | "filter";

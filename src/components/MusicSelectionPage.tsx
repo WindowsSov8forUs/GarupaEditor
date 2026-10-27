@@ -1,6 +1,6 @@
 import { usePreparationPending } from "./PagePreparation";
 import { useContext } from "react";
-import { OriginalPageVisible } from "./OriginalPrefabView";
+import { OriginalPageExiting, OriginalPageVisible } from "./OriginalPrefabView";
 import { OfficialMusicFolders } from "./OfficialMusicFolders";
 import { useOfficialMusicPreview } from "./useOfficialMusicPreview";
 import { getOfficialMusicLibrary, type OfficialDifficulty } from "../services/officialMusicLibrary";
@@ -62,19 +62,22 @@ const importButtonModel = new OriginalPrefabModel(prefabs.info, {
 });
 const charterScrollLabels = new Set([270]);
 const officialServerLabels = { jp: "日服", cn: "大陆服", tw: "台服", en: "英服" } as const;
-// StarUIAnchor places the parent at the camera top; the child retains y=-147.
-// The parent's UIWidget anchor adds 88 units, yielding a top inset of 59.
+// StarUIAnchor anchors both vertical sides of UIWidget 377 to the panel top.
+// Their identical absolute offset survives UIWidget.OnAnchor; child 108 keeps
+// its authored local position. Header geometry is independent of this chain.
+const filterAnchor = prefabs.filterButton.components.find(component => component.id === 377)!.data;
+const filterAnchorY = filterAnchor.topAnchor.absolute;
 const filterButtonModel = new OriginalPrefabModel(prefabs.filterButton, {
-  nodes: { 81: { x: 0, y: 0 }, 68: { y: 88 } },
+  nodes: { 81: { x: 0, y: 0 }, 68: { y: filterAnchorY } },
   components: { 359: { mText: "筛选" } },
 });
 const sourceButtonModel = new OriginalPrefabModel(prefabs.filterButton, {
-  nodes: { 81: { x: 0, y: 0 }, 68: { x: -447, y: 88 } },
+  nodes: { 81: { x: 0, y: 0 }, 68: { x: -447, y: filterAnchorY } },
   components: { 359: { mText: "切换源" } },
 });
 
 const searchButtonModel = new OriginalPrefabModel(prefabs.filterButton, {
-  nodes: { 81: { x: 0, y: 0 }, 68: { x: -311, y: 88 } },
+  nodes: { 81: { x: 0, y: 0 }, 68: { x: -311, y: filterAnchorY } },
   components: { 359: { mText: "搜索" } },
 });
 
@@ -379,6 +382,7 @@ export function MusicSelectionPage({ source, onSourceChange: setSource, onLoad, 
   onLoad(source: "bestdori" | "test" | "official", id: string, progress: (ratio: number) => void, destination: SelectionDestination, difficulty?: OfficialDifficulty): Promise<boolean>;
   onReady(destination: SelectionDestination): void;
 }) {
+  const { scale, safeInsets } = useUiViewport();
   // The list may reset for a filter/difficulty change; its jacket lease must not.
   const [jacketEntry, setJacketEntry] = useState<MusicSelectionEntry>();
   const jacket = useMusicJacket(jacketEntry);
@@ -397,6 +401,14 @@ export function MusicSelectionPage({ source, onSourceChange: setSource, onLoad, 
   const [sourceChoiceOpen, setSourceChoiceOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const pageExiting = useContext(OriginalPageExiting);
+  useLayoutEffect(() => {
+    if (!pageExiting) return;
+    // ScreenLayerMusicSelect.OnExiting closes the drawer while the page exits.
+    // Keep the portal mounted for its existing 0.15-second Hide animation.
+    setFilterOpen(false);
+    setSearchOpen(false);
+  }, [pageExiting]);
   const [retainedFilter, setFilter] = useState({ ...DEFAULT_BESTDORI_FILTER });
   const filter = useMemo(() => normalizeBestdoriMusicFilter(retainedFilter), [retainedFilter]);
   useLayoutEffect(() => { if (filter !== retainedFilter) setFilter(filter); }, [filter, retainedFilter]);
@@ -466,7 +478,9 @@ export function MusicSelectionPage({ source, onSourceChange: setSource, onLoad, 
   return <><UiPageViewport fullWindow>
     <section aria-label="谱面搜索" data-original-screen="ScreenLayerMusicSelect" className="music-selection-page"
       onKeyDown={event => { if (event.key !== "Escape") event.stopPropagation(); }}>
-      <div style={{ position: "absolute", right: 0, top: 0, zIndex: 30 }}>
+      {/* RightTop uses StarUISafeAreaToScreenPosition, just like the Header.
+          This full-window surface is already scaled, so convert physical insets once. */}
+      <div style={{ position: "absolute", right: safeInsets.right / scale, top: safeInsets.top / scale, zIndex: 30 }}>
         <OriginalPrefabView model={filterButtonModel} root={108} bindings={{ buttons: { 386: { action: () => { setSearchOpen(false); setFilterOpen(true); }, disabled: busy || (source === "official" && getOfficialMusicLibrary().songs.length === 0) } } }} />
         <OriginalPrefabView model={searchButtonModel} root={108}
           bindings={{ buttons: { 386: { action: () => { setFilterOpen(false); setSearchOpen(true); }, disabled: busy } } }} />
