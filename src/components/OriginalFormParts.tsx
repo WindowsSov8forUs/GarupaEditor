@@ -39,8 +39,9 @@ const stepperLayout = new OriginalPrefabModel(stepperPrefab);
 const stepperBody = stepperLayout.nodeAt("HiSpeed/Body");
 
 /** The authored HiSpeed row, with integer steps and bounds supplied by the editor field. */
-export function OriginalFormStepper({ title, value, minimum, maximum, onChange }: {
+export function OriginalFormStepper({ title, value, minimum, maximum, onChange, editable }: {
   title: string; value: number; minimum: number; maximum: number; onChange(value: number): void;
+  editable?: { value: string; onChange(value: string): void };
 }) {
   const model = new OriginalPrefabModel(stepperPrefab, { components: {
     570: { mText: String(value) },
@@ -55,10 +56,21 @@ export function OriginalFormStepper({ title, value, minimum, maximum, onChange }
   const left = Math.min(0, ...boxes.map(box => box.x));
   const top = model.rect(model.components.get(574)!).y;
   const right = Math.max(...boxes.map(box => box.x + box.width)), bottom = Math.max(...boxes.map(box => box.y + box.height));
+  const label = model.components.get(570)!;
+  const labelRect = model.rect(label);
   return <div style={{ position: "relative", minWidth: right - left, height: bottom - top, flexShrink: 0, alignSelf: "stretch" }}>
     <OriginalFormSubtitle text={title} />
     <div className="original-prefab-origin" style={{ left: -left, top: -top }}>
-      <OriginalPrefabView model={model} root={stepperBody.id} bindings={{ buttons }} />
+      <OriginalPrefabView model={model} root={stepperBody.id} bindings={{ buttons,
+        omit: editable ? new Set([570]) : undefined }} />
+      {editable && <input type="text" inputMode="numeric" aria-label={title}
+        className="original-stepper-editor" value={editable.value}
+        onChange={event => editable.onChange(event.target.value)}
+        style={{ left: labelRect.x, top: labelRect.y, width: labelRect.width, height: labelRect.height,
+          fontSize: label.data.mFontSize, fontWeight: label.data.mFontStyle === 1 ? 700 : 400,
+          letterSpacing: label.data.mSpacingX,
+          color: `rgba(${label.data.mColor.r * 255},${label.data.mColor.g * 255},${label.data.mColor.b * 255},${label.data.mColor.a})`,
+          zIndex: label.data.mDepth + 1 }} />}
     </div>
   </div>;
 }

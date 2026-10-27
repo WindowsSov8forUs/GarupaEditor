@@ -64,7 +64,7 @@ interface BestdoriNames {
 
 export function createBestdoriNetworkMediaDescriptor(input: {
   readonly server: BestdoriAssetServer;
-  readonly purpose: "bgm" | "cover" | "mv" | "stage-backdrop";
+  readonly purpose: "bgm" | "cover" | "mv" | "illust-background";
   readonly nativeId: string;
   readonly logicalPath?: string;
   readonly title: string;

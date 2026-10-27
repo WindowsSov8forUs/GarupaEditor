@@ -11,6 +11,8 @@ permissions:
 env:
   PROJECT_NAME: GarupaEditor
   CARGO_TERM_COLOR: always
+  # Built into the backend (option_env!) to sign NotGarupa uploads.
+  NOTGARUPA_UPLOAD_KEY: ${{ secrets.NOTGARUPA_UPLOAD_KEY }}
 
 jobs:
   create-release:

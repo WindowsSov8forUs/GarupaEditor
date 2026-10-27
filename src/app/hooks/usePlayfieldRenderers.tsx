@@ -1,4 +1,5 @@
-﻿import { useMemo, type ReactNode } from "react";
+﻿import { editorGridWindow } from "../editorGridWindow";
+import { useMemo, type ReactNode } from "react";
 import { projectPlayfieldLineRuntimeAssets } from "../../skinLoader";
 
 export function usePlayfieldRenderers(params: any) {
@@ -6,6 +7,8 @@ export function usePlayfieldRenderers(params: any) {
     laneValues,
     LANE_WIDTH,
     totalSteps,
+    yToBeat,
+    isSvPreviewEnabled,
     beatDivision,
     beatsPerMeasure,
     approxEq,
@@ -77,9 +80,6 @@ export function usePlayfieldRenderers(params: any) {
   };
 
   const renderLaneGuides = () => {
-    if (isCanvasBackend) {
-      return [] as ReactNode[];
-    }
     const guides: ReactNode[] = [];
 
     for (let column = 1; column < laneValues.length; column += 1) {
@@ -96,13 +96,13 @@ export function usePlayfieldRenderers(params: any) {
     return guides;
   };
 
-  const renderGridLines = () => {
+  const renderGridLines = (top: number, bottom: number) => {
     if (isCanvasBackend) {
       return [] as ReactNode[];
     }
     const lines: ReactNode[] = [];
 
-    for (let step = 0; step < totalSteps; step += 1) {
+    for (const { step, y } of editorGridWindow({ top, bottom, totalSteps, beatDivision, beatToY: beatToTrackY, yToBeat, fullScan: isSvPreviewEnabled })) {
       const beat = step / beatDivision;
       const roundedBeat = Math.round(beat);
       const isWholeBeat = approxEq(beat, roundedBeat);
@@ -113,7 +113,7 @@ export function usePlayfieldRenderers(params: any) {
         <div
           key={`line-${step}`}
           className={lineClass}
-          style={{ top: beatToTrackY(beat) }}
+          style={{ top: y }}
           aria-hidden="true"
         />,
       );

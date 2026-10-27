@@ -20,6 +20,9 @@ export async function buildSimulatorLaunchRequest(
   const jacketSource = await readSingle(mediaLease, SIMULATOR_MEDIA_SLOTS.jacket);
   const jacketPng = await normalizeJacketPng(jacketSource);
   const stagePng = await normalizeStagePng(await readStageBackdrop(mediaLease));
+  const illustBackgroundPng = mediaLease.slots[SIMULATOR_MEDIA_SLOTS.illustBackground]
+    ? await normalizeSourcePng(await readSingle(mediaLease, SIMULATOR_MEDIA_SLOTS.illustBackground), "custom background", null)
+    : null;
   const mv = descriptor.presentation.mvEnabled
     ? Object.freeze({
         bytes: await readSingle(mediaLease, SIMULATOR_MEDIA_SLOTS.mv),
@@ -38,7 +41,7 @@ export async function buildSimulatorLaunchRequest(
       jacketPng,
       displayImagePng: mediaLease.slots[SIMULATOR_MEDIA_SLOTS.displayImage]
         ? await normalizeSourcePng(await readSingle(mediaLease, SIMULATOR_MEDIA_SLOTS.displayImage), "display image", null) : null,
-      stage: Object.freeze({ backdropPng: stagePng }),
+      stage: Object.freeze({ backdropPng: stagePng, illustBackgroundPng }),
       mv,
     }),
     config: decodeSimulatorLaunchTransportConfig(descriptor.config),

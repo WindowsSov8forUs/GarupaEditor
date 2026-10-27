@@ -35,6 +35,11 @@ export interface SimulatorPresentationPackage {
   readonly displayImagePng?: SimulatorPresentationPng | null;
   readonly stage: {
     readonly backdropPng: SimulatorPresentationPng;
+    /**
+     * The chart's custom background, shown as the original Light mode
+     * (InGameGraphicsMode.Light) card illustration in place of the stage.
+     */
+    readonly illustBackgroundPng?: SimulatorPresentationPng | null;
     /** Optional independent presentation score; not inferred from playable notes. */
     readonly commandNotes?: readonly StageCommandNote[];
   };
@@ -90,6 +95,8 @@ export interface SimulatorOriginalLiveSettings {
   readonly allPerfectStatusDisplayMode: boolean;
   readonly mvDarkness: number;
   readonly longNoteLineBrightness: number;
+  /** The custom background's brightness (percent), as the Light mode card background. */
+  readonly lightModeBrightness: number;
   readonly suddenRate: number;
   readonly suddenLane: boolean;
 }

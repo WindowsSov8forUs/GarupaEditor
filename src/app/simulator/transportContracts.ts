@@ -9,6 +9,7 @@ export const SIMULATOR_MEDIA_SLOTS = Object.freeze({
   bgm: "simulator.media.bgm",
   jacket: "simulator.media.jacket",
   stage: "simulator.media.stage",
+  illustBackground: "simulator.media.illust-background",
   mv: "simulator.media.mv",
   displayImage: "simulator.media.display-image",
 } as const);
@@ -91,6 +92,7 @@ export function encodeSimulatorLaunchTransportConfig(
     allPerfectStatusDisplayMode: config.allPerfectStatusDisplayMode,
     mvDarkness: config.mvDarkness,
     longNoteLineBrightness: config.longNoteLineBrightness,
+    lightModeBrightness: config.lightModeBrightness,
     suddenRate: config.suddenRate, suddenLane: config.suddenLane,
     skin: config.skin,
     visual: Object.freeze({
@@ -129,6 +131,7 @@ export function decodeSimulatorLaunchTransportConfig(
     allPerfectStatusDisplayMode: config.allPerfectStatusDisplayMode,
     mvDarkness: config.mvDarkness,
     longNoteLineBrightness: config.longNoteLineBrightness,
+    lightModeBrightness: config.lightModeBrightness,
     suddenRate: config.suddenRate, suddenLane: config.suddenLane,
     skin: config.skin,
     visual: Object.freeze({

@@ -1,0 +1,524 @@
+{
+  "source": {
+    "commit": "861e3e0f9f1d26f6974f5db6c4ae88436e033454",
+    "path": "artifacts/investigations/cn-card-image-switch-button-contract.json",
+    "sha256": "7714AE4DB09794FDCB26B71C36B207B6F2167653D6771794167527DD0490CC0B"
+  },
+  "resource": "prefabs/screen/situationdetail/IllustChangeButton",
+  "nodes": [
+    {
+      "id": 101,
+      "transformId": 278,
+      "name": "Image",
+      "path": "Image",
+      "parent": 108,
+      "position": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0,
+        "w": 1.0
+      },
+      "active": true
+    },
+    {
+      "id": 108,
+      "transformId": 314,
+      "name": "IllustChangeButton",
+      "path": "IllustChangeButton",
+      "parent": null,
+      "position": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0,
+        "w": 1.0
+      },
+      "active": true
+    },
+    {
+      "id": 117,
+      "transformId": 315,
+      "name": "Cover",
+      "path": "Cover",
+      "parent": 108,
+      "position": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "rotation": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0,
+        "w": 1.0
+      },
+      "active": false
+    }
+  ],
+  "components": [
+    {
+      "id": 385,
+      "node": 108,
+      "kind": "BoxCollider2D",
+      "data": {
+        "m_Enabled": 1,
+        "m_Density": 1.0,
+        "m_Material": {
+          "m_FileID": 0,
+          "m_PathID": 0
+        },
+        "m_IncludeLayers": {
+          "m_Bits": 0
+        },
+        "m_ExcludeLayers": {
+          "m_Bits": 0
+        },
+        "m_LayerOverridePriority": 0,
+        "m_ForceSendLayers": {
+          "m_Bits": 4294967295
+        },
+        "m_ForceReceiveLayers": {
+          "m_Bits": 4294967295
+        },
+        "m_ContactCaptureLayers": {
+          "m_Bits": 4294967295
+        },
+        "m_CallbackLayers": {
+          "m_Bits": 4294967295
+        },
+        "m_IsTrigger": false,
+        "m_UsedByEffector": false,
+        "m_UsedByComposite": false,
+        "m_Offset": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "m_SpriteTilingProperty": {
+          "border": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0,
+            "w": 0.0
+          },
+          "pivot": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "oldSize": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "newSize": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "adaptiveTilingThreshold": 0.0,
+          "drawMode": 0,
+          "adaptiveTiling": false
+        },
+        "m_AutoTiling": false,
+        "m_Size": {
+          "x": 60.0,
+          "y": 70.0
+        },
+        "m_EdgeRadius": 0.0
+      }
+    },
+    {
+      "id": 532,
+      "node": 108,
+      "kind": "StarUIButton",
+      "data": {
+        "m_Enabled": 1,
+        "tweenTarget": {
+          "m_FileID": 0,
+          "m_PathID": 108
+        },
+        "hover": {
+          "r": 1.0,
+          "g": 1.0,
+          "b": 1.0,
+          "a": 1.0
+        },
+        "pressed": {
+          "r": 1.0,
+          "g": 1.0,
+          "b": 1.0,
+          "a": 1.0
+        },
+        "disabledColor": {
+          "r": 1.0,
+          "g": 1.0,
+          "b": 1.0,
+          "a": 1.0
+        },
+        "duration": 0.20000000298023224,
+        "dragHighlight": 0,
+        "hoverSprite": "",
+        "pressedSprite": "",
+        "disabledSprite": "",
+        "hoverSprite2D": {
+          "m_FileID": 0,
+          "m_PathID": 0
+        },
+        "pressedSprite2D": {
+          "m_FileID": 0,
+          "m_PathID": 0
+        },
+        "disabledSprite2D": {
+          "m_FileID": 0,
+          "m_PathID": 0
+        },
+        "pixelSnap": 0,
+        "onClick": [
+          {
+            "mTarget": {
+              "m_FileID": 0,
+              "m_PathID": 394
+            },
+            "mMethodName": "OnClickChangeImageButton",
+            "mParameters": [],
+            "oneShot": 0
+          }
+        ],
+        "pressedSpriteElement": {
+          "widget": {
+            "m_FileID": 0,
+            "m_PathID": 535
+          },
+          "color": {
+            "r": 1.0,
+            "g": 1.0,
+            "b": 1.0,
+            "a": 0.5
+          }
+        },
+        "disableSpriteElement": {
+          "widget": {
+            "m_FileID": 0,
+            "m_PathID": 535
+          },
+          "color": {
+            "r": 0.0,
+            "g": 0.0,
+            "b": 0.0,
+            "a": 0.5
+          }
+        },
+        "contentSprite": {
+          "m_FileID": 0,
+          "m_PathID": 534
+        },
+        "initializeTemplateColorPattern": 0,
+        "initializeTemplateHeight": 0,
+        "initializeTemplateWidth": 0,
+        "isInitializeTemplateLabel": 1,
+        "clickSEType": 1,
+        "longPressJudgementTime": 1.0,
+        "onStartLongPressEventList": [],
+        "onLongPressEventList": [],
+        "onReleaseLongPressEventList": [],
+        "enableDoubleTap": 0,
+        "atlas": {
+          "m_FileID": 0,
+          "m_PathID": 0
+        },
+        "additionalParts": []
+      }
+    },
+    {
+      "id": 534,
+      "node": 108,
+      "kind": "UISprite",
+      "data": {
+        "m_Enabled": 1,
+        "leftAnchor": {
+          "target": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "relative": 0.0,
+          "absolute": 0
+        },
+        "rightAnchor": {
+          "target": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "relative": 1.0,
+          "absolute": 0
+        },
+        "bottomAnchor": {
+          "target": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "relative": 0.0,
+          "absolute": 21
+        },
+        "topAnchor": {
+          "target": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "relative": 0.0,
+          "absolute": 101
+        },
+        "updateAnchors": 1,
+        "mColor": {
+          "r": 1.0,
+          "g": 1.0,
+          "b": 1.0,
+          "a": 1.0
+        },
+        "mPivot": 4,
+        "mWidth": 48,
+        "mHeight": 48,
+        "mDepth": 25,
+        "boundless": 0,
+        "mMat": {
+          "m_FileID": 0,
+          "m_PathID": 0
+        },
+        "autoResizeBoxCollider": 0,
+        "hideIfOffScreen": 0,
+        "keepAspectRatio": 0,
+        "aspectRatio": 1.0,
+        "mType": 1,
+        "mFillDirection": 4,
+        "mFillAmount": 1.0,
+        "mInvert": 0,
+        "mFlip": 0,
+        "mApplyGradient": 0,
+        "mGradientTop": {
+          "r": 1.0,
+          "g": 1.0,
+          "b": 1.0,
+          "a": 1.0
+        },
+        "mGradientBottom": {
+          "r": 0.699999988079071,
+          "g": 0.699999988079071,
+          "b": 0.699999988079071,
+          "a": 1.0
+        },
+        "centerType": 1,
+        "leftType": 1,
+        "rightType": 1,
+        "bottomType": 1,
+        "topType": 1,
+        "mAtlas": {
+          "m_FileID": 4,
+          "m_PathID": 1883
+        },
+        "mSpriteName": "button_gray",
+        "mFixedAspect": 0,
+        "mFillCenter": 1
+      }
+    },
+    {
+      "id": 535,
+      "node": 117,
+      "kind": "UISprite",
+      "data": {
+        "m_Enabled": 1,
+        "leftAnchor": {
+          "target": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "relative": 0.0,
+          "absolute": 0
+        },
+        "rightAnchor": {
+          "target": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "relative": 1.0,
+          "absolute": 0
+        },
+        "bottomAnchor": {
+          "target": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "relative": 0.0,
+          "absolute": 0
+        },
+        "topAnchor": {
+          "target": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "relative": 1.0,
+          "absolute": 0
+        },
+        "updateAnchors": 0,
+        "mColor": {
+          "r": 0.0,
+          "g": 0.0,
+          "b": 0.0,
+          "a": 0.5
+        },
+        "mPivot": 4,
+        "mWidth": 48,
+        "mHeight": 48,
+        "mDepth": 27,
+        "boundless": 0,
+        "mMat": {
+          "m_FileID": 0,
+          "m_PathID": 0
+        },
+        "autoResizeBoxCollider": 0,
+        "hideIfOffScreen": 0,
+        "keepAspectRatio": 0,
+        "aspectRatio": 1.0,
+        "mType": 1,
+        "mFillDirection": 4,
+        "mFillAmount": 1.0,
+        "mInvert": 0,
+        "mFlip": 0,
+        "mApplyGradient": 0,
+        "mGradientTop": {
+          "r": 1.0,
+          "g": 1.0,
+          "b": 1.0,
+          "a": 1.0
+        },
+        "mGradientBottom": {
+          "r": 0.699999988079071,
+          "g": 0.699999988079071,
+          "b": 0.699999988079071,
+          "a": 1.0
+        },
+        "centerType": 1,
+        "leftType": 1,
+        "rightType": 1,
+        "bottomType": 1,
+        "topType": 1,
+        "mAtlas": {
+          "m_FileID": 4,
+          "m_PathID": 1809
+        },
+        "mSpriteName": "button_gray",
+        "mFixedAspect": 0,
+        "mFillCenter": 1
+      }
+    },
+    {
+      "id": 610,
+      "node": 101,
+      "kind": "UISprite",
+      "data": {
+        "m_Enabled": 1,
+        "leftAnchor": {
+          "target": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "relative": 0.0,
+          "absolute": 0
+        },
+        "rightAnchor": {
+          "target": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "relative": 1.0,
+          "absolute": 0
+        },
+        "bottomAnchor": {
+          "target": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "relative": 0.0,
+          "absolute": 0
+        },
+        "topAnchor": {
+          "target": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "relative": 1.0,
+          "absolute": 0
+        },
+        "updateAnchors": 1,
+        "mColor": {
+          "r": 1.0,
+          "g": 1.0,
+          "b": 1.0,
+          "a": 1.0
+        },
+        "mPivot": 4,
+        "mWidth": 25,
+        "mHeight": 23,
+        "mDepth": 26,
+        "boundless": 0,
+        "mMat": {
+          "m_FileID": 0,
+          "m_PathID": 0
+        },
+        "autoResizeBoxCollider": 0,
+        "hideIfOffScreen": 0,
+        "keepAspectRatio": 0,
+        "aspectRatio": 1.08695650100708,
+        "mType": 0,
+        "mFillDirection": 4,
+        "mFillAmount": 1.0,
+        "mInvert": 0,
+        "mFlip": 0,
+        "mApplyGradient": 0,
+        "mGradientTop": {
+          "r": 1.0,
+          "g": 1.0,
+          "b": 1.0,
+          "a": 1.0
+        },
+        "mGradientBottom": {
+          "r": 0.699999988079071,
+          "g": 0.699999988079071,
+          "b": 0.699999988079071,
+          "a": 1.0
+        },
+        "centerType": 1,
+        "leftType": 1,
+        "rightType": 1,
+        "bottomType": 1,
+        "topType": 1,
+        "mAtlas": {
+          "m_FileID": 4,
+          "m_PathID": 1796
+        },
+        "mSpriteName": "icon_pictchange",
+        "mFixedAspect": 0,
+        "mFillCenter": 1
+      }
+    }
+  ]
+}

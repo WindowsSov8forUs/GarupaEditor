@@ -6,15 +6,15 @@ import { listApplicationBuiltinImages } from "../resources/builtin/builtinResour
 const urls = new Map(listApplicationBuiltinImages().map(entry => [entry.slot, entry.url]));
 
 /** Use the shared original dialog, with packaged artwork even if storage bootstrap failed. */
-export default function StartupResourceDialog({ error, warnings, onRetry, onContinue }: {
-  error: string; warnings: readonly string[]; onRetry(): void; onContinue(): void;
+export default function StartupResourceDialog({ error, warnings, onRetry, onContinue, title }: {
+  error: string; warnings: readonly string[]; onRetry(): void; onContinue?: () => void; title?: string;
 }) {
   return <BuiltinResourcePresentationProvider urls={urls}>
     <div style={{ position: "fixed", inset: 0, zIndex: 10002 }}>
-      <StandardModal open title={error ? "启动加载失败" : "部分资源未准备完成"} hideCloseAction
+      <StandardModal open title={title ?? (error ? "启动加载失败" : "部分资源未准备完成")} hideCloseAction
         actions={<>
           <OriginalButton tone="pink" onClick={onRetry}>重试</OriginalButton>
-          {!error && <OriginalButton tone="gray" onClick={onContinue}>继续</OriginalButton>}
+          {!error && onContinue && <OriginalButton tone="gray" onClick={onContinue}>继续</OriginalButton>}
         </>}>
         <div style={{ maxHeight: "min(320px, 40vh)", overflowY: "auto", overflowWrap: "anywhere", whiteSpace: "pre-wrap" }}>
           {error || warnings.join("\n\n")}

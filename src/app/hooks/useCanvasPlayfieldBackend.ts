@@ -1,3 +1,5 @@
+import { editorGridWindow } from "../editorGridWindow";
+import { editorNoteHeight, editorDirectionalSegmentWidth } from "../editorNoteMetrics";
 import { useMemo, useRef, type RefObject } from "react";
 import {
   projectCanvasRenderResourceRuntimeAssets,
@@ -10,8 +12,6 @@ import type { RenderConnectionSegment, RenderSimultaneousSegment } from "./useEd
 const GRID_COLOR = "rgb(26, 51, 59)";
 const GRID_BEAT_COLOR = "rgb(0, 166, 166)";
 const GRID_MEASURE_COLOR = "rgb(0, 166, 166)";
-const LANE_GUIDE_COLOR = "rgba(98, 124, 162, 0.46)";
-const BOARD_BG_COLOR = "#02050d";
 const BOARD_OVERSCAN_PX = 280;
 const BOARD_HORIZONTAL_OVERSCAN_PX = 160;
 const PLAYBACK_BOARD_OVERSCAN_PX = 160;
@@ -41,7 +41,7 @@ type SegmentEndpoints = {
 
 type CanvasOverlayMode = "none" | "flick" | "directional";
 
-type CanvasNoteVisual = {
+export type CanvasNoteVisual = {
   id: string;
   type: string;
   x: number;
@@ -102,7 +102,7 @@ function resolveSegmentEndpoints(
   };
 }
 
-function resolveSegmentGeometry(endpoints: SegmentEndpoints): SegmentGeometry | null {
+export function resolveSegmentGeometry(endpoints: SegmentEndpoints): SegmentGeometry | null {
   const { fromX, fromY, toX, toY } = endpoints;
   const deltaY = toY - fromY;
 
@@ -128,7 +128,7 @@ function resolveSegmentGeometry(endpoints: SegmentEndpoints): SegmentGeometry | 
   };
 }
 
-function drawConnectionSegment(
+export function drawConnectionSegment(
   context: CanvasRenderingContext2D,
   segment: RenderConnectionSegment,
   geometry: SegmentGeometry,
@@ -149,7 +149,7 @@ function isDirectionalVisual(type: string): boolean {
   return type === "directional_flick_left" || type === "directional_flick_right";
 }
 
-function drawNoteVisual(
+export function drawNoteVisual(
   context: CanvasRenderingContext2D,
   note: CanvasNoteVisual,
   boardXOffset: number,
@@ -164,7 +164,7 @@ function drawNoteVisual(
     return;
   }
 
-  const NOTE_HEIGHT = 24 * noteVisualScale;
+  const NOTE_HEIGHT = editorNoteHeight(laneWidth, noteVisualScale);
   const centerX = note.x + boardXOffset;
   const centerY = note.y;
   const directional = isDirectionalVisual(note.type);
@@ -181,7 +181,7 @@ function drawNoteVisual(
 
   if (directional) {
     const laneCount = Math.max(1, Math.round(note.spanLanes));
-    const segmentWidth = Math.max(laneWidth * 1.34 * noteVisualScale, 60 * noteVisualScale);
+    const segmentWidth = editorDirectionalSegmentWidth(laneWidth, noteVisualScale);
     const headSegmentIndex = note.type === "directional_flick_right" ? laneCount - 1 : 0;
     const headSegmentCenterX = tokenLeft + ((headSegmentIndex + 0.5) / laneCount) * tokenWidth;
     const headSegmentLeft = headSegmentCenterX - segmentWidth * 0.5;
@@ -777,52 +777,11 @@ export function useCanvasPlayfieldBackend(params: {
           return;
         }
         trackRenderMemoRef.current = trackMemo;
-        context.fillStyle = BOARD_BG_COLOR;
-        context.fillRect(0, 0, width, windowHeight);
 
-        for (let column = 0; column < snapshot.laneValues.length; column += 1) {
-          context.fillStyle = column % 2 === 0 ? "rgba(8, 15, 26, 0.72)" : "rgba(12, 20, 32, 0.72)";
-          context.fillRect(
-            boardXOffset + column * snapshot.laneWidth,
-            0,
-            snapshot.laneWidth,
-            windowHeight,
-          );
-        }
-
-        for (let column = 1; column < snapshot.laneValues.length; column += 1) {
-          const x = boardXOffset + column * snapshot.laneWidth;
-          context.strokeStyle = LANE_GUIDE_COLOR;
-          context.lineWidth = 3;
-          context.beginPath();
-          context.moveTo(x, 0);
-          context.lineTo(x, windowHeight);
-          context.stroke();
-        }
-        context.fillStyle = GRID_BEAT_COLOR;
-        context.fillRect(boardXOffset - 9, 0, 9, windowHeight);
-        context.fillRect(boardXOffset + logicalBoardWidth, 0, 9, windowHeight);
-
-        const beatA = snapshot.yToBeat(windowBottom);
-        const beatB = snapshot.yToBeat(windowTop);
-        const minBeat = Math.max(0, Math.min(beatA, beatB));
-        const maxBeat = Math.max(0, Math.max(beatA, beatB));
-        const minStep = snapshot.useFullGridScan
-          ? 0
-          : Math.max(0, Math.floor(minBeat * snapshot.beatDivision) - snapshot.beatDivision);
-        const maxStep = snapshot.useFullGridScan
-          ? snapshot.totalSteps
-          : Math.min(
-              snapshot.totalSteps,
-              Math.ceil(maxBeat * snapshot.beatDivision) + snapshot.beatDivision,
-            );
-
-        for (let step = minStep; step <= maxStep; step += 1) {
+        for (const { step, y: yWorld } of editorGridWindow({ top: windowTop, bottom: windowBottom,
+          totalSteps: snapshot.totalSteps, beatDivision: snapshot.beatDivision,
+          beatToY: snapshot.beatToY, yToBeat: snapshot.yToBeat, fullScan: snapshot.useFullGridScan })) {
           const beat = step / snapshot.beatDivision;
-          const yWorld = snapshot.beatToY(beat);
-          if (yWorld < windowTop - 2 || yWorld > windowBottom + 2) {
-            continue;
-          }
           const y = yWorld - windowTop;
           const roundedBeat = Math.round(beat);
           const isWholeBeat = Math.abs(beat - roundedBeat) < 1e-6;

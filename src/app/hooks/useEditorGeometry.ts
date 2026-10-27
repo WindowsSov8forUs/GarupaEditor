@@ -1,3 +1,4 @@
+import { editorNoteHeight, editorDirectionalSegmentWidth } from "../editorNoteMetrics";
 import { useCallback, useEffect, useMemo, useRef, type UIEvent } from "react";
 import type { ChartNote, NoteType } from "../../chartCore";
 import { buildSelectionMoveOffsetMap } from "../slideHiddenMoveOffsets";
@@ -7,6 +8,7 @@ const ZERO_BEAT_RENDER_OFFSET_PX = 4;
 export function useEditorGeometry(params: any) {
   const {
     laneMin,
+    playbackLinePositionPercent,
     bpmTimeline,
     boardHeight,
     displayAxis,
@@ -64,6 +66,7 @@ export function useEditorGeometry(params: any) {
     onSelectionDragCompleted,
   } = params;
   const svPreviewScrollFrameRef = useRef<number | null>(null);
+  const previousPlaybackPositionRef = useRef(playbackLinePositionPercent);
 
   const laneToColumn = useCallback((lane: number): number => lane - laneMin, [laneMin]);
 
@@ -172,38 +175,34 @@ export function useEditorGeometry(params: any) {
     const maxScrollTop = Math.max(0, effectiveScrollHeight - playfield.clientHeight);
 
     if (!didInitTimelineScrollRef.current) {
+      previousPlaybackPositionRef.current = playbackLinePositionPercent;
       const zeroBeatScrollTop = clamp(
-        timeToY(beatToSec(0)) - playfield.clientHeight,
+        timeToY(beatToSec(0)) - playfield.clientHeight * (1 - playbackLinePositionPercent / 100),
         0,
         maxScrollTop,
       );
       playfield.scrollTop = zeroBeatScrollTop;
-      viewBottomTimeSecRef.current = 0;
+      viewBottomTimeSecRef.current = -playfield.clientHeight * playbackLinePositionPercent / 100 / timelinePixelsPerSecond;
       syncSvPreviewTimeFromViewport(0);
       didInitTimelineScrollRef.current = true;
       return;
     }
 
-    const targetBottomTime = clamp(
-      Number.isFinite(viewBottomTimeSecRef.current) ? viewBottomTimeSecRef.current : 0,
-      0,
-      totalDurationSec,
-    );
+    const positionDelta = playbackLinePositionPercent - previousPlaybackPositionRef.current;
+    previousPlaybackPositionRef.current = playbackLinePositionPercent;
+    const targetBottomTime = (Number.isFinite(viewBottomTimeSecRef.current) ? viewBottomTimeSecRef.current : 0)
+      - playfield.clientHeight * positionDelta / 100 / timelinePixelsPerSecond;
     const nextBottomY = timeToY(targetBottomTime);
     const nextScrollTop = clamp(nextBottomY - playfield.clientHeight, 0, maxScrollTop);
     playfield.scrollTop = nextScrollTop;
-    viewBottomTimeSecRef.current = yToTime(playfield.scrollTop + playfield.clientHeight);
+    // Preserve the requested anchor while the scroll extent catches up with layout changes.
+    viewBottomTimeSecRef.current = targetBottomTime;
     syncSvPreviewTimeFromViewport(viewBottomTimeSecRef.current);
-  }, [beatToSec, boardHeight, clamp, didInitTimelineScrollRef, displayAxis, isSkinReady, playfieldRef, syncSvPreviewTimeFromViewport, timeToY, totalDurationSec, viewBottomTimeSecRef, yToTime]);
+  }, [timelinePixelsPerSecond, playbackLinePositionPercent, beatToSec, boardHeight, clamp, didInitTimelineScrollRef, displayAxis, isSkinReady, playfieldRef, syncSvPreviewTimeFromViewport, timeToY, totalDurationSec, viewBottomTimeSecRef, yToTime]);
 
   const handlePlayfieldScroll = useCallback((event: UIEvent<HTMLDivElement>) => {
     const playfield = event.currentTarget;
-    const effectiveScrollHeight = Math.max(boardHeight, Number(displayAxis?.contentHeight) || 0);
-    const maxScrollTop = Math.max(0, effectiveScrollHeight - playfield.clientHeight);
-    if (playfield.scrollTop > maxScrollTop) {
-      playfield.scrollTop = maxScrollTop;
-    }
-    const bottomTimeSec = yToTime(playfield.scrollTop + playfield.clientHeight);
+    const bottomTimeSec = (displayAxis?.viewportTimeAtY ?? yToTime)(playfield.scrollTop + playfield.clientHeight);
     viewBottomTimeSecRef.current = bottomTimeSec;
     syncSvPreviewTimeFromViewport(bottomTimeSec);
   }, [boardHeight, displayAxis, syncSvPreviewTimeFromViewport, viewBottomTimeSecRef, yToTime]);
@@ -330,7 +329,7 @@ export function useEditorGeometry(params: any) {
     (type: NoteType, spanLanes: number): number => {
       if (isDirectionalNoteType(type)) {
         const laneCount = Math.max(1, spanLanes);
-        const directionalSegmentWidth = Math.max(LANE_WIDTH * 1.34, 60) * noteVisualScale;
+        const directionalSegmentWidth = editorDirectionalSegmentWidth(LANE_WIDTH, noteVisualScale);
         return Math.max(1, (laneCount - 1) * LANE_WIDTH + directionalSegmentWidth);
       }
       return LANE_WIDTH * (spanLanes + 0.25) * noteVisualScale;
@@ -347,7 +346,7 @@ export function useEditorGeometry(params: any) {
         }
         const { x: centerX, y: centerY, spanLanes } = getNoteCenterAt(note);
         const tokenWidth = getNoteHitboxWidth(note.type, spanLanes);
-        const tokenHeight = 24 * noteVisualScale;
+        const tokenHeight = editorNoteHeight(LANE_WIDTH, noteVisualScale);
         const left = centerX - tokenWidth / 2;
         const right = centerX + tokenWidth / 2;
         const top = centerY - tokenHeight / 2;
@@ -358,7 +357,7 @@ export function useEditorGeometry(params: any) {
       }
       return null;
     },
-    [getNoteCenterAt, getNoteHitboxWidth, noteVisualScale, notes],
+    [LANE_WIDTH, getNoteCenterAt, getNoteHitboxWidth, noteVisualScale, notes],
   );
 
   const isPlacementBlocked = useCallback((
@@ -404,7 +403,7 @@ export function useEditorGeometry(params: any) {
       rhythmWidth?: number;
     },
   ): { lane: number; beat: number } | null => {
-    if (y < 0 || y > boardHeight) {
+    if (y < 0 || y > Math.max(boardHeight, displayAxis?.contentHeight ?? 0) || (displayAxis?.viewportTimeAtY?.(y) ?? 0) < -4 / timelinePixelsPerSecond) {
       return null;
     }
 
@@ -463,6 +462,8 @@ export function useEditorGeometry(params: any) {
     quantizeBeat,
     resolvePreviewSpanLanes,
     tool,
+    displayAxis,
+    timelinePixelsPerSecond,
     yToBeat,
   ]);
 
@@ -516,7 +517,7 @@ export function useEditorGeometry(params: any) {
         const noteCenterX = (laneToColumn(directionalStartLane) + spanLanes / 2) * LANE_WIDTH;
         const noteCenterY = beatToY(note.beat);
         const noteWidth = getNoteHitboxWidth(note.type, spanLanes);
-        const noteHeight = 24 * noteVisualScale;
+        const noteHeight = editorNoteHeight(LANE_WIDTH, noteVisualScale);
         const noteLeft = noteCenterX - noteWidth / 2;
         const noteRight = noteCenterX + noteWidth / 2;
         const noteTop = noteCenterY - noteHeight / 2;

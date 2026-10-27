@@ -8,7 +8,7 @@ import {
 import type { PreparedSkinRenderOverlay } from "./skinRenderPreparation";
 
 export interface PreparedPresentationImage {
-  readonly role: "jacket" | "stage-backdrop" | "stage-effect" | "display-image";
+  readonly role: "jacket" | "stage-backdrop" | "illust-background" | "stage-effect" | "display-image";
   readonly slot: number | null;
   readonly logicalId: string;
   readonly sha256: string;
@@ -36,6 +36,8 @@ export interface PreparedSessionPresentation {
   readonly difficulty: SimulatorPresentationPackage["difficulty"];
   readonly jacket: PreparedPresentationImage;
   readonly stageBackdrop: PreparedPresentationImage;
+  /** The custom background, shown as the Light mode card illustration. */
+  readonly illustBackground: PreparedPresentationImage | null;
   /** Visible stage-effect widgets of the selected special background. */
   readonly stageEffect: readonly PreparedStageEffectWidget[];
   readonly displayImage: PreparedPresentationImage | null;
@@ -49,6 +51,9 @@ export async function deriveSessionPresentation(
   if (jacket.status === "rejected") return jacket;
   const backdrop = deriveImage("stage-backdrop", null, presentation.stage.backdropPng, null, null);
   if (backdrop.status === "rejected") return backdrop;
+  const illustBackground = presentation.stage.illustBackgroundPng == null ? null
+    : deriveImage("illust-background", null, presentation.stage.illustBackgroundPng, null, null);
+  if (illustBackground?.status === "rejected") return illustBackground;
   const displayImage = presentation.displayImagePng == null ? null
     : deriveImage("display-image", null, presentation.displayImagePng, null, null);
   if (displayImage?.status === "rejected") return displayImage;
@@ -58,6 +63,7 @@ export async function deriveSessionPresentation(
     difficulty: presentation.difficulty,
     jacket: jacket.value,
     stageBackdrop: backdrop.value,
+    illustBackground: illustBackground?.value ?? null,
     stageEffect: Object.freeze([]),
     displayImage: displayImage?.value ?? null,
     sdCharacters,

@@ -3,6 +3,7 @@ import {
   type GarupaChartJson,
 } from "../../chart";
 import type { ChartMetadata } from "../../chartCore";
+import { normalizeSourcePng } from "../../resources/normalizeImagePng";
 import {
   SONOLUS_TEST_SERVER_ROOT,
   bestdoriGetMe,
@@ -13,6 +14,7 @@ import {
   prepareBestdoriFileUpload,
   NOTGARUPA_SERVER_ROOT,
   uploadNotGarupaLevel,
+  type NotGarupaUploadFile,
   uploadSonolusLevel,
   type BestdoriPostContentSegment,
   type BestdoriPostTag,
@@ -397,12 +399,12 @@ export interface UploadNotGarupaLevelFlowParams {
   audioFileName: string;
   audioMimeType: string;
   coverFileBytes: Uint8Array;
-  coverFileName: string;
   coverMimeType: string;
+  illustBackgroundFileBytes?: Uint8Array | null;
+  illustBackgroundMimeType?: string | null;
   description?: string | null;
   tags?: BestdoriPostTag[] | null;
   difficulty?: number;
-  lifetime?: number;
   hidden?: boolean;
   onStage?: (stage: UploadNotGarupaLevelFlowStage) => void;
 }
@@ -418,7 +420,15 @@ function buildNotGarupaLevelUrl(uid: string): string {
 }
 
 function buildNotGarupaChartUrl(uid: string): string {
-  return `${NOTGARUPA_LEVEL_URL_ROOT}/${uid}/chart.json`;
+  return `${NOTGARUPA_SERVER_ROOT}/api/levels/${uid}/chart.json`;
+}
+
+/** The server takes PNG or JPEG images; other formats are sent as PNG. */
+async function notGarupaImage(name: string, bytes: Uint8Array, mimeType: string): Promise<NotGarupaUploadFile> {
+  const type = mimeType.toLowerCase();
+  if (type === "image/png") return { fileName: `${name}.png`, fileBytes: bytes, mimeType: type };
+  if (type === "image/jpeg" || type === "image/jpg") return { fileName: `${name}.jpg`, fileBytes: bytes, mimeType: "image/jpeg" };
+  return { fileName: `${name}.png`, fileBytes: await normalizeSourcePng(bytes, name, null), mimeType: "image/png" };
 }
 
 export async function uploadSonolusLevelFlow(
@@ -483,6 +493,10 @@ export async function uploadNotGarupaLevelFlow(
   }
   params.onStage?.("resolving-audio");
   params.onStage?.("resolving-cover");
+  const cover = await notGarupaImage("cover", params.coverFileBytes, params.coverMimeType);
+  const illustBackground = params.illustBackgroundFileBytes?.byteLength
+    ? await notGarupaImage("illust-background", params.illustBackgroundFileBytes, params.illustBackgroundMimeType ?? "")
+    : null;
   const tags = Array.isArray(params.tags)
     ? params.tags
       .map((tag) => trimNonEmptyStringOrNull(tag?.data))
@@ -493,19 +507,16 @@ export async function uploadNotGarupaLevelFlow(
   const uid = await uploadNotGarupaLevel({
     title,
     chart: garupaChartJsonText,
-    chartFileName: "chart.json",
-    bgmFileName: params.audioFileName,
-    bgmFileBytes: params.audioFileBytes,
-    bgmMimeType: params.audioMimeType,
-    coverFileName: params.coverFileName,
-    coverFileBytes: params.coverFileBytes,
-    coverMimeType: params.coverMimeType,
+    bgm: { fileName: params.audioFileName, fileBytes: params.audioFileBytes, mimeType: params.audioMimeType },
+    cover,
+    illustBackground,
     artists,
     author,
     description: trimNonEmptyStringOrNull(params.description) ?? "",
     tags,
-    difficulty: params.difficulty,
-    lifetime: params.lifetime,
+    rating: params.difficulty ?? 1,
+    difficulty: metadata.difficulty,
+    fullLength: metadata.isFullLength,
     hidden: params.hidden,
   });
 

@@ -6,7 +6,7 @@ import { createResourceRef } from "../resources/contracts";
 
 export const PROJECT_FORMAT = "GarupaEditor.ChartProject";
 export const PROJECT_VERSION = 1;
-export const PROJECT_MEDIA_ROLES = ["bgm", "cover", "mv", "stageBackdrop"] as const;
+export const PROJECT_MEDIA_ROLES = ["bgm", "cover", "mv", "illustBackground"] as const;
 export type ProjectMediaRole = typeof PROJECT_MEDIA_ROLES[number];
 
 /** Persisted editing data, not a replay of import heuristics or a runtime scene. */
@@ -150,9 +150,25 @@ export function validateProject(value: unknown): asserts value is ChartProject {
 }
 export async function readChartProject(json: string): Promise<ChartProject> {
   const project: unknown = JSON.parse(json);
+  const legacy = renameLegacyProjectMedia(project);
   validateProject(project);
-  requireValue(await projectHash(projectContent(project)) === project.contentHash, "内容摘要不匹配");
+  const content = projectContent(project) as { media: Record<string, unknown> };
+  if (legacy) {
+    // The hash was taken over the old role name; verify it, then rehash.
+    const { illustBackground, ...media } = content.media;
+    requireValue(await projectHash({ ...content, media: { ...media, stageBackdrop: illustBackground } }) === project.contentHash, "内容摘要不匹配");
+    project.contentHash = await projectHash(content);
+  } else requireValue(await projectHash(content) === project.contentHash, "内容摘要不匹配");
   return project;
+}
+
+/** Projects before the rename stored the custom background as stageBackdrop. */
+function renameLegacyProjectMedia(project: unknown): boolean {
+  if (!record(project) || !record(project.media) || !("stageBackdrop" in project.media)
+    || "illustBackground" in project.media) return false;
+  const { stageBackdrop, ...media } = project.media;
+  project.media = { ...media, illustBackground: stageBackdrop };
+  return true;
 }
 export function projectDraft(project: ChartProject): ChartProjectDraft {
   return { projectId: project.projectId, metadata: project.metadata, chart: project.chart,

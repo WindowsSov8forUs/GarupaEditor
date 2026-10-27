@@ -24,7 +24,7 @@ export function hasCompatibleUserMediaMagic(
 ): boolean {
   const type = normalizeMediaType(mediaType);
   if (type === null) return false;
-  if (purpose === "cover" || purpose === "stage-backdrop") {
+  if (purpose === "cover" || purpose === "illust-background") {
     if (type === "image/png") return bytes.length >= 8 && [137, 80, 78, 71, 13, 10, 26, 10].every((value, index) => bytes[index] === value);
     if (type === "image/jpeg" || type === "image/jpg") return bytes[0] === 0xff && bytes[1] === 0xd8;
     if (type === "image/webp") return ascii(bytes, 0, "RIFF") && ascii(bytes, 8, "WEBP");

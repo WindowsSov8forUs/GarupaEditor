@@ -241,11 +241,12 @@ function SongProfileDifficulty({ difficulty, hasSpecialNotes, hasMv }: {
 
 type NoteStatisticsContent = (expanded: boolean, onChange: (expanded: boolean) => void) => ReactNode;
 
-export function SongProfileInformation({ title, artist, duration, bpm, count, cover, level, difficulty, hasSpecialNotes, hasMv, mv, onChangeMv, noteStatistics, isFullLength, onFullLengthChange, onLevelChange, onTitleChange, onArtistChange }: {
+export function SongProfileInformation({ title, artist, duration, bpm, count, cover, level, difficulty, hasSpecialNotes, hasMv, mv, onChangeMv, illustBackground, onChangeIllustBackground, onRemoveIllustBackground, noteStatistics, isFullLength, onFullLengthChange, onLevelChange, onTitleChange, onArtistChange }: {
   title: string; artist: string; duration: string; bpm: string; count: number; cover: string | null; onTitleChange(value: string): void;
   level: string; difficulty: ChartMetadata["difficulty"]; onLevelChange(value: string): void;
   hasSpecialNotes: boolean; hasMv: boolean;
   mv: string | null; onChangeMv(): void; noteStatistics: NoteStatisticsContent;
+  illustBackground: string | null; onChangeIllustBackground(): void; onRemoveIllustBackground(): void;
   onArtistChange(value: string): void;
   isFullLength: boolean; onFullLengthChange(value: boolean): void;
 }) {
@@ -297,6 +298,8 @@ export function SongProfileInformation({ title, artist, duration, bpm, count, co
       </div>
     </div>
     <SongProfilePages duration={duration} bpm={bpm} count={count} mv={mv} onChangeMv={onChangeMv}
+      illustBackground={illustBackground} onChangeIllustBackground={onChangeIllustBackground}
+      onRemoveIllustBackground={onRemoveIllustBackground}
       noteStatistics={noteStatistics} expanded={expanded} onExpandedChange={setExpanded} />
   </div>;
 }
@@ -307,6 +310,12 @@ const profilePageNames = ["歌曲统计", "音符统计", "MV"] as const;
 const profileMvHeader = new OriginalPrefabModel(prefabs.profileMvHeader, {
   nodes: { 300: { x: 0 } },
   components: { 957: { mText: "MV" }, 964: { mText: "更改" } },
+});
+// Not in the original page: the custom background (shown by the simulator as
+// the Light mode card background) reuses the MV header below the MV preview.
+const profileIllustBackgroundHeader = new OriginalPrefabModel(prefabs.profileMvHeader, {
+  nodes: { 300: { x: 0 } },
+  components: { 957: { mText: "自定义背景" }, 964: { mText: "更改" } },
 });
 
 function SongProfilePageArrow({ direction, visible, onClick }: {
@@ -348,8 +357,10 @@ function SongProfilePageArrow({ direction, visible, onClick }: {
 }
 
 /** ProfilePageController: slide only the clipped contents, leaving arrows and page icons fixed. */
-function SongProfilePages({ duration, bpm, count, mv, onChangeMv, noteStatistics, expanded, onExpandedChange }: {
+function SongProfilePages({ duration, bpm, count, mv, onChangeMv, illustBackground, onChangeIllustBackground,
+  onRemoveIllustBackground, noteStatistics, expanded, onExpandedChange }: {
   duration: string; bpm: string; count: number; mv: string | null; onChangeMv(): void; noteStatistics: NoteStatisticsContent;
+  illustBackground: string | null; onChangeIllustBackground(): void; onRemoveIllustBackground(): void;
   expanded: boolean; onExpandedChange(value: boolean): void;
 }) {
   const [pagination] = useState(() => new OriginalProfilePagination(3, profilePagination.pageWidth));
@@ -383,7 +394,11 @@ function SongProfilePages({ duration, bpm, count, mv, onChangeMv, noteStatistics
   const selected = page;
   const header = profileMvHeader.rect(profileMvHeader.components.get(954)!);
   const previewTop = header.y + header.height + 16;
-  const previewHeight = -icons.y - 24 - previewTop;
+  // The MV and the custom background share the page: header, preview, header, preview.
+  const previewHeight = (-icons.y - 24 - previewTop - 32 - header.height) / 2;
+  const backgroundHeaderTop = previewTop + previewHeight + 16;
+  const backgroundPreviewTop = backgroundHeaderTop + header.height + 16;
+  const previewWidth = bottomBackground.width - (header.x - bottomBackground.x) * 2;
   return <>
     <SongProfilePageMask>
       <div ref={track} className="original-prefab-origin" data-profile-root-x={pagination.rootX}
@@ -402,8 +417,20 @@ function SongProfilePages({ duration, bpm, count, mv, onChangeMv, noteStatistics
               } }} />
               {mv && <video ref={video} src={mv} controls preload="metadata" playsInline
                 aria-label="MV 预览" style={{ position: "absolute", left: header.x, top: previewTop,
-                  width: bottomBackground.width - (header.x - bottomBackground.x) * 2,
-                  height: previewHeight, objectFit: "contain" }} />}
+                  width: previewWidth, height: previewHeight, objectFit: "contain" }} />}
+              <div className="original-prefab-origin" style={{ top: backgroundHeaderTop - header.y }}>
+                <OriginalPrefabView model={profileIllustBackgroundHeader} bindings={{ buttons: {
+                  839: { label: "更改自定义背景", action: onChangeIllustBackground },
+                } }} />
+              </div>
+              {illustBackground && <>
+                <img src={illustBackground} alt="自定义背景预览" style={{ position: "absolute", left: header.x,
+                  top: backgroundPreviewTop, width: previewWidth, height: previewHeight, objectFit: "contain" }} />
+                <div style={{ position: "absolute", left: header.x, top: backgroundPreviewTop + previewHeight,
+                  width: previewWidth, display: "flex", justifyContent: "flex-end", transform: "translateY(-100%)" }}>
+                  <OriginalFormButton size="small" onClick={onRemoveIllustBackground}>移除</OriginalFormButton>
+                </div>
+              </>}
             </>}
           </div></OriginalPageVisible.Provider>;
         })}

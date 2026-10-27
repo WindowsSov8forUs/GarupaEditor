@@ -345,7 +345,6 @@ const BESTDORI_UPLOAD_ENDPOINT = "https://bestdori.com/api/upload";
 export const SONOLUS_TEST_SERVER_ROOT = "https://sonolus.ayachan.fun/test";
 export const NOTGARUPA_SERVER_ROOT = "https://notgarupa.sov8.cn";
 const SONOLUS_TEST_LEVELS_ENDPOINT = `${SONOLUS_TEST_SERVER_ROOT}/sonolus/levels`;
-const NOTGARUPA_LEVELS_ENDPOINT = `${NOTGARUPA_SERVER_ROOT}/sonolus/levels`;
 export const BESTDORI_OFFICIAL_CHART_TEAM = "=BANDORI OFFICIAL CHART TEAM=";
 
 export function normalizeBestdoriAssetServer(value: string | null | undefined): BestdoriAssetServer {
@@ -1070,70 +1069,90 @@ export async function uploadSonolusLevel(params: SonolusUploadLevelParams): Prom
   return extractSonolusUploadUid(response.uid);
 }
 
-export async function uploadNotGarupaLevel(params: SonolusUploadLevelParams): Promise<string> {
+export interface NotGarupaUploadFile {
+  fileName: string;
+  fileBytes: Uint8Array;
+  mimeType: string;
+}
+
+export interface NotGarupaUploadLevelParams {
+  title: string;
+  chart: string;
+  bgm: NotGarupaUploadFile;
+  cover: NotGarupaUploadFile;
+  illustBackground?: NotGarupaUploadFile | null;
+  artists: string;
+  author: string;
+  description: string;
+  tags: string[];
+  rating: number;
+  difficulty: string;
+  fullLength: boolean;
+  hidden?: boolean;
+}
+
+interface NotGarupaUploadResponse {
+  status: number;
+  body: { uid?: unknown; error?: unknown } | null;
+  retryAfter: number | null;
+}
+
+/**
+ * The Tauri backend signs the upload with the key it was built with
+ * (server docs/UPLOAD.md); a browser build has no key and cannot upload.
+ */
+export async function uploadNotGarupaLevel(params: NotGarupaUploadLevelParams): Promise<string> {
+  if (!isTauriRuntimeEnvironment()) {
+    throw new Error("上传至 NotGarupa 服务器需要使用桌面版 GarupaEditor。");
+  }
   const title = normalizeSonolusUploadTitle(params.title);
   const chart = normalizeSonolusUploadChart(params.chart);
-  const difficulty = normalizeSonolusUploadDifficulty(params.difficulty);
-  normalizeSonolusUploadLifetime(params.lifetime);
-  const chartFileName = normalizeBestdoriUploadFileName(params.chartFileName ?? "chart.json");
-  const bgmFileName = normalizeBestdoriUploadFileName(params.bgmFileName);
-  const bgmFileBytes = normalizeBestdoriFileBytes(params.bgmFileBytes);
-  if (bgmFileBytes.length <= 0) {
-    throw new Error("sonolus level bgm file cannot be empty");
-  }
-  if (!params.coverFileName || !params.coverFileBytes) {
-    throw new Error("notgarupa level cover file is required");
-  }
-  const coverFileName = normalizeBestdoriUploadFileName(params.coverFileName);
-  const coverFileBytes = normalizeBestdoriFileBytes(params.coverFileBytes);
-  if (coverFileBytes.length <= 0) {
-    throw new Error("sonolus level cover file cannot be empty");
-  }
-  const chartBytes = new TextEncoder().encode(chart);
+  const rating = normalizeSonolusUploadDifficulty(params.rating);
   const fields: Record<string, string> = {
     title,
-    rating: String(difficulty),
-    artists: trimNonEmptyStringOrNull(params.artists) ?? "Unknown Artist",
-    author: trimNonEmptyStringOrNull(params.author) ?? "GarupaEditor",
-    description: trimNonEmptyStringOrNull(params.description) ?? "",
-    tags: JSON.stringify(Array.isArray(params.tags) ? params.tags : []),
+    rating: String(rating),
+    artists: params.artists,
+    author: params.author,
+    description: params.description,
+    tags: JSON.stringify(params.tags),
+    difficulty: params.difficulty.toLowerCase(),
   };
-  if (params.hidden === true) {
-    fields.hidden = "true";
-  }
-  const response = await requestBestdoriPostMultipartFileJson<{ uid?: unknown }>(
-    NOTGARUPA_LEVELS_ENDPOINT,
-    "notgarupa level upload",
-    {
-      fieldName: "bgm",
-      fileName: bgmFileName,
-      fileBytes: bgmFileBytes,
-      mimeType: params.bgmMimeType,
+  if (params.hidden === true) fields.hidden = "true";
+  if (params.fullLength) fields.fullLength = "true";
+  const files: { fieldName: string; file: NotGarupaUploadFile }[] = [
+    { fieldName: "chart", file: { fileName: "chart.json", fileBytes: new TextEncoder().encode(chart), mimeType: "application/json" } },
+    { fieldName: "bgm", file: params.bgm },
+    { fieldName: "cover", file: params.cover },
+    ...(params.illustBackground ? [{ fieldName: "illustBackground", file: params.illustBackground }] : []),
+  ];
+  const response = await invokeTauriCommand<NotGarupaUploadResponse>("notgarupa_upload_level", {
+    params: {
       fields,
-      files: [
-        {
-          fieldName: "chart",
-          fileName: chartFileName,
-          fileBytes: chartBytes,
-          mimeType: "application/json",
-        },
-        {
-          fieldName: "bgm",
-          fileName: bgmFileName,
-          fileBytes: bgmFileBytes,
-          mimeType: params.bgmMimeType,
-        },
-        {
-          fieldName: "cover",
-          fileName: coverFileName,
-          fileBytes: coverFileBytes,
-          mimeType: params.coverMimeType,
-        },
-      ],
-      hostScope: "sonolus",
+      files: files.map(({ fieldName, file }) => ({
+        fieldName,
+        fileName: normalizeBestdoriUploadFileName(file.fileName),
+        fileBase64: encodeBytesToBase64(file.fileBytes),
+        mimeType: trimNonEmptyStringOrNull(file.mimeType),
+      })),
     },
-  );
-  return extractSonolusUploadUid(response.uid);
+  });
+  if (response.status === 200) return extractSonolusUploadUid(response.body?.uid);
+  throw new Error(describeNotGarupaUploadFailure(response));
+}
+
+function describeNotGarupaUploadFailure({ status, body, retryAfter }: NotGarupaUploadResponse): string {
+  const detail = typeof body?.error === "string" && body.error.trim() ? `（${body.error.trim()}）` : "";
+  switch (status) {
+    case 400: return `服务器拒绝了上传的内容${detail}`;
+    case 401: return `服务器未接受此 GarupaEditor 的签名，请使用正式发布的版本并检查系统时间${detail}`;
+    case 408: return `上传超时，请检查网络后重试${detail}`;
+    case 413: return `上传的文件总大小超过服务器上限${detail}`;
+    case 429: return retryAfter !== null
+      ? `上传过于频繁，请在 ${retryAfter} 秒后重试${detail}`
+      : `上传过于频繁，请稍后重试${detail}`;
+    case 503: return `服务器暂时不接受上传${detail}`;
+    default: return `服务器返回 HTTP ${status}${detail}`;
+  }
 }
 
 export async function fetchBestdoriOfficialChart(

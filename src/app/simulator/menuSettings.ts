@@ -1,10 +1,12 @@
 import type { SimulatorOriginalSkinSettings } from "../../simulator/public/contracts";
-import { validateAndFreezeOriginalSkinSettings } from "../../simulator/public/settings";
+import { LIGHT_MODE_BRIGHTNESS_DEFAULT, isOriginalLightModeBrightness,
+  validateAndFreezeOriginalSkinSettings } from "../../simulator/public/settings";
 
 export interface SimulatorMenuSettings {
   readonly lastTab: number;
   readonly suddenRate: number;
   readonly suddenLane: boolean;
+  readonly lightModeBrightness: number;
   readonly hideFastSlow: boolean;
   readonly displayStageEffect: boolean;
   readonly hideCombo: boolean;
@@ -23,7 +25,7 @@ export const DEFAULT_SIMULATOR_MENU_SETTINGS: SimulatorMenuSettings = Object.fre
   hideFastSlow: false, displayStageEffect: true,
   hideCombo: false, displayComboPosition: 4,
   lastTab: 0,
-  suddenRate: 0, suddenLane: false, judgementAdjustValue: 0, judgementAdjustValueB: 0, musicVolumePercent: 70, masterVolumePercent: 100, systemSeVolumePercent: 70, systemBgmVolumePercent: 70,
+  suddenRate: 0, suddenLane: false, lightModeBrightness: LIGHT_MODE_BRIGHTNESS_DEFAULT, judgementAdjustValue: 0, judgementAdjustValueB: 0, musicVolumePercent: 70, masterVolumePercent: 100, systemSeVolumePercent: 70, systemBgmVolumePercent: 70,
   skin: Object.freeze({ noteSkin: 0, fieldSkin: 0, tapEffect: 0, judgeSE: 0, directionalFlick: 0,
     directionalFlickEffect: 0, isFixedBG: false, special: Object.freeze({ kind: "none" as const }) }),
 });
@@ -64,6 +66,8 @@ export function normalizeSimulatorMenuSettings(value: unknown): SimulatorMenuSet
   const suddenLane = item.suddenLane === undefined ? false : item.suddenLane;
   if (!Number.isInteger(suddenRate) || (suddenRate as number) < 0 || (suddenRate as number) > 100 || typeof suddenLane !== "boolean")
     throw new Error("Invalid original Sudden settings.");
+  const lightModeBrightness = item.lightModeBrightness === undefined ? LIGHT_MODE_BRIGHTNESS_DEFAULT : item.lightModeBrightness;
+  if (!isOriginalLightModeBrightness(lightModeBrightness)) throw new Error("Invalid original Light mode background brightness.");
   const skin = validateAndFreezeOriginalSkinSettings(item.skin);
   if (skin.status !== "ok") throw new Error("Simulator 皮肤设置不符合原作索引范围。");
   const remembered = (kind: "collabo" | "limited", value: unknown) => {
@@ -80,6 +84,6 @@ export function normalizeSimulatorMenuSettings(value: unknown): SimulatorMenuSet
   return Object.freeze({ hideFastSlow, displayStageEffect, hideCombo, displayComboPosition: displayComboPosition as number, lastTab: item.lastTab as number, judgementAdjustValue: item.judgementAdjustValue as number,
     judgementAdjustValueB: item.judgementAdjustValueB as number,
     musicVolumePercent: item.musicVolumePercent as number, masterVolumePercent: item.masterVolumePercent as number,
-    systemSeVolumePercent, systemBgmVolumePercent, suddenRate: suddenRate as number, suddenLane, skin: skin.value,
+    systemSeVolumePercent, systemBgmVolumePercent, suddenRate: suddenRate as number, suddenLane, lightModeBrightness, skin: skin.value,
     rememberedCollaboSkin, rememberedLimitedSkin });
 }

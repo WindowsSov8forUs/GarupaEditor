@@ -66,6 +66,9 @@ export function copyAndFreezeSimulatorPresentation(
   if (jacket.status === "rejected") return jacket;
   const backdrop = copyPng(presentation.stage.backdropPng, null, null, "stage-backdrop");
   if (backdrop.status === "rejected") return backdrop;
+  const illustBackground = presentation.stage.illustBackgroundPng == null ? null
+    : copyPng(presentation.stage.illustBackgroundPng, null, null, "illust-background");
+  if (illustBackground?.status === "rejected") return illustBackground;
   const displayImage = presentation.displayImagePng == null ? null
     : copyPng(presentation.displayImagePng, null, null, "display-image");
   if (displayImage?.status === "rejected") return displayImage;
@@ -87,6 +90,7 @@ export function copyAndFreezeSimulatorPresentation(
     displayImagePng: displayImage?.value ?? null,
     stage: Object.freeze({
       backdropPng: backdrop.value,
+      illustBackgroundPng: illustBackground?.value ?? null,
       ...(commandNotes.length === 0 ? {} : { commandNotes: Object.freeze(commandNotes) }),
     }),
     mv: mv.value,

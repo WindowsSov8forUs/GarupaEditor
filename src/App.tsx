@@ -12,6 +12,7 @@ import {
 import { StartupReadinessContext } from "./app/startupReadiness";
 import { isMobileRuntime } from "./app/mobileRuntime";
 import { SimulatorLoadingBoundary } from "./app/simulator/SimulatorLoadingBoundary";
+import StartupResourceDialog from "./app/StartupResourceDialog";
 
 const ChartEditorController = lazy(() => import("./app/ChartEditorController"));
 let preparedEditor: typeof ChartEditorController | typeof import("./app/ChartEditorController").default;
@@ -64,14 +65,9 @@ class AppErrorBoundary extends Component<AppErrorBoundaryProps, AppErrorBoundary
   render() {
     if (this.state.hasError) {
       return (
-        <main className="app-shell">
-          <section className="playfield-loading ui-design-scale">
-            界面渲染发生异常：{this.state.message || "未知错误"}
-            <button type="button" onClick={this.handleRecover}>
-              <span className="btn-content">重试</span>
-            </button>
-          </section>
-        </main>
+        <StartupResourceDialog title="界面渲染异常"
+          error={this.state.message || "未知错误"} warnings={[]}
+          onRetry={this.handleRecover} />
       );
     }
 

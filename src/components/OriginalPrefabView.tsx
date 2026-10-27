@@ -14,6 +14,7 @@ import { OriginalPrefabModel, originalAtlasFor, originalRef, ORIGINAL_PREFABS, O
 import "./OriginalPrefab.css";
 
 export const OriginalPageVisible = createContext(true);
+export const OriginalPageExiting = createContext(false);
 
 export interface OriginalButtonBinding { action?: () => void; disabled?: boolean; label?: string; selected?: boolean; navigationIndex?: number; role?: "tab" | "radio" | "checkbox" }
 export interface OriginalRadioBinding {

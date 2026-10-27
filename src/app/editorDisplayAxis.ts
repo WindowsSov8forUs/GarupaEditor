@@ -9,12 +9,14 @@ type DisplayAxisOptions = {
   pixelsPerSecond: number;
   previewTimeSec: number;
   mainGroup: TimingGroupDef | null | undefined;
+  padding?: { top: number; bottom: number };
 };
 
 export type EditorDisplayAxis = {
   contentHeight: number;
   timeToY: (timeSec: number) => number;
   yToTime: (y: number) => number;
+  viewportTimeAtY: (y: number) => number;
   distanceAtTime: (timeSec: number, group?: TimingGroupDef | null) => number;
   timeToGroupY: (timeSec: number, group?: TimingGroupDef | null) => number;
 };
@@ -44,23 +46,24 @@ export function createEditorDisplayAxis(options: DisplayAxisOptions): EditorDisp
   const baseHeight = Math.max(1, totalDurationSec * pixelsPerSecond);
   const previewTimeSec = clamp(finiteOrZero(options.previewTimeSec), 0, totalDurationSec);
   const group = options.enabled ? options.mainGroup : null;
-  const contentHeight = Math.max(1, Math.ceil(baseHeight));
+  const origin = baseHeight + (options.padding?.top ?? 0);
+  const contentHeight = Math.max(1, Math.ceil(origin + (options.padding?.bottom ?? 0)));
 
   const distanceAtTime = (timeSec: number, targetGroup: TimingGroupDef | null | undefined = group): number => {
     if (!options.enabled) {
-      return clamp(finiteOrZero(timeSec), 0, totalDurationSec) * pixelsPerSecond;
+      return Math.max(0, finiteOrZero(timeSec)) * pixelsPerSecond;
     }
-    return distanceAtMs(targetGroup, clamp(finiteOrZero(timeSec), 0, totalDurationSec) * 1000, pixelsPerSecond);
+    return distanceAtMs(targetGroup, Math.max(0, finiteOrZero(timeSec)) * 1000, pixelsPerSecond);
   };
 
   const timeToY = (timeSec: number): number => (
-    baseHeight - clamp(finiteOrZero(timeSec), 0, totalDurationSec) * pixelsPerSecond - 1
+    origin - finiteOrZero(timeSec) * pixelsPerSecond - 1
   );
 
   const yToTime = (y: number): number => {
-    const rawSec = (baseHeight - finiteOrZero(y) - 1) / pixelsPerSecond;
+    const rawSec = (origin - finiteOrZero(y) - 1) / pixelsPerSecond;
     const zeroBeatOffsetSec = ZERO_BEAT_RENDER_OFFSET_PX / pixelsPerSecond;
-    return clamp(rawSec <= zeroBeatOffsetSec ? 0 : rawSec, 0, totalDurationSec);
+    return rawSec <= zeroBeatOffsetSec ? 0 : rawSec;
   };
 
   const timeToGroupY = (timeSec: number, targetGroup: TimingGroupDef | null | undefined = group): number => {
@@ -75,6 +78,7 @@ export function createEditorDisplayAxis(options: DisplayAxisOptions): EditorDisp
     contentHeight,
     timeToY,
     yToTime,
+    viewportTimeAtY: y => (origin - finiteOrZero(y) - 1) / pixelsPerSecond,
     distanceAtTime,
     timeToGroupY,
   };

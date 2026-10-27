@@ -1,3 +1,4 @@
+import { OriginalFormInput } from "./OriginalFormParts";
 import { OriginalButton, OriginalDialogFrame, OriginalDialogHeader } from "./OriginalUi";
 import { type BestdoriCatalogKind, type SkinSelection } from "../skinLoader";
 import { SettingPrimaryTitle } from "./SettingPrimaryTitle";
@@ -86,9 +87,8 @@ function TypeStepper({
         >
           <StepperIcon type="left" />
         </button>
-        <input
-          type="text"
-          className="stepper-input"
+        <OriginalFormInput
+          aria-label={title}
           value={formatTypeLabel(catalogKind, value)}
           readOnly
           tabIndex={-1}

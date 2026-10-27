@@ -4,6 +4,7 @@ import type { OriginalSettingsGuideKey } from "./OriginalSettingsGuide";
 import { ORIGINAL_SUDDEN_DEFAULT, ORIGINAL_SUDDEN_MIN, ORIGINAL_SUDDEN_MAX,
   ORIGINAL_SUDDEN_STEP, ORIGINAL_SUDDEN_SMALL_STEP } from "../simulator/public/settings";
 import { LONG_NOTE_LINE_BRIGHTNESS_MIN, LONG_NOTE_LINE_BRIGHTNESS_MAX, LONG_NOTE_LINE_BRIGHTNESS_DEFAULT,
+  LIGHT_MODE_BRIGHTNESS_MIN, LIGHT_MODE_BRIGHTNESS_MAX, LIGHT_MODE_BRIGHTNESS_DEFAULT,
   resolveOriginalPreviewSkin } from "../simulator/public/settings";
 import type { EditorOptionSettings } from "../chartCore";
 import skinSelection from "../data/originalSkinSelection.json";
@@ -113,7 +114,7 @@ export function buildOriginalSettingsPage(page: number, draft: OriginalSettingsD
   } else if (page === 1) {
     const root = "Contents/ScrollView/Contents";
     // Expose implemented settings, not disabled controls for absent game systems.
-    hideChildren(root, ["LiveVibration", "MemberIllustCutin", "3DLive", "LightMode"]);
+    hideChildren(root, ["LiveVibration", "MemberIllustCutin", "3DLive"]);
     hideChildren(`${root}/LiveMode`, ["Cutin3DMode", "GraphicsMode", "ResolutionType", "Cutin3DModeDescription", "LowLatencySoundMode"]);
     hideChildren(`${root}/LiveMode/Grid`, ["LowLatencySoundModeDescription", "ResolutionTypeDescription"]);
     hideChildren(`${root}/LiveEffect`, ["LightFever", "LightMode", "DisplaySkillWindow", "DisplaySkillEffect", "DisplayStageEffect"]);
@@ -121,6 +122,9 @@ export function buildOriginalSettingsPage(page: number, draft: OriginalSettingsD
     // Description is the server MV-download retention notice, not playback help.
     hideChildren(`${root}/MV`, ["MVLiveModeQuality", "HoldMVData", "Description"]);
     hideChildren(`${root}/LiveSoundVolume`, ["VoiceSlider"]);
+    // The custom background is shown as the Light mode card background; there
+    // is no deck to choose the card from (leader / random).
+    hideChildren(`${root}/LightMode`, ["LightModeIllust", "Description"]);
     // Keep the authored controls and columns, closing the removed rows/sections.
     place(`${root}/LiveMode/HighFrequencyMode`, -50);
     place(`${root}/LiveMode/Grid`, -158);
@@ -130,7 +134,11 @@ export function buildOriginalSettingsPage(page: number, draft: OriginalSettingsD
       place(`${root}/LiveEffect/${name}`, -50);
     place(`${root}/MV`, -540);
     place(`${root}/MV/MVBrightness`, -49, -156);
-    place(`${root}/LiveSoundVolume`, -786);
+    // Light mode keeps the original order after MV, with the MV block's spacing
+    // for its single remaining row.
+    place(`${root}/LightMode`, -786);
+    place(`${root}/LightMode/LightModeBrightness`, -50);
+    place(`${root}/LiveSoundVolume`, -1033);
     radio(598, draft.fps === 120 ? 0 : 1, index => update(old => ({ ...old, fps: index === 0 ? 120 : 60 })));
     boolean(676, !draft.options.simulatorSettings.hideFastSlow, value => native("hideFastSlow", !value));
     boolean(863, draft.combo, value => update(old => ({ ...old, combo: value })));
@@ -140,6 +148,8 @@ export function buildOriginalSettingsPage(page: number, draft: OriginalSettingsD
     components[originalRef(mvMode.data.radioButtonManager)] = { radioButtonNameList: ["word_on", "word_off"] };
     boolean(602, draft.mv, value => update(old => ({ ...old, mv: value })));
     number(657, draft.alpha, 30, 100, 10, value => update(old => ({ ...old, alpha: value })), value => `${value}%`);
+    number(757, draft.options.simulatorSettings.lightModeBrightness, LIGHT_MODE_BRIGHTNESS_MIN, LIGHT_MODE_BRIGHTNESS_MAX, 10,
+      value => native("lightModeBrightness", value), value => `${value}%`, LIGHT_MODE_BRIGHTNESS_DEFAULT);
     volume(825, draft.options.simulatorSettings.musicVolumePercent, value => native("musicVolumePercent", value), 0.01);
     volume(684, draft.options.noteSeVolumePercent, value => option("noteSeVolumePercent", value));
   } else if (page === 2) {

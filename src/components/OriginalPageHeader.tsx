@@ -13,6 +13,7 @@ const menuSurface = source.componentAt(menu.id, "UISprite")!;
 const menuWidth = menuSurface.data.mWidth, menuHeight = menuSurface.data.mHeight;
 const top = -menu.position.y - menuHeight / 2;
 const right = -menu.position.x - menuWidth / 2;
+export const ORIGINAL_HEADER_MENU_BOUNDS = { width: menuWidth, height: menuHeight, top, right };
 const headerHeight = -2 * menu.position.y;
 const nodes = source.prefab.nodes.filter(node => source.isWithin(node.id, left.id))
   .map(node => node.id === left.id ? { ...node, parent: null, position: { x: 0, y: 0, z: 0 } } : node);

@@ -3,13 +3,13 @@ import type { ApplicationResourceManager } from "./applicationResourceManager";
 import type { ResourceConsumerLease } from "./contracts";
 import type { ApplicationResourceSlot, ChartMediaResources } from "./selections";
 
-export type ChartMediaPurpose = "bgm" | "cover" | "mv" | "stageBackdrop";
+export type ChartMediaPurpose = "bgm" | "cover" | "mv" | "illustBackground";
 
 const SLOT_BY_PURPOSE: Readonly<Record<ChartMediaPurpose, ApplicationResourceSlot>> = Object.freeze({
   bgm: "chart-media.bgm",
   cover: "chart-media.cover",
   mv: "chart-media.mv",
-  stageBackdrop: "chart-media.stage-backdrop",
+  illustBackground: "chart-media.illust-background",
 });
 
 interface ChartMediaLeaseState {
@@ -42,7 +42,7 @@ export function useChartMediaLease(
         "chart-media.bgm": media.bgm,
         "chart-media.cover": media.cover,
         "chart-media.mv": media.mv,
-        "chart-media.stage-backdrop": media.stageBackdrop,
+        "chart-media.illust-background": media.illustBackground,
       };
       const selected = manager.replaceSelection(changes);
       if (selected.status === "rejected") throw new Error(`${selected.failure.capability}: ${selected.failure.boundary}`);
