@@ -1,0 +1,5 @@
+.editor-minimap-column { position: relative; flex: 0 0 auto; min-height: 0; }
+.editor-minimap { position: absolute; bottom: 0; left: 0; right: 0; overflow: hidden; touch-action: none; cursor: grab; }
+.editor-minimap:active { cursor: grabbing; }
+.editor-minimap canvas { display: block; pointer-events: none; }
+.editor-minimap-viewport { position: absolute; left: 0; right: 0; box-sizing: border-box; border: 2px solid white; background: rgb(255 255 255 / 12%); pointer-events: none; }

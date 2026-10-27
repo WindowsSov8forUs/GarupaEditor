@@ -1,3 +1,7 @@
+import { EditorMinimap } from "./EditorMinimap";
+import { EditorBeatDivision } from "./EditorBeatDivision";
+import { ORIGINAL_HEADER_MENU_BOUNDS } from "../OriginalPageHeader";
+import { editorNoteHeight, editorDirectionalSegmentWidth } from "../../app/editorNoteMetrics";
 import { OriginalMenuBackground } from "../OriginalMenuBackground";
 import { useApplicationPresentation, useReturnToTitle } from "../../app/titleNavigation";
 import { useIsStartingApplication, useStartupReadiness } from "../../app/startupReadiness";
@@ -8,6 +12,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, 
 import { ExportJsonModal } from "../ExportJsonModal";
 import { ImportJsonModal } from "../ImportJsonModal";
 import { SongInformationPage } from "../SongInformationPage";
+import { SONG_INFORMATION_CONTENT_BOUNDS } from "../OriginalSongDetailParts";
 import { LivePreparationPage } from "../LivePreparationPage";
 import songDetailSource from "../../data/originalSongDetailProfile.json";
 import { songHasSpecialNotes } from "../songNoteStatistics";
@@ -21,7 +26,6 @@ import { SkinSettingsModal } from "../SkinSettingsModal";
 import { bestdoriGetMe, bestdoriLogin, bestdoriLogout } from "../../services/bestdori/api";
 import { isMobileRuntime } from "../../app/mobileRuntime";
 import { SidebarPanel } from "./SidebarPanel";
-import { TimelineStrip } from "./TimelineStrip";
 import { useUiViewport } from "../useUiViewport";
 import type { useEditorIoAndShortcuts } from "../../app/hooks/useEditorIoAndShortcuts";
 
@@ -31,8 +35,6 @@ type ChartEditorLayoutProps = {
 
 const CANVAS_INTERACTION_OVERSCAN_PX = 240;
 const CANVAS_INTERACTION_SNAP_PX = 96;
-const MOBILE_BOARD_SIDE_PADDING_PX = 16;
-const MOBILE_BOARD_MAX_SCALE = 8;
 
 function isHalfBeatAligned(value: number): boolean {
   if (!Number.isFinite(value)) {
@@ -99,43 +101,9 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     isToolArmed,
     tool,
     applyToolFromPalette,
-    applyBpmToolFromPalette,
-    applySvToolFromPalette,
-    applyCopyToolFromPalette,
-    applyPasteToolFromPalette,
     onTogglePlayTool,
     isPlayToolSelected,
     isPlaybackPlaying,
-    getPlaybackNowLabel,
-    playbackTotalLabel,
-    playbackSpeedLabel,
-    playbackVolumeLabel,
-    playbackPositionLabel,
-    isPlaybackFollowEnabled,
-    setPlaybackFollowEnabled,
-    canStepPlaybackSpeedDown,
-    canStepPlaybackSpeedUp,
-    canStepPlaybackVolumeDown,
-    canStepPlaybackVolumeUp,
-    canStepPlaybackPositionDown,
-    canStepPlaybackPositionUp,
-    stepPlaybackSpeed,
-    stepPlaybackVolume,
-    stepPlaybackPosition,
-    timingGroupIds,
-    isTimingGroupPanelOpen,
-    setIsTimingGroupPanelOpen,
-    selectedTimingGroupId,
-    setSelectedTimingGroupId,
-    isTimingGroupModeActive,
-    setIsTimingGroupModeEnabled,
-    createTimingGroup,
-    renameTimingGroup,
-    deleteTimingGroup,
-    showTimingGroupSetting,
-    isTimingGroupSettingLocked,
-    selectedObjectTimingGroupId,
-    setSelectedObjectTimingGroupId,
     isNoteOutsideActiveTimingGroup,
     getPaletteSpriteLayers,
     getPaletteSpriteAspectRatio,
@@ -145,83 +113,9 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     renderSpriteStack,
     clearAllSelections,
     setStatusMessage,
-    undoLastNote,
-    redoLastNote,
-    canUndoLastOperation,
-    canRedoLastOperation,
-    mirrorSelectedNotes,
-    canMirrorSelection,
-    clearAllNotes,
     notes,
     noteById,
-    mirrorActionIcon,
-    undoActionIcon,
-    copyActionIcon,
-    pasteActionIcon,
-    clearActionIcon,
-    applyActionIcon,
-    showBeatSetting,
-    isBeatSettingLocked,
-    beatInputText,
-    setBeatInputText,
-    beatInputEditingRef,
-    commitBeatInput,
-    showBpmSetting,
-    bpmInputText,
-    setBpmInputText,
-    bpmInputEditingRef,
-    commitBpmInput,
-    svInputText,
-    setSvInputText,
-    svInputEditingRef,
-    commitSvInput,
-    showSvSetting,
     isSvPreviewEnabled,
-    setIsSvPreviewEnabled,
-    showLaneSetting,
-    isLaneSettingLocked,
-    stepActiveLane,
-    laneInputText,
-    setLaneInputText,
-    laneInputEditingRef,
-    commitLaneInput,
-    showWidthSetting,
-    stepActiveWidth,
-    widthInputText,
-    setWidthInputText,
-    widthInputEditingRef,
-    commitWidthInput,
-    showDirectionSetting,
-    activeDirectionalValue,
-    setActiveDirectionalType,
-    hideSettingsPanel,
-    showSlideSegmentSetting,
-    slideShape,
-    slideCurveType,
-    slidePrecision,
-    slideDivision,
-    slideVibration,
-    slideVibrationInputText,
-    setSlideVibrationInputText,
-    slideVibrationInputEditingRef,
-    commitSlideVibrationInput,
-    isSlideCurveTypeDisabled,
-    isSlideDivisionDisabled,
-    setSlideShape,
-    setSlideCurveType,
-    stepSlidePrecision,
-    stepSlideDivision,
-    stepSlideVibration,
-    canStepSlidePrecisionDown,
-    canStepSlidePrecisionUp,
-    canStepSlideDivisionDown,
-    canStepSlideDivisionUp,
-    canDeleteSelection,
-    canApplyLongLineSettings,
-    applyCurrentLongLineSettings,
-    deleteCurrentSelection,
-    settings,
-    applySettingsPatch,
     playfieldRef,
     handlePlayfieldScroll,
     selectionDrag,
@@ -284,7 +178,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     isRhythmWidthEditableType,
     isHabahiroEnabled,
     renderDirectionalSprite,
-    statusMessage,
     isSkinApplying,
     isMetadataEditorOpen,
     setMetadata,
@@ -324,7 +217,9 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     copiedChartPayload,
   } = vm;
   const mobileRuntime = isMobileRuntime();
-  const [playfieldViewportWidth, setPlayfieldViewportWidth] = useState(0);
+  const [viewportTop, setViewportTop] = useState(0);
+  const [viewportRight, setViewportRight] = useState(0);
+  const [viewportHeight, setViewportHeight] = useState(window.innerHeight);
   const [playfieldScrollTop, setPlayfieldScrollTop] = useState(0);
   const [timelineLabelX, setTimelineLabelX] = useState(8);
   const rhythmSkinTypes = bestdoriSkinCatalogOptions?.rhythm ?? [];
@@ -520,8 +415,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   const canvasPreviewSpanLanes = canvasPreviewIsDirectional
     ? normalizeDirectionalWidth(toolDirectionalWidth)
     : canvasPreviewRhythmWidth;
-  const noteSpriteHeightPx = 24 * noteVisualScale;
-  const directionalBaseWidthPx = Math.max(LANE_WIDTH * 1.34, 60) * noteVisualScale;
+  const noteSpriteHeightPx = editorNoteHeight(LANE_WIDTH, noteVisualScale);
+  const directionalBaseWidthPx = editorDirectionalSegmentWidth(LANE_WIDTH, noteVisualScale);
   const canvasPreviewTokenWidth = canvasPreviewIsDirectional
     ? canvasPreviewSpanLanes * LANE_WIDTH
     : (
@@ -537,7 +432,12 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     }
 
     const updatePlayfieldMeasurements = () => {
-      setPlayfieldViewportWidth(playfield.clientWidth);
+      setViewportTop(playfield.parentElement!.getBoundingClientRect().top);
+      setViewportHeight(window.innerHeight);
+      setViewportRight(window.innerWidth - playfield.parentElement!.parentElement!.getBoundingClientRect().right);
+      const bottom = playfield.parentElement!.getBoundingClientRect().bottom;
+      vm.setPlaybackBottomInsetRatio(Math.max(0, Math.min(1,
+        (window.innerHeight - bottom) / Math.max(1, window.innerHeight))));
       const board = playfieldBoardRef.current;
       if (!board) {
         setTimelineLabelX(8);
@@ -551,37 +451,29 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     };
 
     updatePlayfieldMeasurements();
+    window.addEventListener("resize", updatePlayfieldMeasurements);
 
     if (typeof ResizeObserver !== "undefined") {
       const observer = new ResizeObserver(updatePlayfieldMeasurements);
       observer.observe(playfield);
+      observer.observe(playfield.parentElement!);
       const board = playfieldBoardRef.current;
       if (board) {
         observer.observe(board);
       }
       return () => {
         observer.disconnect();
+        window.removeEventListener("resize", updatePlayfieldMeasurements);
       };
     }
 
-    window.addEventListener("resize", updatePlayfieldMeasurements);
     return () => {
       window.removeEventListener("resize", updatePlayfieldMeasurements);
     };
-  }, [boardWidth, playfieldBoardRef, playfieldRef]);
-  const mobileBoardScale = useMemo(() => {
-    if (!mobileRuntime || playfieldViewportWidth <= 0 || boardWidth <= 0) {
-      return 1;
-    }
-    const availableWidth = Math.max(1, playfieldViewportWidth - MOBILE_BOARD_SIDE_PADDING_PX);
-    const fitWidthScale = availableWidth / boardWidth;
-    return Math.min(MOBILE_BOARD_MAX_SCALE, fitWidthScale);
-  }, [boardWidth, mobileRuntime, playfieldViewportWidth]);
-  const scaledBoardWidth = mobileRuntime ? Math.max(1, boardWidth * mobileBoardScale) : boardWidth;
-  const scaledScrollContentHeight = mobileRuntime
-    ? Math.max(1, effectiveScrollContentHeight * mobileBoardScale)
-    : effectiveScrollContentHeight;
-  const viewportTimelineScale = isCanvasRenderBackend && mobileRuntime ? mobileBoardScale : 1;
+  }, [boardWidth, isSkinReady, playfieldBoardRef, playfieldRef]);
+  const scaledBoardWidth = boardWidth;
+  const scaledScrollContentHeight = effectiveScrollContentHeight;
+  const viewportTimelineScale = 1;
   const canvasPreviewTokenStyle: CSSProperties = useMemo(
     () => ({
       left: -9999,
@@ -1167,7 +1059,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         const spriteAspectRatio = getSpriteAspectRatio(resolved.layers);
         const noteHitboxCoreWidth = Math.max(1, LANE_WIDTH * (spanLanes + 0.25));
         const scaledHitboxCoreWidth = noteHitboxCoreWidth * noteVisualScale;
-        const scaledHitboxCoreHeight = 24 * noteVisualScale;
+        const scaledHitboxCoreHeight = editorNoteHeight(LANE_WIDTH, noteVisualScale);
         const tokenWidth = isDirectional
           ? spanLanes * LANE_WIDTH
           : scaledHitboxCoreWidth;
@@ -1338,145 +1230,28 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       }>
 
 
-      <section className={`workspace ${mobileRuntime ? "is-mobile-workspace" : ""}`}>
-        <SidebarPanel
-          isSkinReady={isSkinReady}
-          isExGarupaEnabled={vm.appOptionSettings.exGarupaEnabled === true}
-          isToolArmed={isToolArmed}
-          tool={tool}
-          applyToolFromPalette={applyToolFromPalette}
-          getSpriteLayers={getPaletteSpriteLayers}
-          getSpriteAspectRatio={getPaletteSpriteAspectRatio}
-          renderSpriteStack={renderPaletteSpriteStack}
-          onSelectBpmTool={applyBpmToolFromPalette}
-          onSelectSvTool={applySvToolFromPalette}
-          onSelectCopyTool={applyCopyToolFromPalette}
-          onSelectPasteTool={applyPasteToolFromPalette}
-          onTogglePlayTool={onTogglePlayTool}
-          isPlayToolSelected={isPlayToolSelected}
-          isPlaybackPlaying={isPlaybackPlaying}
-          getPlaybackNowLabel={getPlaybackNowLabel}
-          playbackTotalLabel={playbackTotalLabel}
-          playbackSpeedLabel={playbackSpeedLabel}
-          playbackVolumeLabel={playbackVolumeLabel}
-          playbackPositionLabel={playbackPositionLabel}
-          isPlaybackFollowEnabled={isPlaybackFollowEnabled}
-          setPlaybackFollowEnabled={setPlaybackFollowEnabled}
-          canStepPlaybackSpeedDown={canStepPlaybackSpeedDown}
-          canStepPlaybackSpeedUp={canStepPlaybackSpeedUp}
-          canStepPlaybackVolumeDown={canStepPlaybackVolumeDown}
-          canStepPlaybackVolumeUp={canStepPlaybackVolumeUp}
-          canStepPlaybackPositionDown={canStepPlaybackPositionDown}
-          canStepPlaybackPositionUp={canStepPlaybackPositionUp}
-          stepPlaybackSpeed={stepPlaybackSpeed}
-          stepPlaybackVolume={stepPlaybackVolume}
-          stepPlaybackPosition={stepPlaybackPosition}
-          timingGroupIds={timingGroupIds}
-          isTimingGroupPanelOpen={isTimingGroupPanelOpen}
-          setIsTimingGroupPanelOpen={setIsTimingGroupPanelOpen}
-          selectedTimingGroupId={selectedTimingGroupId}
-          setSelectedTimingGroupId={setSelectedTimingGroupId}
-          isTimingGroupModeActive={isTimingGroupModeActive}
-          setIsTimingGroupModeEnabled={setIsTimingGroupModeEnabled}
-          createTimingGroup={createTimingGroup}
-          renameTimingGroup={renameTimingGroup}
-          deleteTimingGroup={deleteTimingGroup}
-          showTimingGroupSetting={showTimingGroupSetting}
-          isTimingGroupSettingLocked={isTimingGroupSettingLocked}
-          selectedObjectTimingGroupId={selectedObjectTimingGroupId}
-          setSelectedObjectTimingGroupId={setSelectedObjectTimingGroupId}
-          undoLastNote={undoLastNote}
-          redoLastNote={redoLastNote}
-          canUndoLastOperation={canUndoLastOperation}
-          canRedoLastOperation={canRedoLastOperation}
-          mirrorSelectedNotes={mirrorSelectedNotes}
-          canMirrorSelection={canMirrorSelection}
-          clearAllNotes={clearAllNotes}
-          notesLength={notes.length}
-          mirrorActionIcon={mirrorActionIcon}
-          undoActionIcon={undoActionIcon}
-          copyActionIcon={copyActionIcon}
-          pasteActionIcon={pasteActionIcon}
-          clearActionIcon={clearActionIcon}
-          applyActionIcon={applyActionIcon}
-          showBeatSetting={showBeatSetting}
-          isBeatSettingLocked={isBeatSettingLocked}
-          beatInputText={beatInputText}
-          setBeatInputText={setBeatInputText}
-          beatInputEditingRef={beatInputEditingRef}
-          commitBeatInput={commitBeatInput}
-          showBpmSetting={showBpmSetting}
-          bpmInputText={bpmInputText}
-          setBpmInputText={setBpmInputText}
-          bpmInputEditingRef={bpmInputEditingRef}
-          commitBpmInput={commitBpmInput}
-          svInputText={svInputText}
-          setSvInputText={setSvInputText}
-          svInputEditingRef={svInputEditingRef}
-          commitSvInput={commitSvInput}
-          showSvSetting={showSvSetting}
-          showLaneSetting={showLaneSetting}
-          isLaneSettingLocked={isLaneSettingLocked}
-          stepActiveLane={stepActiveLane}
-          laneInputText={laneInputText}
-          setLaneInputText={setLaneInputText}
-          laneInputEditingRef={laneInputEditingRef}
-          commitLaneInput={commitLaneInput}
-          showWidthSetting={showWidthSetting}
-          stepActiveWidth={stepActiveWidth}
-          widthInputText={widthInputText}
-          setWidthInputText={setWidthInputText}
-          widthInputEditingRef={widthInputEditingRef}
-          commitWidthInput={commitWidthInput}
-          showDirectionSetting={showDirectionSetting}
-          activeDirectionalValue={activeDirectionalValue}
-          setActiveDirectionalType={setActiveDirectionalType}
-          hideSettingsPanel={hideSettingsPanel}
-          showSlideSegmentSetting={showSlideSegmentSetting}
-          slideShape={slideShape}
-          slideCurveType={slideCurveType}
-          slidePrecision={slidePrecision}
-          slideDivision={slideDivision}
-          slideVibration={slideVibration}
-          slideVibrationInputText={slideVibrationInputText}
-          setSlideVibrationInputText={setSlideVibrationInputText}
-          slideVibrationInputEditingRef={slideVibrationInputEditingRef}
-          commitSlideVibrationInput={commitSlideVibrationInput}
-          isSlideCurveTypeDisabled={isSlideCurveTypeDisabled}
-          isSlideDivisionDisabled={isSlideDivisionDisabled}
-          setSlideShape={setSlideShape}
-          setSlideCurveType={setSlideCurveType}
-          stepSlidePrecision={stepSlidePrecision}
-          stepSlideDivision={stepSlideDivision}
-          stepSlideVibration={stepSlideVibration}
-          canStepSlidePrecisionDown={canStepSlidePrecisionDown}
-          canStepSlidePrecisionUp={canStepSlidePrecisionUp}
-          canStepSlideDivisionDown={canStepSlideDivisionDown}
-          canStepSlideDivisionUp={canStepSlideDivisionUp}
-          canDeleteSelection={canDeleteSelection}
-          canApplyLongLineSettings={canApplyLongLineSettings}
-          applyCurrentLongLineSettings={applyCurrentLongLineSettings}
-          deleteCurrentSelection={deleteCurrentSelection}
-        />
-        <div
-          className="workspace-divider"
-          role="separator"
-          aria-orientation="vertical"
-          aria-label="左右区域分隔"
-        />
-
-        <section className="editor-panel">
-          <TimelineStrip
-            settings={settings}
-            applySettingsPatch={applySettingsPatch}
-            isSvPreviewEnabled={isSvPreviewEnabled}
-            setIsSvPreviewEnabled={setIsSvPreviewEnabled}
-          />
-
+      <section className={`workspace ${mobileRuntime ? "is-mobile-workspace" : ""}`}
+        style={{ position: "relative", gap: SONG_INFORMATION_CONTENT_BOUNDS.columnGap * uiViewport.scale }}>
+        <EditorBeatDivision value={vm.settings.timeSignatureDenominator} onSave={vm.setBeatDivision}
+          scale={uiViewport.scale} top={uiViewport.safeInsets.top - viewportTop}
+          right={uiViewport.safeInsets.right - viewportRight} />
+        <SidebarPanel isSkinReady={isSkinReady} isToolArmed={isToolArmed} tool={tool}
+          onPlay={() => { void openSimulatorWindow(); }}
+          onPreview={() => { void openStaticRenderWindow(); }}
+          applyToolFromPalette={applyToolFromPalette} getSpriteLayers={getPaletteSpriteLayers}
+          getSpriteAspectRatio={getPaletteSpriteAspectRatio} renderSpriteStack={renderPaletteSpriteStack} />
+        <section className="editor-viewport-region">
+          {isSkinReady && <div className="editor-track-viewport" aria-hidden="true"
+            style={{ top: -viewportTop, height: viewportHeight }}>
+            <div className="editor-track-guides" style={{ width: boardWidth }}>
+              {renderLaneGuides()}
+            </div>
+          </div>}
           {isSkinReady ? (
             <div
               className={`playfield-scroll ${selectionDrag?.isDragging ? "is-marquee-selecting" : ""} ${isToolArmed ? "is-tool-armed" : ""}`}
-              ref={playfieldRef}
+              ref={vm.attachViewport}
+              style={{ top: -viewportTop, height: viewportHeight }}
               onScroll={handlePlayfieldScrollInternal}
               tabIndex={0}
               onMouseDown={(event) => {
@@ -1502,7 +1277,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                   style={{
                     width: scaledBoardWidth,
                     height: scaledScrollContentHeight,
-                    "--mobile-board-scale": `${mobileBoardScale}`,
                   } as CSSProperties}
                 >
                   <div
@@ -1621,7 +1395,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                 </div>
                 <div
                   ref={playfieldBoardRef}
-                  className={`playfield-board ${isCanvasRenderBackend ? "canvas-render-backend" : ""}`}
+                  className={`playfield-board viewport-track-owned ${isCanvasRenderBackend ? "canvas-render-backend" : ""}`}
                   style={{ width: boardWidth, height: effectiveScrollContentHeight }}
                   onClick={handleBoardClick}
                   onContextMenu={handleBoardContextMenu}
@@ -1631,31 +1405,30 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                       <canvas
                         ref={playfieldTrackCanvasRef}
                         className="playfield-canvas-layer playfield-canvas-track-layer"
-                        width={boardWidth}
-                        height={effectiveScrollContentHeight}
+                        width={1}
+                        height={1}
                         aria-hidden="true"
                       />
                       <canvas
                         ref={playfieldNoteCanvasRef}
                         className="playfield-canvas-layer playfield-canvas-note-layer"
-                        width={boardWidth}
-                        height={effectiveScrollContentHeight}
+                        width={1}
+                        height={1}
                         aria-hidden="true"
                       />
                       <canvas
                         ref={playfieldPlaybackCanvasRef}
                         className="playfield-canvas-layer playfield-canvas-playback-layer"
-                        width={boardWidth}
-                        height={effectiveScrollContentHeight}
+                        width={1}
+                        height={1}
                         aria-hidden="true"
                       />
                     </>
                   )}
-                  <div className="judge-line" />
+                  <div className="judge-line" style={{ top: beatToY(0), bottom: "auto" }} />
 
                   <div className="grid-layer">
-                    {renderLaneGuides()}
-                    {renderGridLines()}
+                    {renderGridLines(playfieldScrollTop, playfieldScrollTop + viewportHeight)}
                   </div>
 
                   <div className="simultaneous-layer">
@@ -1729,7 +1502,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                             ? LANE_WIDTH * (previewSpanLanes + 0.25) * noteVisualScale
                             : undefined
                         );
-                      const previewTokenHeight = 24 * noteVisualScale;
+                      const previewTokenHeight = editorNoteHeight(LANE_WIDTH, noteVisualScale);
 
                       const followStyle: CSSProperties = {
                         left: cursorPreview.x,
@@ -1839,7 +1612,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                             ? LANE_WIDTH * (replacePreview.spanLanes + 0.25) * noteVisualScale
                             : undefined
                         );
-                      const tokenHeight = 24 * noteVisualScale;
+                      const tokenHeight = editorNoteHeight(LANE_WIDTH, noteVisualScale);
                       const style: CSSProperties = {
                         left: replacePreview.x,
                         top: replacePreview.y,
@@ -1892,7 +1665,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                       }
                       const previewSpec = NOTE_SPECS[widenPreview.type];
                       const previewAspectRatio = getSpriteAspectRatio(previewLayers);
-                      const tokenHeight = 24 * noteVisualScale;
+                      const tokenHeight = editorNoteHeight(LANE_WIDTH, noteVisualScale);
                       const style: CSSProperties = {
                         left: widenPreview.x,
                         top: widenPreview.y,
@@ -2024,7 +1797,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                             ? LANE_WIDTH * (note.spanLanes + 0.25) * noteVisualScale
                             : undefined
                         );
-                      const tokenHeight = 24 * noteVisualScale;
+                      const tokenHeight = editorNoteHeight(LANE_WIDTH, noteVisualScale);
                       const style: CSSProperties = {
                         left: note.x,
                         top: note.y,
@@ -2092,8 +1865,12 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
             </div>
           )}
 
-          <div className="status-strip ui-design-scale" title={statusMessage}>{statusMessage}</div>
         </section>
+        <EditorMinimap notes={vm.minimapNotes} segments={vm.minimapSegments} duration={vm.minimapDuration}
+          laneCount={vm.settings.laneCount} axis={vm.minimapAxis} viewport={playfieldRef}
+          getImage={vm.minimapGetImage} skinAssets={vm.minimapSkinAssets} resourcesVersion={vm.minimapResourceVersion}
+          noteScale={noteVisualScale} width={ORIGINAL_HEADER_MENU_BOUNDS.width * uiViewport.scale}
+          top={uiViewport.safeInsets.top + (ORIGINAL_HEADER_MENU_BOUNDS.top + ORIGINAL_HEADER_MENU_BOUNDS.height + 12) * uiViewport.scale - viewportTop} />
       </section>
 
       </OriginalPageSwitch>

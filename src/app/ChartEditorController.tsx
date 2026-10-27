@@ -1,3 +1,8 @@
+// @refresh reset
+// This controller owns the editor hook tree; hot updates must not reuse an older hook layout.
+import { minimapLaneVisible } from "./editorMinimapGeometry";
+import { useEditorScrollExtent } from "./hooks/useEditorScrollExtent";
+import { useEditorViewportZoom } from "./hooks/useEditorViewportZoom";
 import { holdAuxiliaryPreparation } from "./RoutePresentation";
 import { useChartProjectFiles } from "./hooks/useChartProjectFiles";
 import { projectDraft, type ChartProject, type ChartProjectDraft } from "../project/chartProject";
@@ -94,7 +99,6 @@ import {
   DEFAULT_METADATA,
   DEFAULT_SETTINGS,
   GLOBAL_TIMING_GROUP_ID,
-  LANE_WIDTH,
   NOTE_SPECS,
   NOTE_TYPES,
   WINDOW_SIZE_PRESETS,
@@ -582,6 +586,9 @@ function ChartEditorController() {
   const [playbackSpeedIndex, setPlaybackSpeedIndex] = useState(() => PLAYBACK_SPEED_OPTIONS.indexOf(1));
   const [playbackVolumePercent, setPlaybackVolumePercent] = useState(100);
   const [playbackLinePositionPercent, setPlaybackLinePositionPercent] = useState(0);
+  const [playbackBottomInsetRatio, setPlaybackBottomInsetRatio] = useState(0);
+  const viewportPlaybackPositionPercent = 100 * playbackBottomInsetRatio
+    + playbackLinePositionPercent * (1 - playbackBottomInsetRatio);
   const [isPlaybackFollowEnabled, setIsPlaybackFollowEnabledState] = useState(true);
   const [selectionDrag, setSelectionDrag] = useState<{
     startX: number;
@@ -1250,6 +1257,9 @@ function ChartEditorController() {
   const isSkinReady = skinAssets !== null;
 
   const playfieldRef = useRef<HTMLDivElement | null>(null);
+  const { trackWidth, verticalZoom, attachViewport, viewportElement } = useEditorViewportZoom(playfieldRef, isSkinReady);
+  const scrollPadding = useEditorScrollExtent(playfieldRef, viewportElement, viewportPlaybackPositionPercent);
+  const LANE_WIDTH = Math.max(1, trackWidth / settings.laneCount);
   const playfieldBoardRef = useRef<HTMLDivElement | null>(null);
   const playfieldTrackCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const playfieldNoteCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -1405,7 +1415,7 @@ function ChartEditorController() {
   const beatStep = 1 / beatDivision;
   const noteVisualScale = clamp(appOptionSettings.rhythmNoteSizePercent / 100, 0.1, 2);
   const longLineOpacityScale = clamp(appOptionSettings.longLineBrightnessPercent / 100, 0.1, 1);
-  const verticalScale = clamp(appOptionSettings.verticalScalePercent / 100, 0.5, 2);
+  const verticalScale = clamp(appOptionSettings.verticalScalePercent / 100, 0.5, 2) * verticalZoom;
   const noteSeVolumeScale = clamp(appOptionSettings.noteSeVolumePercent / 100, 0, 1);
   const timelinePixelsPerSecond = (BEAT_HEIGHT * verticalScale * TIMELINE_REFERENCE_BPM) / 60;
   const bpmTimeline = useMemo(
@@ -3321,11 +3331,13 @@ function ChartEditorController() {
   }, [notes, slideChains]);
   const displayAxis = useMemo(() => createEditorDisplayAxis({
     enabled: isSvPreviewEnabled,
+    padding: scrollPadding,
     totalDurationSec,
     pixelsPerSecond: timelinePixelsPerSecond,
     previewTimeSec: svPreviewTimeSec,
     mainGroup: svPreviewTimingGroups.get(GLOBAL_TIMING_GROUP_ID) ?? null,
   }), [
+    scrollPadding,
     isSvPreviewEnabled,
     svPreviewTimeSec,
     svPreviewTimingGroups,
@@ -3350,6 +3362,7 @@ function ChartEditorController() {
     finishSelectionDrag,
     calcSelectionMoveDelta,
   } = useEditorGeometry({
+    playbackLinePositionPercent: viewportPlaybackPositionPercent,
     laneMin,
     bpmTimeline,
     boardHeight,
@@ -3650,7 +3663,7 @@ function ChartEditorController() {
     const playbackWorldY = timeToY(timeSec);
     let localY = playbackWorldY - viewportTop;
     if (playbackLineModeRef.current === "follow") {
-      const ratioFromBottom = clamp(playbackLinePositionPercent / 100, 0, 1);
+      const ratioFromBottom = clamp(viewportPlaybackPositionPercent / 100, 0, 1);
       const anchorInViewport = viewportHeight * (1 - ratioFromBottom);
       const yInViewport = playbackWorldY - viewportTop;
       const maxScrollTop = Math.max(0, scrollContentHeight - viewportHeight);
@@ -3679,7 +3692,7 @@ function ChartEditorController() {
     if (host.style.display !== "block") {
       host.style.display = "block";
     }
-  }, [clamp, isPlayToolSelected, playbackLinePositionPercent, scrollContentHeight, timeToY]);
+  }, [clamp, isPlayToolSelected, viewportPlaybackPositionPercent, scrollContentHeight, timeToY]);
 
   const flushPlaybackGuide = useCallback(() => {
     playbackGuideRafRef.current = null;
@@ -3900,15 +3913,15 @@ function ChartEditorController() {
     playbackViewportSyncStampRef.current = nowMs;
     const viewportHeight = Math.max(1, playfield.clientHeight);
     const maxScrollTop = Math.max(0, scrollContentHeight - viewportHeight);
-    const ratioFromBottom = clamp(playbackLinePositionPercent / 100, 0, 1);
+    const ratioFromBottom = clamp(viewportPlaybackPositionPercent / 100, 0, 1);
     const anchorLocalY = viewportHeight * (1 - ratioFromBottom);
     const worldY = timeToY(timeSec);
     const nextScrollTop = clamp(worldY - anchorLocalY, 0, maxScrollTop);
     if (Math.abs(playfield.scrollTop - nextScrollTop) > 0.5) {
       playfield.scrollTop = nextScrollTop;
     }
-    viewBottomTimeSecRef.current = yToTime(playfield.scrollTop + playfield.clientHeight);
-  }, [clamp, playbackLinePositionPercent, scrollContentHeight, timeToY, viewBottomTimeSecRef, yToTime]);
+    viewBottomTimeSecRef.current = displayAxis.viewportTimeAtY(playfield.scrollTop + playfield.clientHeight);
+  }, [clamp, displayAxis, viewportPlaybackPositionPercent, scrollContentHeight, timeToY, viewBottomTimeSecRef]);
 
   const ensurePlaybackSeAudioContext = useCallback((): AudioContext | null => {
     const existingContext = playbackSeAudioContextRef.current;
@@ -5173,6 +5186,14 @@ function ChartEditorController() {
     isSimultaneousLineEnabled: appOptionSettings.simultaneousLineEnabled,
     isSlideChainMuted: isSlideChainOutsideActiveTimingGroup,
   });
+  // A second projection of the same chart model, in seconds and lanes, with no SV transform.
+  const minimapBeatToTime = useCallback((beat: number) => beatToSeconds(beat, bpmTimeline), [bpmTimeline]);
+  const minimapRenderModel = useEditorRenderModel({
+    bpmTimeline, totalBeats, beatToY: minimapBeatToTime, notes: interactiveNotes,
+    effectiveSlideChains, noteById, getRenderedNotePlacement, getSlideAnchorLane,
+    laneToColumn, getNoteSpanLanes, LANE_WIDTH: 1, longLineOpacityScale,
+    isSimultaneousLineEnabled: false,
+  });
   const resolveDirectionalWidenPreviewAt = useCallback(
     (x: number, y: number): DirectionalWidenPreviewState | null => {
       if (!isToolArmed || !isNoteTool(tool) || !isDirectionalNoteType(tool)) {
@@ -5342,6 +5363,32 @@ function ChartEditorController() {
     selectedNoteIdSet,
     slideBuildSelectedIdSet,
   ]);
+  const minimapNotes = useMemo(() => notes.flatMap(note => {
+    if (note.type === "hidden") return [];
+    const placement = getRenderedNotePlacement(note);
+    const spanLanes = getNoteSpanLanes(note);
+    const start = note.type === "directional_flick_left" ? placement.lane - spanLanes + 1 : placement.lane;
+    const { layers } = resolvePlacedNoteLayers(note, { beat: placement.beat });
+    return [{ id: note.id, type: note.type, x: laneToColumn(start) + spanLanes / 2,
+      y: minimapBeatToTime(placement.beat), spanLanes, base: layers.base ?? null, overlay: layers.overlay ?? null,
+      overlayMode: layers.overlayMode, selected: false, muted: false }];
+  }), [notes, getRenderedNotePlacement, getNoteSpanLanes, resolvePlacedNoteLayers, laneToColumn, minimapBeatToTime]);
+  const minimapSegments = useMemo(() => {
+    const validByChain = new Map(effectiveSlideChains.map(chain => [chain.id, chain.noteIds
+      .map(id => noteById.get(id)).filter((note): note is ChartNote => !!note).map(note => {
+        const placement = getRenderedNotePlacement(note), span = getNoteSpanLanes(note);
+        const start = note.type === "directional_flick_left" ? placement.lane - span + 1 : placement.lane;
+        return minimapLaneVisible(laneToColumn(start) + span / 2, span, laneValues.length);
+      })]));
+    return minimapRenderModel.connectionSegments.filter(segment => {
+      const valid = validByChain.get(segment.chainId);
+      return valid?.[segment.index] && valid[segment.index + 1];
+    });
+  }, [effectiveSlideChains, noteById, getRenderedNotePlacement, getNoteSpanLanes, laneToColumn, laneValues.length,
+    minimapRenderModel.connectionSegments]);
+  const minimapDuration = useMemo(() => notes.reduce((end, note) =>
+    Math.max(end, minimapBeatToTime(getRenderedNotePlacement(note).beat)), Math.max(1, audioDurationSec || 0)),
+    [notes, minimapBeatToTime, getRenderedNotePlacement, audioDurationSec]);
   const canvasBpmVisualLines = useMemo(() => {
     return (bpmTimeline ?? [])
       .filter((node: any) => node.beat >= 0 && node.beat <= totalBeats + 1e-6)
@@ -5428,6 +5475,8 @@ function ChartEditorController() {
     slideBuildCommittedGuideLines,
     slideBuildGuideLine,
   } = usePlayfieldRenderers({
+    yToBeat,
+    isSvPreviewEnabled,
     laneValues,
     LANE_WIDTH,
     totalSteps,
@@ -5525,7 +5574,7 @@ function ChartEditorController() {
     playbackLineVisible: isPlaybackPlaying,
     playbackCanvasLineEnabled: false,
     playbackLineMode,
-    playbackLinePositionPercent,
+    playbackLinePositionPercent: viewportPlaybackPositionPercent,
     getPlaybackNowTimeSec,
     useFullGridScan: isSvPreviewEnabled,
     resourcesVersion: canvasResourceVersion,
@@ -6161,6 +6210,16 @@ function ChartEditorController() {
         deleteCurrentSelection,
         settings,
         applySettingsPatch,
+        minimapNotes,
+        minimapSegments,
+        minimapDuration,
+        minimapGetImage: getCanvasResourceImage,
+        minimapResourceVersion: canvasResourceVersion,
+        minimapSkinAssets: skinAssets,
+        minimapAxis: displayAxis,
+        attachViewport,
+        setBeatDivision: (value: number) => setSettings(previous => ({ ...previous, timeSignatureDenominator: value })),
+        setPlaybackBottomInsetRatio,
         playfieldRef,
         handlePlayfieldScroll,
         selectionDrag,

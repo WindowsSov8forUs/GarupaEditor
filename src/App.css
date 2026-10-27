@@ -85,6 +85,9 @@ body,
   margin: 0;
   width: 100%;
   height: 100%;
+  /* Original screen anchors share the window viewport. Page overflow must not
+   * create a second, scrollable document viewport or shrink the header root. */
+  overflow: clip;
 }
 
 html::-webkit-scrollbar,
@@ -128,16 +131,6 @@ input,
 select,
 textarea {
   font: inherit;
-}
-
-input,
-select,
-textarea {
-  border: 2px solid rgba(191, 193, 205, 0.95);
-  border-radius: 6px;
-  color: var(--text);
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: none;
 }
 
 /* Fallback artwork must yield to component classes, including pseudo-elements
@@ -215,19 +208,6 @@ button:where(:not(.original-button):not(.note-token):not(.bpm-label-button):not(
   filter: saturate(0.72);
 }
 
-input,
-select,
-textarea {
-  padding: 8px 10px;
-  outline: none;
-}
-
-input:focus,
-select:focus,
-textarea:focus {
-  border-color: rgba(255, 59, 113, 0.92);
-  box-shadow: 0 0 0 3px rgba(255, 59, 113, 0.18);
-}
 
 .hidden-input {
   position: absolute;
@@ -355,7 +335,7 @@ textarea:focus {
 }
 
 .sidebar {
-  width: 404px;
+  width: max-content;
   flex: 0 0 auto;
   min-width: 0;
   max-width: none;
@@ -373,22 +353,6 @@ textarea:focus {
   width: 0;
   height: 0;
   display: none;
-}
-
-.workspace-divider {
-  position: relative;
-  flex: 0 0 calc(12px * var(--ui-scale));
-}
-
-.workspace-divider::before {
-  content: "";
-  position: absolute;
-  top: 8px;
-  bottom: 8px;
-  left: 50%;
-  width: 2px;
-  transform: translateX(-50%);
-  background: rgba(170, 171, 186, 0.82);
 }
 
 .chart-info-panel {
@@ -1268,31 +1232,8 @@ label.ui-checkbox.is-disabled .ui-checkbox-box {
   -webkit-text-stroke: 0 transparent;
 }
 
-.value-input,
-.stepper-input {
-  width: 100%;
-  height: 34px;
-  min-height: 34px;
-  box-sizing: border-box;
-  padding-top: 0;
-  padding-bottom: 0;
-  line-height: 1.2;
-  text-align: center;
-  font-size: 0.9rem;
-  color: #4f4c58;
-}
 
-select.value-input,
-select.stepper-input {
-  line-height: normal;
-  padding-top: 0;
-  padding-bottom: 0;
-}
 
-.metadata-left-input {
-  text-align: left;
-  padding-left: 10px;
-}
 
 .metadata-file-row {
   display: grid;
@@ -1326,12 +1267,6 @@ select.stepper-input {
   display: none;
 }
 
-.value-input.is-disabled,
-.stepper-input.is-disabled {
-  background: rgba(210, 212, 220, 0.95);
-  color: #7d818a;
-  border-color: rgba(185, 187, 198, 0.92);
-}
 
 .inline-stepper {
   display: grid;
@@ -1634,12 +1569,16 @@ button.apply-icon-button:not(.original-button):not(.note-token):not(.bpm-label-b
 }
 
 .playfield-scroll {
-  position: relative;
+  position: absolute;
+  width: 100%;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  overflow-x: auto;
-  background: #000;
+  overflow-x: hidden;
+  overflow-anchor: none;
+  scrollbar-width: none;
+  touch-action: none;
+  background: transparent;
 }
 
 .playfield-scroll:focus {
@@ -1654,18 +1593,20 @@ button.apply-icon-button:not(.original-button):not(.note-token):not(.bpm-label-b
   justify-content: center;
   color: #7d7a85;
   font-size: 0.9rem;
-  background: #000;
+  background: transparent;
 }
 
 .playfield-host {
   position: relative;
+  /* Only chart objects define this scroll surface; the track lives in the viewport layer. */
+  overflow: clip;
   min-width: 100%;
   min-height: 100%;
   display: flex;
   justify-content: safe center;
   align-items: flex-start;
-  padding: 0 10px;
-  background: #000;
+  padding: 0;
+  background: transparent;
 }
 
 .playfield-host.is-marquee-selecting .note-token,
@@ -1715,7 +1656,7 @@ button.apply-icon-button:not(.original-button):not(.note-token):not(.bpm-label-b
   outline: 1px solid rgb(0, 166, 166);
   outline-offset: 0;
   border-radius: 0;
-  background: #02050d;
+  background: transparent;
   overflow: visible;
 }
 
@@ -1738,6 +1679,27 @@ button.apply-icon-button:not(.original-button):not(.note-token):not(.bpm-label-b
 .playfield-board::after {
   right: -9px;
 }
+
+.editor-track-viewport {
+  position: absolute;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.editor-track-guides {
+  position: relative;
+  height: 100%;
+  margin: 0 auto;
+  box-sizing: content-box;
+  border-left: 9px solid rgb(0, 166, 166);
+  border-right: 9px solid rgb(0, 166, 166);
+}
+
+.playfield-board.viewport-track-owned { outline: none; }
+.playfield-board.viewport-track-owned::before,
+.playfield-board.viewport-track-owned::after { display: none; }
 
 .judge-line {
   position: absolute;
@@ -2613,10 +2575,6 @@ button.app-settings-apply-button:not(.original-button):not(.note-token):not(.bpm
   padding: 0 20px;
 }
 
-.bestdori-login-form .value-input {
-  text-align: left;
-  padding-left: 10px;
-}
 
 .bestdori-login-submit .btn-content {
   color: #ffffff;
@@ -2758,23 +2716,6 @@ button.app-settings-apply-button:not(.original-button):not(.note-token):not(.bpm
   outline: none;
 }
 
-/* Reflow follows the shared viewport, not a separate device-specific pixel threshold. */
-.app-shell[data-ui-layout="stacked"] .workspace {
-  flex-direction: column;
-  overflow: hidden;
-}
-.app-shell[data-ui-layout="stacked"] .sidebar {
-  width: auto;
-  flex: 0 1 auto;
-  max-height: calc(var(--ui-logical-height) * 0.4);
-}
-.app-shell[data-ui-layout="stacked"] .workspace-divider {
-  flex-basis: calc(12px * var(--ui-scale));
-}
-.app-shell[data-ui-layout="stacked"] .workspace-divider::before {
-  top: 50%; bottom: auto; left: 0; right: 0;
-  width: auto; height: 1px; transform: none;
-}
 .modal-card {
   max-width: calc(var(--ui-safe-logical-width) - 32px);
   max-height: calc(var(--ui-safe-logical-height) - 32px);
@@ -2885,17 +2826,8 @@ button.app-settings-apply-button:not(.original-button):not(.note-token):not(.bpm
   background: rgba(255, 255, 255, 0.68);
 }
 
-/* The chart's own projection is independent of the control scale. */
-.app-shell.is-mobile-runtime .playfield-scroll {
-  overscroll-behavior: contain;
-  touch-action: pan-y pinch-zoom;
-}
-.app-shell.is-mobile-runtime .playfield-host {
-  padding-inline: 4px;
-}
-.app-shell.is-mobile-runtime .playfield-board-visual-layer {
-  transform: scale(var(--mobile-board-scale, 1));
-}
+.editor-viewport-region { position: relative; flex: 1; min-width: 0; min-height: 0; }
+.playfield-scroll { overscroll-behavior: contain; }
 
 .static-render-strip {
   box-sizing: border-box;
@@ -2968,3 +2900,15 @@ button.app-settings-apply-button:not(.original-button):not(.note-token):not(.bpm
   word-break: break-all;
   color: var(--muted);
 }
+
+.editor-left-column { display: flex; flex: 0 0 auto; flex-direction: column; min-height: 0; gap: 12px; }
+.editor-left-column > .editor-note-sidebar { flex: 1; width: auto; min-height: 0; }
+.editor-left-actions { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; }
+.editor-left-play { position: relative; flex: 0 0 auto; align-self: center; }
+.editor-note-sidebar { position: relative; padding: 0; overflow: hidden; }
+.editor-note-grid { position: relative; display: grid; grid-template-columns: repeat(2, var(--note-button-width)); gap: var(--note-button-gap); }
+.editor-note-button-slot { position: relative; width: var(--note-button-width); height: var(--note-button-height); }
+.editor-note-button-image { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+.editor-note-button-image .note-sprite-stack { width: 100%; max-height: 100%; }
+
+.playfield-scroll::-webkit-scrollbar { display: none; }

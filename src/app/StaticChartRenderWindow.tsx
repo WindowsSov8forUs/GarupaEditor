@@ -1,3 +1,4 @@
+import { OriginalFormInput } from "../components/OriginalFormParts";
 import { OriginalMenuBackground } from "../components/OriginalMenuBackground";
 import { usePresentRoute } from "./RoutePresentation";
 import { appLog } from "../logging/applicationLogger";
@@ -1367,9 +1368,7 @@ export default function StaticChartRenderWindow() {
             >
               <StepperIcon type="minus" />
             </button>
-            <input
-              type="text"
-              className="stepper-input"
+            <OriginalFormInput
               value={`${zoomPercent}%`}
               readOnly
               tabIndex={-1}
