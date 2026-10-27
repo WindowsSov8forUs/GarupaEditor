@@ -11,6 +11,7 @@ use tauri::{Emitter, Manager};
 
 mod application_log;
 mod download;
+mod notgarupa_upload;
 mod official_music;
 mod resource_manager;
 use resource_manager::{resource_read_skin_thumbnail, resource_write_skin_thumbnail, resource_install_display_image};
@@ -2223,6 +2224,7 @@ pub fn run() {
             bestdori_fetch_json,
             bestdori_post_json,
             bestdori_post_multipart_file,
+            notgarupa_upload::notgarupa_upload_level,
             bestdori_fetch_binary,
             bestdori_probe_url,
             prepare_bestdori_package,

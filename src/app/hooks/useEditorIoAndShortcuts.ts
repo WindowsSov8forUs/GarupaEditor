@@ -1708,6 +1708,8 @@ export function useEditorIoAndShortcuts(params: any) {
       if (audioFileBytes === null || coverFileBytes === null) {
         throw new Error("NotGarupa上传需要已安装的歌曲音频和封面资源。");
       }
+      const illustBackgroundFileBytes = chartMediaResources.illustBackground === null
+        ? null : await chartMediaLease.readBytes("illustBackground");
       const difficultyValue = Number(metadata.difficultyLevel);
       const resolvedDifficulty = Number.isFinite(difficultyValue) && difficultyValue >= 1
         ? Math.trunc(difficultyValue)
@@ -1719,8 +1721,9 @@ export function useEditorIoAndShortcuts(params: any) {
         audioFileName: resolveTrimmedString(audioFileName) || "song.mp3",
         audioMimeType: chartMediaLease.mediaTypes.bgm ?? "audio/mpeg",
         coverFileBytes,
-        coverFileName: "cover.png",
         coverMimeType: chartMediaLease.mediaTypes.cover ?? "image/png",
+        illustBackgroundFileBytes,
+        illustBackgroundMimeType: chartMediaLease.mediaTypes.illustBackground ?? null,
         description: uploadCommunityPostContent,
         tags: uploadCommunityPostTags,
         difficulty: resolvedDifficulty,
