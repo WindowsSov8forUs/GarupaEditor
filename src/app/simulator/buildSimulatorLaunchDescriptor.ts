@@ -90,7 +90,7 @@ export async function buildSimulatorLaunchDescriptor(
     seGainPercent: input.seGainPercent,
   });
   const cover = media.cover ?? requireRef("builtin/ui/default-cover");
-  let stage = media.stageBackdrop;
+  let stage = media.illustBackground;
   if (stage === null) {
     const refreshed = await input.manager.prepareCatalog("bestdori");
     if (refreshed.status === "rejected") {

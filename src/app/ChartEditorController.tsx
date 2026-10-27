@@ -543,7 +543,7 @@ function ChartEditorController() {
     bgm: null,
     cover: null,
     mv: null,
-    stageBackdrop: null,
+    illustBackground: null,
   }));
   const chartMediaLease = useChartMediaLease(resourceManager, chartMediaResources);
   const [settings, setSettingsState] = useState<ChartSettings>(DEFAULT_SETTINGS);
@@ -3108,7 +3108,8 @@ function ChartEditorController() {
     handleCoverUpload,
     handleAudioUpload,
     handleMvUpload,
-    handleStageBackdropUpload,
+    handleIllustBackgroundUpload,
+    removeIllustBackground,
     applyWindowPreset,
     applyWindowPresetById,
     applyBestdoriSkinSelection,
@@ -6070,7 +6071,7 @@ function ChartEditorController() {
           cover: chartMediaLease.urls.cover ?? null,
           audio: chartMediaLease.urls.bgm ?? null,
           mv: chartMediaLease.urls.mv ?? null,
-          stageBackdrop: chartMediaLease.urls.stageBackdrop ?? null,
+          illustBackground: chartMediaLease.urls.illustBackground ?? null,
         }),
         chartMediaError: chartMediaLease.error,
         coverImageSrc,
@@ -6291,7 +6292,8 @@ function ChartEditorController() {
         handleCoverUpload,
         handleAudioUpload,
         handleMvUpload,
-        handleStageBackdropUpload,
+        handleIllustBackgroundUpload,
+        removeIllustBackground,
         isAppSettingsOpen,
         setIsAppSettingsOpen,
         appOptionSettings,

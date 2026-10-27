@@ -82,7 +82,7 @@ export const APPLICATION_RESOURCE_SLOTS = Object.freeze([
   "chart-media.bgm",
   "chart-media.cover",
   "chart-media.mv",
-  "chart-media.stage-backdrop",
+  "chart-media.illust-background",
 ] as const);
 
 export type ApplicationResourceSlot = (typeof APPLICATION_RESOURCE_SLOTS)[number];
@@ -95,7 +95,7 @@ export interface ChartMediaResources {
   readonly bgm: ResourceRef | null;
   readonly cover: ResourceRef | null;
   readonly mv: ResourceRef | null;
-  readonly stageBackdrop: ResourceRef | null;
+  readonly illustBackground: ResourceRef | null;
 }
 
 export interface SkinResourceSelection {
@@ -135,7 +135,7 @@ export function chartMediaResourcesFromSelection(
     bgm: selection["chart-media.bgm"],
     cover: selection["chart-media.cover"],
     mv: selection["chart-media.mv"],
-    stageBackdrop: selection["chart-media.stage-backdrop"],
+    illustBackground: selection["chart-media.illust-background"],
   });
 }
 

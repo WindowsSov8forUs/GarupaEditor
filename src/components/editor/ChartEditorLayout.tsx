@@ -1221,6 +1221,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         mediaSources={chartMediaSources}
           onCoverUpload={vm.handleCoverUpload}
           onMvUpload={vm.handleMvUpload}
+          onIllustBackgroundUpload={vm.handleIllustBackgroundUpload}
+          onIllustBackgroundRemove={vm.removeIllustBackground}
           optionSettings={appOptionSettings}
           habahiro={isHabahiroEnabled}
           onError={vm.setStatusMessage}

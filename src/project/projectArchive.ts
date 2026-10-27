@@ -52,7 +52,7 @@ export async function importProjectArchive(manager: ApplicationResourceManager, 
   const { project, media } = await readProjectArchive(bytes);
   for (const role of PROJECT_MEDIA_ROLES) {
     const item = project.media[role]; if (!item) continue;
-    const purpose = (role === "stageBackdrop" ? "stage-backdrop" : role) as UserMediaPurpose;
+    const purpose: UserMediaPurpose = role === "illustBackground" ? "illust-background" : role;
     const existingRef = createResourceRef(`workspace/current/chart-media/${purpose}/${item.integrity.sha256.toLowerCase()}`);
     if (existingRef.status === "rejected") throw new ResourceFailureError(existingRef.failure);
     const existing = await manager.verify(existingRef.value);

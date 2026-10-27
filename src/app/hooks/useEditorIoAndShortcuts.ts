@@ -1522,7 +1522,7 @@ export function useEditorIoAndShortcuts(params: any) {
         bgm: bgmRef,
         cover: coverRef,
         mv: null,
-        stageBackdrop: null,
+        illustBackground: null,
       }));
       setAudioFileName(bgmRef === null ? "" : resolveFileNameFromUrl(audioUrl, `community-post-${postId}.mp3`));
       setAudioDurationSec(0);
@@ -1593,7 +1593,7 @@ export function useEditorIoAndShortcuts(params: any) {
       };
       const bgm = await media("bgm"), cover = await media("cover");
       const summary = applyParsedGarupaChartJson(converted, true);
-      setChartMediaResources(Object.freeze({ bgm, cover, mv: null, stageBackdrop: null }));
+      setChartMediaResources(Object.freeze({ bgm, cover, mv: null, illustBackground: null }));
       setAudioFileName(`test-${id}-bgm`); setAudioDurationSec(0);
       setMetadata((current: ChartMetadata) => ({...current, title: resolveTrimmedString(item.title),
         artist: "", charter: "", isFullLength: false, difficulty: "EXPERT",
@@ -1897,7 +1897,7 @@ export function useEditorIoAndShortcuts(params: any) {
   };
 
   const importWorkspaceMedia = async (
-    purpose: "bgm" | "cover" | "mv" | "stage-backdrop",
+    purpose: "bgm" | "cover" | "mv" | "illust-background",
     file: File,
   ) => {
     const imported = await resourceManager.importWorkspaceMedia({
@@ -1944,14 +1944,19 @@ export function useEditorIoAndShortcuts(params: any) {
     }).catch((error) => setStatusMessage(`MV导入失败：${error instanceof Error ? error.message : String(error)}`));
   };
 
-  const handleStageBackdropUpload = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleIllustBackgroundUpload = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.currentTarget.files?.[0];
     event.currentTarget.value = "";
     if (!file) return;
-    void importWorkspaceMedia("stage-backdrop", file).then((stageBackdrop) => {
-      setChartMediaResources((current: typeof chartMediaResources) => Object.freeze({ ...current, stageBackdrop }));
-      setStatusMessage(`舞台背景资源已导入：${file.name}`);
-    }).catch((error) => setStatusMessage(`舞台背景导入失败：${error instanceof Error ? error.message : String(error)}`));
+    void importWorkspaceMedia("illust-background", file).then((illustBackground) => {
+      setChartMediaResources((current: typeof chartMediaResources) => Object.freeze({ ...current, illustBackground }));
+      setStatusMessage(`自定义背景已导入：${file.name}`);
+    }).catch((error) => setStatusMessage(`自定义背景导入失败：${error instanceof Error ? error.message : String(error)}`));
+  };
+
+  const removeIllustBackground = () => {
+    setChartMediaResources((current: typeof chartMediaResources) => Object.freeze({ ...current, illustBackground: null }));
+    setStatusMessage("自定义背景已移除。");
   };
 
   const applyWindowPresetById = async (
@@ -2252,7 +2257,8 @@ export function useEditorIoAndShortcuts(params: any) {
     handleCoverUpload,
     handleAudioUpload,
     handleMvUpload,
-    handleStageBackdropUpload,
+    handleIllustBackgroundUpload,
+    removeIllustBackground,
     applyWindowPreset,
     applyWindowPresetById,
     applyBestdoriSkinSelection,

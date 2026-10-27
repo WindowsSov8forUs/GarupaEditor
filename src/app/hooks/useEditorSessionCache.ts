@@ -122,9 +122,14 @@ function parseChartMediaResources(value: unknown): ChartMediaResources | null {
   const bgm = parse(value.bgm);
   const cover = parse(value.cover);
   const mv = parse(value.mv);
-  const stageBackdrop = parse(value.stageBackdrop);
-  if (bgm === undefined || cover === undefined || mv === undefined || stageBackdrop === undefined) return null;
-  return Object.freeze({ bgm, cover, mv, stageBackdrop });
+  // Caches before the rename stored the custom background as stageBackdrop;
+  // a stage skin named there is dropped, the stage uses its default skin.
+  const legacy = value.illustBackground === undefined ? parse(value.stageBackdrop) : undefined;
+  const illustBackground = value.illustBackground === undefined
+    ? legacy?.id.includes("/ingameskin/bgskin/") === true ? null : legacy
+    : parse(value.illustBackground);
+  if (bgm === undefined || cover === undefined || mv === undefined || illustBackground === undefined) return null;
+  return Object.freeze({ bgm, cover, mv, illustBackground });
 }
 
 function normalizeOptionalText(value: unknown): string | null {
@@ -489,7 +494,7 @@ export function useEditorSessionCache(params: any) {
             restoredMedia.bgm?.id.startsWith("user/") === true || restoredMedia.bgm?.id.startsWith("bestdori/") === true ||
             restoredMedia.cover?.id.startsWith("user/") === true || restoredMedia.cover?.id.startsWith("bestdori/") === true ||
             restoredMedia.mv?.id.startsWith("user/") === true || restoredMedia.mv?.id.startsWith("bestdori/") === true ||
-            restoredMedia.stageBackdrop?.id.startsWith("user/") === true
+            restoredMedia.illustBackground?.id.startsWith("user/") === true
           );
           if (restoredMedia !== null && (loadedResourceSchema !== 5 || hasLegacyMediaRef)) {
             const adopted = await resourceManager.adoptLegacyChartMedia(restoredMedia);
@@ -542,7 +547,7 @@ export function useEditorSessionCache(params: any) {
               if (imported.status === "rejected") throw new Error(`${imported.failure.capability}: ${imported.failure.boundary}`);
               mv = imported.value.ref;
             }
-            restoredMedia = Object.freeze({ bgm, cover, mv, stageBackdrop: null });
+            restoredMedia = Object.freeze({ bgm, cover, mv, illustBackground: null });
           }
           const reconciled = await resourceManager.reconcileCurrentChartMedia(restoredMedia);
           if (reconciled.status === "rejected") {

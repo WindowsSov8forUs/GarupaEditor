@@ -1502,7 +1502,11 @@ fn verify_workspace_record(root: &Path, record: &StoredResourceRecord) -> Result
         .get("purpose")
         .and_then(Value::as_str)
         .ok_or_else(|| "workspace media purpose is missing".to_string())?;
-    normalize_user_media_purpose(purpose)?;
+    // Media imported before the custom background was renamed keeps its
+    // stage-backdrop identity; new imports use illust-background.
+    if purpose != "stage-backdrop" {
+        normalize_user_media_purpose(purpose)?;
+    }
     normalize_workspace_provenance(
         record
             .descriptor
@@ -2050,7 +2054,7 @@ fn normalize_logical_path(value: &str) -> Result<String, String> {
 
 fn normalize_user_media_purpose(value: &str) -> Result<String, String> {
     match value {
-        "bgm" | "cover" | "mv" | "stage-backdrop" => Ok(value.to_string()),
+        "bgm" | "cover" | "mv" | "illust-background" => Ok(value.to_string()),
         _ => Err("user media purpose is not allowed".to_string()),
     }
 }
@@ -2089,7 +2093,7 @@ fn workspace_media_descriptor(
     let kind = match purpose {
         "bgm" => "audio",
         "mv" => "video",
-        "cover" | "stage-backdrop" => "image",
+        "cover" | "illust-background" => "image",
         _ => return Err("workspace media purpose is invalid".to_string()),
     };
     Ok(serde_json::json!({

@@ -19,7 +19,7 @@ export type ResourceAvailability =
 
 export type ResourceCatalogFreshness = "fresh" | "not-modified" | "offline-cached" | "unavailable";
 
-export type UserMediaPurpose = "bgm" | "cover" | "mv" | "stage-backdrop";
+export type UserMediaPurpose = "bgm" | "cover" | "mv" | "illust-background";
 
 export type ResourcePlacementIdentityClass =
   | "application-builtin"

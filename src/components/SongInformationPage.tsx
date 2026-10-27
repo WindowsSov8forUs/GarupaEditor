@@ -13,19 +13,23 @@ type SongInformationPageProps = {
   notes: readonly ChartNote[];
   slideChains: readonly SlideChain[];
   metadata: ChartMetadata;
-  mediaSources: { cover: string | null; mv: string | null };
+  mediaSources: { cover: string | null; mv: string | null; illustBackground: string | null };
   setMetadata: Dispatch<SetStateAction<ChartMetadata>>;
   onCoverUpload: ChangeEventHandler<HTMLInputElement>;
   onMvUpload: ChangeEventHandler<HTMLInputElement>;
+  onIllustBackgroundUpload: ChangeEventHandler<HTMLInputElement>;
+  onIllustBackgroundRemove(): void;
   optionSettings: EditorOptionSettings;
   habahiro: boolean;
   onError(message: string): void;
 };
 
 export function SongInformationPage({ audioDurationSec, noteCount, notes, slideChains, metadata, mediaSources,
-  setMetadata, onCoverUpload, onMvUpload, optionSettings, habahiro, onError }: SongInformationPageProps) {
+  setMetadata, onCoverUpload, onMvUpload, onIllustBackgroundUpload, onIllustBackgroundRemove, optionSettings, habahiro,
+  onError }: SongInformationPageProps) {
   const coverInput = useRef<HTMLInputElement>(null);
   const mvInput = useRef<HTMLInputElement>(null);
+  const illustBackgroundInput = useRef<HTMLInputElement>(null);
   const noteCounts = useMemo(() => countSongNoteKinds(notes, slideChains), [notes, slideChains]);
   const hasSpecialNotes = useMemo(() => songHasSpecialNotes(notes, slideChains), [notes, slideChains]);
   return (
@@ -35,6 +39,8 @@ export function SongInformationPage({ audioDurationSec, noteCount, notes, slideC
         aria-label="选择封面图片" onChange={onCoverUpload} />
       <input ref={mvInput} type="file" accept="video/*" className="hidden-input"
         aria-label="选择 MV 文件" onChange={onMvUpload} />
+      <input ref={illustBackgroundInput} type="file" accept="image/png,image/jpeg" className="hidden-input"
+        aria-label="选择自定义背景图片" onChange={onIllustBackgroundUpload} />
       <div className="song-information-composition" style={{
         left: `calc(var(--ui-page-window-center-x) + ${SONG_INFORMATION_CONTENT_BOUNDS.x}px)`,
         top: `calc(var(--ui-page-window-center-y) + ${SONG_INFORMATION_CONTENT_BOUNDS.y}px)`,
@@ -58,6 +64,9 @@ export function SongInformationPage({ audioDurationSec, noteCount, notes, slideC
           hasMv={Boolean(mediaSources.mv)}
           mv={mediaSources.mv}
           onChangeMv={() => mvInput.current?.click()}
+          illustBackground={mediaSources.illustBackground}
+          onChangeIllustBackground={() => illustBackgroundInput.current?.click()}
+          onRemoveIllustBackground={onIllustBackgroundRemove}
           noteStatistics={(expanded, onExpandedChange) => <SongNoteStatisticsPage counts={noteCounts}
             settings={optionSettings} habahiro={habahiro} onError={onError} expanded={expanded} onExpandedChange={onExpandedChange} />}
           isFullLength={metadata.isFullLength}

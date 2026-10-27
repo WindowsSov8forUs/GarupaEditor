@@ -528,13 +528,13 @@ export class ApplicationResourceManager {
       bgm: null,
       cover: null,
       mv: null,
-      stageBackdrop: null,
+      illustBackground: null,
     };
     const purposes: Readonly<Record<keyof ChartMediaResources, UserMediaPurpose>> = Object.freeze({
       bgm: "bgm",
       cover: "cover",
       mv: "mv",
-      stageBackdrop: "stage-backdrop",
+      illustBackground: "illust-background",
     });
     for (const key of Object.keys(output) as Array<keyof ChartMediaResources>) {
       const ref = media[key];
@@ -543,10 +543,12 @@ export class ApplicationResourceManager {
         continue;
       }
       if (
-        key === "stageBackdrop" && ref.id.startsWith("bestdori/") &&
+        key === "illustBackground" && ref.id.startsWith("bestdori/") &&
         ref.id.includes("/ingameskin/bgskin/")
       ) {
-        output[key] = ref;
+        // A legacy stage backdrop could name a stage skin; the custom
+        // background is an uploaded image, and the stage skin is the default.
+        output[key] = null;
         continue;
       }
       if (!ref.id.startsWith("user/media/") && !ref.id.startsWith("bestdori/")) {
@@ -931,7 +933,7 @@ function validateChartMediaImport(
       : "image/";
   const mediaType = normalizeMediaType(input.mediaType);
   if (
-    !(["bgm", "cover", "mv", "stage-backdrop"] as readonly string[]).includes(input.purpose) ||
+    !(["bgm", "cover", "mv", "illust-background"] as readonly string[]).includes(input.purpose) ||
     typeof input.fileName !== "string" || input.fileName.trim().length === 0 ||
     mediaType === null || !mediaType.startsWith(expectedMediaPrefix) ||
     !(input.bytes instanceof Uint8Array) || input.bytes.byteLength <= 0 ||
