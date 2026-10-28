@@ -142,7 +142,7 @@ function normalizeOptionalText(value: unknown): string | null {
 
 export function useEditorSessionCache(params: any) {
   const {
-    project, restoreProject,
+    project, restoreProject, playSessionActive,
     metadata,
     settings,
     appOptionSettings,
@@ -620,7 +620,7 @@ export function useEditorSessionCache(params: any) {
   }, []);
 
   useEffect(() => {
-    if (!didRestoreAttemptFinish || blockedRestoreProjectIdRef.current === project.projectId) {
+    if (!didRestoreAttemptFinish || playSessionActive || blockedRestoreProjectIdRef.current === project.projectId) {
       return;
     }
 
@@ -667,6 +667,7 @@ export function useEditorSessionCache(params: any) {
     };
   }, [
     project,
+    playSessionActive,
     audioDurationSec,
     audioFileName,
     bpmEvents,

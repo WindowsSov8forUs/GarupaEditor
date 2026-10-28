@@ -3204,8 +3204,24 @@ function ChartEditorController() {
   const projectFiles = useChartProjectFiles(resourceManager, project, loaded => {
     restoreProject(loaded); closeImportJsonModal();
   }, setStatusMessage);
+  // Charts picked for play from the chart list load through the editor state; keep the
+  // editor's own chart aside (and out of the session cache) until the play flow ends.
+  const playSessionBackupRef = useRef<ChartProject | null>(null);
+  const [playSessionActive, setPlaySessionActive] = useState(false);
+  const beginPlaySession = useCallback(async () => {
+    if (playSessionBackupRef.current !== null) return;
+    playSessionBackupRef.current = await captureChartProject(resourceManager, project);
+    setPlaySessionActive(true);
+  }, [resourceManager, project]);
+  const endPlaySession = useCallback(() => {
+    const backup = playSessionBackupRef.current;
+    if (backup === null) return;
+    playSessionBackupRef.current = null;
+    restoreProject(backup);
+    setPlaySessionActive(false);
+  }, [restoreProject]);
   const settingsResourcesReady = useEditorSessionCache({
-    project, restoreProject,
+    project, restoreProject, playSessionActive,
     metadata,
     settings,
     appOptionSettings,
@@ -6052,6 +6068,8 @@ function ChartEditorController() {
         applyImportOfficialChart,
         applyImportCommunityChart,
     loadChartForPlay,
+    beginPlaySession,
+    endPlaySession,
         loadOfficialChart,
         applyUploadCommunityChart,
         applyUploadNotGarupaServerChart,
