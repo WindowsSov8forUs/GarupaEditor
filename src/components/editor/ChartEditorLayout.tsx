@@ -1238,7 +1238,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
           scale={uiViewport.scale} top={uiViewport.safeInsets.top - viewportTop}
           right={uiViewport.safeInsets.right - viewportRight} />
         <SidebarPanel isSkinReady={isSkinReady} isToolArmed={isToolArmed} tool={tool}
-          onPlay={() => { void openSimulatorWindow(); }}
+          onPlay={() => { setIsAppSettingsOpen(false); setIsMetadataEditorOpen(false); setLivePreparationOpen(true); }}
           onPreview={() => { void openStaticRenderWindow(); }}
           applyToolFromPalette={applyToolFromPalette} getSpriteLayers={getPaletteSpriteLayers}
           getSpriteAspectRatio={getPaletteSpriteAspectRatio} renderSpriteStack={renderPaletteSpriteStack} />
