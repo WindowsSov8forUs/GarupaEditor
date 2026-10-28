@@ -1296,7 +1296,7 @@ export function useEditorIoAndShortcuts(params: any) {
     });
   };
 
-  const loadOfficialChart = async (requested?: { id: string; difficulty: OfficialDifficulty; preserveForPlay: boolean; progress: (ratio: number) => void }) => {
+  const loadOfficialChart = async (requested?: { id: string; difficulty: OfficialDifficulty; preserveForPlay: boolean; includeMv?: boolean; progress: (ratio: number) => void }) => {
     appLog("info", "editor.action", { action: "applyImportOfficialChart" });
     const chartIdText = (requested?.id ?? importOfficialChartId).trim();
     if (!/^\d+$/.test(chartIdText)) {
@@ -1363,7 +1363,7 @@ export function useEditorIoAndShortcuts(params: any) {
         title: `${payload.metadata.title} cover`,
         url: payload.resources.jacketUrl,
       });
-      const mvRef = payload.resources.mvUrl === null
+      const mvRef = payload.resources.mvUrl === null || requested?.includeMv === false
         ? null
         : await materializeBestdoriMediaInWorkspace({
             server: payload.resources.server,

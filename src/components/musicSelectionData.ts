@@ -31,3 +31,18 @@ export interface OfficialSelectionEntry extends MusicSelectionBase {
   source: "official"; difficulty: OfficialDifficulty; officialSong: OfficialSong;
 }
 export type MusicSelectionEntry = BestdoriSelectionEntry | AyachanSelectionEntry | OfficialSelectionEntry;
+
+/** What the original carries from song select into live preparation: the selection, not its files. */
+export interface MusicPlaySelection {
+  source: "bestdori" | "test" | "official"; id: string; officialDifficulty?: OfficialDifficulty;
+  title: string; difficulty: OfficialDifficulty; level: string;
+  /** Known before download only from official master data; other sources hide these marks. */
+  hasMv: boolean; hasSpecialNotes: boolean;
+}
+export function musicPlaySelection(entry: MusicSelectionEntry): MusicPlaySelection {
+  const base = { id: String(entry.id), title: entry.title, level: entry.level };
+  if (entry.source === "official") return { ...base, source: "official", officialDifficulty: entry.difficulty, difficulty: entry.difficulty,
+    hasMv: entry.officialSong.hasMv, hasSpecialNotes: entry.officialSong.specialNotes.includes(entry.difficulty) };
+  if (entry.source === "ayachan") return { ...base, source: "test", difficulty: "EXPERT", hasMv: false, hasSpecialNotes: false };
+  return { ...base, source: "bestdori", difficulty: entry.difficulty, hasMv: false, hasSpecialNotes: false };
+}

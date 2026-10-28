@@ -375,12 +375,14 @@ function EmptyMusicSelection({ onNextPage, busy, official }: { onNextPage(): voi
   </div>;
 }
 
-export function MusicSelectionPage({ source, onSourceChange: setSource, onLoad, onReady, previewVolume, onResourceWarning }: {
+export function MusicSelectionPage({ source, onSourceChange: setSource, onLoad, onReady, onPlay, previewVolume, onResourceWarning }: {
   source: MusicSource; onSourceChange(source: MusicSource): void;
   onResourceWarning(message: string): void;
   previewVolume: number;
   onLoad(source: "bestdori" | "test" | "official", id: string, progress: (ratio: number) => void, destination: SelectionDestination, difficulty?: OfficialDifficulty): Promise<boolean>;
   onReady(destination: SelectionDestination): void;
+  /** Original next step: hand the selection to live preparation without loading anything. */
+  onPlay(entry: MusicSelectionEntry): void;
 }) {
   const { scale, safeInsets } = useUiViewport();
   // The list may reset for a filter/difficulty change; its jacket lease must not.
@@ -460,6 +462,7 @@ export function MusicSelectionPage({ source, onSourceChange: setSource, onLoad, 
   }; }, []);
   const confirm = async (entry: MusicSelectionEntry, destination: SelectionDestination) => {
     if (running.current) return;
+    if (destination === "play") { onPlay(entry); return; }
     running.current = true; setBusy(true); setError("");
     const loading = originalLoading.hold("network", {});
     releaseLoad.current = loading.release;
