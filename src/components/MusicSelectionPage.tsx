@@ -2,7 +2,6 @@ import { usePreparationPending } from "./PagePreparation";
 import { useContext } from "react";
 import { OriginalPageExiting, OriginalPageVisible } from "./OriginalPrefabView";
 import { OfficialMusicFolders } from "./OfficialMusicFolders";
-import { useOfficialMusicPreview } from "./useOfficialMusicPreview";
 import { getOfficialMusicLibrary, type OfficialDifficulty } from "../services/officialMusicLibrary";
 import { DEFAULT_OFFICIAL_FILTER, resetOfficialFilter, selectOfficialMusic } from "./officialMusicSelection";
 import { OfficialMusicFilterDialog } from "./OfficialMusicFilterDialog";
@@ -375,10 +374,11 @@ function EmptyMusicSelection({ onNextPage, busy, official }: { onNextPage(): voi
   </div>;
 }
 
-export function MusicSelectionPage({ source, onSourceChange: setSource, onLoad, onReady, onPlay, previewVolume, onResourceWarning }: {
+export function MusicSelectionPage({ source, onSourceChange: setSource, onLoad, onReady, onPlay, onPreview, onResourceWarning }: {
   source: MusicSource; onSourceChange(source: MusicSource): void;
   onResourceWarning(message: string): void;
-  previewVolume: number;
+  /** The sample cue is owned above this page so live preparation keeps it playing. */
+  onPreview(slot: string | null, paused: boolean): void;
   onLoad(source: "bestdori" | "test" | "official", id: string, progress: (ratio: number) => void, destination: SelectionDestination, difficulty?: OfficialDifficulty): Promise<boolean>;
   onReady(destination: SelectionDestination): void;
   /** Original next step: hand the selection to live preparation without loading anything. */
@@ -453,8 +453,10 @@ export function MusicSelectionPage({ source, onSourceChange: setSource, onLoad, 
   const [searchError, setSearchError] = useState("");
   useEffect(() => { setSearchError(!pageVisible || search.loading ? "" : search.error); }, [source, search.loading, search.error, pageVisible]);
   const [busy, setBusy] = useState(false);
-  useOfficialMusicPreview(pageVisible && source === "official" && entries.length ? previewSlot : null, previewVolume, busy,
-    message => warning.current(message));
+  const requestedPreview = pageVisible && source === "official" && entries.length ? previewSlot : null;
+  const reportPreview = useRef(onPreview); reportPreview.current = onPreview;
+  // Unmounting for live preparation must not clear the cue (RemoveAllSoundBundle keeps the current one).
+  useEffect(() => { reportPreview.current(requestedPreview, busy); }, [requestedPreview, busy]);
   const running = useRef(false), active = useRef(true);
   const releaseLoad = useRef<(() => void) | null>(null);
   useEffect(() => { active.current = true; return () => {

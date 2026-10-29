@@ -15,6 +15,7 @@ import { SongInformationPage } from "../SongInformationPage";
 import { SONG_INFORMATION_CONTENT_BOUNDS } from "../OriginalSongDetailParts";
 import { LivePreparationPage, MvDownloadDialog } from "../LivePreparationPage";
 import { downloadActivity } from "../../services/downloadActivity";
+import { SAMPLE_START_GAME_FADE_SECONDS, useOfficialMusicPreview } from "../useOfficialMusicPreview";
 import songDetailSource from "../../data/originalSongDetailProfile.json";
 import { songHasSpecialNotes } from "../songNoteStatistics";
 import { SIMULATOR_PRE_ADAPTATION_DEFAULTS, type SimulatorModeSelection } from "../../app/simulator/preAdaptationContract";
@@ -260,6 +261,12 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   const pendingLaunch = useRef<{ mode: SimulatorModeSelection; done(): void } | null>(null);
   const [launchRevision, setLaunchRevision] = useState(0);
   const [mvDownloadAnswer, setMvDownloadAnswer] = useState<((confirmed: boolean) => void) | null>(null);
+  const [preview, setPreview] = useState<{ slot: string | null; paused: boolean }>({ slot: null, paused: false });
+  const [previewStopped, setPreviewStopped] = useState(false);
+  useEffect(() => { if (!livePreparationOpen) setPreviewStopped(false); }, [livePreparationOpen]);
+  const samplePlayer = useOfficialMusicPreview(musicSelectionOpen && !previewStopped ? preview.slot : null,
+    appOptionSettings.simulatorSettings.systemBgmVolumePercent * appOptionSettings.simulatorSettings.masterVolumePercent / 10000,
+    preview.paused, message => vm.setStatusMessage(message));
   const answerMvDownload = (confirmed: boolean) => { mvDownloadAnswer?.(confirmed); setMvDownloadAnswer(null); };
   useEffect(() => {
     if (musicSelectionOpen) return;
@@ -294,6 +301,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         if (!loaded) return;
         loadedPlay.current = { key: key!, withMv };
       }
+      // startGame: StopBGM(0.5) fades the sample out under the Loading screen.
+      samplePlayer.stop(SAMPLE_START_GAME_FADE_SECONDS); setPreviewStopped(true);
       await new Promise<void>(done => { pendingLaunch.current = { mode, done }; setLaunchRevision(value => value + 1); });
     } finally { releaseLoading(); }
   };
@@ -1243,7 +1252,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         onMvChange={setPlaybackMvMode} onSettings={() => setPreparationSettingsOpen(true)}
         resourcesReady={vm.settingsResourcesReady} onStart={startLive} /> : !isMetadataEditorOpen && musicSelectionOpen ?
       <MusicSelectionPage source={appOptionSettings.musicSelectionSource} onSourceChange={vm.setMusicSelectionSource}
-        onResourceWarning={vm.setStatusMessage} previewVolume={appOptionSettings.simulatorSettings.systemBgmVolumePercent * appOptionSettings.simulatorSettings.masterVolumePercent / 10000} onLoad={(source, id, progress, _destination, difficulty) => {
+        onResourceWarning={vm.setStatusMessage} onPreview={(slot, paused) => setPreview(current => current.slot === slot && current.paused === paused ? current : { slot, paused })} onLoad={(source, id, progress, _destination, difficulty) => {
           vm.endPlaySession(); loadedPlay.current = null;
           return source === "official"
             ? vm.loadOfficialChart({ id, difficulty: difficulty!, preserveForPlay: false, progress }).then(Boolean) : source === "bestdori"
