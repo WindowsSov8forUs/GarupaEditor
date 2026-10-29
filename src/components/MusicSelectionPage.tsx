@@ -3,7 +3,8 @@ import { useContext } from "react";
 import { OriginalPageExiting, OriginalPageVisible } from "./OriginalPrefabView";
 import { OfficialMusicFolders } from "./OfficialMusicFolders";
 import { getOfficialMusicLibrary, type OfficialDifficulty } from "../services/officialMusicLibrary";
-import { DEFAULT_OFFICIAL_FILTER, resetOfficialFilter, selectOfficialMusic } from "./officialMusicSelection";
+import { DEFAULT_OFFICIAL_FILTER, officialLevelBounds, resetOfficialFilter, selectOfficialMusic, type OfficialMusicFilter } from "./officialMusicSelection";
+import type { OfficialMusicSelectionCache } from "../chartCore";
 import { OfficialMusicFilterDialog } from "./OfficialMusicFilterDialog";
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent, type CSSProperties } from "react";
 import { UiPageViewport } from "./UiViewport";
@@ -374,7 +375,33 @@ function EmptyMusicSelection({ onNextPage, busy, official }: { onNextPage(): voi
   </div>;
 }
 
-export function MusicSelectionPage({ source, onSourceChange: setSource, onLoad, onReady, onPlay, onPreview, onResourceWarning }: {
+// The page unmounts behind live preparation and other pages; its list state must survive that.
+// The official parts the original caches are also persisted (see persistOfficialState).
+const rememberedSelections: Partial<Record<MusicSource | "official-other", { id: number; order: number[] }>> = {};
+const sessionFilters: {
+  official?: OfficialMusicFilter;
+  bestdori?: typeof DEFAULT_BESTDORI_FILTER;
+  ayachan?: typeof DEFAULT_AYACHAN_FILTER;
+  seeded?: boolean;
+} = {};
+
+/** Restores SaveToCache / SaveSelectedDifficulty / folder state; levels stay inside the current library. */
+function restoreOfficialFilter(cache: OfficialMusicSelectionCache | null, library: Parameters<typeof resetOfficialFilter>[1]): OfficialMusicFilter {
+  const base = resetOfficialFilter(DEFAULT_OFFICIAL_FILTER, library);
+  if (cache === null) return base;
+  const [lowest, highest] = officialLevelBounds(library);
+  const minimum = Math.min(Math.max(cache.minimum, lowest), highest), maximum = Math.max(Math.min(cache.maximum, highest), lowest);
+  return { ...base, difficulty: cache.difficulty, band: cache.band, extension: cache.extension, sort: cache.sort, category: cache.category,
+    ...(minimum <= maximum ? { minimum, maximum } : {}) };
+}
+
+function officialCache(filter: OfficialMusicFilter): OfficialMusicSelectionCache {
+  return { difficulty: filter.difficulty, band: filter.band, extension: filter.extension, sort: filter.sort,
+    minimum: filter.minimum, maximum: filter.maximum, category: filter.category,
+    all: rememberedSelections.official ?? null, other: rememberedSelections["official-other"] ?? null };
+}
+
+export function MusicSelectionPage({ source, onSourceChange: setSource, onLoad, onReady, onPlay, onPreview, onResourceWarning, persisted, onPersist }: {
   source: MusicSource; onSourceChange(source: MusicSource): void;
   onResourceWarning(message: string): void;
   /** The sample cue is owned above this page so live preparation keeps it playing. */
@@ -383,14 +410,26 @@ export function MusicSelectionPage({ source, onSourceChange: setSource, onLoad, 
   onReady(destination: SelectionDestination): void;
   /** Original next step: hand the selection to live preparation without loading anything. */
   onPlay(entry: MusicSelectionEntry): void;
+  /** The official song select cache saved by the last exit. */
+  persisted: OfficialMusicSelectionCache | null;
+  onPersist(cache: OfficialMusicSelectionCache): void;
 }) {
   const { scale, safeInsets } = useUiViewport();
   // The list may reset for a filter/difficulty change; its jacket lease must not.
   const [jacketEntry, setJacketEntry] = useState<MusicSelectionEntry>();
   const jacket = useMusicJacket(jacketEntry);
-  const selectionMemory = useRef<Partial<Record<MusicSource | "official-other", { id: number; order: number[] }>>>({});
+  const selectionMemory = useRef(rememberedSelections);
   const officialLibrary = getOfficialMusicLibrary();
-  const [officialFilter, setOfficialFilter] = useState(() => resetOfficialFilter(DEFAULT_OFFICIAL_FILTER, officialLibrary));
+  if (!sessionFilters.seeded) {
+    sessionFilters.seeded = true;
+    if (persisted?.all) rememberedSelections.official = persisted.all;
+    if (persisted?.other) rememberedSelections["official-other"] = persisted.other;
+  }
+  const [officialFilter, setOfficialFilter] = useState(() => sessionFilters.official ?? restoreOfficialFilter(persisted, officialLibrary));
+  useEffect(() => { sessionFilters.official = officialFilter; }, [officialFilter]);
+  // OnExiting saveSortFilterData and OnExit SaveSelectedDifficulty / selector state; next and back
+  // also leave through here after saving the carousel selection.
+  const persist = useRef(() => {}); persist.current = () => onPersist(officialCache(officialFilter));
   const warning = useRef(onResourceWarning); warning.current = onResourceWarning;
   useEffect(() => {
     if (source !== "official") return;
@@ -405,6 +444,8 @@ export function MusicSelectionPage({ source, onSourceChange: setSource, onLoad, 
   const [filterOpen, setFilterOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const pageExiting = useContext(OriginalPageExiting);
+  useLayoutEffect(() => { if (pageExiting) persist.current(); }, [pageExiting]);
+  useEffect(() => () => persist.current(), []);
   useLayoutEffect(() => {
     if (!pageExiting) return;
     // ScreenLayerMusicSelect.OnExiting closes the drawer while the page exits.
@@ -412,13 +453,15 @@ export function MusicSelectionPage({ source, onSourceChange: setSource, onLoad, 
     setFilterOpen(false);
     setSearchOpen(false);
   }, [pageExiting]);
-  const [retainedFilter, setFilter] = useState({ ...DEFAULT_BESTDORI_FILTER });
+  const [retainedFilter, setFilter] = useState(() => sessionFilters.bestdori ?? { ...DEFAULT_BESTDORI_FILTER });
+  useEffect(() => { sessionFilters.bestdori = retainedFilter; }, [retainedFilter]);
   const filter = useMemo(() => normalizeBestdoriMusicFilter(retainedFilter), [retainedFilter]);
   useLayoutEffect(() => { if (filter !== retainedFilter) setFilter(filter); }, [filter, retainedFilter]);
   const [searchRevision, setSearchRevision] = useState(0);
   const [bestdoriSearch, setSearch] = useState<BestdoriSearchState>({ entries: [], offset: 0, hasMore: true, loading: false, error: "" });
   const bestdoriSession = useMemo(() => new BestdoriMusicSearch(setSearch), []);
-  const [ayachanFilterState, setAyachanFilter] = useState({ ...DEFAULT_AYACHAN_FILTER });
+  const [ayachanFilterState, setAyachanFilter] = useState(() => sessionFilters.ayachan ?? { ...DEFAULT_AYACHAN_FILTER });
+  useEffect(() => { sessionFilters.ayachan = ayachanFilterState; }, [ayachanFilterState]);
   const ayachanFilter = useMemo(() => normalizeAyachanFilter(ayachanFilterState), [ayachanFilterState]);
   useLayoutEffect(() => { if (ayachanFilter !== ayachanFilterState) setAyachanFilter(ayachanFilter); }, [ayachanFilter, ayachanFilterState]);
   const [ayachanRevision, setAyachanRevision] = useState(0);

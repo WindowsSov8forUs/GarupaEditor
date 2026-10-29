@@ -58,8 +58,21 @@ export interface ChartSettings {
   laneChangeBeats?: number[];
 }
 
+/** One selector's remembered song and the list order it was chosen from. */
+export interface MusicSelectionMemory { id: number; order: number[] }
+/**
+ * Song select state the original persists for Solo: SaveToCache (band, other, sort, level),
+ * SaveSelectedDifficulty, the folder, and the All / other-category selection caches.
+ */
+export interface OfficialMusicSelectionCache {
+  difficulty: "EASY" | "NORMAL" | "HARD" | "EXPERT" | "SPECIAL";
+  band: number; extension: number; sort: number; minimum: number; maximum: number; category: number;
+  all: MusicSelectionMemory | null; other: MusicSelectionMemory | null;
+}
+
 export interface EditorOptionSettings {
   musicSelectionSource: "bestdori" | "ayachan" | "official";
+  officialMusicSelection: OfficialMusicSelectionCache | null;
   simulatorSettings: SimulatorMenuSettings;
   rhythmNoteSizePercent: number;
   rhythmNoteSpeed: number;
@@ -244,6 +257,7 @@ export const DEFAULT_SETTINGS: ChartSettings = {
 
 export const DEFAULT_EDITOR_OPTION_SETTINGS: EditorOptionSettings = {
   musicSelectionSource: "bestdori",
+  officialMusicSelection: null,
   simulatorSettings: DEFAULT_SIMULATOR_MENU_SETTINGS,
   rhythmNoteSizePercent: 100,
   rhythmNoteSpeed: 9.7,
@@ -939,6 +953,7 @@ export function normalizeEditorOptionSettings(
     simulatorSettings: normalizeSimulatorMenuSettings(input.simulatorSettings),
     musicSelectionSource: input.musicSelectionSource === "official" || input.musicSelectionSource === "ayachan"
       ? input.musicSelectionSource : "bestdori",
+    officialMusicSelection: normalizeOfficialMusicSelectionCache(input.officialMusicSelection),
     rhythmNoteSizePercent,
     rhythmNoteSpeed,
     longLineBrightnessPercent,
@@ -1013,4 +1028,27 @@ export function normalizeNote(
   }
 
   return normalized;
+}
+
+function normalizeMusicSelectionMemory(value: unknown): MusicSelectionMemory | null {
+  if (!value || typeof value !== "object") return null;
+  const { id, order } = value as Partial<MusicSelectionMemory>;
+  if (!Number.isSafeInteger(id) || !Array.isArray(order) || order.length > 10000 ||
+    !order.every(item => Number.isSafeInteger(item))) return null;
+  return { id: id as number, order: [...order] };
+}
+
+function normalizeOfficialMusicSelectionCache(value: unknown): OfficialMusicSelectionCache | null {
+  if (!value || typeof value !== "object") return null;
+  const input = value as Partial<OfficialMusicSelectionCache>;
+  const difficulties = ["EASY", "NORMAL", "HARD", "EXPERT", "SPECIAL"] as const;
+  const integer = (item: unknown) => Number.isSafeInteger(item) ? item as number : null;
+  const band = integer(input.band), extension = integer(input.extension), sort = integer(input.sort), category = integer(input.category);
+  if (!difficulties.includes(input.difficulty as typeof difficulties[number]) || band === null || extension === null ||
+    sort === null || category === null || !Number.isFinite(input.minimum) || !Number.isFinite(input.maximum)) return null;
+  return {
+    difficulty: input.difficulty as OfficialMusicSelectionCache["difficulty"], band, extension, sort, category,
+    minimum: input.minimum as number, maximum: input.maximum as number,
+    all: normalizeMusicSelectionMemory(input.all), other: normalizeMusicSelectionMemory(input.other),
+  };
 }

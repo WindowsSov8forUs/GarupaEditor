@@ -1252,6 +1252,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         onMvChange={setPlaybackMvMode} onSettings={() => setPreparationSettingsOpen(true)}
         resourcesReady={vm.settingsResourcesReady} onStart={startLive} /> : !isMetadataEditorOpen && musicSelectionOpen ?
       <MusicSelectionPage source={appOptionSettings.musicSelectionSource} onSourceChange={vm.setMusicSelectionSource}
+        persisted={appOptionSettings.officialMusicSelection} onPersist={vm.setOfficialMusicSelection}
         onResourceWarning={vm.setStatusMessage} onPreview={(slot, paused) => setPreview(current => current.slot === slot && current.paused === paused ? current : { slot, paused })} onLoad={(source, id, progress, _destination, difficulty) => {
           vm.endPlaySession(); loadedPlay.current = null;
           return source === "official"
