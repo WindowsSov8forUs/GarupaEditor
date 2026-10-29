@@ -31,6 +31,18 @@ function DemoPlayDialog({ open, auto, onClose, onConfirm }: {
   }} />;
 }
 
+/** MusicVideoDownloadDialog for MV Live. The saved quality and catalog download size are
+ * not available to the editor before downloading, so those two rows stay hidden. */
+export function MvDownloadDialog({ open, onCancel, onConfirm }: { open: boolean; onCancel(): void; onConfirm(): void }) {
+  const model = new OriginalPrefabModel(prefabs.mvDownloadDialog, { nodes: { 5: { active: false }, 21: { active: false } }, components: {
+    48: { mText: word("dialog_downloadForMVLive_title") },
+    52: { mText: word("dialog_downloadForMVLive_message") },
+    47: { mText: word("dialog_downloadMV_settingCaption") },
+  } });
+  return <OriginalAuthoredDialog open={open} model={model} onClose={onCancel}
+    bindings={{ buttons: { 55: { action: onCancel }, 63: { action: onConfirm } } }} />;
+}
+
 /** SoloLiveDeckSelect's lower components; team/deck and account rewards are omitted. */
 export function LivePreparationPage({ metadata, mode, onModeChange, mvEnabled, hasMv, hasSpecialNotes,
   onMvChange, onSettings, onStart, resourcesReady }: {

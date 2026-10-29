@@ -13,7 +13,7 @@ import { ExportJsonModal } from "../ExportJsonModal";
 import { ImportJsonModal } from "../ImportJsonModal";
 import { SongInformationPage } from "../SongInformationPage";
 import { SONG_INFORMATION_CONTENT_BOUNDS } from "../OriginalSongDetailParts";
-import { LivePreparationPage } from "../LivePreparationPage";
+import { LivePreparationPage, MvDownloadDialog } from "../LivePreparationPage";
 import { downloadActivity } from "../../services/downloadActivity";
 import songDetailSource from "../../data/originalSongDetailProfile.json";
 import { songHasSpecialNotes } from "../songNoteStatistics";
@@ -259,6 +259,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   const loadedPlay = useRef<{ key: string; withMv: boolean } | null>(null);
   const pendingLaunch = useRef<{ mode: SimulatorModeSelection; done(): void } | null>(null);
   const [launchRevision, setLaunchRevision] = useState(0);
+  const [mvDownloadAnswer, setMvDownloadAnswer] = useState<((confirmed: boolean) => void) | null>(null);
+  const answerMvDownload = (confirmed: boolean) => { mvDownloadAnswer?.(confirmed); setMvDownloadAnswer(null); };
   useEffect(() => {
     if (musicSelectionOpen) return;
     setPlaySelection(null); loadedPlay.current = null;
@@ -276,6 +278,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     const key = selection === null ? null : `${selection.source}:${selection.id}:${selection.officialDifficulty ?? ""}`;
     const withMv = selection !== null && mode.sessionMode === "live" && playbackMvMode && selection.hasMv;
     const needsMv = withMv && !(loadedPlay.current?.key === key && loadedPlay.current.withMv);
+    // liveStart asks before downloading a missing selected MV; cancel stays on this page.
+    if (needsMv && !await new Promise<boolean>(answer => setMvDownloadAnswer(() => answer))) return;
     // ShowLoadingScreen (layer 13) is held for every start, downloaded or not, until the
     // gameplay surface is presented; transfers add the download gauge.
     const releaseLoading = downloadActivity.holdScreen();
@@ -1937,6 +1941,9 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         onSubmit={() => void submitBestdoriLogin()}
         onClose={closeBestdoriLoginModal}
       />
+
+      <MvDownloadDialog open={mvDownloadAnswer !== null} onCancel={() => answerMvDownload(false)}
+        onConfirm={() => answerMvDownload(true)} />
 
       <AppSettingsModal
         onReturnToTitle={returnToTitle ? handleReturnToTitle : undefined}
