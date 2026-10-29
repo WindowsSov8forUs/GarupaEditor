@@ -21,7 +21,6 @@ import { OriginalPageSwitch } from "../OriginalPageSwitch";
 import { LiveSelectionPage } from "../LiveSelectionPage";
 import { MusicSelectionPage } from "../MusicSelectionPage";
 import { musicPlaySelection, type MusicPlaySelection } from "../musicSelectionData";
-import { originalLoading } from "../originalLoadingState";
 import { DownloadProgressModal } from "../DownloadProgressModal";
 import { OverlayDialogModal } from "../OverlayDialogModal";
 import { SkinSettingsModal } from "../SkinSettingsModal";
@@ -277,16 +276,15 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     const key = `${selection.source}:${selection.id}:${selection.officialDifficulty ?? ""}`;
     const withMv = mode.sessionMode === "live" && playbackMvMode && selection.hasMv;
     if (loadedPlay.current?.key !== key || (withMv && !loadedPlay.current.withMv)) {
-      const loading = originalLoading.hold("network", {});
-      try {
-        await vm.beginPlaySession();
-        const progress = { progress: loading.progress };
-        const loaded = selection.source === "official"
-          ? await vm.loadOfficialChart({ id: selection.id, difficulty: selection.officialDifficulty!, preserveForPlay: true, includeMv: withMv, ...progress })
-          : await vm.loadChartForPlay(selection.source, selection.id, progress);
-        if (!loaded) return;
-        loadedPlay.current = { key, withMv };
-      } finally { loading.release(); }
+      await vm.beginPlaySession();
+      // The transfers open DownloadOverlay's full-screen comic Loading with total progress
+      // (ScreenLayerLoading, layer 13), not a NetworkIndicator; no separate indicator here.
+      const progress = { progress: () => {} };
+      const loaded = selection.source === "official"
+        ? await vm.loadOfficialChart({ id: selection.id, difficulty: selection.officialDifficulty!, preserveForPlay: true, includeMv: withMv, ...progress })
+        : await vm.loadChartForPlay(selection.source, selection.id, progress);
+      if (!loaded) return;
+      loadedPlay.current = { key, withMv };
     }
     await new Promise<void>(done => { pendingLaunch.current = { mode, done }; setLaunchRevision(value => value + 1); });
   };
