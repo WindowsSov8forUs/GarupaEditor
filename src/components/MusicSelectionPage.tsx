@@ -399,7 +399,8 @@ export function MusicSelectionPage({ source, onSourceChange: setSource, onLoad, 
       warning.current(`官方曲库资源准备失败：${officialLibrary.error ? (officialLibrary.metadata ? "启动更新失败，使用已保存的数据。" : "启动更新失败，尚无可用缓存。") : ""}${catalogFailures ? `${catalogFailures} 份资源清单未更新，已保留其他成功结果及已有记录。` : ""}${officialLibrary.mediaFailures.length ? `${officialLibrary.mediaFailures.length} 项封面／试听资源未准备完成（${officialLibrary.mediaFailures.join("、")}）。` : ""}下次启动会重新检查资源站并尝试补齐。`);
   }, [source, officialLibrary]);
   const officialEntries = useMemo(() => selectOfficialMusic(officialLibrary, officialFilter), [officialLibrary, officialFilter]);
-  const [previewSlot, setPreviewSlot] = useState<string | null>(null);
+  // undefined until the carousel decides a song; null when the decided song has no sample.
+  const [previewSlot, setPreviewSlot] = useState<string | null | undefined>(undefined);
   const [sourceChoiceOpen, setSourceChoiceOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -453,10 +454,12 @@ export function MusicSelectionPage({ source, onSourceChange: setSource, onLoad, 
   const [searchError, setSearchError] = useState("");
   useEffect(() => { setSearchError(!pageVisible || search.loading ? "" : search.error); }, [source, search.loading, search.error, pageVisible]);
   const [busy, setBusy] = useState(false);
-  const requestedPreview = pageVisible && source === "official" && entries.length ? previewSlot : null;
+  // Only decisions change the cue (onDecideSelectMusic). Mounting or hiding the page is not one,
+  // and re-deciding the playing song keeps it (LoadSampleMusic skips an already playing BgmId).
+  const decidedPreview = source !== "official" || !entries.length ? null : previewSlot;
   const reportPreview = useRef(onPreview); reportPreview.current = onPreview;
   // Unmounting for live preparation must not clear the cue (RemoveAllSoundBundle keeps the current one).
-  useEffect(() => { reportPreview.current(requestedPreview, busy); }, [requestedPreview, busy]);
+  useEffect(() => { if (decidedPreview !== undefined) reportPreview.current(decidedPreview, busy); }, [decidedPreview, busy]);
   const running = useRef(false), active = useRef(true);
   const releaseLoad = useRef<(() => void) | null>(null);
   useEffect(() => { active.current = true; return () => {
