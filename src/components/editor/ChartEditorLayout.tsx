@@ -14,6 +14,7 @@ import { ImportJsonModal } from "../ImportJsonModal";
 import { SongInformationPage } from "../SongInformationPage";
 import { SONG_INFORMATION_CONTENT_BOUNDS } from "../OriginalSongDetailParts";
 import { LivePreparationPage } from "../LivePreparationPage";
+import { downloadActivity } from "../../services/downloadActivity";
 import songDetailSource from "../../data/originalSongDetailProfile.json";
 import { songHasSpecialNotes } from "../songNoteStatistics";
 import { SIMULATOR_PRE_ADAPTATION_DEFAULTS, type SimulatorModeSelection } from "../../app/simulator/preAdaptationContract";
@@ -272,21 +273,25 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   }, [launchRevision]);
   const startLive = async (mode: SimulatorModeSelection) => {
     const selection = playSelection;
-    if (selection === null) return openSimulatorWindow(mode);
-    const key = `${selection.source}:${selection.id}:${selection.officialDifficulty ?? ""}`;
-    const withMv = mode.sessionMode === "live" && playbackMvMode && selection.hasMv;
-    if (loadedPlay.current?.key !== key || (withMv && !loadedPlay.current.withMv)) {
-      await vm.beginPlaySession();
-      // The transfers open DownloadOverlay's full-screen comic Loading with total progress
-      // (ScreenLayerLoading, layer 13), not a NetworkIndicator; no separate indicator here.
-      const progress = { progress: () => {} };
-      const loaded = selection.source === "official"
-        ? await vm.loadOfficialChart({ id: selection.id, difficulty: selection.officialDifficulty!, preserveForPlay: true, includeMv: withMv, ...progress })
-        : await vm.loadChartForPlay(selection.source, selection.id, progress);
-      if (!loaded) return;
-      loadedPlay.current = { key, withMv };
-    }
-    await new Promise<void>(done => { pendingLaunch.current = { mode, done }; setLaunchRevision(value => value + 1); });
+    const key = selection === null ? null : `${selection.source}:${selection.id}:${selection.officialDifficulty ?? ""}`;
+    const withMv = selection !== null && mode.sessionMode === "live" && playbackMvMode && selection.hasMv;
+    const needsMv = withMv && !(loadedPlay.current?.key === key && loadedPlay.current.withMv);
+    // ShowLoadingScreen (layer 13) is held for every start, downloaded or not, until the
+    // gameplay surface is presented; transfers add the download gauge.
+    const releaseLoading = downloadActivity.holdScreen();
+    try {
+      if (selection === null) return await openSimulatorWindow(mode);
+      if (loadedPlay.current?.key !== key || needsMv) {
+        await vm.beginPlaySession();
+        const progress = { progress: () => {} };
+        const loaded = selection.source === "official"
+          ? await vm.loadOfficialChart({ id: selection.id, difficulty: selection.officialDifficulty!, preserveForPlay: true, includeMv: withMv, ...progress })
+          : await vm.loadChartForPlay(selection.source, selection.id, progress);
+        if (!loaded) return;
+        loadedPlay.current = { key: key!, withMv };
+      }
+      await new Promise<void>(done => { pendingLaunch.current = { mode, done }; setLaunchRevision(value => value + 1); });
+    } finally { releaseLoading(); }
   };
   useStartupReadiness("home-page", backgroundPage === "entrance");
   const [preparationSettingsOpen, setPreparationSettingsOpen] = useState(false);

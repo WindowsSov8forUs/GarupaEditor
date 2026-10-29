@@ -22,6 +22,12 @@ export const downloadActivity = {
     preparations.add(preparation); publish();
     return () => { if (preparations.delete(preparation)) publish(); };
   },
+  /** ScreenLayerLoading held without a transfer: live start shows it even when nothing is downloaded. */
+  holdScreen() {
+    const preparation = { downloading: true };
+    preparations.add(preparation); publish();
+    return () => { if (preparations.delete(preparation)) publish(); };
+  },
   subscribe(listener: () => void) { listeners.add(listener); return () => { listeners.delete(listener); }; },
   getSnapshot: () => snapshot,
   begin() {
