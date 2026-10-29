@@ -3,6 +3,7 @@ import {
   Graphics,
   Sprite,
   Texture,
+  TilingSprite,
   VideoSource,
 } from "pixi.js";
 import type {
@@ -26,6 +27,10 @@ import type { OriginalMovieLayout } from "../../scene/originalSurfaceLayout";
 export const PIXI_MV_LIVE_STAGE_LABEL = "GarupaSimulatorMvLive";
 export const PIXI_MV_LIVE_SPRITE_LABEL = "GarupaSimulatorMvLiveVideo";
 export const PIXI_MV_LIVE_DARK_COVER_LABEL = "GarupaSimulatorMvLiveDarkCover";
+export const PIXI_MV_LIVE_BACKGROUND_LABEL = "GarupaSimulatorMvLiveBackground";
+// InGameMovie prefab widgets (authored units, centred siblings of the movie-only vertical fit).
+const ORIGINAL_MV_BACKGROUND_SIZE = [1400, 1010] as const;
+const ORIGINAL_MV_DARK_COVER_SIZE = [1334, 1002] as const;
 
 export class PixiMvLiveBackend implements SimulatorMovieBackend {
   readonly id = "pixi-mv-live";
@@ -40,6 +45,8 @@ export class PixiMvLiveBackend implements SimulatorMovieBackend {
   private texture: Texture | null = null;
   private sprite: Sprite | null = null;
   private darkCover: Graphics | null = null;
+  private background: TilingSprite | null = null;
+  private backgroundVisible = false;
   private visible = false;
   private darkCoverVisible = false;
   private darkCoverAlpha = Math.fround(0);
@@ -52,6 +59,8 @@ export class PixiMvLiveBackend implements SimulatorMovieBackend {
   constructor(
     outputSuppressed: boolean,
     private readonly movieLayout: OriginalMovieLayout,
+    /** Original `bg_movie_black`, tiled under the movie by the Background UITexture. */
+    private readonly backgroundTexture: Texture,
   ) {
     this.suppressed = outputSuppressed;
     this.stage.sortableChildren = false;
@@ -70,7 +79,9 @@ export class PixiMvLiveBackend implements SimulatorMovieBackend {
       !(resource.bytes instanceof Uint8Array) ||
       !Number.isFinite(this.movieLayout.x) || !Number.isFinite(this.movieLayout.y) ||
       !Number.isFinite(this.movieLayout.width) || this.movieLayout.width <= 0 ||
-      !Number.isFinite(this.movieLayout.height) || this.movieLayout.height <= 0) {
+      !Number.isFinite(this.movieLayout.height) || this.movieLayout.height <= 0 ||
+      !Number.isFinite(this.movieLayout.unitPixels) || this.movieLayout.unitPixels <= 0 ||
+      !(this.backgroundTexture instanceof Texture) || this.backgroundTexture.destroyed) {
       return this.reject("movie.pixi.invalid-prepare", "Pixi MV preparation requires one fresh session, one exact simulator-derived browser resource and one original serialized movie-widget layout.");
     }
     const profile = validateMovieResourceProfile(resource.profile);
@@ -106,6 +117,7 @@ export class PixiMvLiveBackend implements SimulatorMovieBackend {
     let texture: Texture | null = null;
     let sprite: Sprite | null = null;
     let darkCover: Graphics | null = null;
+    let background: TilingSprite | null = null;
     try {
       source = new VideoSource({
         resource: video,
@@ -128,15 +140,28 @@ export class PixiMvLiveBackend implements SimulatorMovieBackend {
       sprite.eventMode = "none";
       sprite.visible = false;
       sprite.alpha = 1;
+      const unit = this.movieLayout.unitPixels;
+      const centerX = this.movieLayout.x + this.movieLayout.width / 2;
+      const centerY = this.movieLayout.y + this.movieLayout.height / 2;
+      const [backgroundWidth, backgroundHeight] = ORIGINAL_MV_BACKGROUND_SIZE;
+      background = new TilingSprite({ texture: this.backgroundTexture, label: PIXI_MV_LIVE_BACKGROUND_LABEL,
+        width: backgroundWidth * unit, height: backgroundHeight * unit });
+      background.position.set(centerX - backgroundWidth * unit / 2, centerY - backgroundHeight * unit / 2);
+      background.tileScale.set(unit, unit);
+      // NGUI tiles from the widget's bottom-left corner.
+      background.tilePosition.set(0, (backgroundHeight % this.backgroundTexture.height) * unit);
+      background.eventMode = "none";
+      const [coverWidth, coverHeight] = ORIGINAL_MV_DARK_COVER_SIZE;
       darkCover = new Graphics({ label: PIXI_MV_LIVE_DARK_COVER_LABEL })
-        .rect(this.movieLayout.x, this.movieLayout.y, this.movieLayout.width, this.movieLayout.height)
+        .rect(centerX - coverWidth * unit / 2, centerY - coverHeight * unit / 2, coverWidth * unit, coverHeight * unit)
         .fill({ color: 0x000000 });
       darkCover.eventMode = "none";
       darkCover.visible = false;
       darkCover.alpha = 0;
-      this.stage.addChild(sprite, darkCover);
+      this.stage.addChild(background, sprite, darkCover);
     } catch {
       try { darkCover?.destroy({ children: false }); } catch { /* prepare failure stays primary */ }
+      try { background?.destroy({ children: false }); } catch { /* prepare failure stays primary */ }
       try { sprite?.destroy({ children: false }); } catch { /* prepare failure stays primary */ }
       try { texture?.destroy(false); } catch { /* prepare failure stays primary */ }
       try { source?.destroy(); } catch { /* prepare failure stays primary */ }
@@ -153,6 +178,9 @@ export class PixiMvLiveBackend implements SimulatorMovieBackend {
     this.texture = texture;
     this.sprite = sprite;
     this.darkCover = darkCover;
+    this.background = background;
+    this.backgroundVisible = true;
+    this.refreshStageVisibility();
     this.installListeners(video);
     this.state = "ready";
     return movieAccepted(undefined);
@@ -325,9 +353,12 @@ export class PixiMvLiveBackend implements SimulatorMovieBackend {
       this.stage.removeFromParent();
       this.darkCover?.removeFromParent();
       this.sprite?.removeFromParent();
+      this.background?.removeFromParent();
     });
     capture("movie.pixi.dispose-dark-cover-threw", "MV dark-cover destroy threw during cleanup; remaining owners were still released.", () => this.darkCover?.destroy({ children: false }));
     capture("movie.pixi.dispose-sprite-threw", "MV sprite destroy threw during cleanup; remaining owners were still released.", () => this.sprite?.destroy({ children: false }));
+    // The background texture belongs to the renderer's leased common resources; only the sprite is owned here.
+    capture("movie.pixi.dispose-background-threw", "MV background destroy threw during cleanup; remaining owners were still released.", () => this.background?.destroy({ children: false }));
     capture("movie.pixi.dispose-texture-threw", "MV texture destroy threw during cleanup; remaining owners were still released.", () => this.texture?.destroy(false));
     capture("movie.pixi.dispose-source-threw", "MV VideoSource destroy threw during cleanup; remaining owners were still released.", () => this.source?.destroy());
     capture("movie.pixi.dispose-resource-threw", "MV Blob/video release threw during cleanup after Pixi owners were released.", () => this.prepared?.release());
@@ -336,6 +367,8 @@ export class PixiMvLiveBackend implements SimulatorMovieBackend {
     this.texture = null;
     this.sprite = null;
     this.darkCover = null;
+    this.background = null;
+    this.backgroundVisible = false;
     this.prepared = null;
     this.profile = null;
     this.sessionId = null;
@@ -411,7 +444,7 @@ export class PixiMvLiveBackend implements SimulatorMovieBackend {
     this.refreshStageVisibility();
   }
   private refreshStageVisibility(): void {
-    this.stage.visible = this.visible || this.darkCoverVisible;
+    this.stage.visible = this.backgroundVisible || this.visible || this.darkCoverVisible;
   }
   private terminal<T>(): MovieOperationResult<T> | null {
     if (this.state === "disposed") return this.disposed();
@@ -424,6 +457,7 @@ export class PixiMvLiveBackend implements SimulatorMovieBackend {
       this.state = "faulted";
       this.darkCoverVisible = false;
       if (this.darkCover !== null) this.darkCover.visible = false;
+      this.backgroundVisible = false;
       this.applyVisibility(false);
     }
     return movieRejected("movie-backend-fault", this.fault.capability, this.fault.boundary);

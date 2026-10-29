@@ -447,9 +447,18 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
           ...await releaseResourceLeaseCleanup(resourceLease.value),
         ]));
       }
-      const movie = mvResource.value === null
+      const movieBackground = mvResource.value === null ? null : renderer.getMovieBackgroundTexture();
+      if (movieBackground !== null && movieBackground.status !== "ok") {
+        startupScene.dispose();
+        return rejectedWithCleanup(fromIntegrity(movieBackground), Object.freeze([
+          ...disposeAssembly(assembly.value, null),
+          ...releasePendingMovie(),
+          ...await releaseResourceLeaseCleanup(resourceLease.value),
+        ]));
+      }
+      const movie = movieBackground === null
         ? null
-        : new PixiMvLiveBackend(false, originalLayout.value.movie);
+        : new PixiMvLiveBackend(false, originalLayout.value.movie, movieBackground.value);
       if (movie !== null) {
         const prepared = await movie.prepare(sessionId, mvResource.value!);
         if (prepared.status !== "accepted") {

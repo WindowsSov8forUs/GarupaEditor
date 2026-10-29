@@ -507,6 +507,11 @@
       "sha256": "FE40627CE6D725EC64C81CC75D3FC88BD4F2C507F56B49B579172065C1B21FCD"
     },
     {
+      "path": "game/prefabs/bms/movie/movie-background.png",
+      "byteLength": 3445,
+      "sha256": "CCA98EEF0CD59CB4FD1E23F54DA169D6B4A698A548625E28BC7C5EA32B472049"
+    },
+    {
       "path": "game/prefabs/bms/pause/countdown-1.png",
       "byteLength": 2024,
       "sha256": "6622E8DFE2FDDE79A1983875185B7E160BA7BDE8347FF2EFB16756774B9BF752"

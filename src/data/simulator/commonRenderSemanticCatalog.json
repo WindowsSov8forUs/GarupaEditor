@@ -1339,6 +1339,27 @@
           "materialRole": "hud",
           "animationRole": "none"
         }
+      },
+      {
+        "file": "movie-background.png",
+        "profile": {
+          "logicalAssetId": "movie/background",
+          "role": "startup-ui",
+          "mime": "image/png",
+          "width": 288,
+          "height": 144,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "repeat",
+            "wrapModeV": "repeat",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
       }
     ],
     "gameClear": [
