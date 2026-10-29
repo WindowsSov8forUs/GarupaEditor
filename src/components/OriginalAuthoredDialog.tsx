@@ -35,7 +35,9 @@ export function OriginalAuthoredDialog({ open, model, bindings, onClose, onClose
     return () => observer.disconnect();
   }, [open, prepared, transition.mounted, transition.transitionRef]);
   useOriginalDialogInput(transition.transitionRef, transition.mounted, onClose, !transition.shown || busy);
-  const windowNode = model.nodeAt("Window");
+  // The dialog window is the root's "Window"; content views may nest their own (DownloadSizeView/Window).
+  const windowNode = [...model.nodes.values()].find(node => node.name === "Window" && node.parent !== null &&
+    model.nodes.get(node.parent)?.parent === null) ?? model.nodeAt("Window");
   const frame = frameComponentId === undefined ? model.componentAt(windowNode.id, "UISprite")!
     : model.components.get(frameComponentId)!;
   const title = [...model.components.values()].find(item => item.kind === "UILabel" && model.nodes.get(item.node)?.name === "Title");
