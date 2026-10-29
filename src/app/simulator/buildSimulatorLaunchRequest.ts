@@ -27,6 +27,7 @@ export async function buildSimulatorLaunchRequest(
     ? Object.freeze({
         bytes: await readSingle(mediaLease, SIMULATOR_MEDIA_SLOTS.mv),
         musicStartDelayMilliseconds: descriptor.presentation.mvMusicStartDelayMilliseconds,
+        resourceLeadInMilliseconds: descriptor.presentation.mvResourceLeadInMilliseconds,
       })
     : null;
   return Object.freeze({

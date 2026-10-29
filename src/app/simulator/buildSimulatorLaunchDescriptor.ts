@@ -6,6 +6,7 @@ import {
   createResourceRef,
   type ResourceConsumerLease,
   type ResourceRef,
+  type WorkspaceMediaDescriptor,
 } from "../../resources/contracts";
 import { buildSimulatorGarupaChart } from "./chartAdapter";
 import { buildSimulatorPreAdaptedConfig, type SimulatorModeSelection } from "./preAdaptationContract";
@@ -100,6 +101,7 @@ export async function buildSimulatorLaunchDescriptor(
   if (input.mvEnabled && media.mv === null) {
     throw new Error("Simulator MV mode requires one explicit video resource.");
   }
+  const mvResourceLeadIn = input.mvEnabled ? await bestdoriMovieLeadInMilliseconds(input.manager, media.mv!, mvDelay) : 0;
   const bindings: Record<string, ResourceRef> = {
     [SIMULATOR_MEDIA_SLOTS.bgm]: media.bgm,
     [SIMULATOR_MEDIA_SLOTS.jacket]: cover,
@@ -133,6 +135,7 @@ export async function buildSimulatorLaunchDescriptor(
       difficulty: Object.freeze({ type: metadata.difficulty, level }),
       mvEnabled: input.mvEnabled,
       mvMusicStartDelayMilliseconds: mvDelay,
+      mvResourceLeadInMilliseconds: mvResourceLeadIn,
     }),
     config: encodeSimulatorLaunchTransportConfig(config),
     requestedWindow: Object.freeze({ width, height }),
@@ -174,4 +177,24 @@ function strictInt32(value: unknown, label: string): number {
     throw new Error(`Simulator ${label} must be a signed Int32 without clamping.`);
   }
   return numeric;
+}
+
+/**
+ * Bestdori's official MP4 conversion is aligned to the BGM file: for a negative
+ * musicStartDelayMilliseconds it prepends |delay| of black and silence that the
+ * original movie does not have (measured against the MP4's own audio track).
+ * The simulator keeps the original delay timing and starts the file after this lead-in.
+ */
+async function bestdoriMovieLeadInMilliseconds(
+  manager: ApplicationResourceManager,
+  ref: ResourceRef,
+  musicStartDelayMilliseconds: number,
+): Promise<number> {
+  if (musicStartDelayMilliseconds >= 0) return 0;
+  const resolved = await manager.ensureAvailable(ref);
+  if (resolved.status === "rejected") throw new Error(`${resolved.failure.capability}: ${resolved.failure.boundary}`);
+  if (resolved.value.origin !== "workspace") return 0;
+  const { provenance } = resolved.value as WorkspaceMediaDescriptor;
+  const official = provenance.kind === "network" && /^bestdori\/[a-z]+\/movie\/mv\//.test(provenance.sourceRef.id);
+  return official ? -musicStartDelayMilliseconds : 0;
 }

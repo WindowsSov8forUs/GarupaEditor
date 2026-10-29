@@ -16,6 +16,8 @@ export type SimulatorPresentationPng = Uint8Array;
 export interface SimulatorPresentationMvPackage {
   readonly bytes: Uint8Array;
   readonly musicStartDelayMilliseconds: number;
+  /** Leading file time the original movie does not have; Play starts the file there. */
+  readonly resourceLeadInMilliseconds: number;
 }
 
 export interface SimulatorPresentationPackage {

@@ -132,6 +132,8 @@ export class PixiMvLiveBackend implements SimulatorMovieBackend {
         alphaMode: "no-premultiply-alpha",
       });
       await source.load();
+      // Skip a converted file's lead-in so Play starts at the original movie's first frame.
+      if (profile.value.resourceLeadInMilliseconds > 0) await seekBeforePlay(video, profile.value.resourceLeadInMilliseconds / 1000);
       texture = new Texture({ source, label: `${profile.value.logicalId}:texture` });
       sprite = new Sprite({ texture, label: PIXI_MV_LIVE_SPRITE_LABEL });
       sprite.position.set(this.movieLayout.x, this.movieLayout.y);
@@ -471,4 +473,18 @@ export class PixiMvLiveBackend implements SimulatorMovieBackend {
   private reject(capability: string, boundary: string): MovieOperationResult<never> {
     return movieRejected("integrity-failure", capability, boundary);
   }
+}
+
+function seekBeforePlay(video: HTMLVideoElement, seconds: number): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const settle = (error: boolean) => {
+      video.removeEventListener("seeked", seeked);
+      video.removeEventListener("error", failed);
+      if (error) reject(new Error("MV lead-in seek failed")); else resolve();
+    };
+    const seeked = () => settle(false), failed = () => settle(true);
+    video.addEventListener("seeked", seeked);
+    video.addEventListener("error", failed);
+    video.currentTime = seconds;
+  });
 }

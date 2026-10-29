@@ -48,6 +48,8 @@ export interface SimulatorLaunchTransportDescriptor {
     };
     readonly mvEnabled: boolean;
     readonly mvMusicStartDelayMilliseconds: number;
+    /** File time before the original movie's first frame (Bestdori lead-in); 0 for other sources. */
+    readonly mvResourceLeadInMilliseconds: number;
   };
   readonly config: SimulatorLaunchTransportConfig;
   readonly requestedWindow: {
