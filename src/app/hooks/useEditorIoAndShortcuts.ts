@@ -1317,7 +1317,8 @@ export function useEditorIoAndShortcuts(params: any) {
     startDownloadProgress(importOperationId, "正在获取官方谱面数据…", requested ? { progress: requested.progress } : "panel");
     try {
       pushImportProgress(15, "正在请求官方谱面与歌曲信息…");
-      const snapshot = requested ? getOfficialMusicLibrary() : null;
+      // Only the official master carries MV seq; use it for manual imports too when startup loaded it.
+      const snapshot = requested ? getOfficialMusicLibrary() : (() => { try { return getOfficialMusicLibrary(); } catch { return null; } })();
       const song = snapshot?.songs.find(song => song.id === chartId);
       if (requested && (!song || !song.available.includes(difficulty) || !snapshot?.metadata)) throw new Error("所选官方谱面不在本次启动曲库内");
       const payload = await fetchBestdoriOfficialChartImportPayload(chartId, OFFICIAL_CHART_DIFFICULTY_TO_API[difficulty],
@@ -1395,7 +1396,7 @@ export function useEditorIoAndShortcuts(params: any) {
         offsetMs: Number.isFinite(Number(payload.metadata.offsetMs))
           ? Math.round(Number(payload.metadata.offsetMs))
           : 0,
-        mvOffsetMs: 0,
+        mvOffsetMs: payload.metadata.mvOffsetMs,
       }));
       const label = `已导入官方谱面 ${chartId}/${difficulty} 并同步歌曲信息`;
       applyChartImportStatus(label, summary);

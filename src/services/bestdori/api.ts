@@ -130,6 +130,8 @@ export interface BestdoriSongBpm {
 
 export interface BestdoriSongMusicVideo {
   assetBundleName: string;
+  /** MasterMusicVideo seq; present in official master rows, absent from Bestdori song info. */
+  seq?: number;
   musicStartDelayMilliseconds?: number;
   thumbAssetBundleName?: string;
   title?: BestdoriPerServerValue<string>;
@@ -711,14 +713,20 @@ function resolveBestdoriSongDifficultyLevel(
   return "1";
 }
 
-function resolveBestdoriSongMvOffsetMs(songInfo: BestdoriSongInfo): number {
+// Solo Live uses the persisted MV seq, seq 1 when none is stored; the editor stores none.
+const ORIGINAL_DEFAULT_MV_SEQ = 1;
+function resolveOriginalMusicVideoKey(songInfo: BestdoriSongInfo): string | null {
   const videos = resolveBestdoriSongMusicVideos(songInfo);
-  const keys = Object.keys(videos).sort();
-  if (keys.length === 0) {
+  return Object.keys(videos).find(key => videos[key]?.seq === ORIGINAL_DEFAULT_MV_SEQ) ?? null;
+}
+
+function resolveBestdoriSongMvOffsetMs(songInfo: BestdoriSongInfo): number {
+  const key = resolveOriginalMusicVideoKey(songInfo);
+  // The original MusicVideoModel reads zero delay when no master row matches the seq.
+  if (key === null) {
     return 0;
   }
-  const latestVideo = videos[keys[keys.length - 1]];
-  const rawOffset = Number(latestVideo?.musicStartDelayMilliseconds);
+  const rawOffset = Number(resolveBestdoriSongMusicVideos(songInfo)[key]?.musicStartDelayMilliseconds);
   if (!Number.isFinite(rawOffset)) {
     return 0;
   }
@@ -1380,7 +1388,10 @@ export async function fetchBestdoriSongResourceUrls(
   const jacketUrl = fromServer(buildBestdoriSongJacketUrl(songId, songInfo));
   const jacketLogicalPath = buildBestdoriSongJacketLogicalPath(songId, songInfo);
   const movies = buildBestdoriSongMovieResources(songInfo).map(movie => ({ ...movie, url: fromServer(movie.url) }));
-  const selectedMovie = movies.length === 0 ? null : movies[movies.length - 1]!;
+  const selectedKey = resolveOriginalMusicVideoKey(songInfo);
+  const selectedMovie = selectedKey === null ? null
+    : buildBestdoriSongMovieResources({ ...songInfo, musicVideos: { [selectedKey]: resolveBestdoriSongMusicVideos(songInfo)[selectedKey]! }, musicVideo: undefined })
+      .map(movie => ({ ...movie, url: fromServer(movie.url) }))[0] ?? null;
   return {
     server,
     audioUrl,
