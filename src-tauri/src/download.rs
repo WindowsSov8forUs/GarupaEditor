@@ -96,11 +96,21 @@ pub async fn get<W: Write>(
     destination: impl FnMut() -> std::io::Result<W>,
     progress: impl FnMut(u64, Option<u64>),
 ) -> Result<W, DownloadError> {
-    receive(client, url, cookie, destination, progress, false).await
+    receive(client, url, cookie, destination, progress, false, true).await
+}
+
+/// A background transfer: it does not open the application's download screen.
+pub async fn get_untracked<W: Write>(
+    client: &reqwest::Client,
+    url: &str,
+    cookie: Option<&str>,
+    destination: impl FnMut() -> std::io::Result<W>,
+) -> Result<W, DownloadError> {
+    receive(client, url, cookie, destination, |_, _| {}, false, false).await
 }
 
 pub async fn probe(client: &reqwest::Client, url: &str, cookie: Option<&str>) -> Result<bool, String> {
-    match receive(client, url, cookie, || Ok(std::io::sink()), |_, _| {}, true).await {
+    match receive(client, url, cookie, || Ok(std::io::sink()), |_, _| {}, true, true).await {
         Ok(_) => Ok(true),
         Err(error) if error.status.is_some() => Ok(false),
         Err(error) => Err(error.message),
@@ -114,10 +124,11 @@ async fn receive<W: Write>(
     mut destination: impl FnMut() -> std::io::Result<W>,
     mut progress: impl FnMut(u64, Option<u64>),
     headers_only: bool,
+    track: bool,
 ) -> Result<W, DownloadError> {
-    let mut activity = ActiveTransfer::begin();
+    let mut activity = track.then(ActiveTransfer::begin);
     for attempt in 1..=ATTEMPTS {
-        activity.progress(0, None);
+        if let Some(activity) = activity.as_mut() { activity.progress(0, None); }
         let result = async {
             let mut response = super::with_optional_cookie_header(client.get(url), cookie)
                 .send().await.map_err(DownloadError::network)?;
@@ -137,12 +148,12 @@ async fn receive<W: Write>(
             let total = response.content_length();
             let mut received = 0;
             progress(0, total);
-            activity.progress(0, total);
+            if let Some(activity) = activity.as_mut() { activity.progress(0, total); }
             while let Some(chunk) = response.chunk().await.map_err(DownloadError::network)? {
                 output.write_all(&chunk).map_err(DownloadError::local)?;
                 received += chunk.len() as u64;
                 progress(received, total);
-                activity.progress(received, total);
+                if let Some(activity) = activity.as_mut() { activity.progress(received, total); }
             }
             output.flush().map_err(DownloadError::local)?;
             Ok(output)
