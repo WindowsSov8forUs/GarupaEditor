@@ -18,7 +18,7 @@ import { useUiViewport } from "./useUiViewport";
 import { useMusicJacket } from "./useMusicJacket";
 import { MusicSelectionCarousel } from "./musicSelectionCarousel";
 import { musicSelectionLayout, musicCarouselRows, musicSelectionScale } from "./musicSelectionLayout";
-import { loadMusicSelectionCharter, type MusicSelectionEntry } from "./musicSelectionData";
+import { loadMusicSelectionCharter, musicPreviewRequest, type MusicPreviewRequest, type MusicSelectionEntry } from "./musicSelectionData";
 import profile from "../data/originalMusicSelectionProfile.json";
 import detail from "../data/originalSongDetailProfile.json";
 import "./MusicSelectionPage.css";
@@ -405,7 +405,7 @@ export function MusicSelectionPage({ source, onSourceChange: setSource, onLoad, 
   source: MusicSource; onSourceChange(source: MusicSource): void;
   onResourceWarning(message: string): void;
   /** The sample cue is owned above this page so live preparation keeps it playing. */
-  onPreview(slot: string | null, paused: boolean): void;
+  onPreview(request: MusicPreviewRequest | null, paused: boolean): void;
   onLoad(source: "bestdori" | "test" | "official", id: string, progress: (ratio: number) => void, destination: SelectionDestination, difficulty?: OfficialDifficulty): Promise<boolean>;
   onReady(destination: SelectionDestination): void;
   /** Original next step: hand the selection to live preparation without loading anything. */
@@ -438,8 +438,8 @@ export function MusicSelectionPage({ source, onSourceChange: setSource, onLoad, 
       warning.current(`官方曲库资源准备失败：${officialLibrary.error ? (officialLibrary.metadata ? "启动更新失败，使用已保存的数据。" : "启动更新失败，尚无可用缓存。") : ""}${catalogFailures ? `${catalogFailures} 份资源清单未更新，已保留其他成功结果及已有记录。` : ""}${officialLibrary.mediaFailures.length ? `${officialLibrary.mediaFailures.length} 项封面／试听资源未准备完成（${officialLibrary.mediaFailures.join("、")}）。` : ""}下次启动会重新检查资源站并尝试补齐。`);
   }, [source, officialLibrary]);
   const officialEntries = useMemo(() => selectOfficialMusic(officialLibrary, officialFilter), [officialLibrary, officialFilter]);
-  // undefined until the carousel decides a song; null when the decided song has no sample.
-  const [previewSlot, setPreviewSlot] = useState<string | null | undefined>(undefined);
+  // undefined until the carousel decides a song; null when the decided song has no preview.
+  const [preview, setPreview] = useState<MusicPreviewRequest | null | undefined>(undefined);
   const [sourceChoiceOpen, setSourceChoiceOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -499,7 +499,7 @@ export function MusicSelectionPage({ source, onSourceChange: setSource, onLoad, 
   const [busy, setBusy] = useState(false);
   // Only decisions change the cue (onDecideSelectMusic). Mounting or hiding the page is not one,
   // and re-deciding the playing song keeps it (LoadSampleMusic skips an already playing BgmId).
-  const decidedPreview = source !== "official" || !entries.length ? null : previewSlot;
+  const decidedPreview = !entries.length ? null : preview;
   const reportPreview = useRef(onPreview); reportPreview.current = onPreview;
   // Unmounting for live preparation must not clear the cue (RemoveAllSoundBundle keeps the current one).
   useEffect(() => { if (decidedPreview !== undefined) reportPreview.current(decidedPreview, busy); }, [decidedPreview, busy]);
@@ -539,7 +539,7 @@ export function MusicSelectionPage({ source, onSourceChange: setSource, onLoad, 
           bindings={{ buttons: { 386: { action: () => { setSearchOpen(false); setFilterOpen(false); setSourceChoiceOpen(true); }, disabled: busy } } }} />
       </div>
       {source === "official" && <OfficialMusicFolders selected={officialFilter.category} onChange={category => setOfficialFilter(value => ({ ...value, category }))} busy={busy || filterOpen || searchOpen || sourceChoiceOpen} />}
-      {entries.length > 0 && <MusicCarousel key={`${source}:${JSON.stringify(source === "official" ? officialFilter : source === "bestdori" ? filter : ayachanFilter)}`} entries={entries} jacket={jacket} initialId={initialId} onSelected={entry => { setJacketEntry(entry); setPreviewSlot(entry.source === "official" ? entry.officialSong.previewSlot : null); selectionMemory.current[memoryKey] = { id: entry.id, order: entries.map(item => item.id) }; }} onDifficulty={difficulty => setOfficialFilter(value => ({ ...value, difficulty }))} busy={busy || filterOpen || searchOpen || sourceChoiceOpen} onNextPage={nextPage} onConfirm={(entry, destination) => void confirm(entry, destination)} />}
+      {entries.length > 0 && <MusicCarousel key={`${source}:${JSON.stringify(source === "official" ? officialFilter : source === "bestdori" ? filter : ayachanFilter)}`} entries={entries} jacket={jacket} initialId={initialId} onSelected={entry => { setJacketEntry(entry); setPreview(musicPreviewRequest(entry)); selectionMemory.current[memoryKey] = { id: entry.id, order: entries.map(item => item.id) }; }} onDifficulty={difficulty => setOfficialFilter(value => ({ ...value, difficulty }))} busy={busy || filterOpen || searchOpen || sourceChoiceOpen} onNextPage={nextPage} onConfirm={(entry, destination) => void confirm(entry, destination)} />}
       {!search.loading && !search.error && entries.length === 0 &&
         <EmptyMusicSelection official={source === "official"} onNextPage={nextPage} busy={busy || filterOpen || searchOpen || sourceChoiceOpen} />}
     </section>

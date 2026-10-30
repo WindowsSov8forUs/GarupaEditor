@@ -1,25 +1,26 @@
 import { useCallback, useEffect, useRef } from "react";
 import { appLog } from "../logging/applicationLogger";
-import { getOfficialMusicLibrary } from "../services/officialMusicLibrary";
+import type { MusicPreviewRequest } from "./musicSelectionData";
 
-// SampleMusicController: a new chorus cue fades in while the old one fades out once the new
-// resource is ready; startGame stops it with StopBGM(0.5).
+// SampleMusicController: a new cue fades in while the old one fades out once the new resource
+// is ready; startGame stops it with StopBGM(0.5).
 const SAMPLE_SWITCH_FADE_SECONDS = 0.2;
 export const SAMPLE_START_GAME_FADE_SECONDS = 0.5;
 
-interface Voice { audio: HTMLAudioElement; slot: string; frame: number; level: number }
+interface Voice { audio: HTMLAudioElement; key: string; frame: number; level: number }
 
-export interface OfficialMusicPreviewControl {
-  /** Fades the playing cue out and keeps it stopped until the requested slot changes. */
+export interface MusicPreviewControl {
+  /** Fades the playing cue out and keeps it stopped until the requested preview changes. */
   stop(fadeSeconds: number): void;
 }
 
-/** One sample cue owned above song select and live preparation, so moving between them
- * keeps it playing without a restart. */
-export function useOfficialMusicPreview(slot: string | null, volume: number, paused: boolean,
-  onError: (message: string) => void): OfficialMusicPreviewControl {
+/** One preview cue owned above song select and live preparation, so moving between them
+ * keeps it playing without a restart. A superseded load is aborted, including its download. */
+export function useMusicPreview(request: MusicPreviewRequest | null, volume: number, paused: boolean,
+  onError: (message: string) => void): MusicPreviewControl {
   const report = useRef(onError); report.current = onError;
   const reported = useRef(new Set<string>());
+  const latest = useRef(request); latest.current = request;
   const state = useRef<{ cache: Map<string, string>; active: boolean; current: Voice | null; volume: number; halted: string | null } | null>(null);
   const ramp = useCallback((voice: Voice, to: number, seconds: number, done?: () => void) => {
     cancelAnimationFrame(voice.frame);
@@ -49,56 +50,57 @@ export function useOfficialMusicPreview(slot: string | null, volume: number, pau
     runtime.volume = Math.min(1, Math.max(0, volume));
     if (runtime.current) runtime.current.audio.volume = runtime.current.level * runtime.volume;
   }, [volume]);
+  const key = request?.key ?? null;
   useEffect(() => {
     const runtime = state.current!;
-    if (runtime.halted !== null && runtime.halted !== slot) runtime.halted = null;
-    const wanted = !slot || paused || runtime.halted === slot ? null : slot;
+    if (runtime.halted !== null && runtime.halted !== key) runtime.halted = null;
+    const wanted = !key || paused || runtime.halted === key ? null : latest.current;
     if (wanted === null) {
       if (runtime.current) { retire(runtime.current, SAMPLE_SWITCH_FADE_SECONDS); runtime.current = null; }
       return;
     }
     // Same cue across song select and live preparation: keep its phase.
-    if (runtime.current?.slot === wanted) return;
-    let current = true;
+    if (runtime.current?.key === wanted.key) return;
+    const loading = new AbortController();
     const failed = (error: unknown) => {
-      if (!current || (error instanceof DOMException && ["NotAllowedError", "AbortError"].includes(error.name))) return;
-      appLog("warn", "official.preview-failed", { slot: wanted, error });
-      if (!reported.current.has(wanted)) {
-        reported.current.add(wanted);
-        report.current(`官方试听加载失败：${error instanceof Error ? error.message : String(error)}`);
+      if (loading.signal.aborted || (error instanceof DOMException && ["NotAllowedError", "AbortError"].includes(error.name))) return;
+      appLog("warn", "music.preview-failed", { key: wanted.key, error });
+      if (!reported.current.has(wanted.key)) {
+        reported.current.add(wanted.key);
+        report.current(`试听加载失败：${error instanceof Error ? error.message : String(error)}`);
       }
     };
     let pending: Voice | null = null;
-    const retry = () => { if (current && pending) void pending.audio.play().then(() => reported.current.delete(wanted)).catch(failed); };
+    const retry = () => { if (!loading.signal.aborted && pending) void pending.audio.play().then(() => reported.current.delete(wanted.key)).catch(failed); };
     void (async () => {
       try {
-        let url = runtime.cache.get(wanted);
+        let url = runtime.cache.get(wanted.key);
         if (!url) {
-          const lease = getOfficialMusicLibrary().lease;
-          if (!lease) throw new Error("官方试听未在启动时准备完成");
-          const bytes = await lease.readBytes(wanted, "payload");
-          if (!runtime.active) return;
-          // A superseded read must not insert or evict URLs owned by the
-          // current selection, including a second read of the same slot.
-          if (!current) return;
-          url = runtime.cache.get(wanted) ?? URL.createObjectURL(new Blob([Uint8Array.from(bytes)], { type: "audio/mpeg" }));
+          const bytes = await wanted.read(loading.signal);
+          if (!runtime.active || loading.signal.aborted) return;
+          // The decided song has no preview: its decision still stops the previous cue.
+          if (bytes === null) {
+            if (runtime.current) { retire(runtime.current, SAMPLE_SWITCH_FADE_SECONDS); runtime.current = null; }
+            return;
+          }
+          url = runtime.cache.get(wanted.key) ?? URL.createObjectURL(new Blob([Uint8Array.from(bytes)], wanted.mime ? { type: wanted.mime } : {}));
           if (runtime.cache.size >= 6) {
             const oldest = runtime.cache.keys().next().value!;
             URL.revokeObjectURL(runtime.cache.get(oldest)!); runtime.cache.delete(oldest);
           }
-          runtime.cache.set(wanted, url);
+          runtime.cache.set(wanted.key, url);
         }
-        if (!current) return;
+        if (loading.signal.aborted) return;
         const audio = new Audio(url);
         audio.loop = true; audio.volume = 0;
-        const voice: Voice = { audio, slot: wanted, frame: 0, level: 0 };
+        const voice: Voice = { audio, key: wanted.key, frame: 0, level: 0 };
         pending = voice;
         const previous = runtime.current;
         runtime.current = voice;
         // The old cue stays audible until the new resource is ready, then both fade.
         if (previous) retire(previous, SAMPLE_SWITCH_FADE_SECONDS);
         ramp(voice, 1, SAMPLE_SWITCH_FADE_SECONDS);
-        try { await audio.play(); reported.current.delete(wanted); }
+        try { await audio.play(); reported.current.delete(wanted.key); }
         catch (error) {
           if (error instanceof DOMException && error.name === "NotAllowedError") {
             window.addEventListener("pointerdown", retry, { once: true });
@@ -107,11 +109,11 @@ export function useOfficialMusicPreview(slot: string | null, volume: number, pau
         }
       } catch (error) { failed(error); }
     })();
-    return () => { current = false; window.removeEventListener("pointerdown", retry); window.removeEventListener("keydown", retry); };
-  }, [slot, paused, ramp, retire]);
+    return () => { loading.abort(); window.removeEventListener("pointerdown", retry); window.removeEventListener("keydown", retry); };
+  }, [key, paused, ramp, retire]);
   const stop = useCallback((fadeSeconds: number) => {
     const runtime = state.current; if (!runtime?.current) return;
-    runtime.halted = runtime.current.slot;
+    runtime.halted = runtime.current.key;
     retire(runtime.current, fadeSeconds);
     runtime.current = null;
   }, [retire]);

@@ -15,7 +15,7 @@ export function ayachanMusicEntry(item: AyachanLevelItem): AyachanSelectionEntry
   if (!/^[1-9]\d*$/.test(item.name) || !Number.isSafeInteger(id) || !Number.isFinite(item.rating) ||
       !item.bgm?.url || !item.data?.url || typeof item.title !== "string") return null;
   return { source: "ayachan", id, title: item.title, artists: item.artists ?? "", author: item.author ?? "",
-    level: String(item.rating), difficulty: null, cover: item.cover ?? { url: "", hash: "" } };
+    level: String(item.rating), difficulty: null, cover: item.cover ?? { url: "", hash: "" }, bgm: item.bgm.url };
 }
 export interface AyachanSearchState {
   entries: readonly AyachanSelectionEntry[]; page: number; hasMore: boolean; loading: boolean; error: string;

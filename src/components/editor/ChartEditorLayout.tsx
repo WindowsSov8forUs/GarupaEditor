@@ -15,7 +15,8 @@ import { SongInformationPage } from "../SongInformationPage";
 import { SONG_INFORMATION_CONTENT_BOUNDS } from "../OriginalSongDetailParts";
 import { LivePreparationPage, MvDownloadDialog } from "../LivePreparationPage";
 import { downloadActivity } from "../../services/downloadActivity";
-import { SAMPLE_START_GAME_FADE_SECONDS, useOfficialMusicPreview } from "../useOfficialMusicPreview";
+import { SAMPLE_START_GAME_FADE_SECONDS, useMusicPreview } from "../useMusicPreview";
+import type { MusicPreviewRequest } from "../musicSelectionData";
 import songDetailSource from "../../data/originalSongDetailProfile.json";
 import { songHasSpecialNotes } from "../songNoteStatistics";
 import { SIMULATOR_PRE_ADAPTATION_DEFAULTS, type SimulatorModeSelection } from "../../app/simulator/preAdaptationContract";
@@ -261,10 +262,10 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   const pendingLaunch = useRef<{ mode: SimulatorModeSelection; done(): void } | null>(null);
   const [launchRevision, setLaunchRevision] = useState(0);
   const [mvDownloadAnswer, setMvDownloadAnswer] = useState<((confirmed: boolean) => void) | null>(null);
-  const [preview, setPreview] = useState<{ slot: string | null; paused: boolean }>({ slot: null, paused: false });
+  const [preview, setPreview] = useState<{ request: MusicPreviewRequest | null; paused: boolean }>({ request: null, paused: false });
   const [previewStopped, setPreviewStopped] = useState(false);
   useEffect(() => { if (!livePreparationOpen) setPreviewStopped(false); }, [livePreparationOpen]);
-  const samplePlayer = useOfficialMusicPreview(musicSelectionOpen && !previewStopped ? preview.slot : null,
+  const samplePlayer = useMusicPreview(musicSelectionOpen && !previewStopped ? preview.request : null,
     appOptionSettings.simulatorSettings.systemBgmVolumePercent * appOptionSettings.simulatorSettings.masterVolumePercent / 10000,
     preview.paused, message => vm.setStatusMessage(message));
   const answerMvDownload = (confirmed: boolean) => { mvDownloadAnswer?.(confirmed); setMvDownloadAnswer(null); };
@@ -1253,7 +1254,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         resourcesReady={vm.settingsResourcesReady} onStart={startLive} /> : !isMetadataEditorOpen && musicSelectionOpen ?
       <MusicSelectionPage source={appOptionSettings.musicSelectionSource} onSourceChange={vm.setMusicSelectionSource}
         persisted={appOptionSettings.officialMusicSelection} onPersist={vm.setOfficialMusicSelection}
-        onResourceWarning={vm.setStatusMessage} onPreview={(slot, paused) => setPreview(current => current.slot === slot && current.paused === paused ? current : { slot, paused })} onLoad={(source, id, progress, _destination, difficulty) => {
+        onResourceWarning={vm.setStatusMessage} onPreview={(request, paused) => setPreview(current => current.request?.key === request?.key && current.paused === paused ? current : { request, paused })} onLoad={(source, id, progress, _destination, difficulty) => {
           vm.endPlaySession(); loadedPlay.current = null;
           return source === "official"
             ? vm.loadOfficialChart({ id, difficulty: difficulty!, preserveForPlay: false, progress }).then(Boolean) : source === "bestdori"
