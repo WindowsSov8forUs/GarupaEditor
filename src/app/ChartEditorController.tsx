@@ -608,7 +608,6 @@ function ChartEditorController() {
   });
   const previewLoadingHideTimerRef = useRef<number | null>(null);
 
-  const [isMetadataEditorOpen, setIsMetadataEditorOpen] = useState(false);
   const [isAppSettingsOpen, setIsAppSettingsOpen] = useState(false);
   const [isSkinSettingsOpen, setIsSkinSettingsOpen] = useState(false);
   const [overlayDialog, setOverlayDialog] = useState<OverlayDialogState | null>(null);
@@ -3102,7 +3101,6 @@ function ChartEditorController() {
     triggerBestdoriV2Import,
     handleJsonImport,
     handleBestdoriV2Import,
-    openMetadataEditor,
     openAppSettings,
     openSkinSettings,
     handleCoverUpload,
@@ -3170,7 +3168,6 @@ function ChartEditorController() {
     jsonImportRef,
     bestdoriV2ImportRef,
     sanitizeFileName,
-    setIsMetadataEditorOpen,
     setIsAppSettingsOpen,
     setIsSkinSettingsOpen,
     windowPresetId,
@@ -6096,7 +6093,6 @@ function ChartEditorController() {
         coverImageSrc,
         audioDurationSec,
         visibleNoteCount,
-        openMetadataEditor,
         isCoverLoadFailed,
         setIsCoverLoadFailed,
         isSkinReady,
@@ -6304,10 +6300,8 @@ function ChartEditorController() {
         renderDirectionalSprite,
         statusMessage,
         isSkinApplying,
-        isMetadataEditorOpen,
         setMetadata,
         audioObjectUrl,
-        setIsMetadataEditorOpen,
         handleCoverUpload,
         handleAudioUpload,
         handleMvUpload,

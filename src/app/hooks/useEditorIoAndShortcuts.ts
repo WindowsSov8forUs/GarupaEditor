@@ -196,7 +196,6 @@ export function useEditorIoAndShortcuts(params: any) {
     jsonImportRef,
     bestdoriV2ImportRef,
     sanitizeFileName,
-    setIsMetadataEditorOpen,
     setIsAppSettingsOpen,
     setIsSkinSettingsOpen,
     windowPresetId,
@@ -1887,10 +1886,6 @@ export function useEditorIoAndShortcuts(params: any) {
     }
   };
 
-  const openMetadataEditor = () => {
-    setIsMetadataEditorOpen(true);
-  };
-
   const openAppSettings = () => {
     setIsAppSettingsOpen(true);
   };
@@ -2255,7 +2250,6 @@ export function useEditorIoAndShortcuts(params: any) {
     triggerBestdoriV2Import,
     handleJsonImport,
     handleBestdoriV2Import,
-    openMetadataEditor,
     openAppSettings,
     openSkinSettings,
     handleCoverUpload,

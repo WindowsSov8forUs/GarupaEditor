@@ -4,7 +4,8 @@ import { ORIGINAL_HEADER_MENU_BOUNDS } from "../OriginalPageHeader";
 import { editorNoteHeight, editorDirectionalSegmentWidth } from "../../app/editorNoteMetrics";
 import { OriginalMenuBackground } from "../OriginalMenuBackground";
 import { useApplicationPresentation, useReturnToTitle } from "../../app/titleNavigation";
-import { useIsStartingApplication, useStartupReadiness } from "../../app/startupReadiness";
+import { useStartupReadiness } from "../../app/startupReadiness";
+import { EDITOR_STACK, HOME_STACK, openDetailPage, popPage, pushPage, returnToPage, topPage, type AppPage, type PageStack } from "./pageStack";
 import { AppSettingsModal } from "../AppSettingsModal";
 import { OriginalUiSoundProvider } from "../OriginalUiSound";
 import { BestdoriLoginModal } from "../BestdoriLoginModal";
@@ -100,7 +101,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     chartMediaSources,
     audioDurationSec,
     visibleNoteCount,
-    openMetadataEditor,
     isSkinReady,
     isToolArmed,
     tool,
@@ -183,9 +183,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     isHabahiroEnabled,
     renderDirectionalSprite,
     isSkinApplying,
-    isMetadataEditorOpen,
     setMetadata,
-    setIsMetadataEditorOpen,
     isAppSettingsOpen,
     setIsAppSettingsOpen,
     appOptionSettings,
@@ -239,10 +237,11 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   const bestdoriAuthRevision = useRef(0);
   const bestdoriAuthBusy = useRef(false);
   const [isBestdoriLoginOpen, setIsBestdoriLoginOpen] = useState(false);
-  const [livePreparationOpen, setLivePreparationOpen] = useState(false);
-  const startingApplication = useIsStartingApplication();
-  const [liveSelectionOpen, setLiveSelectionOpen] = useState(startingApplication);
-  const [musicSelectionOpen, setMusicSelectionOpen] = useState(false);
+  const [pageStack, setPageStack] = useState<PageStack>(HOME_STACK);
+  const page = topPage(pageStack);
+  const livePreparationOpen = page === "live";
+  // Song select stays below live preparation: its sample and play session continue there.
+  const musicSelectionOpen = pageStack.includes("search");
   const [backgroundPage, setBackgroundPage] = useState<string | null>(null);
   const handleReturnToTitle = () => {
     if (isPlayToolSelected) onTogglePlayTool();
@@ -251,10 +250,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   };
   useEffect(() => {
     if (!presentation || presentation.visible) return;
-    setLivePreparationOpen(false);
-    setIsMetadataEditorOpen(false);
-    setMusicSelectionOpen(false);
-    setLiveSelectionOpen(true);
+    setPageStack(HOME_STACK);
   }, [presentation?.visible]);
   // Song select only records the selection; files are fetched when live preparation starts, as in the original.
   const [playSelection, setPlaySelection] = useState<MusicPlaySelection | null>(null);
@@ -1225,33 +1221,32 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         }}
       />
 
-      <OriginalPageSwitch workspaceReady={vm.workspaceReady} open={isMetadataEditorOpen || livePreparationOpen || liveSelectionOpen || musicSelectionOpen}
+      <OriginalPageSwitch workspaceReady={vm.workspaceReady} open={page !== "editor"}
         onPageShown={setBackgroundPage}
-        onRestorePage={(page, key) => {
-          setLivePreparationOpen(page === "live"); setIsMetadataEditorOpen(page === "song");
-          setMusicSelectionOpen(page === "search"); setLiveSelectionOpen(page !== null);
+        onRestorePage={(shown, key) => {
+          // A cancelled or failed preparation returns to the page still shown (null is the editor).
+          setPageStack(stack => returnToPage(stack, (shown ?? "editor") as AppPage));
           const source = key?.split(":")[1];
-          if (page === "search" && (source === "official" || source === "bestdori" || source === "ayachan")) vm.setMusicSelectionSource(source);
+          if (shown === "search" && (source === "official" || source === "bestdori" || source === "ayachan")) vm.setMusicSelectionSource(source);
         }}
-        onWorkspaceBack={() => setLiveSelectionOpen(true)}
-        showPageBack={isMetadataEditorOpen || livePreparationOpen || musicSelectionOpen || !!returnToTitle}
-        pageKey={livePreparationOpen ? "live" : isMetadataEditorOpen ? "song" : musicSelectionOpen ? `search:${appOptionSettings.musicSelectionSource}` : "entrance"}
-        pageId={livePreparationOpen ? "live" : isMetadataEditorOpen ? "song" : musicSelectionOpen ? "search" : "entrance"}
-        section={livePreparationOpen ? "演出" : isMetadataEditorOpen ? "歌曲" : musicSelectionOpen ? "演出" : "首页"}
-        title={livePreparationOpen ? songDetailSource.wording[preparationMode.sessionMode === "rehearsal"
-          ? "header_mainTitle_freeLivePracticeMode" : "header_mainTitle_freeLive"] : isMetadataEditorOpen ? "歌曲信息" : musicSelectionOpen ? "谱面搜索" : "选择功能"}
+        onWorkspaceBack={() => setPageStack(popPage)}
+        showPageBack={page !== "entrance" || !!returnToTitle}
+        pageKey={page === "search" ? `search:${appOptionSettings.musicSelectionSource}` : page}
+        pageId={page}
+        section={page === "song" ? "歌曲" : page === "entrance" ? "首页" : "演出"}
+        title={page === "live" ? songDetailSource.wording[preparationMode.sessionMode === "rehearsal"
+          ? "header_mainTitle_freeLivePracticeMode" : "header_mainTitle_freeLive"] : page === "song" ? "歌曲信息" : page === "search" ? "谱面搜索" : "选择功能"}
         onOpenMenu={openAppSettings} menuOpen={isAppSettingsOpen}
         onBack={() => {
-          if (isMetadataEditorOpen || livePreparationOpen) { setIsMetadataEditorOpen(false); setLivePreparationOpen(false); }
-          else if (musicSelectionOpen) setMusicSelectionOpen(false);
-          else handleReturnToTitle();
-        }} page={livePreparationOpen ?
+          if (page === "entrance") handleReturnToTitle();
+          else setPageStack(popPage);
+        }} page={page === "live" ?
       <LivePreparationPage metadata={playSelection ? { ...metadata, title: playSelection.title,
         difficulty: playSelection.difficulty, difficultyLevel: playSelection.level } : metadata} mode={preparationMode} onModeChange={changePreparationMode}
         mvEnabled={playbackMvMode} hasMv={playSelection ? playSelection.hasMv : !!chartMediaSources.mv}
         hasSpecialNotes={playSelection ? playSelection.hasSpecialNotes : songHasSpecialNotes(notes, vm.slideChains)}
         onMvChange={setPlaybackMvMode} onSettings={() => setPreparationSettingsOpen(true)}
-        resourcesReady={vm.settingsResourcesReady} onStart={startLive} /> : !isMetadataEditorOpen && musicSelectionOpen ?
+        resourcesReady={vm.settingsResourcesReady} onStart={startLive} /> : page === "search" ?
       <MusicSelectionPage source={appOptionSettings.musicSelectionSource} onSourceChange={vm.setMusicSelectionSource}
         persisted={appOptionSettings.officialMusicSelection} onPersist={vm.setOfficialMusicSelection}
         onResourceWarning={vm.setStatusMessage} onPreview={(request, paused) => setPreview(current => current.request?.key === request?.key && current.paused === paused ? current : { request, paused })} onLoad={(source, id, progress, _destination, difficulty) => {
@@ -1260,20 +1255,15 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
             ? vm.loadOfficialChart({ id, difficulty: difficulty!, preserveForPlay: false, progress }).then(Boolean) : source === "bestdori"
             ? vm.applyImportCommunityChart(id, false, { progress }) : vm.loadChartForPlay(source, id, { progress });
         }}
-        onPlay={entry => { setPlaySelection(musicPlaySelection(entry)); setLivePreparationOpen(true); }}
+        onPlay={entry => { setPlaySelection(musicPlaySelection(entry)); setPageStack(stack => openDetailPage(stack, "live")); }}
         onReady={destination => {
-          if (destination === "play") setLivePreparationOpen(true);
-          else {
-            setMusicSelectionOpen(false); setLiveSelectionOpen(false);
-            setLivePreparationOpen(false); setIsMetadataEditorOpen(false);
-          }
-        }} /> : !isMetadataEditorOpen ?
-      <LiveSelectionPage onFreeLive={() => setLiveSelectionOpen(false)}
-        onImportProject={() => vm.projectFiles.choose(() => {
-          setMusicSelectionOpen(false); setLiveSelectionOpen(false);
-          setLivePreparationOpen(false); setIsMetadataEditorOpen(false);
-        }, () => vm.openOverlayDialog({ tone: "info", message: "未选择项目文件" }))}
-        onSearchCharts={() => setMusicSelectionOpen(true)} /> : <SongInformationPage
+          if (destination === "play") setPageStack(stack => openDetailPage(stack, "live"));
+          else setPageStack(EDITOR_STACK);
+        }} /> : page === "entrance" ?
+      <LiveSelectionPage onFreeLive={() => setPageStack(stack => pushPage(stack, "editor"))}
+        onImportProject={() => vm.projectFiles.choose(() => setPageStack(EDITOR_STACK),
+          () => vm.openOverlayDialog({ tone: "info", message: "未选择项目文件" }))}
+        onSearchCharts={() => setPageStack(stack => pushPage(stack, "search"))} /> : <SongInformationPage
         audioDurationSec={audioDurationSec}
         noteCount={visibleNoteCount}
         notes={notes}
@@ -1299,7 +1289,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
           scale={uiViewport.scale} top={uiViewport.safeInsets.top - viewportTop}
           right={uiViewport.safeInsets.right - viewportRight} />
         <SidebarPanel isSkinReady={isSkinReady} isToolArmed={isToolArmed} tool={tool}
-          onPlay={() => { setIsAppSettingsOpen(false); setIsMetadataEditorOpen(false); setLivePreparationOpen(true); }}
+          onPlay={() => { setIsAppSettingsOpen(false); setPageStack(stack => openDetailPage(stack, "live")); }}
           onPreview={() => { void openStaticRenderWindow(); }}
           applyToolFromPalette={applyToolFromPalette} getSpriteLayers={getPaletteSpriteLayers}
           getSpriteAspectRatio={getPaletteSpriteAspectRatio} renderSpriteStack={renderPaletteSpriteStack} />
@@ -1958,8 +1948,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
 
       <AppSettingsModal
         onReturnToTitle={returnToTitle ? handleReturnToTitle : undefined}
-        onSongInformation={() => { setIsAppSettingsOpen(false); setLivePreparationOpen(false); openMetadataEditor(); }}
-        onLivePreparation={() => { setIsAppSettingsOpen(false); setIsMetadataEditorOpen(false); setLivePreparationOpen(true); }}
+        onSongInformation={() => { setIsAppSettingsOpen(false); setPageStack(stack => openDetailPage(stack, "song")); }}
+        onLivePreparation={() => { setIsAppSettingsOpen(false); setPageStack(stack => openDetailPage(stack, "live")); }}
         optionsOpen={preparationSettingsOpen} onOptionsClose={() => setPreparationSettingsOpen(false)}
         resourcesReady={vm.settingsResourcesReady}
         onSettingsError={message => vm.setStatusMessage(`设置操作失败：${message}`)}
