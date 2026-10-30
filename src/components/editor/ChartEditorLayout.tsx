@@ -252,6 +252,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     setMusicSelectionOpen(false);
     setLiveSelectionOpen(true);
   }, [presentation?.visible]);
+  useEffect(() => { if (!musicSelectionOpen) vm.endPlaySession(); }, [musicSelectionOpen, vm.endPlaySession]);
   useStartupReadiness("home-page", backgroundPage === "entrance");
   const [preparationSettingsOpen, setPreparationSettingsOpen] = useState(false);
   const preparationInputs = useRef<Record<SimulatorModeSelection["sessionMode"], SimulatorModeSelection["inputMode"]>>({
@@ -1197,9 +1198,12 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         onMvChange={setPlaybackMvMode} onSettings={() => setPreparationSettingsOpen(true)}
         resourcesReady={vm.settingsResourcesReady} onStart={openSimulatorWindow} /> : !isMetadataEditorOpen && musicSelectionOpen ?
       <MusicSelectionPage source={appOptionSettings.musicSelectionSource} onSourceChange={vm.setMusicSelectionSource}
-        onResourceWarning={vm.setStatusMessage} previewVolume={appOptionSettings.simulatorSettings.systemBgmVolumePercent * appOptionSettings.simulatorSettings.masterVolumePercent / 10000} onLoad={(source, id, progress, destination, difficulty) => source === "official"
-        ? vm.loadOfficialChart({ id, difficulty: difficulty!, preserveForPlay: destination === "play", progress }).then(Boolean) : destination === "editor" && source === "bestdori"
-        ? vm.applyImportCommunityChart(id, false, { progress }) : vm.loadChartForPlay(source, id, { progress })}
+        onResourceWarning={vm.setStatusMessage} previewVolume={appOptionSettings.simulatorSettings.systemBgmVolumePercent * appOptionSettings.simulatorSettings.masterVolumePercent / 10000} onLoad={async (source, id, progress, destination, difficulty) => {
+          if (destination === "play") await vm.beginPlaySession(); else vm.endPlaySession();
+          return source === "official"
+            ? vm.loadOfficialChart({ id, difficulty: difficulty!, preserveForPlay: destination === "play", progress }).then(Boolean) : destination === "editor" && source === "bestdori"
+            ? vm.applyImportCommunityChart(id, false, { progress }) : vm.loadChartForPlay(source, id, { progress });
+        }}
         onReady={destination => {
           if (destination === "play") setLivePreparationOpen(true);
           else {
@@ -1238,7 +1242,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
           scale={uiViewport.scale} top={uiViewport.safeInsets.top - viewportTop}
           right={uiViewport.safeInsets.right - viewportRight} />
         <SidebarPanel isSkinReady={isSkinReady} isToolArmed={isToolArmed} tool={tool}
-          onPlay={() => { void openSimulatorWindow(); }}
+          onPlay={() => { setIsAppSettingsOpen(false); setIsMetadataEditorOpen(false); setLivePreparationOpen(true); }}
           onPreview={() => { void openStaticRenderWindow(); }}
           applyToolFromPalette={applyToolFromPalette} getSpriteLayers={getPaletteSpriteLayers}
           getSpriteAspectRatio={getPaletteSpriteAspectRatio} renderSpriteStack={renderPaletteSpriteStack} />
