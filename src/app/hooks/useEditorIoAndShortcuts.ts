@@ -1597,7 +1597,7 @@ export function useEditorIoAndShortcuts(params: any) {
       setChartMediaResources(Object.freeze({ bgm, cover, mv: null, illustBackground: null }));
       setAudioFileName(`test-${id}-bgm`); setAudioDurationSec(0);
       setMetadata((current: ChartMetadata) => ({...current, title: resolveTrimmedString(item.title),
-        artist: "", charter: "", isFullLength: false, difficulty: "EXPERT",
+        artist: resolveTrimmedString(item.artists), charter: resolveTrimmedString(item.author), isFullLength: false, difficulty: "EXPERT",
         difficultyLevel: Number.isFinite(item.rating) ? String(item.rating) : "", offsetMs: 0, mvOffsetMs: 0}));
       applyChartImportStatus(`已加载测试服谱面 ${id}`, summary);
       completeDownloadProgress("测试服谱面加载完成。"); finish(); return true;
