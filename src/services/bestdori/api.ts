@@ -939,11 +939,62 @@ async function requestBestdoriBinaryBase64(
   return btoa(binary);
 }
 
+// Song previews download a chart's full audio; keep the latest few by URL so the live start
+// that follows reuses the same bytes instead of fetching them again.
+const PREFETCHED_MEDIA_LIMIT = 4;
+const prefetchedMedia = new Map<string, Uint8Array>();
+function prefetched(url: string): Uint8Array | undefined {
+  const bytes = prefetchedMedia.get(url);
+  if (bytes !== undefined) { prefetchedMedia.delete(url); prefetchedMedia.set(url, bytes); }
+  return bytes;
+}
+function rememberPrefetched(url: string, bytes: Uint8Array): void {
+  prefetchedMedia.delete(url); prefetchedMedia.set(url, bytes);
+  while (prefetchedMedia.size > PREFETCHED_MEDIA_LIMIT) prefetchedMedia.delete(prefetchedMedia.keys().next().value!);
+}
+
+/**
+ * Background song-preview download: no download screen, and aborting the signal drops the
+ * in-flight request. Resolves to null when aborted.
+ */
+export function hasSongPreviewMedia(url: string): boolean { return prefetchedMedia.has(url); }
+
+export async function fetchSongPreviewMedia(url: string, hostScope: "bestdori" | "sonolus", signal: AbortSignal): Promise<Uint8Array | null> {
+  const cached = prefetched(url);
+  if (cached !== undefined) return cached;
+  if (signal.aborted) return null;
+  let bytes: Uint8Array | null;
+  if (isTauriRuntimeEnvironment()) {
+    const requestId = crypto.randomUUID();
+    const cancel = () => { void invokeTauriCommand("bestdori_cancel_background_fetch", { requestId }).catch(() => {}); };
+    signal.addEventListener("abort", cancel, { once: true });
+    try {
+      const encoded = await invokeTauriCommand<string | null>("bestdori_fetch_binary_background", { url, hostScope, requestId });
+      bytes = encoded === null ? null : new Uint8Array(decodeBase64ToArrayBuffer(encoded));
+    } finally { signal.removeEventListener("abort", cancel); }
+  } else {
+    const activity = downloadActivity.begin({ background: true });
+    try {
+      const response = await fetch(url, { signal, cache: "no-store" });
+      if (!response.ok) throw new Error(`song preview http status ${response.status}`);
+      bytes = new Uint8Array(await readDownloadBody(response, activity));
+    } catch (error) {
+      if (signal.aborted) return null;
+      throw error;
+    } finally { activity.finish(); }
+  }
+  // A transfer that finished as it was superseded is still kept for a later selection or start.
+  if (bytes !== null) rememberPrefetched(url, bytes);
+  return signal.aborted ? null : bytes;
+}
+
 export async function fetchBestdoriFileBlob(
   url: string,
   mimeType: string,
   label = "bestdori file",
 ): Promise<Blob> {
+  const cached = prefetched(url);
+  if (cached !== undefined) return new Blob([Uint8Array.from(cached)], { type: mimeType });
   const base64 = await requestBestdoriBinaryBase64(url, label);
   const buffer = decodeBase64ToArrayBuffer(base64);
   return new Blob([buffer], { type: mimeType });
@@ -1488,6 +1539,8 @@ export async function fetchAyachanLevelList(page: number, id: string): Promise<{
   return result;
 }
 export async function fetchTestServerMedia(url: string): Promise<Uint8Array> {
+  const cached = prefetched(resolveTestServerResourceUrl(url));
+  if (cached !== undefined) return Uint8Array.from(cached);
   const encoded = await requestBestdoriBinaryBase64(resolveTestServerResourceUrl(url), "test server media", {hostScope:"sonolus"});
   return new Uint8Array(decodeBase64ToArrayBuffer(encoded));
 }

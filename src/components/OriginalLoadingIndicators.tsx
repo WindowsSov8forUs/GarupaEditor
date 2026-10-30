@@ -4,6 +4,7 @@ import { OriginalPrefabView } from "./OriginalPrefabView";
 import { OriginalLoadingAnimation } from "./originalLoadingAnimation";
 import { originalLoading, type OriginalLoadingKind, type OriginalLoadingScreen } from "./originalLoadingState";
 import { useUiViewport } from "./useUiViewport";
+import { downloadActivity } from "../services/downloadActivity";
 import profile from "../data/originalLoadingProfile.json";
 
 function Indicator({ kind, screen }: { kind: OriginalLoadingKind; screen: OriginalLoadingScreen }) {
@@ -22,15 +23,18 @@ function Indicator({ kind, screen }: { kind: OriginalLoadingKind; screen: Origin
     frame = requestAnimationFrame(update);
     return () => cancelAnimationFrame(frame);
   }, [animation]);
-  const model = useMemo(() => animation.model(kind === "network" ? undefined : screen.progress), [animation, kind, screen.progress, revision]);
-  return <div className="original-authored-viewport" data-original-loading={kind} role="status" aria-label={kind === "network" || screen.progress === undefined ? "正在加载" : "正在下载"}
+  // NetworkIndicator shows a download bar only through UpdateDownloadProgress (Spot SingleProgress).
+  const single = useSyncExternalStore(downloadActivity.subscribe, () => downloadActivity.getSnapshot().single);
+  const progress = kind === "network" ? (screen.downloadProgress ? single : undefined) : screen.progress;
+  const model = useMemo(() => animation.model(progress), [animation, progress, revision]);
+  return <div className="original-authored-viewport" data-original-loading={kind} role="status" aria-label={progress === undefined ? "正在加载" : "正在下载"}
     style={{ position: "fixed", right: viewport.safeInsets.right, bottom: viewport.safeInsets.bottom,
       width: 0, height: 0, transform: `scale(${viewport.scale})`, transformOrigin: "0 0", pointerEvents: "none" }}>
     <OriginalPrefabView model={model} />
   </div>;
 }
 
-function TransmittingInputBlock() {
+function InputBlock({ grayout }: { grayout: boolean }) {
   useLayoutEffect(() => {
     // Native BoxCollider blocks the page; keyboard and existing document shortcuts
     // must also stop in a desktop host, including while focus remains in an input.
@@ -44,10 +48,11 @@ function TransmittingInputBlock() {
       if (root) root.inert = wasInert ?? false;
     };
   }, []);
-  const grayout = profile.prefabs.transmitting.components.find(c => c.kind === "UISprite" && c.id === 84)!;
-  const color = grayout.data as { mColor: { r: number; g: number; b: number; a: number } };
+  const sprite = profile.prefabs.transmitting.components.find(c => c.kind === "UISprite" && c.id === 84)!;
+  const color = sprite.data as { mColor: { r: number; g: number; b: number; a: number } };
+  // Transmitting draws its Grayout; an API call under NetworkIndicator has only a transparent collider.
   return <div data-original-transmitting-block="" style={{ position: "fixed", inset: 0,
-    background: `rgba(${color.mColor.r * 255},${color.mColor.g * 255},${color.mColor.b * 255},${color.mColor.a})`, pointerEvents: "auto", touchAction: "none" }} />;
+    background: grayout ? `rgba(${color.mColor.r * 255},${color.mColor.g * 255},${color.mColor.b * 255},${color.mColor.a})` : "transparent", pointerEvents: "auto", touchAction: "none" }} />;
 }
 
 /** One host per application resource context; callers hold/release owners, not React overlays. */
@@ -55,9 +60,10 @@ export function OriginalLoadingIndicators() {
   const state = useSyncExternalStore(originalLoading.subscribe, originalLoading.getSnapshot);
   if (!state.network && !state.transmitting) return null;
   return createPortal(<div style={{ position: "fixed", inset: 0, zIndex: 10002, pointerEvents: "none" }}>
+    {state.network?.blockInput && <InputBlock grayout={false} />}
     {state.network && <Indicator key={`network-${state.network.generation}`} kind="network" screen={state.network} />}
     {state.transmitting && <div style={{ position: "absolute", inset: 0 }}>
-      <TransmittingInputBlock />
+      <InputBlock grayout />
       <Indicator key={`transmitting-${state.transmitting.generation}`} kind="transmitting" screen={state.transmitting} />
     </div>}
   </div>, document.body);

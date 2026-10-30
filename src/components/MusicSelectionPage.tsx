@@ -2,9 +2,9 @@ import { usePreparationPending } from "./PagePreparation";
 import { useContext } from "react";
 import { OriginalPageExiting, OriginalPageVisible } from "./OriginalPrefabView";
 import { OfficialMusicFolders } from "./OfficialMusicFolders";
-import { useOfficialMusicPreview } from "./useOfficialMusicPreview";
 import { getOfficialMusicLibrary, type OfficialDifficulty } from "../services/officialMusicLibrary";
-import { DEFAULT_OFFICIAL_FILTER, resetOfficialFilter, selectOfficialMusic } from "./officialMusicSelection";
+import { DEFAULT_OFFICIAL_FILTER, officialLevelBounds, resetOfficialFilter, selectOfficialMusic, type OfficialMusicFilter } from "./officialMusicSelection";
+import type { OfficialMusicSelectionCache } from "../chartCore";
 import { OfficialMusicFilterDialog } from "./OfficialMusicFilterDialog";
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent, type CSSProperties } from "react";
 import { UiPageViewport } from "./UiViewport";
@@ -18,7 +18,7 @@ import { useUiViewport } from "./useUiViewport";
 import { useMusicJacket } from "./useMusicJacket";
 import { MusicSelectionCarousel } from "./musicSelectionCarousel";
 import { musicSelectionLayout, musicCarouselRows, musicSelectionScale } from "./musicSelectionLayout";
-import { loadMusicSelectionCharter, type MusicSelectionEntry } from "./musicSelectionData";
+import { loadMusicSelectionCharter, musicPreviewRequest, type MusicPreviewRequest, type MusicSelectionEntry } from "./musicSelectionData";
 import profile from "../data/originalMusicSelectionProfile.json";
 import detail from "../data/originalSongDetailProfile.json";
 import "./MusicSelectionPage.css";
@@ -375,22 +375,61 @@ function EmptyMusicSelection({ onNextPage, busy, official }: { onNextPage(): voi
   </div>;
 }
 
-export function MusicSelectionPage({ source, onSourceChange: setSource, onLoad, onReady, onPlay, previewVolume, onResourceWarning }: {
+// The page unmounts behind live preparation and other pages; its list state must survive that.
+// The official parts the original caches are also persisted (see persistOfficialState).
+const rememberedSelections: Partial<Record<MusicSource | "official-other", { id: number; order: number[] }>> = {};
+const sessionFilters: {
+  official?: OfficialMusicFilter;
+  bestdori?: typeof DEFAULT_BESTDORI_FILTER;
+  ayachan?: typeof DEFAULT_AYACHAN_FILTER;
+  seeded?: boolean;
+} = {};
+
+/** Restores SaveToCache / SaveSelectedDifficulty / folder state; levels stay inside the current library. */
+function restoreOfficialFilter(cache: OfficialMusicSelectionCache | null, library: Parameters<typeof resetOfficialFilter>[1]): OfficialMusicFilter {
+  const base = resetOfficialFilter(DEFAULT_OFFICIAL_FILTER, library);
+  if (cache === null) return base;
+  const [lowest, highest] = officialLevelBounds(library);
+  const minimum = Math.min(Math.max(cache.minimum, lowest), highest), maximum = Math.max(Math.min(cache.maximum, highest), lowest);
+  return { ...base, difficulty: cache.difficulty, band: cache.band, extension: cache.extension, sort: cache.sort, category: cache.category,
+    ...(minimum <= maximum ? { minimum, maximum } : {}) };
+}
+
+function officialCache(filter: OfficialMusicFilter): OfficialMusicSelectionCache {
+  return { difficulty: filter.difficulty, band: filter.band, extension: filter.extension, sort: filter.sort,
+    minimum: filter.minimum, maximum: filter.maximum, category: filter.category,
+    all: rememberedSelections.official ?? null, other: rememberedSelections["official-other"] ?? null };
+}
+
+export function MusicSelectionPage({ source, onSourceChange: setSource, onLoad, onReady, onPlay, onPreview, onResourceWarning, persisted, onPersist }: {
   source: MusicSource; onSourceChange(source: MusicSource): void;
   onResourceWarning(message: string): void;
-  previewVolume: number;
+  /** The sample cue is owned above this page so live preparation keeps it playing. */
+  onPreview(request: MusicPreviewRequest | null, paused: boolean): void;
   onLoad(source: "bestdori" | "test" | "official", id: string, progress: (ratio: number) => void, destination: SelectionDestination, difficulty?: OfficialDifficulty): Promise<boolean>;
   onReady(destination: SelectionDestination): void;
   /** Original next step: hand the selection to live preparation without loading anything. */
   onPlay(entry: MusicSelectionEntry): void;
+  /** The official song select cache saved by the last exit. */
+  persisted: OfficialMusicSelectionCache | null;
+  onPersist(cache: OfficialMusicSelectionCache): void;
 }) {
   const { scale, safeInsets } = useUiViewport();
   // The list may reset for a filter/difficulty change; its jacket lease must not.
   const [jacketEntry, setJacketEntry] = useState<MusicSelectionEntry>();
   const jacket = useMusicJacket(jacketEntry);
-  const selectionMemory = useRef<Partial<Record<MusicSource | "official-other", { id: number; order: number[] }>>>({});
+  const selectionMemory = useRef(rememberedSelections);
   const officialLibrary = getOfficialMusicLibrary();
-  const [officialFilter, setOfficialFilter] = useState(() => resetOfficialFilter(DEFAULT_OFFICIAL_FILTER, officialLibrary));
+  if (!sessionFilters.seeded) {
+    sessionFilters.seeded = true;
+    if (persisted?.all) rememberedSelections.official = persisted.all;
+    if (persisted?.other) rememberedSelections["official-other"] = persisted.other;
+  }
+  const [officialFilter, setOfficialFilter] = useState(() => sessionFilters.official ?? restoreOfficialFilter(persisted, officialLibrary));
+  useEffect(() => { sessionFilters.official = officialFilter; }, [officialFilter]);
+  // OnExiting saveSortFilterData and OnExit SaveSelectedDifficulty / selector state; next and back
+  // also leave through here after saving the carousel selection.
+  const persist = useRef(() => {}); persist.current = () => onPersist(officialCache(officialFilter));
   const warning = useRef(onResourceWarning); warning.current = onResourceWarning;
   useEffect(() => {
     if (source !== "official") return;
@@ -399,11 +438,14 @@ export function MusicSelectionPage({ source, onSourceChange: setSource, onLoad, 
       warning.current(`官方曲库资源准备失败：${officialLibrary.error ? (officialLibrary.metadata ? "启动更新失败，使用已保存的数据。" : "启动更新失败，尚无可用缓存。") : ""}${catalogFailures ? `${catalogFailures} 份资源清单未更新，已保留其他成功结果及已有记录。` : ""}${officialLibrary.mediaFailures.length ? `${officialLibrary.mediaFailures.length} 项封面／试听资源未准备完成（${officialLibrary.mediaFailures.join("、")}）。` : ""}下次启动会重新检查资源站并尝试补齐。`);
   }, [source, officialLibrary]);
   const officialEntries = useMemo(() => selectOfficialMusic(officialLibrary, officialFilter), [officialLibrary, officialFilter]);
-  const [previewSlot, setPreviewSlot] = useState<string | null>(null);
+  // undefined until the carousel decides a song; null when the decided song has no preview.
+  const [preview, setPreview] = useState<MusicPreviewRequest | null | undefined>(undefined);
   const [sourceChoiceOpen, setSourceChoiceOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const pageExiting = useContext(OriginalPageExiting);
+  useLayoutEffect(() => { if (pageExiting) persist.current(); }, [pageExiting]);
+  useEffect(() => () => persist.current(), []);
   useLayoutEffect(() => {
     if (!pageExiting) return;
     // ScreenLayerMusicSelect.OnExiting closes the drawer while the page exits.
@@ -411,13 +453,15 @@ export function MusicSelectionPage({ source, onSourceChange: setSource, onLoad, 
     setFilterOpen(false);
     setSearchOpen(false);
   }, [pageExiting]);
-  const [retainedFilter, setFilter] = useState({ ...DEFAULT_BESTDORI_FILTER });
+  const [retainedFilter, setFilter] = useState(() => sessionFilters.bestdori ?? { ...DEFAULT_BESTDORI_FILTER });
+  useEffect(() => { sessionFilters.bestdori = retainedFilter; }, [retainedFilter]);
   const filter = useMemo(() => normalizeBestdoriMusicFilter(retainedFilter), [retainedFilter]);
   useLayoutEffect(() => { if (filter !== retainedFilter) setFilter(filter); }, [filter, retainedFilter]);
   const [searchRevision, setSearchRevision] = useState(0);
   const [bestdoriSearch, setSearch] = useState<BestdoriSearchState>({ entries: [], offset: 0, hasMore: true, loading: false, error: "" });
   const bestdoriSession = useMemo(() => new BestdoriMusicSearch(setSearch), []);
-  const [ayachanFilterState, setAyachanFilter] = useState({ ...DEFAULT_AYACHAN_FILTER });
+  const [ayachanFilterState, setAyachanFilter] = useState(() => sessionFilters.ayachan ?? { ...DEFAULT_AYACHAN_FILTER });
+  useEffect(() => { sessionFilters.ayachan = ayachanFilterState; }, [ayachanFilterState]);
   const ayachanFilter = useMemo(() => normalizeAyachanFilter(ayachanFilterState), [ayachanFilterState]);
   useLayoutEffect(() => { if (ayachanFilter !== ayachanFilterState) setAyachanFilter(ayachanFilter); }, [ayachanFilter, ayachanFilterState]);
   const [ayachanRevision, setAyachanRevision] = useState(0);
@@ -448,13 +492,18 @@ export function MusicSelectionPage({ source, onSourceChange: setSource, onLoad, 
   }, [source, ayachanFilter.id, ayachanRevision, ayachanSession]);
   useLayoutEffect(() => { if (source === "bestdori") bestdoriSession.updateFilter(filter); }, [source, filter, bestdoriSession]);
   useLayoutEffect(() => { if (source === "ayachan") ayachanSession.updateFilter(ayachanFilter); }, [source, ayachanFilter, ayachanSession]);
-  useEffect(() => { if (search.loading) return originalLoading.hold("network", {}).release; }, [search.loading]);
+  // A list query is an API call: NetworkIndicator dots with its collider blocking input.
+  useEffect(() => { if (search.loading) return originalLoading.hold("network", {}, { blockInput: true }).release; }, [search.loading]);
   const [error, setError] = useState("");
   const [searchError, setSearchError] = useState("");
   useEffect(() => { setSearchError(!pageVisible || search.loading ? "" : search.error); }, [source, search.loading, search.error, pageVisible]);
   const [busy, setBusy] = useState(false);
-  useOfficialMusicPreview(pageVisible && source === "official" && entries.length ? previewSlot : null, previewVolume, busy,
-    message => warning.current(message));
+  // Only decisions change the cue (onDecideSelectMusic). Mounting or hiding the page is not one,
+  // and re-deciding the playing song keeps it (LoadSampleMusic skips an already playing BgmId).
+  const decidedPreview = !entries.length ? null : preview;
+  const reportPreview = useRef(onPreview); reportPreview.current = onPreview;
+  // Unmounting for live preparation must not clear the cue (RemoveAllSoundBundle keeps the current one).
+  useEffect(() => { if (decidedPreview !== undefined) reportPreview.current(decidedPreview, busy); }, [decidedPreview, busy]);
   const running = useRef(false), active = useRef(true);
   const releaseLoad = useRef<(() => void) | null>(null);
   useEffect(() => { active.current = true; return () => {
@@ -491,7 +540,7 @@ export function MusicSelectionPage({ source, onSourceChange: setSource, onLoad, 
           bindings={{ buttons: { 386: { action: () => { setSearchOpen(false); setFilterOpen(false); setSourceChoiceOpen(true); }, disabled: busy } } }} />
       </div>
       {source === "official" && <OfficialMusicFolders selected={officialFilter.category} onChange={category => setOfficialFilter(value => ({ ...value, category }))} busy={busy || filterOpen || searchOpen || sourceChoiceOpen} />}
-      {entries.length > 0 && <MusicCarousel key={`${source}:${JSON.stringify(source === "official" ? officialFilter : source === "bestdori" ? filter : ayachanFilter)}`} entries={entries} jacket={jacket} initialId={initialId} onSelected={entry => { setJacketEntry(entry); setPreviewSlot(entry.source === "official" ? entry.officialSong.previewSlot : null); selectionMemory.current[memoryKey] = { id: entry.id, order: entries.map(item => item.id) }; }} onDifficulty={difficulty => setOfficialFilter(value => ({ ...value, difficulty }))} busy={busy || filterOpen || searchOpen || sourceChoiceOpen} onNextPage={nextPage} onConfirm={(entry, destination) => void confirm(entry, destination)} />}
+      {entries.length > 0 && <MusicCarousel key={`${source}:${JSON.stringify(source === "official" ? officialFilter : source === "bestdori" ? filter : ayachanFilter)}`} entries={entries} jacket={jacket} initialId={initialId} onSelected={entry => { setJacketEntry(entry); setPreview(musicPreviewRequest(entry)); selectionMemory.current[memoryKey] = { id: entry.id, order: entries.map(item => item.id) }; }} onDifficulty={difficulty => setOfficialFilter(value => ({ ...value, difficulty }))} busy={busy || filterOpen || searchOpen || sourceChoiceOpen} onNextPage={nextPage} onConfirm={(entry, destination) => void confirm(entry, destination)} />}
       {!search.loading && !search.error && entries.length === 0 &&
         <EmptyMusicSelection official={source === "official"} onNextPage={nextPage} busy={busy || filterOpen || searchOpen || sourceChoiceOpen} />}
     </section>

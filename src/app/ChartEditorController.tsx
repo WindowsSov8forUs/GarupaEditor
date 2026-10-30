@@ -6342,6 +6342,9 @@ function ChartEditorController() {
         applyAppOptionSettings,
         setMusicSelectionSource: (musicSelectionSource: EditorOptionSettings["musicSelectionSource"]) =>
           setAppOptionSettings(value => ({ ...value, musicSelectionSource })),
+        setOfficialMusicSelection: (officialMusicSelection: EditorOptionSettings["officialMusicSelection"]) =>
+          setAppOptionSettings(value => JSON.stringify(value.officialMusicSelection) === JSON.stringify(officialMusicSelection)
+            ? value : { ...value, officialMusicSelection }),
         applyBestdoriSkinSelection,
         downloadProgress,
         playbackRuntimeLineRef,

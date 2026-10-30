@@ -49,11 +49,15 @@ export function useMusicJacket(entry: MusicSelectionEntry | undefined) {
     // The original queue is FIFO; selecting again does not cancel older entries.
     state.queue = state.queue.then(async () => {
       if (state.disposed) return;
-      const { release } = originalLoading.hold("network", {});
-      state.releases.add(release);
+      let release: (() => void) | undefined;
       let objectUrl: string | undefined;
       try {
         let blob = state.cache.get(key);
+        // A local jacket shows nothing; a missing one is a Spot download under NetworkIndicator.
+        if (!blob && entry.source !== "official") {
+          release = originalLoading.hold("network", {}, { downloadProgress: true }).release;
+          state.releases.add(release);
+        }
         if (!blob) {
           if (entry.source === "official") {
             const lease = getOfficialMusicLibrary().lease;
@@ -101,7 +105,7 @@ export function useMusicJacket(entry: MusicSelectionEntry | undefined) {
       } finally {
         if (objectUrl) state.decoding.delete(objectUrl);
         if (!state.disposed) setSettled(entry);
-        release(); state.releases.delete(release);
+        if (release) { release(); state.releases.delete(release); }
       }
     });
   }, [entry, fallback]);

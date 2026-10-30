@@ -1605,6 +1605,51 @@ async fn bestdori_fetch_binary(
     Ok(encode_base64(bytes))
 }
 
+// Cancellation for background fetches, keyed by the caller's request id. Either side may
+// arrive first: a cancel stores a permit that the fetch consumes when it registers.
+type BackgroundFetchCancels = Mutex<HashMap<String, std::sync::Arc<tokio::sync::Notify>>>;
+fn background_fetch_cancels() -> &'static BackgroundFetchCancels {
+    static CANCELS: std::sync::OnceLock<BackgroundFetchCancels> = std::sync::OnceLock::new();
+    CANCELS.get_or_init(Default::default)
+}
+fn background_fetch_cancel(request_id: &str) -> std::sync::Arc<tokio::sync::Notify> {
+    background_fetch_cancels().lock().unwrap_or_else(|e| e.into_inner())
+        .entry(request_id.to_owned()).or_default().clone()
+}
+fn background_fetch_release(request_id: &str) {
+    background_fetch_cancels().lock().unwrap_or_else(|e| e.into_inner()).remove(request_id);
+}
+
+/// Like bestdori_fetch_binary, but without the download screen and abortable: a cancel drops
+/// the in-flight request (closing its connection) and the command resolves to null.
+#[tauri::command]
+async fn bestdori_fetch_binary_background(
+    auth_state: tauri::State<'_, BestdoriAuthState>,
+    url: String,
+    host_scope: Option<String>,
+    request_id: String,
+) -> Result<Option<String>, download::CommandError> {
+    let cancel = background_fetch_cancel(&request_id);
+    let outcome = async {
+        let (normalized_url, client, cookie_header) =
+            build_scoped_request_context(&auth_state, &url, "url", host_scope.as_deref())?;
+        let mut download = std::pin::pin!(download::get_untracked(&client, &normalized_url, cookie_header.as_deref(), || Ok(Vec::new())));
+        let mut cancelled = std::pin::pin!(cancel.notified());
+        let bytes = std::future::poll_fn(|cx| {
+            if std::future::Future::poll(cancelled.as_mut(), cx).is_ready() { return std::task::Poll::Ready(None); }
+            std::future::Future::poll(download.as_mut(), cx).map(Some)
+        }).await;
+        Ok::<_, download::CommandError>(match bytes { None => None, Some(bytes) => Some(encode_base64(bytes?)) })
+    }.await;
+    background_fetch_release(&request_id);
+    outcome
+}
+
+#[tauri::command]
+fn bestdori_cancel_background_fetch(request_id: String) {
+    background_fetch_cancel(&request_id).notify_one();
+}
+
 #[tauri::command]
 async fn bestdori_probe_url(
     auth_state: tauri::State<'_, BestdoriAuthState>,
@@ -2226,6 +2271,8 @@ pub fn run() {
             bestdori_post_multipart_file,
             notgarupa_upload::notgarupa_upload_level,
             bestdori_fetch_binary,
+            bestdori_fetch_binary_background,
+            bestdori_cancel_background_fetch,
             bestdori_probe_url,
             prepare_bestdori_package,
             read_bestdori_text_file,

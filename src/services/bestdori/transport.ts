@@ -22,7 +22,7 @@ export async function invokeTauriCommand<T>(command: string, args?: Record<strin
   try {
     return await invoke<T>(command, args);
   } catch (error) {
-    if ((command === "bestdori_fetch_json" || command === "bestdori_fetch_binary")
+    if ((command === "bestdori_fetch_json" || command === "bestdori_fetch_binary" || command === "bestdori_fetch_binary_background")
       && error !== null && typeof error === "object" && "message" in error && typeof error.message === "string") {
       if ("userMessage" in error && typeof error.userMessage === "string") {
         throw new DownloadFailure(error.message, error.userMessage);
