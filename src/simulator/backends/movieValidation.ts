@@ -98,6 +98,8 @@ export function validateMovieResourceProfile(
     !Number.isInteger(profile.musicStartDelayMilliseconds) ||
     profile.musicStartDelayMilliseconds < -0x80000000 ||
     profile.musicStartDelayMilliseconds > 0x7fffffff ||
+    !Number.isInteger(profile.resourceLeadInMilliseconds) || profile.resourceLeadInMilliseconds < 0 ||
+    profile.resourceLeadInMilliseconds / 1000 >= profile.durationSeconds ||
     profile.fit !== "contain-center-no-crop" || profile.muted !== true || profile.loop !== false ||
     profile.identity !== "session-explicit" || profile.signal !== "host-supplied-portable") {
     return invalidProfile();
@@ -113,6 +115,7 @@ export function validateMovieResourceProfile(
     width: profile.width,
     height: profile.height,
     musicStartDelayMilliseconds: profile.musicStartDelayMilliseconds,
+    resourceLeadInMilliseconds: profile.resourceLeadInMilliseconds,
     fit: "contain-center-no-crop" as const,
     muted: true as const,
     loop: false as const,

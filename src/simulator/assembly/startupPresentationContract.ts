@@ -101,20 +101,23 @@ function copyMvPackage(
   value: unknown,
 ): SimulatorAssemblyResult<SimulatorPresentationMvPackage | null> {
   if (value === null) return accepted(null);
-  if (!isSemanticObject(value, "bytes,musicStartDelayMilliseconds")) {
-    return invalid("mv is null or one exact { bytes, musicStartDelayMilliseconds } object with no caller metadata.");
+  if (!isSemanticObject(value, "bytes,musicStartDelayMilliseconds,resourceLeadInMilliseconds")) {
+    return invalid("mv is null or one exact { bytes, musicStartDelayMilliseconds, resourceLeadInMilliseconds } object with no caller metadata.");
   }
   const mv = value as SimulatorPresentationMvPackage;
   if (!(mv.bytes instanceof Uint8Array) ||
     mv.bytes.byteLength === 0 ||
     !Number.isInteger(mv.musicStartDelayMilliseconds) ||
     mv.musicStartDelayMilliseconds < -0x80000000 ||
-    mv.musicStartDelayMilliseconds > 0x7fffffff) {
+    mv.musicStartDelayMilliseconds > 0x7fffffff ||
+    !Number.isInteger(mv.resourceLeadInMilliseconds) ||
+    mv.resourceLeadInMilliseconds < 0 || mv.resourceLeadInMilliseconds > 0x7fffffff) {
     return invalid("mv requires one non-empty direct Uint8Array and one signed Int32 musicStartDelayMilliseconds value; container, codec, duration, dimensions and identity are derived internally.");
   }
   return accepted(Object.freeze({
     bytes: Uint8Array.from(mv.bytes),
     musicStartDelayMilliseconds: mv.musicStartDelayMilliseconds,
+    resourceLeadInMilliseconds: mv.resourceLeadInMilliseconds,
   }));
 }
 

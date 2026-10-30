@@ -106,6 +106,9 @@ import {
   type SimulatorSurfaceState,
 } from "./surfaceContracts";
 
+/** PreRhythmGame.<start>: GameObjectUtility.WaitForSeconds(0.1f), a deltaTime accumulation. */
+const PRE_RHYTHM_GAME_HANDOFF_SECONDS = Math.fround(0.1);
+
 export interface SimulatorGraphicsMount {
   dispose(): void;
 }
@@ -387,7 +390,14 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
                 if (initialized.status !== "ok") return fromIntegrity(initialized);
                 preparationRoot.addChild(created.value.backgroundRoot, created.value.foregroundRoot);
                 try {
+                  // PreRhythmGame accumulates 0.1f of game deltaTime on the black handoff after its
+                  // cleanup and before requesting RhythmGame, whose FirstView then fades in itself.
+                  let handoffElapsed = Math.fround(0);
                   firstView.presentation = this.platform.graphics.presentPreparation(preparationRoot, (delta) => {
+                    if (handoffElapsed < PRE_RHYTHM_GAME_HANDOFF_SECONDS) {
+                      handoffElapsed = Math.fround(handoffElapsed + Math.fround(delta));
+                      return false;
+                    }
                     if (direction.snapshot().phase !== "first-view") return true;
                     const advanced = direction.step(Math.fround(delta));
                     if (advanced.status !== "ok") throw new Error(advanced.boundary);
@@ -447,9 +457,18 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
           ...await releaseResourceLeaseCleanup(resourceLease.value),
         ]));
       }
-      const movie = mvResource.value === null
+      const movieBackground = mvResource.value === null ? null : renderer.getMovieBackgroundTexture();
+      if (movieBackground !== null && movieBackground.status !== "ok") {
+        startupScene.dispose();
+        return rejectedWithCleanup(fromIntegrity(movieBackground), Object.freeze([
+          ...disposeAssembly(assembly.value, null),
+          ...releasePendingMovie(),
+          ...await releaseResourceLeaseCleanup(resourceLease.value),
+        ]));
+      }
+      const movie = movieBackground === null
         ? null
-        : new PixiMvLiveBackend(false, originalLayout.value.movie);
+        : new PixiMvLiveBackend(false, originalLayout.value.movie, movieBackground.value);
       if (movie !== null) {
         const prepared = await movie.prepare(sessionId, mvResource.value!);
         if (prepared.status !== "accepted") {

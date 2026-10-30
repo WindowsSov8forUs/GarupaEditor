@@ -20,7 +20,7 @@ export interface InGameMovieManagerSnapshot {
   readonly state: InGameMusicVideoStateValue;
   readonly delayTimerSeconds: number;
   readonly mvDarkness: number;
-  readonly darkCoverPhase: "hidden" | "fading" | "steady";
+  readonly darkCoverPhase: "hidden" | "opaque" | "fading" | "steady";
   readonly darkCoverAlpha: number;
   readonly darkCoverElapsedSeconds: number;
   readonly firstFramePresented: boolean;
@@ -34,7 +34,8 @@ export class InGameMovieManager {
   private timerValue = Math.fround(0);
   private initialized = false;
   private disposed = false;
-  private darkCoverPhaseValue: "hidden" | "fading" | "steady" = "hidden";
+  // Foreground starts opaque (TweenAlpha from=to=1) and covers the opening, including WaitingPlay.
+  private darkCoverPhaseValue: "hidden" | "opaque" | "fading" | "steady" = "hidden";
   private darkCoverAlphaValue = Math.fround(0);
   private darkCoverElapsedValue = Math.fround(0);
 
@@ -60,6 +61,10 @@ export class InGameMovieManager {
         "MV engine ownership requires the exact prepared session, one muted non-looping resource and no backend fault before startup mutation.",
       );
     }
+    const cover = mapMovieResult(this.backend.setDarkCover(Math.fround(1), true));
+    if (cover.status !== "ok") return cover;
+    this.darkCoverPhaseValue = "opaque";
+    this.darkCoverAlphaValue = Math.fround(1);
     this.initialized = true;
     return ok(undefined);
   }
@@ -200,8 +205,8 @@ export class InGameMovieManager {
   }
 
   private fadeInDarkCover(): SimulatorResult<void> {
-    if (!this.available() || this.darkCoverPhaseValue !== "hidden") {
-      return rejected("movie.manager.invalid-dark-cover-fade", "Gameplay MV starts its dark-cover tween exactly once before Movie Play.");
+    if (!this.available() || this.darkCoverPhaseValue !== "opaque") {
+      return rejected("movie.manager.invalid-dark-cover-fade", "Gameplay MV starts its dark-cover tween exactly once from the opaque opening cover before Movie Play.");
     }
     this.darkCoverPhaseValue = "fading";
     this.darkCoverElapsedValue = Math.fround(0);

@@ -3,6 +3,7 @@ import { isTauri } from "@tauri-apps/api/core";
 import { emit, listen } from "@tauri-apps/api/event";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { originalLoading } from "../components/originalLoadingState";
+import { downloadActivity } from "../services/downloadActivity";
 import { isMobileRuntime } from "./mobileRuntime";
 
 const Context = createContext<(() => void) | null>(null);
@@ -23,10 +24,12 @@ export function usePresentRoute() {
   return action.current;
 }
 /** Parent owns local preparation feedback while the new native window stays hidden. */
-export async function holdAuxiliaryPreparation(requestId: string, onError?: (message: string) => void) {
-  const lease = originalLoading.hold("network", {});
+export async function holdAuxiliaryPreparation(requestId: string, onError?: (message: string) => void,
+  indicator: "network" | "screen" = "network") {
+  // Live start keeps the full-screen Loading until the gameplay surface replaces it.
+  const releaseIndicator = indicator === "screen" ? downloadActivity.holdScreen() : originalLoading.hold("network", {}).release;
   let stopped = false, unlisten: (() => void) | undefined;
-  const release = () => { if (stopped) return; stopped = true; lease.release(); unlisten?.(); };
+  const release = () => { if (stopped) return; stopped = true; releaseIndicator(); unlisten?.(); };
   try {
     unlisten = await listen<{ requestId: string; error?: string }>("application:page-presented", event => { if (event.payload.requestId === requestId) { release(); if (event.payload.error) onError?.(event.payload.error); } });
     if (stopped) unlisten();

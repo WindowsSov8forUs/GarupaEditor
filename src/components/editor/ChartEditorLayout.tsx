@@ -13,13 +13,15 @@ import { ExportJsonModal } from "../ExportJsonModal";
 import { ImportJsonModal } from "../ImportJsonModal";
 import { SongInformationPage } from "../SongInformationPage";
 import { SONG_INFORMATION_CONTENT_BOUNDS } from "../OriginalSongDetailParts";
-import { LivePreparationPage } from "../LivePreparationPage";
+import { LivePreparationPage, MvDownloadDialog } from "../LivePreparationPage";
+import { downloadActivity } from "../../services/downloadActivity";
 import songDetailSource from "../../data/originalSongDetailProfile.json";
 import { songHasSpecialNotes } from "../songNoteStatistics";
 import { SIMULATOR_PRE_ADAPTATION_DEFAULTS, type SimulatorModeSelection } from "../../app/simulator/preAdaptationContract";
 import { OriginalPageSwitch } from "../OriginalPageSwitch";
 import { LiveSelectionPage } from "../LiveSelectionPage";
 import { MusicSelectionPage } from "../MusicSelectionPage";
+import { musicPlaySelection, type MusicPlaySelection } from "../musicSelectionData";
 import { DownloadProgressModal } from "../DownloadProgressModal";
 import { OverlayDialogModal } from "../OverlayDialogModal";
 import { SkinSettingsModal } from "../SkinSettingsModal";
@@ -252,7 +254,49 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     setMusicSelectionOpen(false);
     setLiveSelectionOpen(true);
   }, [presentation?.visible]);
-  useEffect(() => { if (!musicSelectionOpen) vm.endPlaySession(); }, [musicSelectionOpen, vm.endPlaySession]);
+  // Song select only records the selection; files are fetched when live preparation starts, as in the original.
+  const [playSelection, setPlaySelection] = useState<MusicPlaySelection | null>(null);
+  const loadedPlay = useRef<{ key: string; withMv: boolean } | null>(null);
+  const pendingLaunch = useRef<{ mode: SimulatorModeSelection; done(): void } | null>(null);
+  const [launchRevision, setLaunchRevision] = useState(0);
+  const [mvDownloadAnswer, setMvDownloadAnswer] = useState<((confirmed: boolean) => void) | null>(null);
+  const answerMvDownload = (confirmed: boolean) => { mvDownloadAnswer?.(confirmed); setMvDownloadAnswer(null); };
+  useEffect(() => {
+    if (musicSelectionOpen) return;
+    setPlaySelection(null); loadedPlay.current = null;
+    vm.endPlaySession();
+  }, [musicSelectionOpen, vm.endPlaySession]);
+  // Launch from the render that holds the chart just loaded for play.
+  useEffect(() => {
+    const pending = pendingLaunch.current;
+    if (pending === null) return;
+    pendingLaunch.current = null;
+    void openSimulatorWindow(pending.mode).finally(pending.done);
+  }, [launchRevision]);
+  const startLive = async (mode: SimulatorModeSelection) => {
+    const selection = playSelection;
+    const key = selection === null ? null : `${selection.source}:${selection.id}:${selection.officialDifficulty ?? ""}`;
+    const withMv = selection !== null && mode.sessionMode === "live" && playbackMvMode && selection.hasMv;
+    const needsMv = withMv && !(loadedPlay.current?.key === key && loadedPlay.current.withMv);
+    // liveStart asks before downloading a missing selected MV; cancel stays on this page.
+    if (needsMv && !await new Promise<boolean>(answer => setMvDownloadAnswer(() => answer))) return;
+    // ShowLoadingScreen (layer 13) is held for every start, downloaded or not, until the
+    // gameplay surface is presented; transfers add the download gauge.
+    const releaseLoading = downloadActivity.holdScreen();
+    try {
+      if (selection === null) return await openSimulatorWindow(mode);
+      if (loadedPlay.current?.key !== key || needsMv) {
+        await vm.beginPlaySession();
+        const progress = { progress: () => {} };
+        const loaded = selection.source === "official"
+          ? await vm.loadOfficialChart({ id: selection.id, difficulty: selection.officialDifficulty!, preserveForPlay: true, includeMv: withMv, ...progress })
+          : await vm.loadChartForPlay(selection.source, selection.id, progress);
+        if (!loaded) return;
+        loadedPlay.current = { key: key!, withMv };
+      }
+      await new Promise<void>(done => { pendingLaunch.current = { mode, done }; setLaunchRevision(value => value + 1); });
+    } finally { releaseLoading(); }
+  };
   useStartupReadiness("home-page", backgroundPage === "entrance");
   const [preparationSettingsOpen, setPreparationSettingsOpen] = useState(false);
   const preparationInputs = useRef<Record<SimulatorModeSelection["sessionMode"], SimulatorModeSelection["inputMode"]>>({
@@ -1192,18 +1236,20 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
           else if (musicSelectionOpen) setMusicSelectionOpen(false);
           else handleReturnToTitle();
         }} page={livePreparationOpen ?
-      <LivePreparationPage metadata={metadata} mode={preparationMode} onModeChange={changePreparationMode}
-        mvEnabled={playbackMvMode} hasMv={!!chartMediaSources.mv}
-        hasSpecialNotes={songHasSpecialNotes(notes, vm.slideChains)}
+      <LivePreparationPage metadata={playSelection ? { ...metadata, title: playSelection.title,
+        difficulty: playSelection.difficulty, difficultyLevel: playSelection.level } : metadata} mode={preparationMode} onModeChange={changePreparationMode}
+        mvEnabled={playbackMvMode} hasMv={playSelection ? playSelection.hasMv : !!chartMediaSources.mv}
+        hasSpecialNotes={playSelection ? playSelection.hasSpecialNotes : songHasSpecialNotes(notes, vm.slideChains)}
         onMvChange={setPlaybackMvMode} onSettings={() => setPreparationSettingsOpen(true)}
-        resourcesReady={vm.settingsResourcesReady} onStart={openSimulatorWindow} /> : !isMetadataEditorOpen && musicSelectionOpen ?
+        resourcesReady={vm.settingsResourcesReady} onStart={startLive} /> : !isMetadataEditorOpen && musicSelectionOpen ?
       <MusicSelectionPage source={appOptionSettings.musicSelectionSource} onSourceChange={vm.setMusicSelectionSource}
-        onResourceWarning={vm.setStatusMessage} previewVolume={appOptionSettings.simulatorSettings.systemBgmVolumePercent * appOptionSettings.simulatorSettings.masterVolumePercent / 10000} onLoad={async (source, id, progress, destination, difficulty) => {
-          if (destination === "play") await vm.beginPlaySession(); else vm.endPlaySession();
+        onResourceWarning={vm.setStatusMessage} previewVolume={appOptionSettings.simulatorSettings.systemBgmVolumePercent * appOptionSettings.simulatorSettings.masterVolumePercent / 10000} onLoad={(source, id, progress, _destination, difficulty) => {
+          vm.endPlaySession(); loadedPlay.current = null;
           return source === "official"
-            ? vm.loadOfficialChart({ id, difficulty: difficulty!, preserveForPlay: destination === "play", progress }).then(Boolean) : destination === "editor" && source === "bestdori"
+            ? vm.loadOfficialChart({ id, difficulty: difficulty!, preserveForPlay: false, progress }).then(Boolean) : source === "bestdori"
             ? vm.applyImportCommunityChart(id, false, { progress }) : vm.loadChartForPlay(source, id, { progress });
         }}
+        onPlay={entry => { setPlaySelection(musicPlaySelection(entry)); setLivePreparationOpen(true); }}
         onReady={destination => {
           if (destination === "play") setLivePreparationOpen(true);
           else {
@@ -1895,6 +1941,9 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         onSubmit={() => void submitBestdoriLogin()}
         onClose={closeBestdoriLoginModal}
       />
+
+      <MvDownloadDialog open={mvDownloadAnswer !== null} onCancel={() => answerMvDownload(false)}
+        onConfirm={() => answerMvDownload(true)} />
 
       <AppSettingsModal
         onReturnToTitle={returnToTitle ? handleReturnToTitle : undefined}

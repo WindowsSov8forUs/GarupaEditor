@@ -24,6 +24,8 @@ export async function deriveSessionMvResource(
     !Number.isInteger(source.musicStartDelayMilliseconds) ||
     source.musicStartDelayMilliseconds < -0x80000000 ||
     source.musicStartDelayMilliseconds > 0x7fffffff ||
+    !Number.isInteger(source.resourceLeadInMilliseconds) ||
+    source.resourceLeadInMilliseconds < 0 || source.resourceLeadInMilliseconds > 0x7fffffff ||
     preflight === null || typeof preflight !== "object" ||
     typeof preflight.sha256 !== "function" || typeof preflight.prepare !== "function") {
     return rejected(
@@ -71,6 +73,14 @@ export async function deriveSessionMvResource(
     return fromMovie(validated);
   }
   const metadata = validated.value.metadata;
+  if (source.resourceLeadInMilliseconds / 1000 >= metadata.durationSeconds) {
+    releaseQuietly(prepared.value);
+    return rejected(
+      "integrity-failure",
+      "simulator.mv-live.lead-in-exceeds-duration",
+      "The movie file's lead-in must leave original movie content to play.",
+    );
+  }
   const mime = container.value === "mp4" ? "video/mp4" as const : "video/webm" as const;
   return accepted(Object.freeze({
     profile: Object.freeze({
@@ -84,6 +94,7 @@ export async function deriveSessionMvResource(
       width: metadata.width,
       height: metadata.height,
       musicStartDelayMilliseconds: source.musicStartDelayMilliseconds,
+      resourceLeadInMilliseconds: source.resourceLeadInMilliseconds,
       fit: "contain-center-no-crop" as const,
       muted: true as const,
       loop: false as const,

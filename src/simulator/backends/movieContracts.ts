@@ -55,6 +55,8 @@ export interface MovieResourceProfile {
   readonly width: number;
   readonly height: number;
   readonly musicStartDelayMilliseconds: number;
+  /** File time before the original movie's first frame; preparation starts the file there. */
+  readonly resourceLeadInMilliseconds: number;
   readonly fit: "contain-center-no-crop";
   readonly muted: true;
   readonly loop: false;

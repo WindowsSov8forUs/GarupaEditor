@@ -209,7 +209,8 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
       this.backgroundRoot.addChild(this.stageBackdrop);
       if (this.stageEffect !== null) this.backgroundRoot.addChild(this.stageEffect);
       this.backgroundRoot.addChild(...this.letterBox);
-      this.backgroundRoot.addChild(...this.characters);
+      // A spread of zero children reaches Container.addChild(undefined); charts without SD characters have none.
+      if (this.characters.length > 0) this.backgroundRoot.addChild(...this.characters);
     } else {
       this.stageBackdrop = null;
       this.stageEffect = null;

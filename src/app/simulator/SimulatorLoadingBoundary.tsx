@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { SimulatorResultPreparation } from "../../simulator/host/resultPresentation";
 import { originalLoading } from "../../components/originalLoadingState";
+import { downloadActivity } from "../../services/downloadActivity";
 import { usePresentRoute } from "../RoutePresentation";
 const preparationStages = ["module", "media", "platform", "availability", "lease", "rendering", "presentation"] as const;
 type PreparationStage = typeof preparationStages[number];
@@ -16,7 +17,8 @@ export function SimulatorLoadingBoundary({ children }: { children?: ReactNode })
 function LoadingOwnerBoundary({ children }: { children?: ReactNode }) {
   const [finished, setFinished] = useState(false);
   const present = usePresentRoute();
-  useEffect(() => { if (!finished) return originalLoading.hold("network", {}).release; }, [finished]);
+  // The live-start Loading lasts until the gameplay surface is presented (visible on mobile routes).
+  useEffect(() => { if (!finished) return downloadActivity.holdScreen(); }, [finished]);
   const resultOwner = useRef<SimulatorResultPreparation | null>(null);
   const beginResult = useCallback((): SimulatorResultPreparation => {
     if (resultOwner.current) throw new Error("Result preparation already has a loading owner.");

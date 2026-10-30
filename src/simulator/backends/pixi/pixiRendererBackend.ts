@@ -357,6 +357,13 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     return ok(undefined);
   }
 
+  getMovieBackgroundTexture(): SimulatorResult<Texture> {
+    const texture = this.baseTextures.get("movie/background");
+    return texture === undefined
+      ? reject("render.movie.background-unavailable", "MV Live requires the leased original bg_movie_black texture.")
+      : ok(texture);
+  }
+
   getStartupDirectionCommonResources(): SimulatorResult<PixiStartupDirectionCommonResources> {
     const sliced = (key: string): PixiStartupSlicedImage | undefined => {
       const assetId = CURRENT_STARTUP_DIRECTION_BINDINGS.uiCommonLogicalAssetId;

@@ -99,6 +99,8 @@ export interface OriginalMovieLayout {
   readonly y: number;
   readonly width: number;
   readonly height: number;
+  /** Screen pixels per authored unit for the movie's unfitted siblings (Background, Foreground). */
+  readonly unitPixels: number;
 }
 
 export interface OriginalSurfaceLayout {
@@ -290,6 +292,7 @@ export function createOriginalSurfaceLayout(
       y: div(sub(height, movieHeight), 2),
       width: movieWidth,
       height: movieHeight,
+      unitPixels: pixelsPerAuthoredUnit,
     }),
   }));
 }

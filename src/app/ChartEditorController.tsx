@@ -5916,7 +5916,7 @@ function ChartEditorController() {
         }
       });
       if (!isMobileRuntime()) {
-        releasePreparation = await holdAuxiliaryPreparation(requestId, fail);
+        releasePreparation = await holdAuxiliaryPreparation(requestId, fail, "screen");
         readyUnlisten = await listen<SimulatorWindowReadyPayload>(SIMULATOR_WINDOW_READY_EVENT, (event) => {
           const readyPayload = event.payload ?? {};
           if (abandoned || readyPayload.requestId !== requestId || typeof readyPayload.label !== "string") return;
