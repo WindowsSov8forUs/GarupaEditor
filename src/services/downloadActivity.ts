@@ -1,18 +1,23 @@
 /** Actual transport activity, independent of page preparation and cache reads. */
-export type Transfer = { received: number; total: number | null };
-type Snapshot = { active: boolean; progress: number | undefined };
+/** background: progress for an indicator its caller holds; it never opens the download screen. */
+export type Transfer = { received: number; total: number | null; background?: boolean };
+type Snapshot = { active: boolean; progress: number | undefined; single: number | undefined };
 const transfers = new Map<object | string, Transfer>();
 const preparations = new Set<{ downloading: boolean }>();
 const listeners = new Set<() => void>();
-let snapshot: Snapshot = { active: false, progress: undefined };
+let snapshot: Snapshot = { active: false, progress: undefined, single: undefined };
 function publish() {
-  const values = [...transfers.values()];
+  const all = [...transfers.values()], values = all.filter(value => !value.background);
   if (values.length) for (const preparation of preparations) preparation.downloading = true;
   const total = values.reduce((sum, value) => sum + (value.total ?? 0), 0);
-  const active = values.length > 0 || [...preparations].some(value => value.downloading);
+  // The full-screen Loading belongs to occasions that ask for it (a preparation or held screen);
+  // a transfer outside such an occasion only reports progress.
+  const active = [...preparations].some(value => value.downloading);
+  const latest = all[all.length - 1];
   snapshot = { active, progress: values.length && values.every(value => value.total !== null) && total > 0
     ? Math.min(1, values.reduce((sum, value) => sum + value.received, 0) / total)
-    : values.length ? undefined : active ? snapshot.progress : undefined };
+    : values.length ? undefined : active ? snapshot.progress : undefined,
+    single: latest?.total ? Math.min(1, latest.received / latest.total) : undefined };
   listeners.forEach(listener => listener());
 }
 export const downloadActivity = {
@@ -30,13 +35,14 @@ export const downloadActivity = {
   },
   subscribe(listener: () => void) { listeners.add(listener); return () => { listeners.delete(listener); }; },
   getSnapshot: () => snapshot,
-  begin() {
+  begin(options: { background?: boolean } = {}) {
     const key = {}; let ended = false;
-    transfers.set(key, { received: 0, total: null }); publish();
+    const background = options.background === true;
+    transfers.set(key, { received: 0, total: null, background }); publish();
     return {
       progress(received: number, total: number | null) {
         if (ended) return;
-        transfers.set(key, { received, total }); publish();
+        transfers.set(key, { received, total, background }); publish();
       },
       finish() { if (ended) return; ended = true; transfers.delete(key); publish(); },
     };

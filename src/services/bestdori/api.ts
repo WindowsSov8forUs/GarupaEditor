@@ -957,6 +957,8 @@ function rememberPrefetched(url: string, bytes: Uint8Array): void {
  * Background song-preview download: no download screen, and aborting the signal drops the
  * in-flight request. Resolves to null when aborted.
  */
+export function hasSongPreviewMedia(url: string): boolean { return prefetchedMedia.has(url); }
+
 export async function fetchSongPreviewMedia(url: string, hostScope: "bestdori" | "sonolus", signal: AbortSignal): Promise<Uint8Array | null> {
   const cached = prefetched(url);
   if (cached !== undefined) return cached;
@@ -971,14 +973,15 @@ export async function fetchSongPreviewMedia(url: string, hostScope: "bestdori" |
       bytes = encoded === null ? null : new Uint8Array(decodeBase64ToArrayBuffer(encoded));
     } finally { signal.removeEventListener("abort", cancel); }
   } else {
+    const activity = downloadActivity.begin({ background: true });
     try {
       const response = await fetch(url, { signal, cache: "no-store" });
       if (!response.ok) throw new Error(`song preview http status ${response.status}`);
-      bytes = new Uint8Array(await response.arrayBuffer());
+      bytes = new Uint8Array(await readDownloadBody(response, activity));
     } catch (error) {
       if (signal.aborted) return null;
       throw error;
-    }
+    } finally { activity.finish(); }
   }
   // A transfer that finished as it was superseded is still kept for a later selection or start.
   if (bytes !== null) rememberPrefetched(url, bytes);

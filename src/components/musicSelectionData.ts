@@ -1,4 +1,5 @@
-import { fetchBestdoriCommunityPostDetails, fetchSongPreviewMedia, resolveBestdoriCommunitySongResourceUrls,
+import { originalLoading } from "./originalLoadingState";
+import { fetchBestdoriCommunityPostDetails, fetchSongPreviewMedia, hasSongPreviewMedia, resolveBestdoriCommunitySongResourceUrls,
   resolveTestServerResourceUrl, type BestdoriPostSong } from "../services/bestdori/api";
 import { getOfficialMusicLibrary, type OfficialSong, type OfficialDifficulty } from "../services/officialMusicLibrary";
 
@@ -72,6 +73,17 @@ function communityAudioUrl(song: BestdoriSelectionEntry["song"]): Promise<string
 }
 
 /**
+ * Downloading a song's preview while browsing is the occasion of a missing jacket: a Spot-style
+ * on-demand download under NetworkIndicator with its single-transfer progress, no input block.
+ */
+async function downloadPreview(url: string, hostScope: "bestdori" | "sonolus", signal: AbortSignal): Promise<Uint8Array | null> {
+  if (hasSongPreviewMedia(url)) return fetchSongPreviewMedia(url, hostScope, signal);
+  const indicator = originalLoading.hold("network", {}, { downloadProgress: true });
+  try { return await fetchSongPreviewMedia(url, hostScope, signal); }
+  finally { indicator.release(); }
+}
+
+/**
  * Official songs play their chorus sample (BgmChorusId). Community and test charts have none, so
  * they play the chart's full audio from its start; that download is kept for the live start.
  */
@@ -88,10 +100,10 @@ export function musicPreviewRequest(entry: MusicSelectionEntry): MusicPreviewReq
   if (entry.source === "ayachan") {
     let url: string;
     try { url = resolveTestServerResourceUrl(entry.bgm); } catch { return null; }
-    return { key: `test:${url}`, read: signal => fetchSongPreviewMedia(url, "sonolus", signal) };
+    return { key: `test:${url}`, read: signal => downloadPreview(url, "sonolus", signal) };
   }
   return { key: `bestdori:${entry.id}`, read: async signal => {
     const url = await communityAudioUrl(entry.song);
-    return url === null || signal.aborted ? null : fetchSongPreviewMedia(url, "bestdori", signal);
+    return url === null || signal.aborted ? null : downloadPreview(url, "bestdori", signal);
   } };
 }

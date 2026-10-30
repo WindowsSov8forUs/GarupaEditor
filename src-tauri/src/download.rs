@@ -5,7 +5,7 @@ use std::sync::{Mutex, OnceLock};
 use tauri::Emitter;
 
 #[derive(Clone, serde::Serialize)]
-pub struct Transfer { received: u64, total: Option<u64> }
+pub struct Transfer { received: u64, total: Option<u64>, background: bool }
 #[derive(Clone, Default, serde::Serialize)]
 pub struct DownloadSnapshot { revision: u64, transfers: BTreeMap<u64, Transfer> }
 static ACTIVITY: Mutex<DownloadSnapshot> = Mutex::new(DownloadSnapshot { revision: 0, transfers: BTreeMap::new() });
@@ -18,18 +18,22 @@ fn activity_change(change: impl FnOnce(&mut DownloadSnapshot)) {
         change(&mut state); state.revision += 1; state.clone() };
     if let Some(app) = APP.get() { let _ = app.emit("application-downloads", value); }
 }
-pub(super) struct ActiveTransfer { id: u64, last: std::time::Instant }
+pub(super) struct ActiveTransfer { id: u64, last: std::time::Instant, background: bool }
 impl ActiveTransfer {
-    pub(super) fn begin() -> Self {
+    pub(super) fn begin() -> Self { Self::start(false) }
+    /// Reports progress for indicators the caller holds; never opens the download screen.
+    pub(super) fn begin_background() -> Self { Self::start(true) }
+    fn start(background: bool) -> Self {
         static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
         let id = NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-        activity_change(|s| { s.transfers.insert(id, Transfer { received: 0, total: None }); });
-        Self { id, last: std::time::Instant::now() }
+        activity_change(|s| { s.transfers.insert(id, Transfer { received: 0, total: None, background }); });
+        Self { id, last: std::time::Instant::now(), background }
     }
     pub(super) fn progress(&mut self, received: u64, total: Option<u64>) {
         if received != 0 && Some(received) != total && self.last.elapsed() < Duration::from_millis(50) { return; }
         self.last = std::time::Instant::now();
-        activity_change(|s| { s.transfers.insert(self.id, Transfer { received, total }); });
+        let background = self.background;
+        activity_change(|s| { s.transfers.insert(self.id, Transfer { received, total, background }); });
     }
 }
 impl Drop for ActiveTransfer { fn drop(&mut self) { activity_change(|s| { s.transfers.remove(&self.id); }); } }
@@ -96,21 +100,21 @@ pub async fn get<W: Write>(
     destination: impl FnMut() -> std::io::Result<W>,
     progress: impl FnMut(u64, Option<u64>),
 ) -> Result<W, DownloadError> {
-    receive(client, url, cookie, destination, progress, false, true).await
+    receive(client, url, cookie, destination, progress, false, true, false).await
 }
 
-/// A background transfer: it does not open the application's download screen.
+/// A background transfer: it reports progress but does not open the application's download screen.
 pub async fn get_untracked<W: Write>(
     client: &reqwest::Client,
     url: &str,
     cookie: Option<&str>,
     destination: impl FnMut() -> std::io::Result<W>,
 ) -> Result<W, DownloadError> {
-    receive(client, url, cookie, destination, |_, _| {}, false, false).await
+    receive(client, url, cookie, destination, |_, _| {}, false, true, true).await
 }
 
 pub async fn probe(client: &reqwest::Client, url: &str, cookie: Option<&str>) -> Result<bool, String> {
-    match receive(client, url, cookie, || Ok(std::io::sink()), |_, _| {}, true, true).await {
+    match receive(client, url, cookie, || Ok(std::io::sink()), |_, _| {}, true, true, false).await {
         Ok(_) => Ok(true),
         Err(error) if error.status.is_some() => Ok(false),
         Err(error) => Err(error.message),
@@ -125,8 +129,9 @@ async fn receive<W: Write>(
     mut progress: impl FnMut(u64, Option<u64>),
     headers_only: bool,
     track: bool,
+    background: bool,
 ) -> Result<W, DownloadError> {
-    let mut activity = track.then(ActiveTransfer::begin);
+    let mut activity = track.then(|| if background { ActiveTransfer::begin_background() } else { ActiveTransfer::begin() });
     for attempt in 1..=ATTEMPTS {
         if let Some(activity) = activity.as_mut() { activity.progress(0, None); }
         let result = async {

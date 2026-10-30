@@ -1,6 +1,5 @@
 import { Component, createContext, useContext, useLayoutEffect, useMemo, useRef, type ReactNode } from "react";
 import { originalLoading } from "./originalLoadingState";
-import { downloadActivity } from "../services/downloadActivity";
 
 type Preparation = { report(owner: object, pending: boolean, error?: unknown): void; remove(owner: object): void };
 const Context = createContext<Preparation | null>(null);
@@ -44,9 +43,10 @@ export function PagePreparation({ children, onReady, onError }: {
     };
     return { api, start() {
       alive = true;
-      const indicator = originalLoading.hold("network", {});
-      const endDownload = downloadActivity.prepare();
-      release = () => { indicator.release(); endDownload(); };
+      // Pushing a page shows no loading layer of its own; what it waits for (API checks, a missing
+      // asset's Spot download) is the NetworkIndicator, with the download's own progress.
+      const indicator = originalLoading.hold("network", {}, { downloadProgress: true });
+      release = () => { indicator.release(); };
       schedule();
     },
       stop() { alive = false; cancelAnimationFrame(frame); release?.(); } };

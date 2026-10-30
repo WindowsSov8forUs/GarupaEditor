@@ -492,7 +492,8 @@ export function MusicSelectionPage({ source, onSourceChange: setSource, onLoad, 
   }, [source, ayachanFilter.id, ayachanRevision, ayachanSession]);
   useLayoutEffect(() => { if (source === "bestdori") bestdoriSession.updateFilter(filter); }, [source, filter, bestdoriSession]);
   useLayoutEffect(() => { if (source === "ayachan") ayachanSession.updateFilter(ayachanFilter); }, [source, ayachanFilter, ayachanSession]);
-  useEffect(() => { if (search.loading) return originalLoading.hold("network", {}).release; }, [search.loading]);
+  // A list query is an API call: NetworkIndicator dots with its collider blocking input.
+  useEffect(() => { if (search.loading) return originalLoading.hold("network", {}, { blockInput: true }).release; }, [search.loading]);
   const [error, setError] = useState("");
   const [searchError, setSearchError] = useState("");
   useEffect(() => { setSearchError(!pageVisible || search.loading ? "" : search.error); }, [source, search.loading, search.error, pageVisible]);
