@@ -268,7 +268,7 @@ export class PauseControlSceneOwner {
     commands: Array<PauseControlCommand | RehearsalControlCommand>,
   ): SimulatorResult<void> {
     if (this.state === "resume-countdown") return ok(undefined);
-    const target = this.targetAt(touch.position, layout);
+    const target = this.targetAt(touch.position, layout, controlState.mode);
     if (touch.phase === ManualTouchPhase.Began) {
       this.buttons.press(touch.fingerId, target);
       return ok(undefined);
@@ -305,7 +305,8 @@ export class PauseControlSceneOwner {
     return ok(undefined);
   }
 
-  private targetAt(position: Readonly<{ x: number; y: number }>, layout: PauseControlLayout): PressTarget | null {
+  private targetAt(position: Readonly<{ x: number; y: number }>, layout: PauseControlLayout,
+    mode: SimulatorTimelineControlState["mode"]): PressTarget | null {
     const topLeft = { x: position.x, y: Math.fround(layout.viewportHeight - position.y) };
     if (this.state === "pause-menu") {
       if (containsSerializedButton(topLeft, layout.pauseMenu.abortBoundsTopLeft)) return "abort";
@@ -314,7 +315,10 @@ export class PauseControlSceneOwner {
       return null;
     }
     if (this.state === "retry-confirm" || this.state === "abort-confirm") {
-      const confirmation = this.state === "retry-confirm" ? layout.retryConfirmation : layout.abortConfirmation;
+      // Practice retires through the plain SelectableCommonDialog (RhythmGameRetireAnnotatedDialog is
+      // chosen only when isEnablePractice is false), the same template as the Retry confirmation.
+      const confirmation = this.state === "retry-confirm" || mode.sessionMode === "rehearsal"
+        ? layout.retryConfirmation : layout.abortConfirmation;
       if (containsSerializedButton(topLeft, confirmation.cancelBoundsTopLeft)) return "cancel";
       if (containsSerializedButton(topLeft, confirmation.confirmBoundsTopLeft)) return "confirm";
     }

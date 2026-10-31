@@ -2678,6 +2678,15 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
         snapshot.words.retry.buttons,
         null,
       );
+    } else if (snapshot.mode.sessionMode === "rehearsal") {
+      // Practice retires through the plain SelectableCommonDialog without the reward annotation.
+      this.buildSerializedDialog(
+        graph, snapshot, CURRENT_PAUSE_SERIALIZED_GRAPHS.selectable,
+        CURRENT_PAUSE_CONFIRMATION_COMPONENT_PATHS.retry,
+        snapshot.words.abort.title, snapshot.words.abort.message,
+        snapshot.words.abort.buttons,
+        null,
+      );
     } else {
       this.buildSerializedDialog(
         graph, snapshot, CURRENT_PAUSE_SERIALIZED_GRAPHS.annotated,
