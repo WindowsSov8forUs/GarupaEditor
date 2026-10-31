@@ -1,5 +1,5 @@
 import type { ResourceSnapshotId } from "../../resources/contracts";
-import type { SimulatorLaunchConfig } from "../../simulator/public/contracts";
+import type { SimulatorLaunchConfig, SimulatorModuleCloseReason } from "../../simulator/public/contracts";
 
 export const SIMULATOR_WINDOW_READY_EVENT = "simulator:ready";
 export const SIMULATOR_WINDOW_PAYLOAD_EVENT = "simulator:payload";
@@ -68,9 +68,15 @@ export interface SimulatorWindowPayloadEnvelope {
   readonly descriptor: SimulatorLaunchTransportDescriptor;
 }
 
+/** Where the opener goes when the live ends: leave the preparation, return to it for
+ * もう1回ライブ, or stay on it after a launch that never ran. */
+export type SimulatorWindowExit = "leave" | "play-again" | "failed";
+
 export interface SimulatorWindowClosedPayload {
   readonly requestId: string;
   readonly status: "closed" | "rejected";
+  /** "play-again" returns to the same live preparation; null for rejected launches. */
+  readonly reason: SimulatorModuleCloseReason | null;
   readonly capability: string | null;
   readonly boundary: string | null;
 }

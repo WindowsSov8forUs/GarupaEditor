@@ -127,6 +127,7 @@ export interface SimulatorModuleLaunchRequest {
 
 export type SimulatorModuleCloseReason =
   | "completed"
+  | "play-again"
   | "game-over"
   | "user-closed"
   | "terminal-fault";

@@ -5,7 +5,7 @@ import { editorNoteHeight, editorDirectionalSegmentWidth } from "../../app/edito
 import { OriginalMenuBackground } from "../OriginalMenuBackground";
 import { useApplicationPresentation, useReturnToTitle } from "../../app/titleNavigation";
 import { useStartupReadiness } from "../../app/startupReadiness";
-import { EDITOR_STACK, HOME_STACK, openDetailPage, popPage, pushPage, returnToPage, topPage, type AppPage, type PageStack } from "./pageStack";
+import { EDITOR_STACK, HOME_STACK, leaveLivePreparation, openDetailPage, popPage, pushPage, returnToPage, topPage, type AppPage, type PageStack } from "./pageStack";
 import { AppSettingsModal } from "../AppSettingsModal";
 import { OriginalUiSoundProvider } from "../OriginalUiSound";
 import { BestdoriLoginModal } from "../BestdoriLoginModal";
@@ -21,6 +21,7 @@ import type { MusicPreviewRequest } from "../musicSelectionData";
 import songDetailSource from "../../data/originalSongDetailProfile.json";
 import { songHasSpecialNotes } from "../songNoteStatistics";
 import { SIMULATOR_PRE_ADAPTATION_DEFAULTS, type SimulatorModeSelection } from "../../app/simulator/preAdaptationContract";
+import type { SimulatorWindowExit } from "../../app/simulator/transportContracts";
 import { OriginalPageSwitch } from "../OriginalPageSwitch";
 import { LiveSelectionPage } from "../LiveSelectionPage";
 import { MusicSelectionPage } from "../MusicSelectionPage";
@@ -270,12 +271,18 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     setPlaySelection(null); loadedPlay.current = null;
     vm.endPlaySession();
   }, [musicSelectionOpen, vm.endPlaySession]);
+  // もう1回ライブ comes back to this preparation and PlaySampleMusic restarts the sample from its
+  // start before PushUIScreen(43); a launch that never ran stays here with the sample as well.
+  const endLive = (exit: SimulatorWindowExit) => {
+    if (exit === "leave") setPageStack(leaveLivePreparation);
+    else setPreviewStopped(false);
+  };
   // Launch from the render that holds the chart just loaded for play.
   useEffect(() => {
     const pending = pendingLaunch.current;
     if (pending === null) return;
     pendingLaunch.current = null;
-    void openSimulatorWindow(pending.mode).finally(pending.done);
+    void openSimulatorWindow(pending.mode, endLive).finally(pending.done);
   }, [launchRevision]);
   const startLive = async (mode: SimulatorModeSelection) => {
     const selection = playSelection;
@@ -288,7 +295,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     // gameplay surface is presented; transfers add the download gauge.
     const releaseLoading = downloadActivity.holdScreen();
     try {
-      if (selection === null) return await openSimulatorWindow(mode);
+      if (selection === null) return await openSimulatorWindow(mode, endLive);
       if (loadedPlay.current?.key !== key || needsMv) {
         await vm.beginPlaySession();
         const progress = { progress: () => {} };

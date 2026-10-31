@@ -223,6 +223,7 @@ function BuiltInSimulatorWindow() {
     await emit(SIMULATOR_WINDOW_CLOSED_EVENT, {
       requestId,
       status: transportFailure === null ? "closed" : "rejected",
+      reason: transportFailure === null ? "user-closed" : null,
       capability: transportFailure === null ? null : "app.simulator.transport-failed",
       boundary: transportFailure,
     });

@@ -27,6 +27,14 @@ export function popPage(stack: PageStack): PageStack {
   return stack.length > 1 ? stack.slice(0, -1) : stack;
 }
 
+/** A finished live leaves preparation for the song list it was chosen from, otherwise for the
+ * editor; the original's Home exit is replaced by the page the player came from. */
+export function leaveLivePreparation(stack: PageStack): PageStack {
+  if (topPage(stack) !== "live") return stack;
+  if (stack.includes("search")) return returnToPage(stack, "search");
+  return stack.includes("editor") ? returnToPage(stack, "editor") : popPage(stack);
+}
+
 /** Returns to a page still shown (a cancelled or failed preparation keeps the visible one). */
 export function returnToPage(stack: PageStack, page: AppPage): PageStack {
   const index = stack.lastIndexOf(page);

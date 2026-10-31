@@ -165,6 +165,7 @@ import {
   SIMULATOR_WINDOW_PAYLOAD_EVENT,
   SIMULATOR_WINDOW_READY_EVENT,
   type SimulatorWindowClosedPayload,
+  type SimulatorWindowExit,
   type SimulatorWindowReadyPayload,
 } from "./simulator/transportContracts";
 import {
@@ -5844,8 +5845,15 @@ function ChartEditorController() {
     updatePreviewLoadingProgress,
   ]);
 
-  const openSimulatorWindow = useCallback(async (mode: SimulatorModeSelection = SIMULATOR_PRE_ADAPTATION_DEFAULTS) => {
+  const openSimulatorWindow = useCallback(async (mode: SimulatorModeSelection = SIMULATOR_PRE_ADAPTATION_DEFAULTS,
+    onExit?: (exit: SimulatorWindowExit) => void) => {
     appLog("info", "editor.window.request", { kind: "openSimulatorWindow", sessionMode: mode.sessionMode, inputMode: mode.inputMode });
+    let exited = false;
+    const exit = (value: SimulatorWindowExit) => {
+      if (exited) return;
+      exited = true;
+      onExit?.(value);
+    };
     let releasePreparation: (() => void) | undefined;
     let readyUnlisten: UnlistenFn | null = null;
     let closedUnlisten: UnlistenFn | null = null;
@@ -5881,6 +5889,7 @@ function ChartEditorController() {
     const fail = (error: unknown) => {
       if (abandoned) return;
       abandon();
+      exit("failed");
       const message = error instanceof Error ? error.message : String(error);
       setStatusMessage(`播放器窗口启动失败：${message}`);
       if (simulatorWindow !== null) void simulatorWindow.close().catch((closeError: unknown) => {
@@ -5906,6 +5915,7 @@ function ChartEditorController() {
       closedUnlisten = await listen<SimulatorWindowClosedPayload>(SIMULATOR_WINDOW_CLOSED_EVENT, (event) => {
         if (event.payload?.requestId !== requestId) return;
         abandon();
+        exit(event.payload.status === "rejected" ? "failed" : event.payload.reason === "play-again" ? "play-again" : "leave");
         if (event.payload.status === "rejected") {
           const capability = event.payload.capability ?? "app.simulator.action-unavailable";
           const boundary = event.payload.boundary?.trim() ?? "当前播放器动作不可用，编辑器状态未改变。";
@@ -5932,7 +5942,8 @@ function ChartEditorController() {
         void simulatorWindow.once("tauri://error", (event) => {
           fail(event?.payload ? JSON.stringify(event.payload) : "播放器窗口创建失败");
         });
-        void simulatorWindow.once("tauri://destroyed", abandon);
+        // Closing the window from the system frame retires the live like the Pause menu.
+        void simulatorWindow.once("tauri://destroyed", () => { abandon(); exit("leave"); });
         timeoutId = window.setTimeout(() => {
           if (readyLabel === null && !abandoned) fail("播放器窗口握手超时，请重试。");
         }, 15000);
