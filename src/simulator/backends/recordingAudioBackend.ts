@@ -281,13 +281,15 @@ export class RecordingSimulatorAudioBackend implements SimulatorAudioBackend {
         "MoveTime audio publication requires one loaded BGM and a non-negative integer millisecond target.",
       );
     }
-    return this.execute({
+    // MusicManager.LoadMusic: PlayBGM at the target, then Pause(true) until the countdown resumes it.
+    const loaded = this.execute({
       kind: "bgm.move-time-load",
       cue: this.semantic.bgmCue,
       seek_ms: seekMilliseconds,
       priority: 255,
       fade_bits: "0x00000000",
     });
+    return loaded.status === "accepted" ? this.execute({ kind: "bgm.pause" }) : loaded;
   }
 
   notifyBgmNaturalEnd(): AudioOperationResult<void> {

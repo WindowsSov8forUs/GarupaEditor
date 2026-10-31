@@ -265,6 +265,10 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
   resume(): SimulatorAssemblyResult<void> {
     return this.apply(() => this.engine.resume());
   }
+
+  resumeFromMoveTime(): SimulatorAssemblyResult<void> {
+    return this.apply(() => this.engine.resumeFromMoveTime());
+  }
   playUiDecisionSound(): SimulatorAssemblyResult<void> {
     return this.apply(() => this.engine.playUiDecisionSound());
   }

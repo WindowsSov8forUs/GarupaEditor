@@ -57,6 +57,9 @@ export interface InGamePlaybackState {
   readonly hudAlpha: number;
   readonly singleGameOver: boolean;
   readonly startupScene: StartupDirectionSnapshot["scene"] | null;
+  /** MoveTimeWaitForPlay (15) waits for the countdown; MoveTimeFinished (16) and the following
+   * PlayingNone (4) resume to PlayingSound. */
+  readonly moveTimePhase: "none" | "waiting" | "resuming";
 }
 
 export interface InGameManagerSnapshot extends EngineLifecycleSnapshot {
@@ -88,6 +91,9 @@ export class InGameManager {
   private faultValue: SimulatorIntegrityFailure | null = null;
   private habahiroLanePhase: "idle" | "playing-before-change" | "playing-after-change" | "complete" = "idle";
   private habahiroFlashElapsed = Math.fround(0);
+  /** onResumeFromMoveTime writes 16 inside the countdown's animation event, after this frame's
+   * ExecUpdate; the following ExecUpdate writes 4. */
+  private moveTimeResumeWrittenThisFrame = false;
 
   constructor(
     readonly musicScoreController: InGameMusicScoreController,
@@ -219,24 +225,69 @@ export class InGameManager {
   }
 
   execMoveTimeStep(deltaTimeSeconds: number): SimulatorResult<void> {
+    const entry = this.currentGameStateValue;
     if (this.lifecycleState !== "initialized" ||
-      this.currentGameStateValue !== GameState.PlayingSound ||
+      (entry !== GameState.PlayingSound && entry !== GameState.MoveTimeWaitForPlay) ||
       this.noteManager.inGameCalculatedData.mode.sessionMode !== "rehearsal") {
       return integrityFailure(
         "timeline.movetime.invalid-step-state",
-        "MoveTime advances only an initialized Rehearsal PlayingSound reconstruction.",
+        "MoveTime advances only an initialized Rehearsal in PlayingSound or an earlier MoveTime's countdown.",
       );
     }
     this.currentGameStateValue = GameState.MoveTime;
     try {
       // InputManager excludes state 14; note owners select forcePerfect.
-      return this.execUpdate(deltaTimeSeconds);
+      return this.execUpdateFrame(deltaTimeSeconds);
     } finally {
-      this.currentGameStateValue = GameState.PlayingSound;
+      this.currentGameStateValue = entry;
     }
   }
 
+  /** moveTimeToStartMusic sets MoveTimeWaitForPlay after its resets and LoadMusic; a MoveTime
+   * pressed during the countdown restarts it. */
+  enterMoveTimeWait(): SimulatorResult<void> {
+    if (this.faultValue !== null) return this.faultValue;
+    if (this.lifecycleState !== "initialized" ||
+      (this.currentGameStateValue !== GameState.PlayingSound &&
+        this.currentGameStateValue !== GameState.MoveTimeWaitForPlay)) {
+      return integrityFailure(
+        "timeline.movetime.invalid-wait-state",
+        "Only a MoveTime from PlayingSound or an earlier countdown waits for the countdown.",
+      );
+    }
+    this.currentGameStateValue = GameState.MoveTimeWaitForPlay;
+    this.moveTimeResumeWrittenThisFrame = false;
+    return ok(undefined);
+  }
+
+  /** onResumeFromMoveTime: the countdown's 1.4 s event writes 16 and starts the one-second
+   * ImmortalityTimer before 16 -> 4 -> 5. */
+  resumeFromMoveTime(): SimulatorResult<void> {
+    if (this.faultValue !== null) return this.faultValue;
+    if (this.lifecycleState !== "initialized" || this.currentGameStateValue !== GameState.MoveTimeWaitForPlay) {
+      return integrityFailure(
+        "timeline.movetime.resume-outside-wait",
+        "The countdown resumes only the MoveTime that is waiting for it.",
+      );
+    }
+    this.currentGameStateValue = GameState.MoveTimeFinished;
+    this.moveTimeResumeWrittenThisFrame = true;
+    this.scoreLifeStateManager?.startMoveTimeImmortality();
+    return ok(undefined);
+  }
+
   execUpdate(deltaTimeSeconds: number): SimulatorResult<void> {
+    const waitingForCountdown = this.currentGameStateValue === GameState.MoveTimeWaitForPlay;
+    const updated = this.execUpdateFrame(deltaTimeSeconds);
+    // The ImmortalityTimer coroutine subtracts Time.deltaTime once when started and then once per
+    // frame; a MoveTime's reset stops it until the next countdown restarts it.
+    if (updated.status === "ok" && !waitingForCountdown) {
+      this.scoreLifeStateManager?.advanceImmortality(deltaTimeSeconds);
+    }
+    return updated;
+  }
+
+  private execUpdateFrame(deltaTimeSeconds: number): SimulatorResult<void> {
     if (this.faultValue !== null) {
       return this.faultValue;
     }
@@ -259,6 +310,25 @@ export class InGameManager {
       enteredPlayingSound = true;
     }
     if (!enteredPlayingSound) this.startupDirection?.advancePlayablePresentation(deltaTimeSeconds);
+    // ExecUpdate bypasses updatePlayState in 15 and only writes 4 in 16.
+    if (this.currentGameStateValue === GameState.MoveTimeWaitForPlay) {
+      return this.advanceMoveTimeWaitPresentation(deltaTimeSeconds);
+    }
+    if (this.currentGameStateValue === GameState.MoveTimeFinished) {
+      if (this.moveTimeResumeWrittenThisFrame) this.moveTimeResumeWrittenThisFrame = false;
+      else this.currentGameStateValue = GameState.PlayingNone;
+      return this.advanceMoveTimeWaitPresentation(deltaTimeSeconds);
+    }
+    if (this.currentGameStateValue === GameState.PlayingNone && this.isStartupPlayable()) {
+      // updatePlayingSound writes 5 and PlayMusic resumes the BGM in the same update.
+      const music = this.audioProducer?.preflightMoveTimeMusicStart() ?? null;
+      if (music !== null && music.status !== "ok") return this.latchFault(music);
+      if (music !== null) {
+        const committed = music.value.commit();
+        if (committed.status !== "ok") return this.latchFault(committed);
+      }
+      this.currentGameStateValue = GameState.PlayingSound;
+    }
     if (this.currentGameStateValue === GameState.PauseNone) {
       return this.advancePausedPresentation(deltaTimeSeconds);
     }
@@ -696,6 +766,17 @@ export class InGameManager {
     return ok(undefined);
   }
 
+  private isStartupPlayable(): boolean {
+    return this.startupDirection === null || this.startupDirection.snapshot().playable;
+  }
+
+  /** Outside updatePlayState only note animators and particle systems keep running. */
+  private advanceMoveTimeWaitPresentation(deltaTimeSeconds: number): SimulatorResult<void> {
+    const animated = this.noteManager.advanceNoteAnimations(deltaTimeSeconds);
+    if (animated.status !== "ok") return this.latchFault(animated);
+    return this.commitParticleAdvance(deltaTimeSeconds, false);
+  }
+
   private advancePausedPresentation(deltaTimeSeconds: number): SimulatorResult<void> {
     const animated = this.noteManager.advanceNoteAnimations(deltaTimeSeconds);
     if (animated.status !== "ok") return this.latchFault(animated);
@@ -758,7 +839,11 @@ export class InGameManager {
       startupPlayable: startup?.playable ?? true, gameplayBlocked,
       hudAlpha: startup?.hudAlpha ?? (playable ? 1 : 0),
       singleGameOver: this.scoreLifeStateManager?.record.singleGameOver === true,
-      startupScene: startup?.scene ?? null };
+      startupScene: startup?.scene ?? null,
+      moveTimePhase: this.currentGameStateValue === GameState.MoveTimeWaitForPlay ? "waiting"
+        : this.currentGameStateValue === GameState.MoveTimeFinished ||
+          (this.currentGameStateValue === GameState.PlayingNone && (startup?.playable ?? true)) ? "resuming"
+          : "none" };
   }
 
   snapshot(): InGameManagerSnapshot {

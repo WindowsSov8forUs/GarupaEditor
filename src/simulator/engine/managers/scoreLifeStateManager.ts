@@ -80,6 +80,8 @@ export class ScoreLifeStateManager {
   private lastReflectBatchValue: ScoreLifeReflectBatch | null = null;
   private pendingReflect: PendingScoreLifeReflect | null = null;
   private timelineRevisionValue = 0;
+  /** InGameManager.ImmortalityTimer: while positive, AddIPower drops negative life deltas. */
+  private immortalitySecondsValue = Math.fround(0);
 
   private constructor(
     profile: ScoreLifeStateProfile,
@@ -215,7 +217,9 @@ export class ScoreLifeStateManager {
       stagedConsumed.add(unit.id);
       stagedRecord.addCombo(entry.addCombo);
       stagedRecord.addScore(business.addScore);
-      const lifeDelta = stagedRecord.addLife(business.addPower);
+      const lifeDelta = stagedRecord.addLife(
+        this.immortalitySecondsValue > 0 && business.addPower < 0 ? 0 : business.addPower,
+      );
       stagedRecord.incrementResult(business.adjustedResult, entry.judgeTiming);
       stagedRecord.updateOneNoteMax(business.addScore);
       totalScore = addInt32(totalScore, business.addScore);
@@ -320,6 +324,17 @@ export class ScoreLifeStateManager {
       "score-life.continue-excluded",
       "Premium-currency Continue remains outside the portable contract and performs no mutation.",
     );
+  }
+
+  /** onResumeFromMoveTime starts the one-second timer; Miss and Combo still apply. */
+  startMoveTimeImmortality(): void {
+    this.immortalitySecondsValue = Math.fround(1);
+  }
+
+  advanceImmortality(deltaTimeSeconds: number): void {
+    if (this.immortalitySecondsValue > 0) {
+      this.immortalitySecondsValue = Math.fround(this.immortalitySecondsValue - deltaTimeSeconds);
+    }
   }
 
   snapshot(): ScoreLifeStateSnapshot {

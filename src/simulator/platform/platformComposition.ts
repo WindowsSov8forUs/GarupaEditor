@@ -1,4 +1,5 @@
 import { Container } from "pixi.js";
+import { GameState } from "../engine/data/inGameState";
 import { StartupDirectionController } from "../engine/managers/startupDirectionController";
 import { BrowserAudioResourcePreflightAdapter } from "../backends/audio/browserAudioResourcePreflightAdapter";
 import { WebAudioSimulatorBackend } from "../backends/audio/webAudioBackend";
@@ -785,7 +786,10 @@ class MountedSimulatorEngine implements SimulatorEngine {
   step(deltaTimeSeconds: number, inputFrame?: ManualInputFrame): SimulatorResult<void> {
     const before = this.engine.getPlaybackState();
     if (before.status !== "ok") return before;
-    const wasPlayable = before.value.playable;
+    // The MoveTime countdown (15, 16) holds InGameSec; PlayingNone after it advances with 5.
+    const wasPlayable = before.value.playable &&
+      before.value.currentGameState !== GameState.MoveTimeWaitForPlay &&
+      before.value.currentGameState !== GameState.MoveTimeFinished;
     const stepped = this.engine.step(deltaTimeSeconds, inputFrame);
     if (stepped.status !== "ok") return stepped;
     const startup = this.applyStartupSnapshot();

@@ -20,7 +20,7 @@ export type PauseControlState =
   | "abort-confirm"
   | "resume-countdown";
 
-export type PauseControlCommandKind = "pause" | "resume" | "retry" | "abort" | "ui-decide";
+export type PauseControlCommandKind = "pause" | "resume" | "retry" | "abort" | "ui-decide" | "move-time-resume";
 export interface PauseControlCommand {
   readonly kind: PauseControlCommandKind;
   readonly capability: object;
@@ -73,6 +73,8 @@ export interface PauseControlSceneSnapshot {
   readonly layout: PauseControlLayout;
   readonly resumeCountdownSecondsRemaining: number | null;
   readonly resumeCountdownElapsedSeconds: number | null;
+  /** ResumeCountDownOneSecAnimation after a MoveTime, until its Animator stops at 1.9 s. */
+  readonly moveTimeCountdown: Readonly<{ elapsedSeconds: number; returned: boolean }> | null;
   readonly pressedButtons: readonly string[];
   readonly words: typeof VISIBLE_WORDS;
 }
@@ -84,6 +86,10 @@ export interface PauseControlRouteResult {
 }
 
 const RESUME_COUNTDOWN_SECONDS = Math.fround(3);
+// ResumeCountDownOneSecAnimamtion events: onFinishRhythmGameStartCountDownAnimation resumes,
+// onFinishRhythmGameStartCountDownAnimationPerfectly disables the Animator.
+const MOVE_TIME_RESUME_EVENT_SECONDS = Math.fround(1.399999976158142);
+const MOVE_TIME_COUNTDOWN_END_SECONDS = Math.fround(1.899999976158142);
 const PAUSE_LOCAL_X = Math.fround(-42);
 const PAUSE_LOCAL_Y = Math.fround(-54);
 const PAUSE_WIDTH = Math.fround(68);
@@ -131,6 +137,7 @@ export class PauseControlSceneOwner {
   private state: PauseControlState = "playing";
   private countdown = Math.fround(0);
   private countdownStartedAt: number | null = null;
+  private moveTimeCountdown: { count: number; startedAt: number; returned: boolean; resumed: boolean } | null = null;
   private presentationSeconds = 0;
   private readonly buttons = new SerializedButtonInput<PressTarget>();
   private disposed = false;
@@ -156,7 +163,23 @@ export class PauseControlSceneOwner {
     const touches = manualFrame?.touches ?? [];
     const gameplay: ManualInputTouch[] = [];
 
-    if (hardwareBack) {
+    // PlayOneSecCountdownAnimation starts on the coroutine step after the MoveTime; a MoveTime
+    // pressed during the countdown replays the clip from its start.
+    if (controlState.moveTimeWaiting && this.moveTimeCountdown?.count !== controlState.moveTimeCount) {
+      this.moveTimeCountdown = { count: controlState.moveTimeCount, startedAt: this.presentationSeconds,
+        returned: controlState.moveTimeReturned, resumed: false };
+    }
+    if (this.moveTimeCountdown !== null) {
+      const elapsed = this.presentationSeconds - this.moveTimeCountdown.startedAt;
+      if (!this.moveTimeCountdown.resumed && controlState.moveTimeWaiting && elapsed >= MOVE_TIME_RESUME_EVENT_SECONDS) {
+        commands.push(issue("move-time-resume", controlState.mode, layout.surfaceRevision));
+        this.moveTimeCountdown.resumed = true;
+      }
+      if (elapsed >= MOVE_TIME_COUNTDOWN_END_SECONDS) this.moveTimeCountdown = null;
+    }
+    const moveTimeHeld = controlState.moveTimeWaiting || controlState.moveTimeInProgress;
+
+    if (hardwareBack && !moveTimeHeld) {
       if (this.state === "playing" && controlState.playable && !controlState.paused && !controlState.moveTimeInProgress) {
         commands.push(issue("pause", controlState.mode, layout.surfaceRevision));
         this.state = "pause-menu";
@@ -193,7 +216,8 @@ export class PauseControlSceneOwner {
       if (!controlState.playable || controlState.paused || controlState.moveTimeInProgress) {
         continue;
       }
-      if (touch.phase === ManualTouchPhase.Began && insideCircle(touch.position, layout.pause)) {
+      // In MoveTimeWaitForPlay ExecInput only checks the MoveTime buttons.
+      if (!controlState.moveTimeWaiting && touch.phase === ManualTouchPhase.Began && insideCircle(touch.position, layout.pause)) {
         commands.push(issue("pause", controlState.mode, layout.surfaceRevision));
         this.state = "pause-menu";
         this.buttons.clear();
@@ -211,7 +235,7 @@ export class PauseControlSceneOwner {
         commands.push(rehearsal.value);
         continue;
       }
-      if (controlState.mode.inputMode === "manual") gameplay.push(touch);
+      if (controlState.mode.inputMode === "manual" && !controlState.moveTimeWaiting) gameplay.push(touch);
     }
 
     const filtered = manualFrame === null
@@ -249,6 +273,10 @@ export class PauseControlSceneOwner {
       layout,
       resumeCountdownSecondsRemaining: this.state === "resume-countdown" ? this.countdown : null,
       resumeCountdownElapsedSeconds: this.countdownStartedAt === null ? null : this.presentationSeconds - this.countdownStartedAt,
+      moveTimeCountdown: this.moveTimeCountdown === null ? null : {
+        elapsedSeconds: this.presentationSeconds - this.moveTimeCountdown.startedAt,
+        returned: this.moveTimeCountdown.returned,
+      },
       pressedButtons: Object.freeze(this.buttons.pressedTargets),
       words: VISIBLE_WORDS,
     });
@@ -402,14 +430,16 @@ export function consumePauseControlCommand(
   surface: SimulatorSurfaceState,
 ): SimulatorResult<PauseControlCommandKind> {
   if (command === null || typeof command !== "object" ||
-    !["pause", "resume", "retry", "abort", "ui-decide"].includes(command.kind) ||
+    !["pause", "resume", "retry", "abort", "ui-decide", "move-time-resume"].includes(command.kind) ||
     command.capability === null || typeof command.capability !== "object") {
     return integrityFailure("pause.control.invalid-command", "Only opaque one-use Pause scene commands are accepted.");
   }
   const issued = issuedCommands.get(command.capability);
-  const expectedPaused = command.kind !== "pause";
+  const moveTimeResume = command.kind === "move-time-resume";
+  const expectedPaused = command.kind !== "pause" && !moveTimeResume;
   if (issued === undefined || issued.consumed || issued.kind !== command.kind || issued.mode !== state.mode ||
-    issued.surfaceRevision !== surface.revision || !state.playable || state.paused !== expectedPaused || state.moveTimeInProgress) {
+    issued.surfaceRevision !== surface.revision || !state.playable || state.paused !== expectedPaused || state.moveTimeInProgress ||
+    state.moveTimeWaiting !== moveTimeResume) {
     return integrityFailure(
       "pause.control.foreign-stale-or-state-mismatched-command",
       "Pause command identity, canonical mode, initial surface, playable state and paused transition must still match at consumption.",
@@ -433,6 +463,7 @@ function validControlState(value: unknown): value is SimulatorTimelineControlSta
   if (value === null || typeof value !== "object") return false;
   const state = value as SimulatorTimelineControlState;
   return typeof state.playable === "boolean" && typeof state.paused === "boolean" && typeof state.moveTimeInProgress === "boolean" &&
+    typeof state.moveTimeWaiting === "boolean" && Number.isSafeInteger(state.moveTimeCount) && typeof state.moveTimeReturned === "boolean" &&
     Number.isFinite(state.timelineSeconds) && state.timelineSeconds >= 0 &&
     (state.hudAlpha === undefined || Number.isFinite(state.hudAlpha) && state.hudAlpha >= 0 && state.hudAlpha <= 1 && Math.fround(state.hudAlpha) === state.hudAlpha) &&
     (state.terminalPresentationActive === undefined || typeof state.terminalPresentationActive === "boolean");

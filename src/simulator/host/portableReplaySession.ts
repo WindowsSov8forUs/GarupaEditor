@@ -5,6 +5,7 @@ import type {
   ManualInputTouch,
 } from "../engine/data/manualInput";
 import { copyManualInputPosition } from "../engine/data/manualInput";
+import { GameState } from "../engine/data/inGameState";
 import {
   validateSimulatorModeIdentity,
   type SimulatorModeIdentity,
@@ -25,6 +26,8 @@ import type { SimulatorResultPresentationEngine, SimulatorResultRecord } from ".
 import {
   commitMoveTimeTimelineRevision,
   enterMoveTimeForWholeEngineReplay,
+  enterMoveTimeWait,
+  resumeFromMoveTime,
   publishMoveTimeTimeline,
   resumeMoveTimeInPlace,
   publishFreshEngineVisual,
@@ -49,7 +52,13 @@ export interface SimulatorTimelineControlState {
   readonly playable: boolean;
   readonly hudAlpha?: number;
   readonly paused: boolean;
+  /** 16 and the following 4: the countdown has resumed and MoveTime is unavailable. */
   readonly moveTimeInProgress: boolean;
+  /** 15: the countdown runs; only the MoveTime buttons are routed. */
+  readonly moveTimeWaiting: boolean;
+  readonly moveTimeCount: number;
+  /** The countdown arrow mirrors for returnTime (hasReturned). */
+  readonly moveTimeReturned: boolean;
   readonly terminalPresentationActive?: boolean;
   readonly resultPresentationActive?: boolean;
 }
@@ -76,6 +85,7 @@ export interface PortableReplaySimulatorEngine extends SimulatorEngine, Simulato
   replayResult(): Promise<SimulatorResult<void>>;
   publishPauseControlState(snapshot: PauseControlSceneSnapshot): SimulatorResult<void>;
   getTimelineControlState(): SimulatorResult<SimulatorTimelineControlState>;
+  resumeFromMoveTime(): SimulatorResult<void>;
 }
 
 interface PauseControlVisualEngine {
@@ -175,6 +185,7 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
   private timelineSecondsValue = Math.fround(0);
   private timelineRevisionValue = 0;
   private moveTimeCountValue = 0;
+  private moveTimeReturnedValue = false;
   private state: "ready" | "replaying" | "faulted" | "disposed" = "ready";
   private fault: SimulatorIntegrityFailure | null = null;
   private readonly controlMode: SimulatorTimelineControlState["mode"];
@@ -201,6 +212,11 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     if (before.status !== "ok") return before;
     if (!before.value.playable || before.value.gameplayBlocked) {
       return this.active.step(deltaTimeSeconds, inputFrame);
+    }
+    // The countdown before PlayingNone neither reads gameplay input nor advances the clock.
+    if (before.value.currentGameState === GameState.MoveTimeWaitForPlay ||
+      before.value.currentGameState === GameState.MoveTimeFinished) {
+      return this.active.step(deltaTimeSeconds);
     }
     const prepared = this.controlMode.sessionMode === "rehearsal"
       ? this.prepareLiveInputFrame(inputFrame)
@@ -415,6 +431,10 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     if (published.status !== "ok") {
       return this.latchReplayFault(appendEngineCleanupFailure(published, await disposeSimulatorEngine(fresh)));
     }
+    const waiting = enterMoveTimeWait(fresh);
+    if (waiting.status !== "ok") {
+      return this.latchReplayFault(appendEngineCleanupFailure(waiting, await disposeSimulatorEngine(fresh)));
+    }
     const timeline = publishMoveTimeTimeline(fresh, replaySeconds);
     if (timeline.status !== "ok") {
       return this.latchReplayFault(appendEngineCleanupFailure(timeline, await disposeSimulatorEngine(fresh)));
@@ -431,6 +451,7 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     this.timelineSecondsValue = replaySeconds;
     this.timelineRevisionValue = nextRevision;
     this.moveTimeCountValue = nextMoveCount;
+    this.moveTimeReturnedValue = direction === "return-five";
     this.generation += 1;
     this.state = "ready";
     return ok(Object.freeze({
@@ -455,8 +476,16 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
         this.active.getNaturalCompletionClearStatus() === null,
       hudAlpha: snapshot.value.hudAlpha,
       paused: snapshot.value.paused,
-      moveTimeInProgress: false,
+      moveTimeInProgress: snapshot.value.moveTimePhase === "resuming",
+      moveTimeWaiting: snapshot.value.moveTimePhase === "waiting",
+      moveTimeCount: this.moveTimeCountValue,
+      moveTimeReturned: this.moveTimeReturnedValue,
     }));
+  }
+
+  resumeFromMoveTime(): SimulatorResult<void> {
+    const available = this.available<void>();
+    return available ?? resumeFromMoveTime(this.active);
   }
 
   async retrySession(): Promise<SimulatorResult<void>> {
@@ -580,6 +609,8 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     if (resumed.status !== "ok") return fail(resumed);
     const published = publishMoveTimeAudio(engine, targetSeconds, "in-place");
     if (published.status !== "ok") return fail(published);
+    const waiting = enterMoveTimeWait(engine);
+    if (waiting.status !== "ok") return fail(waiting);
     const timeline = publishMoveTimeTimeline(engine, replaySeconds);
     if (timeline.status !== "ok") return fail(timeline);
     const visual = setMoveTimeVisualState(engine, false);
@@ -593,6 +624,7 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     this.timelineSecondsValue = replaySeconds;
     this.timelineRevisionValue = nextRevision;
     this.moveTimeCountValue = nextMoveCount;
+    this.moveTimeReturnedValue = false;
     this.generation += 1;
     this.state = "ready";
     return ok(Object.freeze({

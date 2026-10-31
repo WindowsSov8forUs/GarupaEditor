@@ -509,6 +509,8 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     const pinkButtonTexture = this.spriteTextures.get(spriteKey(CURRENT_PAUSE_CONTROL_BINDINGS.uiCommonLogicalAssetId, "button_pink"));
     const coverTexture = this.spriteTextures.get(spriteKey(CURRENT_PAUSE_CONTROL_BINDINGS.uiCommonLogicalAssetId, "fill"));
     const countdownTextures = CURRENT_PAUSE_CONTROL_BINDINGS.countdownLogicalAssetIds.map((id) => this.baseTextures.get(id));
+    const moveTimeBackgroundTexture = this.spriteTextures.get(spriteKey(CURRENT_PAUSE_CONTROL_BINDINGS.rhythmGameUiLogicalAssetId, "effect_bg_ingame_move_time"));
+    const moveTimeArrowTexture = this.spriteTextures.get(spriteKey(CURRENT_PAUSE_CONTROL_BINDINGS.rhythmGameUiLogicalAssetId, "effect_ingame_time_move"));
     const font = this.decodedFonts.get(CURRENT_SCORE_HUD_BINDINGS.rankLabelFontLogicalAssetId);
     const pauseCountdownAnimation = this.profile?.pauseCountdownAnimation;
     if (snapshot.state !== "ready" || returnTexture === undefined ||
@@ -516,6 +518,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       demoBackgroundTexture === undefined || pauseTexture === undefined || windowTexture === undefined ||
       headerTexture === undefined || grayButtonTexture === undefined || pinkButtonTexture === undefined || coverTexture === undefined ||
       countdownTextures.some((texture) => texture === undefined) || font === undefined ||
+      moveTimeBackgroundTexture === undefined || moveTimeArrowTexture === undefined ||
       pauseCountdownAnimation === undefined ||
       !Number.isFinite(durationSeconds) || durationSeconds <= 0) {
       return integrityFailure(
@@ -542,6 +545,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       },
       coverTexture,
       countdownTextures as [Texture, Texture, Texture],
+      { background: moveTimeBackgroundTexture, arrow: moveTimeArrowTexture },
       pauseCountdownAnimation,
       font.family,
       createRehearsalControlSceneLayout(surfaceLayout),
@@ -2395,6 +2399,7 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
     cover: Texture;
     countdown: readonly [Texture, Texture, Texture];
   }>;
+  private moveTimeCountdownGraph: Container | null = null;
   private disposed = false;
   private moveTimeInProgress = false;
   private timelineSeconds = 0;
@@ -2416,6 +2421,7 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
     private readonly buttonBorders: Readonly<{ gray: SerializedButtonBorder; pink: SerializedButtonBorder }>,
     coverTexture: Texture,
     countdownTextures: readonly [Texture, Texture, Texture],
+    private readonly moveTimeTextures: Readonly<{ background: Texture; arrow: Texture }>,
     private readonly pauseCountdownAnimation: PauseCountdownAnimationProfile,
     private readonly fontFamily: string,
     layout: RehearsalControlSceneLayout,
@@ -2591,6 +2597,7 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
       this.autoLiveCaptionRoot.visible = snapshot.mode.isAutoLive;
       this.autoLiveCaptionRoot.alpha = snapshot.terminalPresentationActive ? 1 : hudAlpha;
     }
+    this.updateMoveTimeCountdown(snapshot);
     this.rebuildModal(snapshot);
     this.updateModalTransitions(snapshot);
     return ok(undefined);
@@ -2730,6 +2737,89 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
       this.persistentModalGraphs.get(key)!.visible = transition.update(snapshot.presentationSeconds);
     }
     this.modalRoot.visible = this.modalRoot.children.some((graph) => graph.visible);
+  }
+
+  /**
+   * ContinueCountDownAnimation/Contents/TimeMove sampled by ResumeCountDownOneSecAnimamtion:
+   * BG and Slider share effect_bg_ingame_move_time (83x83), the Slider is Filled/Radial360 under a
+   * fixed X scale of -1, and the Arrow parent mirrors for returnTime.
+   */
+  private updateMoveTimeCountdown(snapshot: PauseControlSceneSnapshot): void {
+    const countdown = snapshot.moveTimeCountdown;
+    if (countdown === null) {
+      if (this.moveTimeCountdownGraph !== null) this.moveTimeCountdownGraph.visible = false;
+      return;
+    }
+    let graph = this.moveTimeCountdownGraph;
+    if (graph === null) {
+      graph = new Container({ label: "InGameCountDownAnimation:TimeMove", sortableChildren: true });
+      graph.eventMode = "none";
+      const contents = new Container({ label: "Contents", sortableChildren: true });
+      const timeMove = new Container({ label: "Contents/TimeMove", sortableChildren: true });
+      const background = new Sprite({ texture: this.moveTimeTextures.background, label: "Contents/TimeMove/BG" });
+      background.anchor.set(0.5);
+      background.width = 83; background.height = 83;
+      background.tint = 0xffdae4;
+      background.zIndex = 0;
+      const slider = new Container({ label: "Contents/TimeMove/Slider" });
+      slider.scale.set(-1, 1);
+      slider.zIndex = 1;
+      const fill = new Sprite({ texture: this.moveTimeTextures.background, label: "Contents/TimeMove/Slider/Fill" });
+      fill.anchor.set(0.5);
+      fill.width = 83; fill.height = 83;
+      fill.tint = 0xff3b72;
+      const fillMask = new Graphics({ label: "Contents/TimeMove/Slider/Radial360" });
+      fill.mask = fillMask;
+      slider.addChild(fill, fillMask);
+      const arrowParent = new Container({ label: "Contents/TimeMove/Arrow" });
+      arrowParent.zIndex = 2;
+      const arrow = new Sprite({ texture: this.moveTimeTextures.arrow, label: "Contents/TimeMove/Arrow/Arrow" });
+      arrow.anchor.set(0.5);
+      arrow.width = 46; arrow.height = 32;
+      arrow.position.set(3, 0);
+      arrowParent.addChild(arrow);
+      timeMove.addChild(background, slider, arrowParent);
+      contents.addChild(timeMove);
+      graph.addChild(contents);
+      this.modalRoot.addChild(graph);
+      this.moveTimeCountdownGraph = graph;
+    }
+    graph.position.set(snapshot.layout.viewportWidth / 2, snapshot.layout.viewportHeight / 2);
+    graph.scale.set(snapshot.layout.controlScale);
+    const sample = samplePauseCountdownClip(
+      this.pauseCountdownAnimation.resumeOneSecondClip,
+      Math.fround(countdown.elapsedSeconds),
+    );
+    const value = (channel: string): number => {
+      const current = sample.get(channel);
+      if (current === undefined) throw new Error(`MoveTime countdown channel is missing: ${channel}`);
+      return current;
+    };
+    const unit = (channel: string): number => Math.max(0, Math.min(1, value(channel)));
+    const node = <T extends Container>(label: string): T => {
+      const found = graph!.getChildByLabel(label, true) as T | null;
+      if (found === null) throw new Error(`MoveTime countdown component is missing: ${label}`);
+      return found;
+    };
+    const contents = node<Container>("Contents");
+    const timeMove = node<Container>("Contents/TimeMove");
+    contents.visible = value("Contents.m_IsActive.value") >= 0.5;
+    timeMove.visible = value("Contents/TimeMove.m_IsActive.value") >= 0.5;
+    timeMove.scale.set(value("Contents/TimeMove.m_LocalScale.x"), value("Contents/TimeMove.m_LocalScale.y"));
+    const background = node<Sprite>("Contents/TimeMove/BG");
+    background.visible = value("Contents/TimeMove/BG.m_Enabled.value") >= 0.5;
+    background.alpha = unit("Contents/TimeMove/BG.mColor.a.value");
+    node<Sprite>("Contents/TimeMove/Slider/Fill").alpha = unit("Contents/TimeMove/Slider.mColor.a.value");
+    // NGUI Radial360 without invert sweeps counter-clockwise from 12 o'clock; the Slider's X scale
+    // of -1 makes it run clockwise on screen.
+    const fillAmount = unit("Contents/TimeMove/Slider.attribute_hash:1614703993.value");
+    const mask = node<Graphics>("Contents/TimeMove/Slider/Radial360").clear();
+    if (fillAmount > 0) {
+      mask.moveTo(0, 0).arc(0, 0, 83, -Math.PI / 2, -Math.PI / 2 - fillAmount * Math.PI * 2, true).closePath().fill(0xffffff);
+    }
+    node<Container>("Contents/TimeMove/Arrow").scale.set(countdown.returned ? -1 : 1, 1);
+    node<Sprite>("Contents/TimeMove/Arrow/Arrow").alpha = unit("Contents/TimeMove/Arrow/Arrow.mColor.a.value");
+    graph.visible = true;
   }
 
   private updateCountdownGraph(graph: Container, snapshot: PauseControlSceneSnapshot): void {

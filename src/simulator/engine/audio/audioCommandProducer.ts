@@ -265,6 +265,11 @@ export class AudioCommandProducer {
     ]);
   }
 
+  /** updatePlayingSound after MoveTime: PlayMusic unpauses the BGM LoadMusic left paused at the target. */
+  preflightMoveTimeMusicStart(): SimulatorResult<AudioOwnerTransaction> {
+    return this.preflightCommands([{ kind: "bgm.resume" }]);
+  }
+
   preflightPlayPreparedStartupBgm(): SimulatorResult<AudioOwnerTransaction> {
     return this.preflightCommands([{ kind: "bgm.resume" }]);
   }

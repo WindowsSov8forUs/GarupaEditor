@@ -144,7 +144,10 @@ class SimulatorEngineHost implements SimulatorEngine {
     if (this.inGameManager.state !== "initialized") {
       return this.inGameManager.execUpdate(deltaTimeSeconds);
     }
-    if (this.inGameManager.getPlaybackState().paused) {
+    const playback = this.inGameManager.getPlaybackState();
+    // Paused, and the MoveTime countdown before PlayingNone, stage no gameplay input frame.
+    if (playback.paused || playback.currentGameState === GameState.MoveTimeWaitForPlay ||
+      playback.currentGameState === GameState.MoveTimeFinished) {
       return this.inGameDirector.update(deltaTimeSeconds);
     }
     const deltaValidation = validateDirectorDeltaTime(deltaTimeSeconds);
@@ -591,6 +594,18 @@ class SimulatorEngineHost implements SimulatorEngine {
     return committed.status === "ok" ? committed : this.inGameManager.latchExternalFault(committed);
   }
 
+  enterMoveTimeWait(): SimulatorResult<void> {
+    const backendFault = this.pollAudioFault();
+    if (backendFault.status !== "ok") return backendFault;
+    return this.inGameManager.enterMoveTimeWait();
+  }
+
+  resumeFromMoveTime(): SimulatorResult<void> {
+    const backendFault = this.pollAudioFault();
+    if (backendFault.status !== "ok") return backendFault;
+    return this.inGameManager.resumeFromMoveTime();
+  }
+
   /** Ends the MoveTime suppression on the same engine when an in-place MoveTime resumes. */
   resumeMoveTimeInPlace(): SimulatorResult<void> {
     if (this.inGameManager.fault !== null) return this.inGameManager.fault;
@@ -983,6 +998,24 @@ export function resumeMoveTimeInPlace(
         "particle.movetime.foreign-engine",
         "In-place MoveTime resume accepts only an engine created by the portable simulator host.",
       );
+}
+
+/** MoveTimeWaitForPlay after the MoveTime published its target. */
+export function enterMoveTimeWait(engine: SimulatorEngine): SimulatorResult<void> {
+  const host = resolveMoveTimeHost(engine);
+  return host !== null ? host.enterMoveTimeWait() : integrityFailure(
+    "timeline.movetime.foreign-wait-owner",
+    "The MoveTime countdown belongs to an engine created by the simulator host.",
+  );
+}
+
+/** The countdown's resume event (onResumeFromMoveTime). */
+export function resumeFromMoveTime(engine: SimulatorEngine): SimulatorResult<void> {
+  const host = resolveMoveTimeHost(engine);
+  return host !== null ? host.resumeFromMoveTime() : integrityFailure(
+    "timeline.movetime.foreign-resume-owner",
+    "The MoveTime countdown belongs to an engine created by the simulator host.",
+  );
 }
 
 export function stepForMoveTime(
