@@ -2522,31 +2522,6 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
       this.timeMaxText.position.set(right - 76 * unit, top + 23 * unit);
       this.timeMaxText.zIndex = 21;
       this.rehearsalRoot.addChild(this.returnButton, this.advanceButton, timeBackground, icon, this.timeNowText, this.timeMaxText);
-      if (mode.isDemoPlayMode) {
-        const demo = layout.demoBadgeBoundsTopLeft;
-        const demoBorder = CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.autoLiveCaption;
-        const badge = new NineSliceSprite({
-          texture: demoBackgroundTexture,
-          leftWidth: demoBorder.left,
-          topHeight: demoBorder.top,
-          rightWidth: demoBorder.right,
-          bottomHeight: demoBorder.bottom,
-          label: "rehearsal-demo-badge-background",
-        });
-        // ScoreCountStop/DemoPlay: label_round_white 208x40 at #FFFFFFD8 with DemoPlayLabel #505050,
-        // size 24, no effect, spacing 0 (unlike the pink AutoLiveCaption prefab).
-        const unit = demo.height / 38;
-        const badgeWidth = 208 * unit, badgeHeight = 40 * unit;
-        applyBounds(badge, { x: demo.x + (demo.width - badgeWidth) / 2, y: demo.y + (demo.height - badgeHeight) / 2,
-          width: badgeWidth, height: badgeHeight });
-        badge.alpha = 216 / 255;
-        badge.zIndex = 20;
-        const label = this.text("デモプレイ", 24 * unit, 0x505050, "rehearsal-demo-badge");
-        layoutNguiText(label);
-        label.position.set(demo.x + demo.width / 2, demo.y + demo.height / 2);
-        label.zIndex = 21;
-        this.rehearsalRoot.addChild(badge, label);
-      }
       const initialized = this.updateTimeline(0);
       if (initialized.status !== "ok") throw new Error(initialized.capability);
     } else {
@@ -4126,6 +4101,7 @@ function applyScoreHud(
   updateScorePanelClip(object, visual, progress, state.indicatorLocalX);
   ensureScoreHighRankSprites(object, visual, state, textures, referenceCounts);
   visual.fillRatios = Object.freeze([state.sliderValue.value, state.ratio.value]);
+  applyScoreCountStop(object, visual, state, textures, referenceCounts, decodedFonts);
 }
 
 function updatePersistentScoreHud(
@@ -4196,6 +4172,7 @@ function updatePersistentScoreHud(
   updateScorePanelClip(object, visual, progress, state.indicatorLocalX);
   ensureScoreHighRankSprites(object, visual, state, textures, referenceCounts);
   visual.fillRatios = Object.freeze([state.sliderValue.value, state.ratio.value]);
+  applyScoreCountStop(object, visual, state, textures, referenceCounts, decodedFonts);
 }
 
 function updateScorePanelClip(
@@ -4259,6 +4236,96 @@ function updateScoreSoftClipFilter(
       softness[1],
     );
   }
+}
+
+/**
+ * Score.StopCount: ScoreCountStop (Prefabs/BMS/RhythmGameGauge/ScoreCountStop, instantiated under
+ * Score) replaces the Progress and Base GameObjects with a fixed gray 00000000 and rank scale;
+ * its DemoPlay label is active only for Demo.
+ */
+function applyScoreCountStop(
+  object: PixiObjectRecord,
+  visual: PixiHudVisual,
+  state: RenderScoreHudState,
+  textures: ReadonlyMap<string, Texture>,
+  referenceCounts: Map<string, number>,
+  decodedFonts: ReadonlyMap<string, PixiDecodedFont>,
+): void {
+  const rootPath = requireScoreNativeProfile(object).scene.rootPath;
+  const root = scoreGameObject(visual, rootPath);
+  const stopped = state.scoreCountStop !== "none";
+  scoreGameObject(visual, `${rootPath}/Progress`).visible = !stopped;
+  scoreGameObject(visual, `${rootPath}/Base`).visible = !stopped;
+  let stop = root.getChildByLabel("ScoreCountStop") as Container | null;
+  if (!stopped) {
+    if (stop !== null) stop.visible = false;
+    return;
+  }
+  if (stop === null) {
+    const font = decodedFonts.get(CURRENT_SCORE_HUD_BINDINGS.rankLabelFontLogicalAssetId);
+    if (font === undefined) throw new Error("ScoreCountStop sgm UILabel font is missing");
+    const gaugeAssetId = CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId;
+    stop = new Container({ label: "ScoreCountStop", sortableChildren: true });
+    stop.eventMode = "none";
+    const label = (text: string, size: number, color: number, spacingX: number, name: string) => {
+      const value = localizeSimulatorText(text);
+      const node = new Text({ text: value, label: name, style: {
+        fill: linearTintFromSrgbColor(color), fontFamily: simulatorTextFonts(value, font.family),
+        fontSize: size, fontWeight: "normal", letterSpacing: spacingX,
+      } });
+      return node;
+    };
+    const baseBinding = requiredTextureBinding(textures, gaugeAssetId, "gauge_base_score");
+    const base = scoreNineSlice(baseBinding, 470, 82, CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.gaugeBase, "ScoreCountStop/Base");
+    base.position.set(30, 66);
+    base.tint = linearTintFromSrgbColor(0x808080);
+    base.zIndex = 4;
+    retainHudBinding(object, baseBinding.key, referenceCounts);
+    const rankObject = new Container({ label: "ScoreCountStop/RankObject", sortableChildren: true });
+    rankObject.position.set(37, 41);
+    rankObject.zIndex = 29;
+    const levelMarkBinding = requiredTextureBinding(textures, CURRENT_SCORE_HUD_BINDINGS.levelMarkLogicalAssetId, "level_mark");
+    for (const [rank, x] of [["C", 50], ["B", 142], ["A", 235], ["S", 328], ["SS", 420]] as const) {
+      const rankNode = new Container({ label: `ScoreCountStop/RankObject/rank${rank}`, sortableChildren: true });
+      rankNode.position.set(x, 2);
+      const rankLabel = label(rank, 12, 0x808080, 0, `ScoreCountStop/RankObject/rank${rank}/${rank}`);
+      layoutNguiText(rankLabel);
+      rankLabel.zIndex = 40;
+      const separator = new Sprite({ texture: levelMarkBinding.texture, label: `ScoreCountStop/RankObject/rank${rank}/Separator` });
+      separator.anchor.set(0.5, 0.5);
+      separator.width = 8; separator.height = 6;
+      separator.position.set(0, 8);
+      separator.tint = linearTintFromSrgbColor(0x808080);
+      separator.zIndex = 29;
+      rankNode.addChild(rankLabel, separator);
+      rankObject.addChild(rankNode);
+    }
+    retainHudBinding(object, levelMarkBinding.key, referenceCounts);
+    const totalScore = label("00000000", 28, 0x696969, 1, "ScoreCountStop/TotalScore");
+    layoutNguiText(totalScore, 1, 0.5);
+    totalScore.position.set(225, 81);
+    totalScore.zIndex = 40;
+    const demoPlay = new Container({ label: "ScoreCountStop/DemoPlay", sortableChildren: true });
+    demoPlay.position.set(141, 133);
+    const demoBinding = requiredTextureBinding(textures, gaugeAssetId, "label_round_white");
+    const demoBorder = CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.autoLiveCaption;
+    const demoBackground = new NineSliceSprite({
+      texture: demoBinding.texture, leftWidth: demoBorder.left, topHeight: demoBorder.top,
+      rightWidth: demoBorder.right, bottomHeight: demoBorder.bottom, width: 208, height: 40,
+      anchor: { x: 0.5, y: 0.5 }, label: "ScoreCountStop/DemoPlay/Background",
+    });
+    demoBackground.alpha = 216 / 255;
+    demoBackground.zIndex = 0;
+    retainHudBinding(object, demoBinding.key, referenceCounts);
+    const demoLabel = label("デモプレイ", 24, 0x505050, 0, "ScoreCountStop/DemoPlay/DemoPlayLabel");
+    layoutNguiText(demoLabel);
+    demoLabel.zIndex = 1;
+    demoPlay.addChild(demoBackground, demoLabel);
+    stop.addChild(base, rankObject, totalScore, demoPlay);
+    root.addChild(stop);
+  }
+  (stop.getChildByLabel("ScoreCountStop/DemoPlay") as Container).visible = state.scoreCountStop === "demo";
+  stop.visible = true;
 }
 
 function showScoreBaselineComponents(visual: PixiHudVisual, foregroundActive: boolean): void {

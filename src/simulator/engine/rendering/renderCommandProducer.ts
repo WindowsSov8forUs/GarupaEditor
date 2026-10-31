@@ -6,6 +6,7 @@ import { slideGestureAfterType } from "../chart/slideFlickNodes";
 import type {
   RenderColor,
   RenderCommand,
+  RenderScoreHudState,
   RenderCommandBatch,
   RenderFloat32,
   RenderOrderingKey,
@@ -347,6 +348,8 @@ export interface RenderHudSessionMode {
   readonly hideFastSlow: boolean;
   readonly isAutoPlay: boolean;
   readonly allPerfectStatusPresentationEnabled: boolean;
+  /** Score.AwakeStart: Demo stops the score count at once; Practice prepares ScoreCountStop for MoveTime. */
+  readonly scoreCountStop?: "none" | "practice-ready" | "demo";
 }
 
 const DEFAULT_RENDER_HUD_SESSION_MODE: RenderHudSessionMode = Object.freeze({
@@ -381,12 +384,17 @@ export class RenderCommandProducer {
     readonly playbackRevision?: number | null;
   }>();
 
+  /** ScoreCountStop is active: UpdateTotalScore returns before the number, gauge and rank effects. */
+  private scoreCountStopValue: RenderScoreHudState["scoreCountStop"];
+  private lastScoreHudState: RenderScoreHudState | null = null;
+
   constructor(
     readonly sessionId: string,
     private readonly renderer: SimulatorRendererBackend,
     private readonly resources: RenderEngineResourceBindings,
     private readonly hudSessionMode: RenderHudSessionMode = DEFAULT_RENDER_HUD_SESSION_MODE,
   ) {
+    this.scoreCountStopValue = hudSessionMode.scoreCountStop === "demo" ? "demo" : "none";
     this.hud = new InGameHudController(
       hudSessionMode.isAutoPlay,
       hudSessionMode.allPerfectStatusPresentationEnabled,
@@ -499,9 +507,10 @@ export class RenderCommandProducer {
     create(HUD_OBJECTS.gameClear, "hud-game-clear");
     commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: HUD_OBJECTS.gameClear });
     create(HUD_OBJECTS.score, "hud-score");
+    const initialScoreState = this.hud.score.createState(record, scoreGauge, this.scoreCountStopValue);
     commands.push({
       ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.score,
-      hudRole: "score", state: this.hud.score.createState(record, scoreGauge),
+      hudRole: "score", state: initialScoreState,
     });
     commands.push({ ...base(commands.length), kind: "activate-object", renderObjectId: HUD_OBJECTS.score });
     create(HUD_OBJECTS.life, "hud-life");
@@ -516,6 +525,7 @@ export class RenderCommandProducer {
       animationRole: "life-warning", restart: true,
     });
     return this.preflight(commands, () => {
+      this.lastScoreHudState = initialScoreState;
       this.recordCreatedObjects(created);
       this.lastLifeWarning = initialLifeState.warning;
       if (initialLifeState.warning) this.lifeAnimationElapsedSeconds.set("life-warning", 0);
@@ -640,11 +650,13 @@ export class RenderCommandProducer {
       ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.result,
       animationRole: "result", restart: true,
     });
-    commands.push({
+    const scoreCounting = this.scoreCountStopValue === "none";
+    const nextScoreState = scoreCounting ? this.hud.score.createState(plan.record, plan.scoreGauge) : null;
+    if (nextScoreState !== null) commands.push({
       ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.score,
-      hudRole: "score", state: this.hud.score.createState(plan.record, plan.scoreGauge),
+      hudRole: "score", state: nextScoreState,
     });
-    if (plan.scoreGauge.highRankEffect !== "none" &&
+    if (scoreCounting && plan.scoreGauge.highRankEffect !== "none" &&
       plan.scoreGauge.highRankEffect !== this.scoreGaugeHighRankClip) commands.push({
       ...base(commands.length), kind: "play-animation", renderObjectId: HUD_OBJECTS.score,
       animationRole: "score-gauge-ss", restart: true,
@@ -698,7 +710,8 @@ export class RenderCommandProducer {
         // CE.Result.Show starts its visibility coroutine immediately.
         visibilityElapsedSeconds: Math.fround(deltaTimeSeconds),
       });
-      if (plan.scoreGauge.highRankEffect !== "none" &&
+      if (nextScoreState !== null) this.lastScoreHudState = nextScoreState;
+      if (scoreCounting && plan.scoreGauge.highRankEffect !== "none" &&
         plan.scoreGauge.highRankEffect !== this.scoreGaugeHighRankClip) {
         this.scoreGaugeSsElapsedSeconds = 0;
         this.scoreGaugeHighRankClip = plan.scoreGauge.highRankEffect;
@@ -746,7 +759,14 @@ export class RenderCommandProducer {
       ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.life,
       hudRole: "life", state: life,
     });
+    // moveTimeToStartMusic: StopScoreCount -> Score.StopCount; Demo already stopped at AwakeStart.
+    const stopScore = this.scoreCountStopValue === "none" && this.lastScoreHudState !== null;
+    if (stopScore) commands.push({
+      ...base(commands.length), kind: "set-hud", renderObjectId: HUD_OBJECTS.score,
+      hudRole: "score", state: Object.freeze({ ...this.lastScoreHudState!, scoreCountStop: "practice" as const }),
+    });
     return this.preflight(commands, () => {
+      if (stopScore) this.scoreCountStopValue = "practice";
       this.hudAnimationElapsedSeconds.clear();
       this.lifeAnimationElapsedSeconds.clear();
       this.addScoreAnimations.clear();

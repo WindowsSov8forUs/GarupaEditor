@@ -1103,6 +1103,8 @@ export function createSimulatorEngine(
           isAutoPlay: input.runtime.mode.isAutoPlay,
           allPerfectStatusPresentationEnabled:
             input.runtime.originalLiveSettings.allPerfectStatusDisplayMode,
+          scoreCountStop: input.runtime.mode.isDemoPlayMode ? "demo"
+            : input.runtime.mode.isEnablePractice ? "practice-ready" : "none",
         }),
       )
     : null;
