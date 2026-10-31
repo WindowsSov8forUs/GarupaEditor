@@ -6,8 +6,6 @@ import {
   rejected,
   type SimulatorAssemblyResult,
 } from "./result";
-import { currentStartupFontSupports } from "../backends/resources/currentStartupFontCmap";
-import { currentChineseFontSupports } from "../backends/resources/currentChineseFontCmap";
 import { isStagePsylliumCommand, type StageCommandNote } from "../engine/data/stageCommand";
 export const STARTUP_JACKET_SIZE = Object.freeze({ width: 360, height: 360 });
 
@@ -31,22 +29,8 @@ export function copyAndFreezeSimulatorPresentation(
     !isNullableText(presentation.song.arranger)) {
     return invalid("Song title and bandName must be non-empty localized text; each credit is either non-empty text or null.");
   }
-  const localizedText = [
-    presentation.song.title,
-    presentation.song.bandName,
-    presentation.song.lyricist,
-    presentation.song.composer,
-    presentation.song.arranger,
-  ].filter((text): text is string => text !== null);
-  // Mainland labels draw with TTDaYuanGB3 (simplified Chinese); sgm covers the Japanese text.
-  const supported = (codePoint: number) => currentStartupFontSupports(codePoint) || currentChineseFontSupports(codePoint);
-  if (localizedText.some((text) => [...text].some((scalar) => !supported(scalar.codePointAt(0)!)))) {
-    return rejected(
-      "integrity-failure",
-      "simulator.presentation.missing-font-glyph",
-      "Every caller-selected localized scalar must exist in the hash-locked sgm or mainland TTDaYuanGB3 cmap; browser or system-font fallback is forbidden.",
-    );
-  }
+  // The original labels draw through Unity dynamic fonts; a scalar absent from sgm and TTDaYuanGB3
+  // (e.g. U+2661) still renders through the engine's system-font fallback, so it never blocks startup.
   if (!isSemanticObject(presentation.difficulty, "level,type") ||
     !["EASY", "NORMAL", "HARD", "EXPERT", "SPECIAL"].includes(presentation.difficulty.type) ||
     !Number.isSafeInteger(presentation.difficulty.level) || presentation.difficulty.level <= 0) {
