@@ -1,4 +1,5 @@
 import { useCallback, useLayoutEffect, useRef, useState, type RefObject } from "react";
+import { MODIFIER_WHEEL_SURFACE_ATTRIBUTE } from "../modifierWheel";
 
 export type EditorZoom = { width: number; vertical: number };
 export function scaleEditorZoom(value: EditorZoom, factor: number, axis: "x" | "y" | "both"): EditorZoom {
@@ -27,12 +28,17 @@ export function useEditorViewportZoom(viewport: RefObject<HTMLDivElement | null>
       if (next.width === previous.width && next.vertical === previous.vertical) return;
       current.current = next; setZoom(next);
     };
+    // Ctrl + wheel zooms both axes, Shift + wheel the vertical axis, Alt + wheel the horizontal one.
     const wheel = (event: WheelEvent) => {
-      if (!event.ctrlKey) return;
+      const axis = event.ctrlKey ? "both" : event.shiftKey ? "y" : event.altKey ? "x" : null;
+      if (axis === null) return;
       event.preventDefault(); event.stopPropagation();
-      const delta = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? element.clientHeight : 1);
-      apply(Math.exp(-delta * 0.002), "both");
+      // Some hosts move a Shift + wheel delta to the horizontal axis.
+      const raw = event.deltaY || event.deltaX;
+      const delta = raw * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? element.clientHeight : 1);
+      apply(Math.exp(-delta * 0.002), axis);
     };
+    element.setAttribute(MODIFIER_WHEEL_SURFACE_ATTRIBUTE, "");
     let singleY: number | null = null;
     let pinch: { x: number; y: number; distance: number; axis: "x" | "y" | "both" } | null = null;
     let pinched = false;
@@ -68,7 +74,7 @@ export function useEditorViewportZoom(viewport: RefObject<HTMLDivElement | null>
     element.addEventListener("touchmove", move, { passive: false });
     element.addEventListener("touchend", end, { passive: false });
     element.addEventListener("touchcancel", end, { passive: false });
-    return () => { observer.disconnect(); element.removeEventListener("wheel", wheel);
+    return () => { observer.disconnect(); element.removeEventListener("wheel", wheel); element.removeAttribute(MODIFIER_WHEEL_SURFACE_ATTRIBUTE);
       element.removeEventListener("touchstart", start); element.removeEventListener("touchmove", move);
       element.removeEventListener("touchend", end); element.removeEventListener("touchcancel", end); };
   }, [element, ready]);
