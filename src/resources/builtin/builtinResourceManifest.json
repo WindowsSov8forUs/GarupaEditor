@@ -557,6 +557,21 @@
       "sha256": "D07EEFBCA0817174DE1199215E801D6A495AEC1602BD90D651F027C2EDF9F8AA"
     },
     {
+      "path": "game/prefabs/bms/result/result-allperfect-add.png",
+      "byteLength": 13947,
+      "sha256": "C195F30127E1992F3C665BE0CB1F412D66B68FD500A84B61B9697FE311C3846A"
+    },
+    {
+      "path": "game/prefabs/bms/result/result-allperfect.png",
+      "byteLength": 12996,
+      "sha256": "62C287130BB8D99C8942EE90C97A5FC0B21546332F534C2F0F032AA3C3B4DB58"
+    },
+    {
+      "path": "game/prefabs/bms/result/result-fullcombo-add.png",
+      "byteLength": 13344,
+      "sha256": "232AF5463AFC77278934EE0533BD2D1037138ACB2856FF0D269B0849D30E750A"
+    },
+    {
       "path": "game/prefabs/bms/result/rhythmBG.png",
       "byteLength": 720224,
       "sha256": "54D8235EA3BDC0CD1B889EAD82652EBEF33140F4EF850E574DBF46687CC5394C"

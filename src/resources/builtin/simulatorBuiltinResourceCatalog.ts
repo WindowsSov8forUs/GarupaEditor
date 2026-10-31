@@ -18,6 +18,9 @@ import resultBannerUrl from "../../assets/game/prefabs/bms/result/result-banner.
 import resultRankLightUrl from "../../assets/game/prefabs/bms/result/LoginBonus.png?url&no-inline";
 import resultParticle1Url from "../../assets/game/prefabs/bms/result/Tex_parSet_1.png?url&no-inline";
 import resultParticle2Url from "../../assets/game/prefabs/bms/result/Tex_parSet_2.png?url&no-inline";
+import resultAllPerfectUrl from "../../assets/game/prefabs/bms/result/result-allperfect.png?url&no-inline";
+import resultAllPerfectAddUrl from "../../assets/game/prefabs/bms/result/result-allperfect-add.png?url&no-inline";
+import resultFullComboAddUrl from "../../assets/game/prefabs/bms/result/result-fullcombo-add.png?url&no-inline";
 import comboNumberUrl from "../../assets/game/atlas/bms/ui/iconcombonumber/combo-number.png?url&no-inline";
 import decide1Url from "../../assets/game/sound/common-se/decide_1.mp3?url&no-inline";
 import cancelUiUrl from "../../assets/game/sound/common-se/cancel.mp3?url&no-inline";
@@ -180,6 +183,10 @@ const DEFINITIONS: readonly SimulatorBuiltinResourceDefinition[] = Object.freeze
     file("game/prefabs/bms/result/LoginBonus.png", "LoginBonus.png", "image/png", resultRankLightUrl),
     file("game/prefabs/bms/result/Tex_parSet_1.png", "Tex_parSet_1.png", "image/png", resultParticle1Url),
     file("game/prefabs/bms/result/Tex_parSet_2.png", "Tex_parSet_2.png", "image/png", resultParticle2Url),
+    // CN 10.1.3 SpotAtlas icon_result_allperfect and RhythmGameAdditive FC/AP glow sprites.
+    file("game/prefabs/bms/result/result-allperfect.png", "result-allperfect.png", "image/png", resultAllPerfectUrl),
+    file("game/prefabs/bms/result/result-allperfect-add.png", "result-allperfect-add.png", "image/png", resultAllPerfectAddUrl),
+    file("game/prefabs/bms/result/result-fullcombo-add.png", "result-fullcombo-add.png", "image/png", resultFullComboAddUrl),
     file("game/prefabs/bms/result/rhythmBG.png", "rhythmBG.png", "image/png", resultBackgroundUrl),
     file("game/atlas/menu/menu-atlas-cn.png", "result-menu.png", "image/png", resultMenuUrl),
   ]),

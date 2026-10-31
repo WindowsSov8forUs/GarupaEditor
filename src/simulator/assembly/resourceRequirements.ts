@@ -60,7 +60,8 @@ const COMMON_REQUIREMENTS: readonly SimulatorResourceRequirement[] = Object.free
   requirement("render.mv-background", "prefabs/bms/movie", ["movie-background.png"]),
   requirement("render.rehearsal-controls", "prefabs/bms/movetime", ["rehearsal-advance-five.png", "rehearsal-return-five.png"]),
   requirement("render.stage", "prefabs/bms/stage", ["stage-light.png", "stage-speaker.png", "stage-speaker-glow.png", "stage-psyllium.png"]),
-  requirement("render.result", "prefabs/bms/result", ["result-menu.png", "rhythmBG.png", "result-banner.png", "LoginBonus.png", "Tex_parSet_1.png", "Tex_parSet_2.png"]),
+  requirement("render.result", "prefabs/bms/result", ["result-menu.png", "rhythmBG.png", "result-banner.png", "LoginBonus.png", "Tex_parSet_1.png", "Tex_parSet_2.png",
+    "result-allperfect.png", "result-allperfect-add.png", "result-fullcombo-add.png"]),
   requirement("render.pause", "prefabs/bms/pause", [
     "countdown-1.png", "countdown-2.png", "countdown-3.png", "countdown-animation-profile.json",
   ]),
