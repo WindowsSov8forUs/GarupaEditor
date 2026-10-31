@@ -135,7 +135,7 @@ export class DeterministicSimulatorParticleBackend implements SimulatorParticleB
     }
     if (this.suppressedUntilReplay && request.commands.length !== 0 &&
       (request.commands.length !== 1 || request.commands[0]!.kind !== "resume-after-movetime")) {
-      return this.reject("particle.frame.suppressed-command", "MoveTime suppression ends only through its resume or whole-engine reconstruction.");
+      return this.reject("particle.frame.suppressed-command", "MoveTime suppression ends only through its resume.");
     }
     const lifecycle = validateLifecycleSequence(request.commands);
     if (lifecycle.status !== "accepted") return lifecycle;

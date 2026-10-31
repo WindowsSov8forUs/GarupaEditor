@@ -4,7 +4,7 @@ import type {
   AudioCommandProducer,
   AudioOwnerTransaction,
 } from "./audioCommandProducer";
-export type StartupAudioPurpose = "initial" | "retry" | "move-time-reconstruction";
+export type StartupAudioPurpose = "initial" | "retry";
 
 export type StartupAudioOwnerPhase =
   | "created"
@@ -85,9 +85,8 @@ export class StartupAudioOwner {
     private readonly liveStartVoiceCue: string | null,
     mvLive = false,
   ) {
-    const reconstruction = purpose === "move-time-reconstruction";
-    this.gayaRequired = !reconstruction && mode.sessionMode === "live" && !mvLive;
-    this.liveVoiceRequired = !reconstruction && mode.sessionMode === "live" && liveStartVoiceCue !== null;
+    this.gayaRequired = mode.sessionMode === "live" && !mvLive;
+    this.liveVoiceRequired = mode.sessionMode === "live" && liveStartVoiceCue !== null;
   }
 
   initialize(): SimulatorResult<void> {
@@ -97,13 +96,10 @@ export class StartupAudioOwner {
         `Startup audio initialization is available only from created, not ${this.phaseValue}.`,
       );
     }
-    const reconstruction = this.purpose === "move-time-reconstruction";
-    const planned = reconstruction
-      ? this.producer.preflightMoveTimeReconstructionBgm()
-      : this.producer.preflightStartupOpening(
-          this.gayaRequired,
-          this.liveVoiceRequired ? this.liveStartVoiceCue : null,
-        );
+    const planned = this.producer.preflightStartupOpening(
+      this.gayaRequired,
+      this.liveVoiceRequired ? this.liveStartVoiceCue : null,
+    );
     if (planned.status !== "ok") {
       this.phaseValue = "faulted";
       return planned;
@@ -112,11 +108,6 @@ export class StartupAudioOwner {
     if (committed.status !== "ok") {
       this.phaseValue = "faulted";
       return committed;
-    }
-    if (reconstruction) {
-      this.timeline.push("move-time.bgm.prepare-paused", "move-time.bgm.resume");
-      this.phaseValue = "playing";
-      return ok(undefined);
     }
     this.timeline.push("bgm.prepare-paused");
     if (this.gayaRequired) this.timeline.push("gaya.start");

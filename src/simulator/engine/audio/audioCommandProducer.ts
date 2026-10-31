@@ -251,20 +251,6 @@ export class AudioCommandProducer {
     return this.preflightCommands(commands);
   }
 
-  preflightMoveTimeReconstructionBgm(): SimulatorResult<AudioOwnerTransaction> {
-    return this.preflightCommands([
-      {
-        kind: "bgm.load",
-        cue: this.input.bgmCue,
-        seek_ms: this.input.seekMilliseconds,
-        priority: 255,
-        fade_bits: "0x00000000",
-      },
-      { kind: "bgm.pause" },
-      { kind: "bgm.resume" },
-    ]);
-  }
-
   /** updatePlayingSound after MoveTime: PlayMusic unpauses the BGM LoadMusic left paused at the target. */
   preflightMoveTimeMusicStart(): SimulatorResult<AudioOwnerTransaction> {
     return this.preflightCommands([{ kind: "bgm.resume" }]);

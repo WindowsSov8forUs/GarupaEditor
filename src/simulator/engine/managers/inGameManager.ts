@@ -142,11 +142,6 @@ export class InGameManager {
     if (primary.status !== "ok") return primary;
     const startup = this.startupDirection?.initialize() ?? ok(undefined);
     if (startup.status !== "ok") return startup;
-    // A MoveTime reconstruction's startup is playable on initialization; execUpdate only syncs the
-    // game state while startup is still running, so take its PlayingSound here.
-    if (this.startupDirection !== null && this.startupDirection.snapshot().playable) {
-      this.currentGameStateValue = this.startupDirection.snapshot().currentGameState;
-    }
     const noteValidation = this.noteManager.validateSetup();
     if (noteValidation.status !== "ok") {
       return noteValidation;

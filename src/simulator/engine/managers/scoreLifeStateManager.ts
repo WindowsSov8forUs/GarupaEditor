@@ -298,7 +298,7 @@ export class ScoreLifeStateManager {
       timelineRevision < 0 || !Number.isSafeInteger(moveTimeCount) || moveTimeCount <= 0) {
       return integrityFailure(
         "score-life.invalid-move-time-revision",
-        "A reconstructed Rehearsal timeline commits one non-negative revision and positive MoveTime count only after all Score/Life replay owners are settled.",
+        "A Rehearsal MoveTime commits one non-negative revision and positive MoveTime count only after all Score/Life owners are settled.",
       );
     }
     const record = this.record.cloneForPreflight();
@@ -307,7 +307,7 @@ export class ScoreLifeStateManager {
     } catch {
       return integrityFailure(
         "score-life.invalid-move-time-count",
-        "MoveTime count is monotonic across reconstructed timeline publications.",
+        "MoveTime count is monotonic across timeline publications.",
       );
     }
     return ok(Object.freeze({

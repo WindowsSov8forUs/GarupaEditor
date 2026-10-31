@@ -221,14 +221,12 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       recipe.request.config.suddenRate, recipe.request.config.suddenLane,
     );
     if (originalLayout.status !== "ok") return fromIntegrity(originalLayout);
-    const moveTimeCandidate = purpose === "move-time-reconstruction";
     const mvPackage = recipe.request.presentation.mv;
-    if (mvPackage !== null &&
-      (recipe.request.config.sessionMode !== "live" || moveTimeCandidate)) {
+    if (mvPackage !== null && recipe.request.config.sessionMode !== "live") {
       return rejected(
         "integrity-failure",
         "simulator.mv-live.unsupported-mode-or-purpose",
-        "Current MV Live is supported only for fresh Live Manual/Auto; Practice, Retry and MoveTime cannot inherit the standard route.",
+        "Current MV Live is supported only for Live Manual/Auto; Practice cannot inherit the standard route.",
       );
     }
     const sessionId = this.sessionId();
@@ -339,7 +337,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     }
     const gameplayRenderOrder = new PixiGameplayRenderOrder();
     const renderer = new PixiRendererBackend(new BrowserPixiTextureDecoder(), undefined, gameplayRenderOrder);
-    const audio = new WebAudioSimulatorBackend(this.platform.audioContext, moveTimeCandidate);
+    const audio = new WebAudioSimulatorBackend(this.platform.audioContext);
     const particles = new DeterministicSimulatorParticleBackend(false);
     const particleRenderer = new PixiParticleRendererBackend(
       new BrowserPixiParticleTextureDecoder(),
@@ -387,31 +385,29 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
               );
               if (created.status !== "ok") return fromIntegrity(created);
               firstView.scene = created.value;
-              if (!moveTimeCandidate) {
-                const direction = new StartupDirectionController(score.value.mode, created.value);
-                const initialized = direction.initialize();
-                if (initialized.status !== "ok") return fromIntegrity(initialized);
-                preparationRoot.addChild(created.value.backgroundRoot, created.value.foregroundRoot);
-                try {
-                  // PreRhythmGame accumulates 0.1f of game deltaTime on the black handoff after its
-                  // cleanup and before requesting RhythmGame, whose FirstView then fades in itself.
-                  let handoffElapsed = Math.fround(0);
-                  firstView.presentation = this.platform.graphics.presentPreparation(preparationRoot, (delta) => {
-                    if (handoffElapsed < PRE_RHYTHM_GAME_HANDOFF_SECONDS) {
-                      handoffElapsed = Math.fround(handoffElapsed + Math.fround(delta));
-                      return false;
-                    }
-                    if (direction.snapshot().phase !== "first-view") return true;
-                    const advanced = direction.step(Math.fround(delta));
-                    if (advanced.status !== "ok") throw new Error(advanced.boundary);
-                    return direction.snapshot().phase !== "first-view";
-                  });
-                  // ExecStart loads the remaining resources while ShowAnimation
-                  // reveals the card. Play waits for both resource and view readiness.
-                  firstView.ready = firstView.presentation.ready.then(() => accepted(undefined), presentationFailure);
-                } catch (error) {
-                  return presentationFailure(error);
-                }
+              const direction = new StartupDirectionController(score.value.mode, created.value);
+              const initialized = direction.initialize();
+              if (initialized.status !== "ok") return fromIntegrity(initialized);
+              preparationRoot.addChild(created.value.backgroundRoot, created.value.foregroundRoot);
+              try {
+                // PreRhythmGame accumulates 0.1f of game deltaTime on the black handoff after its
+                // cleanup and before requesting RhythmGame, whose FirstView then fades in itself.
+                let handoffElapsed = Math.fround(0);
+                firstView.presentation = this.platform.graphics.presentPreparation(preparationRoot, (delta) => {
+                  if (handoffElapsed < PRE_RHYTHM_GAME_HANDOFF_SECONDS) {
+                    handoffElapsed = Math.fround(handoffElapsed + Math.fround(delta));
+                    return false;
+                  }
+                  if (direction.snapshot().phase !== "first-view") return true;
+                  const advanced = direction.step(Math.fround(delta));
+                  if (advanced.status !== "ok") throw new Error(advanced.boundary);
+                  return direction.snapshot().phase !== "first-view";
+                });
+                // ExecStart loads the remaining resources while ShowAnimation
+                // reveals the card. Play waits for both resource and view readiness.
+                firstView.ready = firstView.presentation.ready.then(() => accepted(undefined), presentationFailure);
+              } catch (error) {
+                return presentationFailure(error);
               }
               return accepted(undefined);
             },
@@ -557,7 +553,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
         startupDirection: {
           scene: startupScene,
           commandNotes: recipe.request.presentation.stage.commandNotes,
-          firstViewPresented: !moveTimeCandidate,
+          firstViewPresented: true,
           liveStartVoiceCue: null,
           purpose,
         },

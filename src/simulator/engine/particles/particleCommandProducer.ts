@@ -487,7 +487,7 @@ export class ParticleCommandProducer {
     if (this.state.suppressedUntilReplay) {
       return rejected(
         "particle.producer.duplicate-movetime",
-        "MoveTime suppression is entered once and can end only through whole-engine checkpoint/replay reconstruction.",
+        "MoveTime suppression is entered once and ends at its resume.",
       );
     }
     const projected = createEmptyState();

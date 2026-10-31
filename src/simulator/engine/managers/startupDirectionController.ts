@@ -92,7 +92,7 @@ export class StartupDirectionController {
     private readonly scene: StartupDirectionSceneBackend | null,
     audio: AudioCommandProducer | null = null,
     private readonly liveStartVoiceCue: string | null = null,
-    private readonly purpose: StartupDirectionPurpose = "initial",
+    purpose: StartupDirectionPurpose = "initial",
     private readonly mvBackground: MvBackgroundModule | null = null,
     private readonly primaryJudgementAdjustment: PrimaryJudgementAdjustmentOwner | null = null,
     private readonly firstViewPresented = false,
@@ -112,11 +112,10 @@ export class StartupDirectionController {
   initialize(): SimulatorResult<void> {
     if (this.disposed) return rejected("startup-direction.initialize-after-dispose", "A disposed startup owner cannot be reconstructed.");
     if (this.initialized) return ok(undefined);
-    if (this.mvBackground !== null &&
-      (this.mode.sessionMode !== "live" || this.purpose === "move-time-reconstruction")) {
+    if (this.mvBackground !== null && this.mode.sessionMode !== "live") {
       return rejected(
         "startup-direction.mv-unsupported-mode-or-purpose",
-        "Current MV Live is evidenced only for fresh Live Manual/Auto startup; Practice Retry and MoveTime cannot select the Simple movie background.",
+        "Current MV Live is evidenced only for Live Manual/Auto startup; Practice cannot select the Simple movie background.",
       );
     }
     const movie = this.mvBackground?.initialize() ?? ok(undefined);
@@ -131,26 +130,6 @@ export class StartupDirectionController {
         : ok(undefined)
     );
     if (startupAudio.status !== "ok") return startupAudio;
-    if (this.purpose === "move-time-reconstruction") {
-      this.phaseValue = "playing-sound";
-      this.stateValue = GameState.PlayingSound;
-      this.publish({
-        informationPhase: "complete",
-        informationAlpha: Math.fround(0),
-        hudAlpha: Math.fround(1),
-        darkCoverAlpha: Math.fround(0),
-        stageSubtractionColor: STARTUP_SUBTRACTION_COLOR,
-        stagePhase: "idle",
-        stageProgress: Math.fround(1),
-        stageColorProgress: Math.fround(1),
-        characterAlpha: Math.fround(1),
-        linePhase: "visible",
-        lineAlpha: Math.fround(1),
-        gameplayVisible: true,
-        rehearsalControlsVisible: this.mode.sessionMode === "rehearsal",
-      });
-      return ok(undefined);
-    }
     if (this.firstViewPresented) {
       this.enter("information-hold", GameState.OPFirstAnimStart);
       this.publish({ informationPhase: "holding", informationAlpha: Math.fround(1) });
@@ -299,7 +278,7 @@ export class StartupDirectionController {
   }
 
   private advanceStartupCovers(delta: number): void {
-    if (this.mvBackground !== null || this.purpose === "move-time-reconstruction" || this.phaseValue === "first-view") return;
+    if (this.mvBackground !== null || this.phaseValue === "first-view") return;
     if (this.sceneValue.stageSubtractionColor === STARTUP_SUBTRACTION_COLOR) return;
     this.startupCoverElapsedValue = Math.fround(Math.min(STARTUP_SUBTRACTION_FADE,
       this.startupCoverElapsedValue + delta));
@@ -311,9 +290,8 @@ export class StartupDirectionController {
   }
 
   private advanceParallelOwners(delta: number): void {
-    if (this.purpose === "move-time-reconstruction" ||
-      (this.sceneValue.linePhase === "visible" && this.sceneValue.stagePhase === "idle" &&
-        this.sceneValue.darkCoverAlpha === 0)) return;
+    if (this.sceneValue.linePhase === "visible" && this.sceneValue.stagePhase === "idle" &&
+      this.sceneValue.darkCoverAlpha === 0) return;
     if (this.phaseValue !== "opening-last" && this.phaseValue !== "music-wait" &&
       this.phaseValue !== "voice-wait" && this.phaseValue !== "movie-before-sound" &&
       this.phaseValue !== "playing-none" && this.phaseValue !== "playing-sound") return;
@@ -378,7 +356,7 @@ export class StartupDirectionController {
   }
 
   reflectStageCommands(musicPosition: number, bpm: number): void {
-    if (this.mode.sessionMode !== "live" || this.mvBackground !== null || this.purpose === "move-time-reconstruction") return;
+    if (this.mode.sessionMode !== "live" || this.mvBackground !== null) return;
     const first = this.stageCommands[this.nextStageCommand];
     if (first === undefined || first.absolutePosition > musicPosition) return;
     const speed = Math.fround(bpm / 240);

@@ -951,14 +951,10 @@ export function publishFreshEngineVisual(engine: SimulatorEngine): SimulatorResu
     : wrapper.publishVisual();
 }
 
-/**
- * Reloads the BGM at the MoveTime target. A reconstructed generation then mounts its visuals;
- * an in-place MoveTime keeps the mounted generation.
- */
+/** LoadMusic: reloads the BGM at the MoveTime target, paused until the countdown resumes. */
 export function publishMoveTimeAudio(
   engine: SimulatorEngine,
   targetSeconds: number,
-  generation: "fresh" | "in-place" = "fresh",
 ): SimulatorResult<void> {
   const host = resolveMoveTimeHost(engine);
   if (host === null) {
@@ -967,9 +963,7 @@ export function publishMoveTimeAudio(
       "MoveTime audio publication may run only on an engine created by the simulator host.",
     );
   }
-  const audio = host.publishMoveTimeAudio(targetSeconds);
-  if (audio.status !== "ok" || generation === "in-place") return audio;
-  return registeredMoveTimeWrappers.get(engine)?.publishVisual() ?? ok(undefined);
+  return host.publishMoveTimeAudio(targetSeconds);
 }
 
 export function commitMoveTimeTimelineRevision(
@@ -1376,11 +1370,10 @@ function createMovieBackground(
     input.movie.musicStartDelayMilliseconds < -0x80000000 ||
     input.movie.musicStartDelayMilliseconds > 0x7fffffff ||
     input.startupDirection === undefined ||
-    input.startupDirection.purpose === "move-time-reconstruction" ||
     mode.sessionMode !== "live" || backend === undefined) {
     return integrityFailure(
       "movie.session.invalid-host-binding",
-      "MV Live requires one prepared backend, exact session/delay binding, fresh Live Manual/Auto startup and no Rehearsal/MoveTime inheritance.",
+      "MV Live requires one prepared backend, exact session/delay binding and Live Manual/Auto startup without Rehearsal inheritance.",
     );
   }
   const snapshot = backend.snapshot();

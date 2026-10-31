@@ -7,7 +7,6 @@ export type PrimaryJudgementAdjustmentPhase =
   | "move-time-waiting-music"
   | "waiting-gameplay"
   | "complete"
-  | "move-time-bypassed"
   | "faulted";
 
 export interface PrimaryJudgementAdjustmentSnapshot {
@@ -30,9 +29,7 @@ export class PrimaryJudgementAdjustmentOwner {
     readonly judgementAdjustValue: number,
     readonly purpose: StartupAudioPurpose,
   ) {
-    this.phaseValue = purpose === "move-time-reconstruction"
-      ? "move-time-bypassed"
-      : "waiting-music";
+    this.phaseValue = "waiting-music";
   }
 
   initialize(hasStartupOwner: boolean): SimulatorResult<void> {
@@ -43,7 +40,6 @@ export class PrimaryJudgementAdjustmentOwner {
         "Primary JudgementAdjustValue must remain the exact persisted integer range -30..30.",
       );
     }
-    if (this.purpose === "move-time-reconstruction") return ok(undefined);
     if (!hasStartupOwner) {
       if (this.judgementAdjustValue !== 0) {
         return this.fault(
@@ -63,7 +59,6 @@ export class PrimaryJudgementAdjustmentOwner {
     if (this.phaseValue === "faulted") {
       return this.fault("primary-adjustment.reset-after-fault", "A faulted Primary adjustment owner cannot restart.");
     }
-    if (this.phaseValue === "move-time-bypassed") return ok(undefined);
     this.fastCounterValue = 0;
     this.slowCounterValue = 0;
     this.musicStartedValue = false;
@@ -72,11 +67,10 @@ export class PrimaryJudgementAdjustmentOwner {
   }
 
   preflightMusicStart(): SimulatorResult<boolean> {
-    if (this.phaseValue === "faulted" || this.musicStartedValue ||
-      this.phaseValue === "move-time-bypassed") {
+    if (this.phaseValue === "faulted" || this.musicStartedValue) {
       return this.fault(
         "primary-adjustment.invalid-music-start",
-        "The Primary music-start edge is requested exactly once outside MoveTime reconstruction.",
+        "The Primary music-start edge is requested once per start or MoveTime resume.",
       );
     }
     if (this.judgementAdjustValue > 0 &&
@@ -110,7 +104,7 @@ export class PrimaryJudgementAdjustmentOwner {
         "A faulted Primary adjustment owner cannot advance gameplay.",
       );
     }
-    if (this.phaseValue === "move-time-bypassed" || this.phaseValue === "complete" ||
+    if (this.phaseValue === "complete" ||
       this.phaseValue === "move-time-waiting-music") {
       return ok(false);
     }

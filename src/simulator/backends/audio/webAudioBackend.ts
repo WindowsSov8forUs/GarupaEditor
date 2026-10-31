@@ -76,13 +76,8 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
   private scheduledPauseOffset = 0;
   private physicalOutputState: "live" | "move-time-suppressed" | "move-time-published";
 
-  constructor(
-    private readonly context: AudioContext,
-    moveTimeReconstruction = false,
-  ) {
-    this.physicalOutputState = moveTimeReconstruction
-      ? "move-time-suppressed"
-      : "live";
+  constructor(private readonly context: AudioContext) {
+    this.physicalOutputState = "live";
   }
 
   async prepare(
@@ -319,8 +314,8 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
   }
 
   /**
-   * In-place MoveTime on the running engine: silences the physical graph while the steps run;
-   * publishMoveTimeOutput then reloads the BGM at the target, as on a reconstructed engine.
+   * MoveTime on the running engine: silences the physical graph while the steps run;
+   * publishMoveTimeOutput then reloads the BGM at the target.
    */
   suppressMoveTimeOutput(): AudioOperationResult<void> {
     const context = this.requireRunningContext<void>();
@@ -376,7 +371,7 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
     } catch {
       return this.recording.recordTerminalFault(
         "audio.web.move-time-publication-threw",
-        "The reconstructed target BGM graph failed during one-use physical publication and is terminal.",
+        "The target BGM graph failed during MoveTime publication and is terminal.",
       );
     }
   }
