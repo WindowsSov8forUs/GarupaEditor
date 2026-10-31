@@ -98,6 +98,15 @@ export function setMobileSimulatorImmersive(enabled: boolean): void {
   bridge.setImmersive(enabled);
 }
 
+/** The editor stays mounted under the mobile Simulator overlay: drop the route without a
+ * reload so the page the live was started from is still there. */
+export function leaveMobileSimulatorRoute(): void {
+  if (typeof window === "undefined") return;
+  if (getRuntimePlatform() === "android") setMobileSimulatorImmersive(false);
+  window.history.replaceState(window.history.state, "", `${window.location.pathname}${window.location.search}`);
+  window.dispatchEvent(new HashChangeEvent("hashchange"));
+}
+
 export function navigateBackToEditor(): void {
   if (typeof window === "undefined") return;
   if (getRuntimePlatform() === "android") setMobileSimulatorImmersive(false);

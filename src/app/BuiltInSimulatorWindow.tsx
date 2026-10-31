@@ -27,7 +27,7 @@ import {
 } from "./simulator/transportContracts";
 import {
   isMobileRuntime,
-  navigateBackToEditor,
+  leaveMobileSimulatorRoute,
   readMobileRoutePayload,
   removeMobileRoutePayload,
   setMobileSimulatorImmersive,
@@ -193,7 +193,7 @@ function BuiltInSimulatorWindow() {
         },
         async leaveHost() {
           await flushLogs();
-          if (mobile) navigateBackToEditor();
+          if (mobile) leaveMobileSimulatorRoute();
           else await getCurrentWebviewWindow().close();
         },
       },
@@ -227,7 +227,7 @@ function BuiltInSimulatorWindow() {
       capability: transportFailure === null ? null : "app.simulator.transport-failed",
       boundary: transportFailure,
     });
-    if (mobile) navigateBackToEditor();
+    if (mobile) leaveMobileSimulatorRoute();
     else await getCurrentWebviewWindow().close();
   }, [mobile, requestId, transportFailure]);
 
