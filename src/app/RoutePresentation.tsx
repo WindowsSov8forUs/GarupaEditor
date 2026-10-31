@@ -41,7 +41,12 @@ export async function presentAuxiliaryWindow() {
   if (!isMobileRuntime() && isTauri()) {
     const requestId = new URLSearchParams(location.hash.split("?")[1]).get("request");
     let error: string | undefined;
-    try { await getCurrentWebviewWindow().show(); } catch (cause) { error = String(cause); }
+    try {
+      const current = getCurrentWebviewWindow();
+      await current.show();
+      // The live window takes input as soon as its gameplay surface is presented.
+      if (location.hash.startsWith("#simulator")) await current.setFocus();
+    } catch (cause) { error = String(cause); }
     await emit("application:page-presented", { requestId, error });
   }
 }

@@ -21,7 +21,7 @@ import {
   type MouseEvent as ReactMouseEvent,
 } from "react";
 import { emitTo, listen, type UnlistenFn } from "@tauri-apps/api/event";
-import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
+import { getCurrentWebviewWindow, WebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { LogicalSize, getCurrentWindow } from "@tauri-apps/api/window";
 import { ChartEditorLayout } from "../components/editor/ChartEditorLayout";
 import { createEditorDisplayAxis } from "./editorDisplayAxis";
@@ -5937,6 +5937,7 @@ function ChartEditorController() {
           visible: false,
           title: `${metadata.title} - playing`,
           width, height, center: true, resizable: false,
+          parent: getCurrentWebviewWindow(),
           url: targetUrl.toString(),
         });
         void simulatorWindow.once("tauri://error", (event) => {
