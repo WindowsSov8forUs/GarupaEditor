@@ -487,13 +487,12 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       );
     }
     const snapshot = this.recording.snapshot();
-    const returnTexture = this.spriteTextures.get(spriteKey(
+    // The buttons bake their words; CN 10.1.3 btn_ingame_time_back/forward read 倒退/快进.
+    const returnTexture = this.baseTextures.get("hud/rehearsal/return-five");
+    const advanceTexture = this.baseTextures.get("hud/rehearsal/advance-five");
+    const timeIconTexture = this.spriteTextures.get(spriteKey(
       CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId,
-      "btn_ingame_time_back",
-    ));
-    const advanceTexture = this.spriteTextures.get(spriteKey(
-      CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId,
-      "btn_ingame_time_forward",
+      "icon_ingame_music",
     ));
     const timeBackgroundTexture = this.spriteTextures.get(spriteKey(
       CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId,
@@ -513,7 +512,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     const font = this.decodedFonts.get(CURRENT_SCORE_HUD_BINDINGS.rankLabelFontLogicalAssetId);
     const pauseCountdownAnimation = this.profile?.pauseCountdownAnimation;
     if (snapshot.state !== "ready" || returnTexture === undefined ||
-      advanceTexture === undefined || timeBackgroundTexture === undefined ||
+      advanceTexture === undefined || timeBackgroundTexture === undefined || timeIconTexture === undefined ||
       demoBackgroundTexture === undefined || pauseTexture === undefined || windowTexture === undefined ||
       headerTexture === undefined || grayButtonTexture === undefined || pinkButtonTexture === undefined || coverTexture === undefined ||
       countdownTextures.some((texture) => texture === undefined) || font === undefined ||
@@ -530,6 +529,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       returnTexture,
       advanceTexture,
       timeBackgroundTexture,
+      timeIconTexture,
       demoBackgroundTexture,
       pauseTexture,
       windowTexture,
@@ -2382,7 +2382,8 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
   private readonly pauseButton: Sprite;
   private readonly returnButton: Sprite | null;
   private readonly advanceButton: Sprite | null;
-  private readonly timeText: Text | null;
+  private readonly timeNowText: Text | null;
+  private readonly timeMaxText: Text | null;
   private readonly pauseTextures: Readonly<{
     window: Texture;
     header: Texture;
@@ -2402,6 +2403,7 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
     returnTexture: Texture,
     advanceTexture: Texture,
     timeBackgroundTexture: Texture,
+    timeIconTexture: Texture,
     demoBackgroundTexture: Texture,
     pauseTexture: Texture,
     windowTexture: Texture,
@@ -2496,11 +2498,21 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
       applyBounds(timeBackground, timeRegion);
       timeBackground.tint = 0xffffff;
       timeBackground.zIndex = 20;
-      this.timeText = this.text("", timeRegion.height * 20 / 32, 0xff3b74, "rehearsal-time-label");
-      layoutNguiText(this.timeText, 0.5, 0.5, this.timeText.style.fontSize * 8 / 20);
-      this.timeText.position.set(timeRegion.x + timeRegion.width / 2, timeRegion.y + timeRegion.height / 2);
-      this.timeText.zIndex = 21;
-      this.rehearsalRoot.addChild(this.returnButton, this.advanceButton, timeBackground, this.timeText);
+      // InGameMoveTime/Time/BG (172x32, pivot TopRight) holds Icon (32x26, Center at -148,-17),
+      // Now (pink, pivot Right at -77,-23) and Max ("/" + total, gray, pivot Left at -76,-23); font 20.
+      const unit = timeRegion.width / 172;
+      const right = timeRegion.x + timeRegion.width, top = timeRegion.y;
+      const icon = new Sprite({ texture: timeIconTexture, anchor: 0.5, label: "rehearsal-time-icon" });
+      icon.width = 32 * unit; icon.height = 26 * unit;
+      icon.position.set(right - 148 * unit, top + 17 * unit);
+      icon.zIndex = 23;
+      this.timeNowText = this.text("", 20 * unit, 0xff3b72, "rehearsal-time-now");
+      this.timeNowText.position.set(right - 77 * unit, top + 23 * unit);
+      this.timeNowText.zIndex = 22;
+      this.timeMaxText = this.text("/", 20 * unit, 0x505050, "rehearsal-time-max");
+      this.timeMaxText.position.set(right - 76 * unit, top + 23 * unit);
+      this.timeMaxText.zIndex = 21;
+      this.rehearsalRoot.addChild(this.returnButton, this.advanceButton, timeBackground, icon, this.timeNowText, this.timeMaxText);
       if (mode.isDemoPlayMode) {
         const demo = layout.demoBadgeBoundsTopLeft;
         const demoBorder = CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.autoLiveCaption;
@@ -2512,11 +2524,15 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
           bottomHeight: demoBorder.bottom,
           label: "rehearsal-demo-badge-background",
         });
-        applyBounds(badge, demo);
-        badge.tint = linearTintFromSrgbColor(0xff3b74);
+        // ScoreCountStop/DemoPlay: label_round_white 208x40 at #FFFFFFD8 with DemoPlayLabel #505050,
+        // size 24, no effect, spacing 0 (unlike the pink AutoLiveCaption prefab).
+        const unit = demo.height / 38;
+        const badgeWidth = 208 * unit, badgeHeight = 40 * unit;
+        applyBounds(badge, { x: demo.x + (demo.width - badgeWidth) / 2, y: demo.y + (demo.height - badgeHeight) / 2,
+          width: badgeWidth, height: badgeHeight });
+        badge.alpha = 216 / 255;
         badge.zIndex = 20;
-        const label = this.text("デモプレイ", demo.height * 24 / 38, 0xffffff, "rehearsal-demo-badge");
-        label.style.letterSpacing = -label.style.fontSize / 24;
+        const label = this.text("デモプレイ", 24 * unit, 0x505050, "rehearsal-demo-badge");
         layoutNguiText(label);
         label.position.set(demo.x + demo.width / 2, demo.y + demo.height / 2);
         label.zIndex = 21;
@@ -2527,7 +2543,8 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
     } else {
       this.returnButton = null;
       this.advanceButton = null;
-      this.timeText = null;
+      this.timeNowText = null;
+      this.timeMaxText = null;
       this.rehearsalRoot.visible = false;
     }
     this.root.sortChildren();
@@ -2535,12 +2552,15 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
 
   updateTimeline(timelineSeconds: number): SimulatorResult<void> {
     if (this.disposed) return integrityFailure("render.in-game-control.after-dispose", "Disposed InGame controls reject timeline publication.");
-    if (this.timeText === null) return ok(undefined);
+    if (this.timeNowText === null || this.timeMaxText === null) return ok(undefined);
     const formatted = formatRehearsalTimeLabel(timelineSeconds, this.durationSeconds);
     if (formatted.status !== "ok") return formatted;
     this.timelineSeconds = timelineSeconds;
-    this.timeText.text = formatted.value;
-    layoutNguiText(this.timeText, 0.5, 0.5, this.timeText.style.fontSize * 8 / 20);
+    const slash = formatted.value.indexOf("/");
+    this.timeNowText.text = formatted.value.slice(0, slash);
+    this.timeMaxText.text = formatted.value.slice(slash);
+    layoutNguiText(this.timeNowText, 1, 0.5);
+    layoutNguiText(this.timeMaxText, 0, 0.5);
     this.applyAvailability();
     return ok(undefined);
   }

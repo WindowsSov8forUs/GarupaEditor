@@ -11,6 +11,8 @@ import light4Url from "../../assets/game/portable/skins/cn/light/source.bundle?u
 import suddenLineUrl from "../../assets/game/prefabs/bms/sudden/sudden-line.png?url&no-inline";
 import stageDarkCoverUrl from "../../assets/game/prefabs/bms/stage/stage-dark-cover.png?url&no-inline";
 import movieBackgroundUrl from "../../assets/game/prefabs/bms/movie/movie-background.png?url&no-inline";
+import rehearsalAdvanceFiveUrl from "../../assets/game/prefabs/bms/movetime/rehearsal-advance-five.png?url&no-inline";
+import rehearsalReturnFiveUrl from "../../assets/game/prefabs/bms/movetime/rehearsal-return-five.png?url&no-inline";
 import stageGameOverCoverUrl from "../../assets/game/prefabs/bms/stage/stage-game-over-cover.png?url&no-inline";
 import resultBannerUrl from "../../assets/game/prefabs/bms/result/result-banner.png?url&no-inline";
 import resultRankLightUrl from "../../assets/game/prefabs/bms/result/LoginBonus.png?url&no-inline";
@@ -204,6 +206,10 @@ const DEFINITIONS: readonly SimulatorBuiltinResourceDefinition[] = Object.freeze
   ]),
   resource("prefabs/bms/movie", "MV Live background resources", "image", [
     file("game/prefabs/bms/movie/movie-background.png", "movie-background.png", "image/png", movieBackgroundUrl),
+  ]),
+  resource("prefabs/bms/movetime", "Rehearsal MoveTime button resources (CN 10.1.3 btn_ingame_time_*)", "image", [
+    file("game/prefabs/bms/movetime/rehearsal-advance-five.png", "rehearsal-advance-five.png", "image/png", rehearsalAdvanceFiveUrl),
+    file("game/prefabs/bms/movetime/rehearsal-return-five.png", "rehearsal-return-five.png", "image/png", rehearsalReturnFiveUrl),
   ]),
   resource("prefabs/bms/stage", "Ordinary stage resources", "image", [
     file("game/prefabs/bms/stage/stage-dark-cover.png", "stage-dark-cover.png", "image/png", stageDarkCoverUrl),

@@ -58,6 +58,7 @@ const COMMON_REQUIREMENTS: readonly SimulatorResourceRequirement[] = Object.free
   requirement("render.rank-label-font", "fonts/sgm", ["rank-label-font.ttf"]),
   requirement("render.startup-information", "prefabs/bms/information", ["startup-line-star.png", "startup-title-base.png"]),
   requirement("render.mv-background", "prefabs/bms/movie", ["movie-background.png"]),
+  requirement("render.rehearsal-controls", "prefabs/bms/movetime", ["rehearsal-advance-five.png", "rehearsal-return-five.png"]),
   requirement("render.stage", "prefabs/bms/stage", ["stage-light.png", "stage-speaker.png", "stage-speaker-glow.png", "stage-psyllium.png"]),
   requirement("render.result", "prefabs/bms/result", ["result-menu.png", "rhythmBG.png", "result-banner.png", "LoginBonus.png", "Tex_parSet_1.png", "Tex_parSet_2.png"]),
   requirement("render.pause", "prefabs/bms/pause", [

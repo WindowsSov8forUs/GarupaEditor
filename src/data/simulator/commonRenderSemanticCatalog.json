@@ -979,6 +979,20 @@
               "borderRight": 0,
               "borderTop": 0,
               "borderBottom": 0
+            },
+            {
+              "exactKey": "icon_ingame_music",
+              "x": 989,
+              "y": 223,
+              "width": 32,
+              "height": 26,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
             }
           ],
           "materialRole": "hud",
@@ -1157,6 +1171,48 @@
           "mime": "image/png",
           "width": 99,
           "height": 121,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "rehearsal-advance-five.png",
+        "profile": {
+          "logicalAssetId": "hud/rehearsal/advance-five",
+          "role": "startup-ui",
+          "mime": "image/png",
+          "width": 104,
+          "height": 104,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "rehearsal-return-five.png",
+        "profile": {
+          "logicalAssetId": "hud/rehearsal/return-five",
+          "role": "startup-ui",
+          "mime": "image/png",
+          "width": 104,
+          "height": 104,
           "textureSettings": {
             "scaleMode": "linear",
             "wrapModeU": "clamp",
