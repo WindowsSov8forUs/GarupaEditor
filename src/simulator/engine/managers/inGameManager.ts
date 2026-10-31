@@ -94,6 +94,8 @@ export class InGameManager {
   /** onResumeFromMoveTime writes 16 inside the countdown's animation event, after this frame's
    * ExecUpdate; the following ExecUpdate writes 4. */
   private moveTimeResumeWrittenThisFrame = false;
+  /** judgeAdjustFastProcess started by updatePlayingSound after a MoveTime, until PlayMusic. */
+  private moveTimeMusicPending = false;
 
   constructor(
     readonly musicScoreController: InGameMusicScoreController,
@@ -255,8 +257,11 @@ export class InGameManager {
         "Only a MoveTime from PlayingSound or an earlier countdown waits for the countdown.",
       );
     }
+    const adjustment = this.primaryJudgementAdjustment?.resetForMoveTime() ?? ok(undefined);
+    if (adjustment.status !== "ok") return this.latchFault(adjustment);
     this.currentGameStateValue = GameState.MoveTimeWaitForPlay;
     this.moveTimeResumeWrittenThisFrame = false;
+    this.moveTimeMusicPending = false;
     return ok(undefined);
   }
 
@@ -278,7 +283,13 @@ export class InGameManager {
 
   execUpdate(deltaTimeSeconds: number): SimulatorResult<void> {
     const waitingForCountdown = this.currentGameStateValue === GameState.MoveTimeWaitForPlay;
+    const musicGateRunning = this.moveTimeMusicPending;
     const updated = this.execUpdateFrame(deltaTimeSeconds);
+    // Coroutines resume after Update: a started judgeAdjustFastProcess steps once per frame.
+    if (updated.status === "ok" && musicGateRunning && this.moveTimeMusicPending && !this.isPaused()) {
+      const music = this.stepMoveTimeMusicGate();
+      if (music.status !== "ok") return music;
+    }
     // The ImmortalityTimer coroutine subtracts Time.deltaTime once when started and then once per
     // frame; a MoveTime's reset stops it until the next countdown restarts it.
     if (updated.status === "ok" && !waitingForCountdown) {
@@ -320,13 +331,11 @@ export class InGameManager {
       return this.advanceMoveTimeWaitPresentation(deltaTimeSeconds);
     }
     if (this.currentGameStateValue === GameState.PlayingNone && this.isStartupPlayable()) {
-      // updatePlayingSound writes 5 and PlayMusic resumes the BGM in the same update.
-      const music = this.audioProducer?.preflightMoveTimeMusicStart() ?? null;
-      if (music !== null && music.status !== "ok") return this.latchFault(music);
-      if (music !== null) {
-        const committed = music.value.commit();
-        if (committed.status !== "ok") return this.latchFault(committed);
-      }
+      // updatePlayingSound starts judgeAdjustFastProcess (its first step runs at once) and
+      // writes 5 in the same call; PlayMusic waits for a positive adjustment's frames.
+      this.moveTimeMusicPending = true;
+      const music = this.stepMoveTimeMusicGate();
+      if (music.status !== "ok") return music;
       this.currentGameStateValue = GameState.PlayingSound;
     }
     if (this.currentGameStateValue === GameState.PauseNone) {
@@ -763,6 +772,22 @@ export class InGameManager {
       const committed = this.commitRenderFrame(hudAnimation.value, "hud-animation-advance");
       if (committed.status !== "ok") return this.latchFault(committed);
     }
+    return ok(undefined);
+  }
+
+  private stepMoveTimeMusicGate(): SimulatorResult<void> {
+    const gate = this.primaryJudgementAdjustment?.preflightMusicStart() ?? ok(true);
+    if (gate.status !== "ok") return this.latchFault(gate);
+    if (!gate.value) return ok(undefined);
+    const music = this.audioProducer?.preflightMoveTimeMusicStart() ?? null;
+    if (music !== null && music.status !== "ok") return this.latchFault(music);
+    if (music !== null) {
+      const committed = music.value.commit();
+      if (committed.status !== "ok") return this.latchFault(committed);
+    }
+    const started = this.primaryJudgementAdjustment?.commitMusicStarted() ?? ok(undefined);
+    if (started.status !== "ok") return this.latchFault(started);
+    this.moveTimeMusicPending = false;
     return ok(undefined);
   }
 
