@@ -289,7 +289,8 @@ class OwnedPixiStartupDirectionScene implements PixiStartupDirectionScene {
     if (this.stagePsyllium !== null) this.backgroundRoot.addChild(this.stagePsyllium.root);
     this.backgroundRoot.addChild(this.darkCover);
     // InGameStageControllerBase.initDarkCoverTexture hides it in Light mode
-    // outside practice (Light mode is never chosen in practice).
+    // outside practice. Practice may run the Light module, but BgManager.initPracticeMode keeps the
+    // practice room ahead of the card, so a practice scene always takes the standard branch here.
     if (includeStandardStage && lightMode === null) {
       // Queue3490 is independent of BgCover (3400): ShowScreenALittle fades
       // this widget's RGB from white to quarter-gray while retaining alpha1.

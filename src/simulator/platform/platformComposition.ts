@@ -301,7 +301,9 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     // RhythmGameStartData.BackgroundModuleType: after MV, the Light module
     // (InGameGraphicsMode.Light; here, a chart with a custom background) is
     // used outside practice on a #HABAHIRO chart or without a Collaboration
-    // skin (SeasonUtility.IsEnableCollaborationSkin).
+    // skin (SeasonUtility.IsEnableCollaborationSkin). Practice may also select Light, which only
+    // removes SD characters and stage effects (neither is present in practice here) and keeps the
+    // practice room from BgManager.initPracticeMode instead of the card.
     const lightMode = presentation.value.illustBackground !== null && score.value.mode.sessionMode === "live" &&
       mvResource.value === null && (chart.value.isMultiRangeNotes || recipe.request.config.skin.special.kind !== "collabo");
     const skin = await this.deriveSkin(recipe, score.value.mode, chart.value);
