@@ -19,6 +19,7 @@ import { DIFFICULTY_LABEL_STYLE } from "../../scene/difficultyLabelStyle";
 import { PixiResultNumberLabel } from "./pixiResultNumberLabel";
 import effectsProfile from "../../../data/simulator/resultEffectsProfile.json";
 import { PixiResultRank } from "./pixiResultRank";
+import fullComboProfile from "../../../data/simulator/resultFullComboProfile.json";
 import { createSerializedButtonPressCover, createSerializedButtonSprite, PixiSerializedButtonInput } from "../../../components/pixi/SerializedButton";
 import { RESULT_BUTTON_COLLIDER } from "../../scene/resultButtonProfile";
 import { linearTintFromSrgbChannels, linearTintFromSrgbColor } from "./hud/nguiMaterialPipeline";
@@ -59,6 +60,8 @@ class ResultCounter {
   }
 
   get counting(): boolean { return this.started && !this.settled && this.scale === null && this.target !== 0; }
+  /** LabelUtility.CountUpLabel completed (its result_label_scale follows). */
+  get countFinished(): boolean { return this.started && (this.settled || this.scale !== null); }
 
   advance(delta: number): void {
     if (!this.started || this.settled) return;
@@ -123,6 +126,9 @@ export class PixiResultScene {
   private readonly practiceReplay: PixiResultNavigationButtons | null;
   private rewardVisible = false;
   private displayMaskTexture: Texture | null = null;
+  /** LiveResultMyScore.setupClearState: fullcomboanimator under COMBO/FullComboAnimationRoot. */
+  private readonly fullCombo: { root: Container; main: Container; additive: Container; glow: Sprite } | null;
+  private fullComboAnimation: StageClipAnimation | null = null;
 
   constructor(private readonly layout: OriginalSurfaceLayout, result: SimulatorResultRecord,
     presentation: Pick<PreparedSessionPresentation, "song" | "difficulty">, backgroundTexture: Texture,
@@ -259,6 +265,26 @@ export class PixiResultScene {
     const nameSprite = this.sprites.get(judgementPath + "COMBO/Back/Name")!;
     nameSprite.texture = texture("menu", "maxcombo_wide"); nameSprite.width = nameSprite.texture.width; nameSprite.height = nameSprite.texture.height;
     this.nodes.get(judgementPath + "COMBO/Value")!.position.set(40, 53);
+    // isFullCombo (maxCombo == maxNoteCount) shows the root; isAllPerfect swaps the main and glow
+    // sprites to 222x40. MoveTime and Auto clear the judge counts first, so neither shows a label.
+    if (!omitJudge && result.clearStatus >= 2) {
+      const allPerfect = result.clearStatus === 3;
+      const root = new Container({ label: judgementPath + "COMBO/FullComboAnimationRoot", sortableChildren: true, visible: false });
+      root.position.set(3, 106);
+      const size = allPerfect ? [222, 40] : [219, 37];
+      const main = new Container({ label: "FullCombo", visible: false });
+      const mainSprite = new Sprite({ texture: allPerfect ? particleTexture("allperfect") : texture("menu", "icon_result_fullcombo"), anchor: 0.5 });
+      mainSprite.width = size[0]!; mainSprite.height = size[1]!; mainSprite.zIndex = 15;
+      main.addChild(mainSprite);
+      const additive = new Container({ label: "FullCombo_additive", visible: false });
+      const glow = new Sprite({ texture: particleTexture(allPerfect ? "allperfect-add" : "fullcombo-add"), anchor: 0.5 });
+      glow.width = size[0]!; glow.height = size[1]!; glow.zIndex = 16; glow.alpha = 0; glow.blendMode = "add";
+      additive.addChild(glow);
+      root.addChild(main, additive);
+      this.nodes.get(judgementPath + "COMBO")!.addChild(root);
+      this.drawOrder.attach(mainSprite); this.drawOrder.attach(glow);
+      this.fullCombo = { root, main, additive, glow };
+    } else this.fullCombo = null;
     this.applyAnimation(this.sceneAnimation);
     this.applyAnimation(this.timingAnimation, timingPath);
     const header = this.header;
@@ -316,10 +342,11 @@ export class PixiResultScene {
     if (this.rewardVisible) return this.rewardButtons.advance(delta, input);
     if (this.clearPage !== null) {
       const action = this.clearPage.advance(delta, input);
-      if ((action === "success" || action === "failed") && !this.isAutoLive) this.rank.play();
+      // The Practice result prefab and its banner carry no SCORE RANK badge.
+      if ((action === "success" || action === "failed") && !this.isAutoLive && !this.isPractice) this.rank.play();
       if (action !== "show-detail") return action;
       this.clearPage.dispose(); this.clearPage = null;
-      this.rank.play(true);
+      if (!this.isPractice) this.rank.play(true);
       this.graph.visible = true;
       this.drawOrder.visible = true;
       return "stay";
@@ -358,7 +385,9 @@ export class PixiResultScene {
       this.animationFinished = this.elapsed >= this.sceneAnimation.clip.duration;
     }
     for (const counter of this.counters.values()) counter.advance(delta);
-    this.settled = this.animationFinished && [...this.counters.values()].every(counter => counter.settled);
+    this.advanceFullCombo(delta);
+    this.settled = this.animationFinished && [...this.counters.values()].every(counter => counter.settled) &&
+      (this.fullCombo === null || (this.fullComboAnimation !== null && !this.fullComboAnimation.advance(0)));
     return "stay";
   }
 
@@ -389,9 +418,43 @@ export class PixiResultScene {
     this.sceneAnimation.advance(this.sceneAnimation.clip.duration); this.applyAnimation(this.sceneAnimation);
     this.timingAnimation.advance(this.timingAnimation.clip.duration); this.applyAnimation(this.timingAnimation, timingPath);
     for (const counter of this.counters.values()) counter.finish();
+    this.skipFullCombo();
     this.animationFinished = true; this.settled = true;
     this.skipPresses.clear(); this.exitButton.clear();
     this.practiceReplay?.show(true);
+  }
+
+  /** onFinishComboCountUp activates the instance and plays live_result_show_fullcombo. */
+  private advanceFullCombo(delta: number): void {
+    if (this.fullCombo === null) return;
+    if (this.fullComboAnimation === null) {
+      if (!this.counters.get("maxCombo")?.countFinished) return;
+      this.fullCombo.root.visible = true;
+      this.fullComboAnimation = new StageClipAnimation(fullComboProfile.clips, "live_result_show_fullcombo");
+    } else this.fullComboAnimation.advance(delta);
+    this.applyFullCombo(this.fullComboAnimation);
+  }
+
+  /** StarAnimation.stopAnimation plays the state at normalized time 0.99, not its last frame. */
+  private skipFullCombo(): void {
+    if (this.fullCombo === null) return;
+    this.fullCombo.root.visible = true;
+    const animation = this.fullComboAnimation ?? new StageClipAnimation(fullComboProfile.clips, "live_result_show_fullcombo");
+    this.fullComboAnimation = animation;
+    animation.play("live_result_show_fullcombo");
+    animation.advance(animation.clip.duration * 0.99);
+    this.applyFullCombo(animation);
+  }
+
+  private applyFullCombo(animation: StageClipAnimation): void {
+    const { main, additive, glow } = this.fullCombo!;
+    const v = animation.values;
+    for (const b of animation.clip.bindings) {
+      const node = b.path === "FullCombo" ? main : additive;
+      if (b.property === "scale") node.scale.set(v[b.index]!, v[b.index + 1]!);
+      else if (b.property === "active") node.visible = v[b.index]! !== 0;
+      else if (b.property === "spriteAlpha") glow.alpha = Math.max(0, Math.min(1, v[b.index]!));
+    }
   }
 
   private applyAnimation(animation: StageClipAnimation, prefix = ""): void {

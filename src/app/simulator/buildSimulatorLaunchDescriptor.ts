@@ -97,7 +97,9 @@ export async function buildSimulatorLaunchDescriptor(
   if (refreshed.status === "rejected") {
     throw new Error(`${refreshed.failure.capability}: ${refreshed.failure.boundary}`);
   }
-  const stage = requireRef("bestdori/jp/ingameskin/bgskin/skin00");
+  // BgManager.initPracticeMode binds the practice room (skinpractice/liveBG_normal) for every Practice.
+  const stage = requireRef(input.sessionMode === "rehearsal"
+    ? "bestdori/jp/ingameskin/bgskin/skinpractice" : "bestdori/jp/ingameskin/bgskin/skin00");
   if (input.mvEnabled && media.mv === null) {
     throw new Error("Simulator MV mode requires one explicit video resource.");
   }

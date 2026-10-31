@@ -165,11 +165,13 @@ function commonLogicalResource(file: string): string | null {
   if (file.startsWith("tap-lane-effect-")) return "atlas/bms/ui/tap-lane-effect";
   if (file === "ui-additive-effect.png") return "atlas/bms/ui/ui-additive-effect";
   if (file === "ui-common.png") return "atlas/bms/ui/uicommon";
-  if (["result-menu.png", "rhythmBG.png", "result-banner.png", "LoginBonus.png", "Tex_parSet_1.png", "Tex_parSet_2.png"].includes(file)) return "prefabs/bms/result";
+  if (["result-menu.png", "rhythmBG.png", "result-banner.png", "LoginBonus.png", "Tex_parSet_1.png", "Tex_parSet_2.png",
+    "result-allperfect.png", "result-allperfect-add.png", "result-fullcombo-add.png"].includes(file)) return "prefabs/bms/result";
   if (file === "rank-label-font.ttf") return "fonts/sgm";
   if (file === "startup-line-star.png" || file === "startup-title-base.png") return "prefabs/bms/information";
   if (file === "stage-dark-cover.png" || file === "stage-game-over-cover.png" || file === "stage-light.png" || file === "stage-speaker.png" || file === "stage-speaker-glow.png" || file === "stage-psyllium.png") return "prefabs/bms/stage";
   if (file === "movie-background.png") return "prefabs/bms/movie";
+  if (file === "rehearsal-advance-five.png" || file === "rehearsal-return-five.png") return "prefabs/bms/movetime";
   if (file.startsWith("countdown-")) return "prefabs/bms/pause";
   if (file.startsWith("high-rank-")) return "prefabs/bms/rhythmgamegauge/score";
   if (/^(?:AllPerfect|FullCombo|Tex_parSet)_/.test(file)) return "prefabs/bms/gameclear";

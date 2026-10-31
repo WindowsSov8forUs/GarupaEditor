@@ -205,6 +205,11 @@ export class ParticleFrameCoordinator {
     return owner.status === "ok" ? this.preflight(0, false, owner.value) : owner;
   }
 
+  preflightMoveTimeResume(): SimulatorResult<ParticleOuterFrameTransaction> {
+    const owner = this.producer.preflightMoveTimeResume();
+    return owner.status === "ok" ? this.preflight(0, false, owner.value) : owner;
+  }
+
   preflightDispose(): SimulatorResult<ParticleOuterFrameTransaction> {
     const owner = this.producer.preflightDispose();
     return owner.status === "ok" ? this.preflight(0, false, owner.value) : owner;

@@ -1,0 +1,496 @@
+{
+ "source": {
+  "evidence": "result-detail-fc-ap-10-2-0",
+  "region": "cn",
+  "clip": "live_result_show_fullcombo",
+  "rawSha256": "32a902bf0c2bde9add5691b532571b2b60faa68101e82218fbc548d547cb3cfc",
+  "note": "Channel 9 (FullCombo_additive Animation.m_Enabled) has no visual effect and is not bound."
+ },
+ "clips": {
+  "live_result_show_fullcombo": {
+   "duration": 0.5833333134651184,
+   "loop": false,
+   "curveCount": 10,
+   "constants": [],
+   "bindings": [
+    {
+     "path": "FullCombo",
+     "property": "scale",
+     "index": 0,
+     "size": 3
+    },
+    {
+     "path": "FullCombo_additive",
+     "property": "scale",
+     "index": 3,
+     "size": 3
+    },
+    {
+     "path": "FullCombo",
+     "property": "active",
+     "index": 6,
+     "size": 1
+    },
+    {
+     "path": "FullCombo_additive",
+     "property": "active",
+     "index": 7,
+     "size": 1
+    },
+    {
+     "path": "FullCombo_additive",
+     "property": "spriteAlpha",
+     "index": 8,
+     "size": 1
+    }
+   ],
+   "frames": [
+    {
+     "time": 0.0,
+     "keys": [
+      {
+       "index": 0,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+       ]
+      },
+      {
+       "index": 1,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      {
+       "index": 2,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+       ]
+      },
+      {
+       "index": 3,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+       ]
+      },
+      {
+       "index": 4,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+       ]
+      },
+      {
+       "index": 5,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+       ]
+      },
+      {
+       "index": 6,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+       ]
+      },
+      {
+       "index": 7,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+       ]
+      },
+      {
+       "index": 8,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      {
+       "index": 9,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+       ]
+      }
+     ]
+    },
+    {
+     "time": 0.0,
+     "keys": [
+      {
+       "index": 0,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+       ]
+      },
+      {
+       "index": 1,
+       "coefficients": [
+        -1499.9998779296875,
+        149.99998474121094,
+        15.0,
+        0.0
+       ]
+      },
+      {
+       "index": 2,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+       ]
+      },
+      {
+       "index": 3,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+       ]
+      },
+      {
+       "index": 4,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+       ]
+      },
+      {
+       "index": 5,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+       ]
+      },
+      {
+       "index": 6,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+       ]
+      },
+      {
+       "index": 7,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+       ]
+      },
+      {
+       "index": 9,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+       ]
+      }
+     ]
+    },
+    {
+     "time": 0.10000000149011612,
+     "keys": [
+      {
+       "index": 0,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+       ]
+      },
+      {
+       "index": 1,
+       "coefficients": [
+        26999.984375,
+        -1349.99951171875,
+        1.430511474609375e-06,
+        1.5
+       ]
+      },
+      {
+       "index": 2,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+       ]
+      }
+     ]
+    },
+    {
+     "time": 0.11666666716337204,
+     "keys": [
+      {
+       "index": 3,
+       "coefficients": [
+        1246.1527099609375,
+        -20.76922035217285,
+        0.0,
+        1.0
+       ]
+      },
+      {
+       "index": 4,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+       ]
+      },
+      {
+       "index": 5,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+       ]
+      },
+      {
+       "index": 8,
+       "coefficients": [
+        -215999.75,
+        3599.997314453125,
+        59.999977111816406,
+        0.0
+       ]
+      }
+     ]
+    },
+    {
+     "time": 0.13333334028720856,
+     "keys": [
+      {
+       "index": 0,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+       ]
+      },
+      {
+       "index": 1,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+       ]
+      },
+      {
+       "index": 2,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+       ]
+      },
+      {
+       "index": 3,
+       "coefficients": [
+        -1.843422532081604,
+        1.597632884979248,
+        0.34615379571914673,
+        1.0
+       ]
+      },
+      {
+       "index": 4,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+       ]
+      },
+      {
+       "index": 5,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+       ]
+      },
+      {
+       "index": 8,
+       "coefficients": [
+        -45.00001525878906,
+        15.000003814697266,
+        0.0,
+        1.0
+       ]
+      }
+     ]
+    },
+    {
+     "time": 0.46666666865348816,
+     "keys": [
+      {
+       "index": 8,
+       "coefficients": [
+        500.0001525878906,
+        -100.0000228881836,
+        -5.000000476837158,
+        1.0
+       ]
+      }
+     ]
+    },
+    {
+     "time": 0.5666666626930237,
+     "keys": [
+      {
+       "index": 3,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        1.2999999523162842
+       ]
+      },
+      {
+       "index": 4,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+       ]
+      },
+      {
+       "index": 5,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+       ]
+      },
+      {
+       "index": 7,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+       ]
+      },
+      {
+       "index": 8,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      {
+       "index": 9,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+       ]
+      }
+     ]
+    },
+    {
+     "time": 0.5833333134651184,
+     "keys": [
+      {
+       "index": 0,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+       ]
+      },
+      {
+       "index": 1,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+       ]
+      },
+      {
+       "index": 2,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+       ]
+      },
+      {
+       "index": 7,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+       ]
+      },
+      {
+       "index": 9,
+       "coefficients": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ }
+}

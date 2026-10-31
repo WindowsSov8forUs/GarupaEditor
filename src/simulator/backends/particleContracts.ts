@@ -725,6 +725,11 @@ export type ParticleCommand =
   | {
       readonly kind: "suppress-until-replay";
       readonly reason: "movetime";
+    }
+  | {
+      /** In-place MoveTime resumes playing (state 16) on the same session. */
+      readonly kind: "resume-after-movetime";
+      readonly reason: "movetime";
     };
 
 export interface ParticleGameClearRuntimeInstance {

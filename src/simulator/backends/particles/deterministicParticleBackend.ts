@@ -133,8 +133,9 @@ export class DeterministicSimulatorParticleBackend implements SimulatorParticleB
     if (this.nextFrame !== null && request.frame !== this.nextFrame) {
       return this.reject("particle.frame.non-contiguous", "After its first host index, native-semantic outer frames commit contiguously exactly once.");
     }
-    if (this.suppressedUntilReplay && request.commands.length !== 0) {
-      return this.reject("particle.frame.suppressed-command", "MoveTime suppression can only end through whole-engine checkpoint/replay reconstruction.");
+    if (this.suppressedUntilReplay && request.commands.length !== 0 &&
+      (request.commands.length !== 1 || request.commands[0]!.kind !== "resume-after-movetime")) {
+      return this.reject("particle.frame.suppressed-command", "MoveTime suppression ends only through its resume.");
     }
     const lifecycle = validateLifecycleSequence(request.commands);
     if (lifecycle.status !== "accepted") return lifecycle;
@@ -408,6 +409,10 @@ function applyCommand(
       return owners.size === 0
         ? particleAccepted(true)
         : transitionRejected("particle.command.suppress-with-active-owner", "MoveTime must clear all live owners before suppression.");
+    case "resume-after-movetime":
+      return suppressedUntilReplay && owners.size === 0
+        ? particleAccepted(false)
+        : transitionRejected("particle.command.resume-without-movetime", "MoveTime resume requires the suppressed, owner-free MoveTime state.");
     default:
       return transitionRejected("particle.command.unknown-transition", "Unknown particle commands cannot mutate deterministic state.");
   }

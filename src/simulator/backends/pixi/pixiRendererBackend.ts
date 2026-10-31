@@ -487,13 +487,12 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       );
     }
     const snapshot = this.recording.snapshot();
-    const returnTexture = this.spriteTextures.get(spriteKey(
+    // The buttons bake their words; CN 10.1.3 btn_ingame_time_back/forward read 倒退/快进.
+    const returnTexture = this.baseTextures.get("hud/rehearsal/return-five");
+    const advanceTexture = this.baseTextures.get("hud/rehearsal/advance-five");
+    const timeIconTexture = this.spriteTextures.get(spriteKey(
       CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId,
-      "btn_ingame_time_back",
-    ));
-    const advanceTexture = this.spriteTextures.get(spriteKey(
-      CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId,
-      "btn_ingame_time_forward",
+      "icon_ingame_music",
     ));
     const timeBackgroundTexture = this.spriteTextures.get(spriteKey(
       CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId,
@@ -510,13 +509,16 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
     const pinkButtonTexture = this.spriteTextures.get(spriteKey(CURRENT_PAUSE_CONTROL_BINDINGS.uiCommonLogicalAssetId, "button_pink"));
     const coverTexture = this.spriteTextures.get(spriteKey(CURRENT_PAUSE_CONTROL_BINDINGS.uiCommonLogicalAssetId, "fill"));
     const countdownTextures = CURRENT_PAUSE_CONTROL_BINDINGS.countdownLogicalAssetIds.map((id) => this.baseTextures.get(id));
+    const moveTimeBackgroundTexture = this.spriteTextures.get(spriteKey(CURRENT_PAUSE_CONTROL_BINDINGS.rhythmGameUiLogicalAssetId, "effect_bg_ingame_move_time"));
+    const moveTimeArrowTexture = this.spriteTextures.get(spriteKey(CURRENT_PAUSE_CONTROL_BINDINGS.rhythmGameUiLogicalAssetId, "effect_ingame_time_move"));
     const font = this.decodedFonts.get(CURRENT_SCORE_HUD_BINDINGS.rankLabelFontLogicalAssetId);
     const pauseCountdownAnimation = this.profile?.pauseCountdownAnimation;
     if (snapshot.state !== "ready" || returnTexture === undefined ||
-      advanceTexture === undefined || timeBackgroundTexture === undefined ||
+      advanceTexture === undefined || timeBackgroundTexture === undefined || timeIconTexture === undefined ||
       demoBackgroundTexture === undefined || pauseTexture === undefined || windowTexture === undefined ||
       headerTexture === undefined || grayButtonTexture === undefined || pinkButtonTexture === undefined || coverTexture === undefined ||
       countdownTextures.some((texture) => texture === undefined) || font === undefined ||
+      moveTimeBackgroundTexture === undefined || moveTimeArrowTexture === undefined ||
       pauseCountdownAnimation === undefined ||
       !Number.isFinite(durationSeconds) || durationSeconds <= 0) {
       return integrityFailure(
@@ -530,6 +532,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       returnTexture,
       advanceTexture,
       timeBackgroundTexture,
+      timeIconTexture,
       demoBackgroundTexture,
       pauseTexture,
       windowTexture,
@@ -542,6 +545,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
       },
       coverTexture,
       countdownTextures as [Texture, Texture, Texture],
+      { background: moveTimeBackgroundTexture, arrow: moveTimeArrowTexture },
       pauseCountdownAnimation,
       font.family,
       createRehearsalControlSceneLayout(surfaceLayout),
@@ -1709,7 +1713,10 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         case "sample-animation":
         case "stop-animation": {
           const object = getObject(command.renderObjectId)!;
-          if (!object.activeAnimationRoles.has(requireEvidenceAnimationRole(command.animationRole))) {
+          // Stopping an Animator that is not playing is a reset, as in the original MoveTime/HUD resets;
+          // only sampling requires a started role.
+          if (command.kind === "sample-animation" &&
+            !object.activeAnimationRoles.has(requireEvidenceAnimationRole(command.animationRole))) {
             return reject(
               "render.pixi.animation-owner-not-playing",
               "Animation sample/stop commands require the same owner-local role to have been started first.",
@@ -2382,7 +2389,8 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
   private readonly pauseButton: Sprite;
   private readonly returnButton: Sprite | null;
   private readonly advanceButton: Sprite | null;
-  private readonly timeText: Text | null;
+  private readonly timeNowText: Text | null;
+  private readonly timeMaxText: Text | null;
   private readonly pauseTextures: Readonly<{
     window: Texture;
     header: Texture;
@@ -2391,6 +2399,7 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
     cover: Texture;
     countdown: readonly [Texture, Texture, Texture];
   }>;
+  private moveTimeCountdownGraph: Container | null = null;
   private disposed = false;
   private moveTimeInProgress = false;
   private timelineSeconds = 0;
@@ -2402,6 +2411,7 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
     returnTexture: Texture,
     advanceTexture: Texture,
     timeBackgroundTexture: Texture,
+    timeIconTexture: Texture,
     demoBackgroundTexture: Texture,
     pauseTexture: Texture,
     windowTexture: Texture,
@@ -2411,6 +2421,7 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
     private readonly buttonBorders: Readonly<{ gray: SerializedButtonBorder; pink: SerializedButtonBorder }>,
     coverTexture: Texture,
     countdownTextures: readonly [Texture, Texture, Texture],
+    private readonly moveTimeTextures: Readonly<{ background: Texture; arrow: Texture }>,
     private readonly pauseCountdownAnimation: PauseCountdownAnimationProfile,
     private readonly fontFamily: string,
     layout: RehearsalControlSceneLayout,
@@ -2496,38 +2507,28 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
       applyBounds(timeBackground, timeRegion);
       timeBackground.tint = 0xffffff;
       timeBackground.zIndex = 20;
-      this.timeText = this.text("", timeRegion.height * 20 / 32, 0xff3b74, "rehearsal-time-label");
-      layoutNguiText(this.timeText, 0.5, 0.5, this.timeText.style.fontSize * 8 / 20);
-      this.timeText.position.set(timeRegion.x + timeRegion.width / 2, timeRegion.y + timeRegion.height / 2);
-      this.timeText.zIndex = 21;
-      this.rehearsalRoot.addChild(this.returnButton, this.advanceButton, timeBackground, this.timeText);
-      if (mode.isDemoPlayMode) {
-        const demo = layout.demoBadgeBoundsTopLeft;
-        const demoBorder = CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.autoLiveCaption;
-        const badge = new NineSliceSprite({
-          texture: demoBackgroundTexture,
-          leftWidth: demoBorder.left,
-          topHeight: demoBorder.top,
-          rightWidth: demoBorder.right,
-          bottomHeight: demoBorder.bottom,
-          label: "rehearsal-demo-badge-background",
-        });
-        applyBounds(badge, demo);
-        badge.tint = linearTintFromSrgbColor(0xff3b74);
-        badge.zIndex = 20;
-        const label = this.text("デモプレイ", demo.height * 24 / 38, 0xffffff, "rehearsal-demo-badge");
-        label.style.letterSpacing = -label.style.fontSize / 24;
-        layoutNguiText(label);
-        label.position.set(demo.x + demo.width / 2, demo.y + demo.height / 2);
-        label.zIndex = 21;
-        this.rehearsalRoot.addChild(badge, label);
-      }
+      // InGameMoveTime/Time/BG (172x32, pivot TopRight) holds Icon (32x26, Center at -148,-17),
+      // Now (pink, pivot Right at -77,-23) and Max ("/" + total, gray, pivot Left at -76,-23); font 20.
+      const unit = timeRegion.width / 172;
+      const right = timeRegion.x + timeRegion.width, top = timeRegion.y;
+      const icon = new Sprite({ texture: timeIconTexture, anchor: 0.5, label: "rehearsal-time-icon" });
+      icon.width = 32 * unit; icon.height = 26 * unit;
+      icon.position.set(right - 148 * unit, top + 17 * unit);
+      icon.zIndex = 23;
+      this.timeNowText = this.text("", 20 * unit, 0xff3b72, "rehearsal-time-now");
+      this.timeNowText.position.set(right - 77 * unit, top + 23 * unit);
+      this.timeNowText.zIndex = 22;
+      this.timeMaxText = this.text("/", 20 * unit, 0x505050, "rehearsal-time-max");
+      this.timeMaxText.position.set(right - 76 * unit, top + 23 * unit);
+      this.timeMaxText.zIndex = 21;
+      this.rehearsalRoot.addChild(this.returnButton, this.advanceButton, timeBackground, icon, this.timeNowText, this.timeMaxText);
       const initialized = this.updateTimeline(0);
       if (initialized.status !== "ok") throw new Error(initialized.capability);
     } else {
       this.returnButton = null;
       this.advanceButton = null;
-      this.timeText = null;
+      this.timeNowText = null;
+      this.timeMaxText = null;
       this.rehearsalRoot.visible = false;
     }
     this.root.sortChildren();
@@ -2535,12 +2536,15 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
 
   updateTimeline(timelineSeconds: number): SimulatorResult<void> {
     if (this.disposed) return integrityFailure("render.in-game-control.after-dispose", "Disposed InGame controls reject timeline publication.");
-    if (this.timeText === null) return ok(undefined);
+    if (this.timeNowText === null || this.timeMaxText === null) return ok(undefined);
     const formatted = formatRehearsalTimeLabel(timelineSeconds, this.durationSeconds);
     if (formatted.status !== "ok") return formatted;
     this.timelineSeconds = timelineSeconds;
-    this.timeText.text = formatted.value;
-    layoutNguiText(this.timeText, 0.5, 0.5, this.timeText.style.fontSize * 8 / 20);
+    const slash = formatted.value.indexOf("/");
+    this.timeNowText.text = formatted.value.slice(0, slash);
+    this.timeMaxText.text = formatted.value.slice(slash);
+    layoutNguiText(this.timeNowText, 1, 0.5);
+    layoutNguiText(this.timeMaxText, 0, 0.5);
     this.applyAvailability();
     return ok(undefined);
   }
@@ -2568,6 +2572,7 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
       this.autoLiveCaptionRoot.visible = snapshot.mode.isAutoLive;
       this.autoLiveCaptionRoot.alpha = snapshot.terminalPresentationActive ? 1 : hudAlpha;
     }
+    this.updateMoveTimeCountdown(snapshot);
     this.rebuildModal(snapshot);
     this.updateModalTransitions(snapshot);
     return ok(undefined);
@@ -2678,6 +2683,15 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
         snapshot.words.retry.buttons,
         null,
       );
+    } else if (snapshot.mode.sessionMode === "rehearsal") {
+      // Practice retires through the plain SelectableCommonDialog without the reward annotation.
+      this.buildSerializedDialog(
+        graph, snapshot, CURRENT_PAUSE_SERIALIZED_GRAPHS.selectable,
+        CURRENT_PAUSE_CONFIRMATION_COMPONENT_PATHS.retry,
+        snapshot.words.abort.title, snapshot.words.abort.message,
+        snapshot.words.abort.buttons,
+        null,
+      );
     } else {
       this.buildSerializedDialog(
         graph, snapshot, CURRENT_PAUSE_SERIALIZED_GRAPHS.annotated,
@@ -2698,6 +2712,89 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
       this.persistentModalGraphs.get(key)!.visible = transition.update(snapshot.presentationSeconds);
     }
     this.modalRoot.visible = this.modalRoot.children.some((graph) => graph.visible);
+  }
+
+  /**
+   * ContinueCountDownAnimation/Contents/TimeMove sampled by ResumeCountDownOneSecAnimamtion:
+   * BG and Slider share effect_bg_ingame_move_time (83x83), the Slider is Filled/Radial360 under a
+   * fixed X scale of -1, and the Arrow parent mirrors for returnTime.
+   */
+  private updateMoveTimeCountdown(snapshot: PauseControlSceneSnapshot): void {
+    const countdown = snapshot.moveTimeCountdown;
+    if (countdown === null) {
+      if (this.moveTimeCountdownGraph !== null) this.moveTimeCountdownGraph.visible = false;
+      return;
+    }
+    let graph = this.moveTimeCountdownGraph;
+    if (graph === null) {
+      graph = new Container({ label: "InGameCountDownAnimation:TimeMove", sortableChildren: true });
+      graph.eventMode = "none";
+      const contents = new Container({ label: "Contents", sortableChildren: true });
+      const timeMove = new Container({ label: "Contents/TimeMove", sortableChildren: true });
+      const background = new Sprite({ texture: this.moveTimeTextures.background, label: "Contents/TimeMove/BG" });
+      background.anchor.set(0.5);
+      background.width = 83; background.height = 83;
+      background.tint = 0xffdae4;
+      background.zIndex = 0;
+      const slider = new Container({ label: "Contents/TimeMove/Slider" });
+      slider.scale.set(-1, 1);
+      slider.zIndex = 1;
+      const fill = new Sprite({ texture: this.moveTimeTextures.background, label: "Contents/TimeMove/Slider/Fill" });
+      fill.anchor.set(0.5);
+      fill.width = 83; fill.height = 83;
+      fill.tint = 0xff3b72;
+      const fillMask = new Graphics({ label: "Contents/TimeMove/Slider/Radial360" });
+      fill.mask = fillMask;
+      slider.addChild(fill, fillMask);
+      const arrowParent = new Container({ label: "Contents/TimeMove/Arrow" });
+      arrowParent.zIndex = 2;
+      const arrow = new Sprite({ texture: this.moveTimeTextures.arrow, label: "Contents/TimeMove/Arrow/Arrow" });
+      arrow.anchor.set(0.5);
+      arrow.width = 46; arrow.height = 32;
+      arrow.position.set(3, 0);
+      arrowParent.addChild(arrow);
+      timeMove.addChild(background, slider, arrowParent);
+      contents.addChild(timeMove);
+      graph.addChild(contents);
+      this.modalRoot.addChild(graph);
+      this.moveTimeCountdownGraph = graph;
+    }
+    graph.position.set(snapshot.layout.viewportWidth / 2, snapshot.layout.viewportHeight / 2);
+    graph.scale.set(snapshot.layout.controlScale);
+    const sample = samplePauseCountdownClip(
+      this.pauseCountdownAnimation.resumeOneSecondClip,
+      Math.fround(countdown.elapsedSeconds),
+    );
+    const value = (channel: string): number => {
+      const current = sample.get(channel);
+      if (current === undefined) throw new Error(`MoveTime countdown channel is missing: ${channel}`);
+      return current;
+    };
+    const unit = (channel: string): number => Math.max(0, Math.min(1, value(channel)));
+    const node = <T extends Container>(label: string): T => {
+      const found = graph!.getChildByLabel(label, true) as T | null;
+      if (found === null) throw new Error(`MoveTime countdown component is missing: ${label}`);
+      return found;
+    };
+    const contents = node<Container>("Contents");
+    const timeMove = node<Container>("Contents/TimeMove");
+    contents.visible = value("Contents.m_IsActive.value") >= 0.5;
+    timeMove.visible = value("Contents/TimeMove.m_IsActive.value") >= 0.5;
+    timeMove.scale.set(value("Contents/TimeMove.m_LocalScale.x"), value("Contents/TimeMove.m_LocalScale.y"));
+    const background = node<Sprite>("Contents/TimeMove/BG");
+    background.visible = value("Contents/TimeMove/BG.m_Enabled.value") >= 0.5;
+    background.alpha = unit("Contents/TimeMove/BG.mColor.a.value");
+    node<Sprite>("Contents/TimeMove/Slider/Fill").alpha = unit("Contents/TimeMove/Slider.mColor.a.value");
+    // NGUI Radial360 without invert sweeps counter-clockwise from 12 o'clock; the Slider's X scale
+    // of -1 makes it run clockwise on screen.
+    const fillAmount = unit("Contents/TimeMove/Slider.attribute_hash:1614703993.value");
+    const mask = node<Graphics>("Contents/TimeMove/Slider/Radial360").clear();
+    if (fillAmount > 0) {
+      mask.moveTo(0, 0).arc(0, 0, 83, -Math.PI / 2, -Math.PI / 2 - fillAmount * Math.PI * 2, true).closePath().fill(0xffffff);
+    }
+    node<Container>("Contents/TimeMove/Arrow").scale.set(countdown.returned ? -1 : 1, 1);
+    node<Sprite>("Contents/TimeMove/Arrow/Arrow").alpha = unit("Contents/TimeMove/Arrow/Arrow.mColor.a.value");
+    graph.visible = true;
   }
 
   private updateCountdownGraph(graph: Container, snapshot: PauseControlSceneSnapshot): void {
@@ -4004,6 +4101,7 @@ function applyScoreHud(
   updateScorePanelClip(object, visual, progress, state.indicatorLocalX);
   ensureScoreHighRankSprites(object, visual, state, textures, referenceCounts);
   visual.fillRatios = Object.freeze([state.sliderValue.value, state.ratio.value]);
+  applyScoreCountStop(object, visual, state, textures, referenceCounts, decodedFonts);
 }
 
 function updatePersistentScoreHud(
@@ -4074,6 +4172,7 @@ function updatePersistentScoreHud(
   updateScorePanelClip(object, visual, progress, state.indicatorLocalX);
   ensureScoreHighRankSprites(object, visual, state, textures, referenceCounts);
   visual.fillRatios = Object.freeze([state.sliderValue.value, state.ratio.value]);
+  applyScoreCountStop(object, visual, state, textures, referenceCounts, decodedFonts);
 }
 
 function updateScorePanelClip(
@@ -4137,6 +4236,96 @@ function updateScoreSoftClipFilter(
       softness[1],
     );
   }
+}
+
+/**
+ * Score.StopCount: ScoreCountStop (Prefabs/BMS/RhythmGameGauge/ScoreCountStop, instantiated under
+ * Score) replaces the Progress and Base GameObjects with a fixed gray 00000000 and rank scale;
+ * its DemoPlay label is active only for Demo.
+ */
+function applyScoreCountStop(
+  object: PixiObjectRecord,
+  visual: PixiHudVisual,
+  state: RenderScoreHudState,
+  textures: ReadonlyMap<string, Texture>,
+  referenceCounts: Map<string, number>,
+  decodedFonts: ReadonlyMap<string, PixiDecodedFont>,
+): void {
+  const rootPath = requireScoreNativeProfile(object).scene.rootPath;
+  const root = scoreGameObject(visual, rootPath);
+  const stopped = state.scoreCountStop !== "none";
+  scoreGameObject(visual, `${rootPath}/Progress`).visible = !stopped;
+  scoreGameObject(visual, `${rootPath}/Base`).visible = !stopped;
+  let stop = root.getChildByLabel("ScoreCountStop") as Container | null;
+  if (!stopped) {
+    if (stop !== null) stop.visible = false;
+    return;
+  }
+  if (stop === null) {
+    const font = decodedFonts.get(CURRENT_SCORE_HUD_BINDINGS.rankLabelFontLogicalAssetId);
+    if (font === undefined) throw new Error("ScoreCountStop sgm UILabel font is missing");
+    const gaugeAssetId = CURRENT_SCORE_HUD_BINDINGS.gaugeLogicalAssetId;
+    stop = new Container({ label: "ScoreCountStop", sortableChildren: true });
+    stop.eventMode = "none";
+    const label = (text: string, size: number, color: number, spacingX: number, name: string) => {
+      const value = localizeSimulatorText(text);
+      const node = new Text({ text: value, label: name, style: {
+        fill: linearTintFromSrgbColor(color), fontFamily: simulatorTextFonts(value, font.family),
+        fontSize: size, fontWeight: "normal", letterSpacing: spacingX,
+      } });
+      return node;
+    };
+    const baseBinding = requiredTextureBinding(textures, gaugeAssetId, "gauge_base_score");
+    const base = scoreNineSlice(baseBinding, 470, 82, CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.gaugeBase, "ScoreCountStop/Base");
+    base.position.set(30, 66);
+    base.tint = linearTintFromSrgbColor(0x808080);
+    base.zIndex = 4;
+    retainHudBinding(object, baseBinding.key, referenceCounts);
+    const rankObject = new Container({ label: "ScoreCountStop/RankObject", sortableChildren: true });
+    rankObject.position.set(37, 41);
+    rankObject.zIndex = 29;
+    const levelMarkBinding = requiredTextureBinding(textures, CURRENT_SCORE_HUD_BINDINGS.levelMarkLogicalAssetId, "level_mark");
+    for (const [rank, x] of [["C", 50], ["B", 142], ["A", 235], ["S", 328], ["SS", 420]] as const) {
+      const rankNode = new Container({ label: `ScoreCountStop/RankObject/rank${rank}`, sortableChildren: true });
+      rankNode.position.set(x, 2);
+      const rankLabel = label(rank, 12, 0x808080, 0, `ScoreCountStop/RankObject/rank${rank}/${rank}`);
+      layoutNguiText(rankLabel);
+      rankLabel.zIndex = 40;
+      const separator = new Sprite({ texture: levelMarkBinding.texture, label: `ScoreCountStop/RankObject/rank${rank}/Separator` });
+      separator.anchor.set(0.5, 0.5);
+      separator.width = 8; separator.height = 6;
+      separator.position.set(0, 8);
+      separator.tint = linearTintFromSrgbColor(0x808080);
+      separator.zIndex = 29;
+      rankNode.addChild(rankLabel, separator);
+      rankObject.addChild(rankNode);
+    }
+    retainHudBinding(object, levelMarkBinding.key, referenceCounts);
+    const totalScore = label("00000000", 28, 0x696969, 1, "ScoreCountStop/TotalScore");
+    layoutNguiText(totalScore, 1, 0.5);
+    totalScore.position.set(225, 81);
+    totalScore.zIndex = 40;
+    const demoPlay = new Container({ label: "ScoreCountStop/DemoPlay", sortableChildren: true });
+    demoPlay.position.set(141, 133);
+    const demoBinding = requiredTextureBinding(textures, gaugeAssetId, "label_round_white");
+    const demoBorder = CURRENT_SCORE_HUD_NINE_SLICE_BORDERS.autoLiveCaption;
+    const demoBackground = new NineSliceSprite({
+      texture: demoBinding.texture, leftWidth: demoBorder.left, topHeight: demoBorder.top,
+      rightWidth: demoBorder.right, bottomHeight: demoBorder.bottom, width: 208, height: 40,
+      anchor: { x: 0.5, y: 0.5 }, label: "ScoreCountStop/DemoPlay/Background",
+    });
+    demoBackground.alpha = 216 / 255;
+    demoBackground.zIndex = 0;
+    retainHudBinding(object, demoBinding.key, referenceCounts);
+    const demoLabel = label("デモプレイ", 24, 0x505050, 0, "ScoreCountStop/DemoPlay/DemoPlayLabel");
+    layoutNguiText(demoLabel);
+    demoLabel.zIndex = 1;
+    demoPlay.addChild(demoBackground, demoLabel);
+    stop.addChild(base, rankObject, totalScore, demoPlay);
+    root.addChild(stop);
+  }
+  (stop.getChildByLabel("ScoreCountStop/DemoPlay") as Container).visible = state.scoreCountStop === "demo";
+  stop.visible = true;
 }
 
 function showScoreBaselineComponents(visual: PixiHudVisual, foregroundActive: boolean): void {

@@ -352,6 +352,10 @@ export function validateParticleCommandShape(
       return hasExactKeys(command, ["kind", "reason"]) && command.reason === "movetime"
         ? particleAccepted(undefined)
         : reject("particle.command.invalid-suppression", "Only MoveTime enters replay suppression.");
+    case "resume-after-movetime":
+      return hasExactKeys(command, ["kind", "reason"]) && command.reason === "movetime"
+        ? particleAccepted(undefined)
+        : reject("particle.command.invalid-movetime-resume", "Only MoveTime resumes from its suppression.");
     default:
       return reject("particle.command.unknown-kind", "Unknown particle commands cannot become no-op backend requests.");
   }

@@ -1,4 +1,5 @@
 import { Container } from "pixi.js";
+import { GameState } from "../engine/data/inGameState";
 import { StartupDirectionController } from "../engine/managers/startupDirectionController";
 import { BrowserAudioResourcePreflightAdapter } from "../backends/audio/browserAudioResourcePreflightAdapter";
 import { WebAudioSimulatorBackend } from "../backends/audio/webAudioBackend";
@@ -220,14 +221,12 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
       recipe.request.config.suddenRate, recipe.request.config.suddenLane,
     );
     if (originalLayout.status !== "ok") return fromIntegrity(originalLayout);
-    const moveTimeCandidate = purpose === "move-time-reconstruction";
     const mvPackage = recipe.request.presentation.mv;
-    if (mvPackage !== null &&
-      (recipe.request.config.sessionMode !== "live" || moveTimeCandidate)) {
+    if (mvPackage !== null && recipe.request.config.sessionMode !== "live") {
       return rejected(
         "integrity-failure",
         "simulator.mv-live.unsupported-mode-or-purpose",
-        "Current MV Live is supported only for fresh Live Manual/Auto; Practice, Retry and MoveTime cannot inherit the standard route.",
+        "Current MV Live is supported only for Live Manual/Auto; Practice cannot inherit the standard route.",
       );
     }
     const sessionId = this.sessionId();
@@ -301,7 +300,9 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     // RhythmGameStartData.BackgroundModuleType: after MV, the Light module
     // (InGameGraphicsMode.Light; here, a chart with a custom background) is
     // used outside practice on a #HABAHIRO chart or without a Collaboration
-    // skin (SeasonUtility.IsEnableCollaborationSkin).
+    // skin (SeasonUtility.IsEnableCollaborationSkin). Practice may also select Light, which only
+    // removes SD characters and stage effects (neither is present in practice here) and keeps the
+    // practice room from BgManager.initPracticeMode instead of the card.
     const lightMode = presentation.value.illustBackground !== null && score.value.mode.sessionMode === "live" &&
       mvResource.value === null && (chart.value.isMultiRangeNotes || recipe.request.config.skin.special.kind !== "collabo");
     const skin = await this.deriveSkin(recipe, score.value.mode, chart.value);
@@ -336,7 +337,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     }
     const gameplayRenderOrder = new PixiGameplayRenderOrder();
     const renderer = new PixiRendererBackend(new BrowserPixiTextureDecoder(), undefined, gameplayRenderOrder);
-    const audio = new WebAudioSimulatorBackend(this.platform.audioContext, moveTimeCandidate);
+    const audio = new WebAudioSimulatorBackend(this.platform.audioContext);
     const particles = new DeterministicSimulatorParticleBackend(false);
     const particleRenderer = new PixiParticleRendererBackend(
       new BrowserPixiParticleTextureDecoder(),
@@ -384,31 +385,29 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
               );
               if (created.status !== "ok") return fromIntegrity(created);
               firstView.scene = created.value;
-              if (!moveTimeCandidate) {
-                const direction = new StartupDirectionController(score.value.mode, created.value);
-                const initialized = direction.initialize();
-                if (initialized.status !== "ok") return fromIntegrity(initialized);
-                preparationRoot.addChild(created.value.backgroundRoot, created.value.foregroundRoot);
-                try {
-                  // PreRhythmGame accumulates 0.1f of game deltaTime on the black handoff after its
-                  // cleanup and before requesting RhythmGame, whose FirstView then fades in itself.
-                  let handoffElapsed = Math.fround(0);
-                  firstView.presentation = this.platform.graphics.presentPreparation(preparationRoot, (delta) => {
-                    if (handoffElapsed < PRE_RHYTHM_GAME_HANDOFF_SECONDS) {
-                      handoffElapsed = Math.fround(handoffElapsed + Math.fround(delta));
-                      return false;
-                    }
-                    if (direction.snapshot().phase !== "first-view") return true;
-                    const advanced = direction.step(Math.fround(delta));
-                    if (advanced.status !== "ok") throw new Error(advanced.boundary);
-                    return direction.snapshot().phase !== "first-view";
-                  });
-                  // ExecStart loads the remaining resources while ShowAnimation
-                  // reveals the card. Play waits for both resource and view readiness.
-                  firstView.ready = firstView.presentation.ready.then(() => accepted(undefined), presentationFailure);
-                } catch (error) {
-                  return presentationFailure(error);
-                }
+              const direction = new StartupDirectionController(score.value.mode, created.value);
+              const initialized = direction.initialize();
+              if (initialized.status !== "ok") return fromIntegrity(initialized);
+              preparationRoot.addChild(created.value.backgroundRoot, created.value.foregroundRoot);
+              try {
+                // PreRhythmGame accumulates 0.1f of game deltaTime on the black handoff after its
+                // cleanup and before requesting RhythmGame, whose FirstView then fades in itself.
+                let handoffElapsed = Math.fround(0);
+                firstView.presentation = this.platform.graphics.presentPreparation(preparationRoot, (delta) => {
+                  if (handoffElapsed < PRE_RHYTHM_GAME_HANDOFF_SECONDS) {
+                    handoffElapsed = Math.fround(handoffElapsed + Math.fround(delta));
+                    return false;
+                  }
+                  if (direction.snapshot().phase !== "first-view") return true;
+                  const advanced = direction.step(Math.fround(delta));
+                  if (advanced.status !== "ok") throw new Error(advanced.boundary);
+                  return direction.snapshot().phase !== "first-view";
+                });
+                // ExecStart loads the remaining resources while ShowAnimation
+                // reveals the card. Play waits for both resource and view readiness.
+                firstView.ready = firstView.presentation.ready.then(() => accepted(undefined), presentationFailure);
+              } catch (error) {
+                return presentationFailure(error);
               }
               return accepted(undefined);
             },
@@ -554,7 +553,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
         startupDirection: {
           scene: startupScene,
           commandNotes: recipe.request.presentation.stage.commandNotes,
-          firstViewPresented: !moveTimeCandidate,
+          firstViewPresented: true,
           liveStartVoiceCue: null,
           purpose,
         },
@@ -648,6 +647,12 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
         engine.value,
         () => mountedEngine.publishMount(),
         (active) => controlOverlay.value.setMoveTimeInProgress(active),
+        (timelineSeconds) => {
+          // The MoveTime computation belongs to the handoff, as a fresh mount's preparation does:
+          // the target clock and the reloaded BGM both continue from the next frame.
+          this.platform.scheduler.resetClock?.();
+          return mountedEngine.publishTimeline(timelineSeconds);
+        },
       );
       if (registered.status !== "ok") {
         return rejectedWithCleanup(fromIntegrity(registered), [
@@ -762,6 +767,11 @@ class MountedSimulatorEngine implements SimulatorEngine {
     return ok(undefined);
   }
 
+  publishTimeline(timelineSeconds: number): SimulatorResult<void> {
+    this.timelineSeconds = Math.fround(timelineSeconds);
+    return this.controlOverlay.updateTimeline(this.timelineSeconds);
+  }
+
   initialize(): SimulatorResult<void> {
     const initialized = this.engine.initialize();
     if (initialized.status !== "ok") return initialized;
@@ -772,7 +782,10 @@ class MountedSimulatorEngine implements SimulatorEngine {
   step(deltaTimeSeconds: number, inputFrame?: ManualInputFrame): SimulatorResult<void> {
     const before = this.engine.getPlaybackState();
     if (before.status !== "ok") return before;
-    const wasPlayable = before.value.playable;
+    // The MoveTime countdown (15, 16) holds InGameSec; PlayingNone after it advances with 5.
+    const wasPlayable = before.value.playable &&
+      before.value.currentGameState !== GameState.MoveTimeWaitForPlay &&
+      before.value.currentGameState !== GameState.MoveTimeFinished;
     const stepped = this.engine.step(deltaTimeSeconds, inputFrame);
     if (stepped.status !== "ok") return stepped;
     const startup = this.applyStartupSnapshot();

@@ -3,9 +3,10 @@ import type { StartupAudioPurpose } from "../audio/startupAudioOwner";
 
 export type PrimaryJudgementAdjustmentPhase =
   | "waiting-music"
+  /** After a MoveTime, PlayingSound already runs while judgeAdjustFastProcess holds PlayMusic. */
+  | "move-time-waiting-music"
   | "waiting-gameplay"
   | "complete"
-  | "move-time-bypassed"
   | "faulted";
 
 export interface PrimaryJudgementAdjustmentSnapshot {
@@ -28,9 +29,7 @@ export class PrimaryJudgementAdjustmentOwner {
     readonly judgementAdjustValue: number,
     readonly purpose: StartupAudioPurpose,
   ) {
-    this.phaseValue = purpose === "move-time-reconstruction"
-      ? "move-time-bypassed"
-      : "waiting-music";
+    this.phaseValue = "waiting-music";
   }
 
   initialize(hasStartupOwner: boolean): SimulatorResult<void> {
@@ -41,7 +40,6 @@ export class PrimaryJudgementAdjustmentOwner {
         "Primary JudgementAdjustValue must remain the exact persisted integer range -30..30.",
       );
     }
-    if (this.purpose === "move-time-reconstruction") return ok(undefined);
     if (!hasStartupOwner) {
       if (this.judgementAdjustValue !== 0) {
         return this.fault(
@@ -55,12 +53,24 @@ export class PrimaryJudgementAdjustmentOwner {
     return ok(undefined);
   }
 
+  /** onResetOnMovedTime stops judgeAdjustFastProcess and clears both counters, so the
+   * resumed PlayingSound runs the adjustment frames again. */
+  resetForMoveTime(): SimulatorResult<void> {
+    if (this.phaseValue === "faulted") {
+      return this.fault("primary-adjustment.reset-after-fault", "A faulted Primary adjustment owner cannot restart.");
+    }
+    this.fastCounterValue = 0;
+    this.slowCounterValue = 0;
+    this.musicStartedValue = false;
+    this.phaseValue = "move-time-waiting-music";
+    return ok(undefined);
+  }
+
   preflightMusicStart(): SimulatorResult<boolean> {
-    if (this.phaseValue === "faulted" || this.musicStartedValue ||
-      this.phaseValue === "move-time-bypassed") {
+    if (this.phaseValue === "faulted" || this.musicStartedValue) {
       return this.fault(
         "primary-adjustment.invalid-music-start",
-        "The Primary music-start edge is requested exactly once outside MoveTime reconstruction.",
+        "The Primary music-start edge is requested once per start or MoveTime resume.",
       );
     }
     if (this.judgementAdjustValue > 0 &&
@@ -72,7 +82,7 @@ export class PrimaryJudgementAdjustmentOwner {
   }
 
   commitMusicStarted(): SimulatorResult<void> {
-    if (this.phaseValue !== "waiting-music" || this.musicStartedValue ||
+    if ((this.phaseValue !== "waiting-music" && this.phaseValue !== "move-time-waiting-music") || this.musicStartedValue ||
       (this.judgementAdjustValue > 0 &&
         this.fastCounterValue < this.judgementAdjustValue)) {
       return this.fault(
@@ -94,7 +104,8 @@ export class PrimaryJudgementAdjustmentOwner {
         "A faulted Primary adjustment owner cannot advance gameplay.",
       );
     }
-    if (this.phaseValue === "move-time-bypassed" || this.phaseValue === "complete") {
+    if (this.phaseValue === "complete" ||
+      this.phaseValue === "move-time-waiting-music") {
       return ok(false);
     }
     if (this.phaseValue !== "waiting-gameplay" || !this.musicStartedValue ||

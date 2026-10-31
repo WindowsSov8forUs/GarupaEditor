@@ -55,7 +55,7 @@ import {
   validateAutoLiveChartOwnership,
 } from "../notes/noteTypes";
 import { SlideNoteManager } from "./slideNoteManager";
-import type { InGameMusicScoreController } from "./inGameMusicScoreController";
+import type { InGameMusicScoreController, MusicScoreMoveTimeSnapshot } from "./inGameMusicScoreController";
 import type { SimulatorManualInputGeometryBackend } from "../../backends/contracts";
 import type {
   DirectionalNotePresentationPlan,
@@ -237,6 +237,7 @@ export class NoteManager {
     ManualSlideSourceOwnership
   >();
   private readonly autoLiveJudgementSources = new WeakSet<NoteInformation>();
+  private readonly groupOwners: MultipleDirectionalGroupOwner[] = [];
   private manualNoteDeactivatedOwner: ((note: NoteBase) => void) | null = null;
   private readonly ordinaryRenderMotionStates = new WeakMap<
     NoteBase,
@@ -1084,10 +1085,86 @@ export class NoteManager {
     this.slideNoteManager.dispose();
   }
 
+  private trackGroupOwner(owner: MultipleDirectionalGroupOwner): MultipleDirectionalGroupOwner {
+    this.groupOwners.push(owner);
+    return owner;
+  }
+
+  /** NoteGroupIndex_ for InGameSnapshotData. */
+  get noteGroupIndex(): number {
+    return this.nextBatchIndexValue;
+  }
+
+  /**
+   * NoteManager.ReturnTime: restore the snapshot clock and group index, clear the active and BPM
+   * lists so every information may be judged again, rebuild the BPM changes between the adjusted
+   * and launcher positions, then return every pooled note (resetAllNotes).
+   */
+  returnTime(noteGroupIndex: number, music: MusicScoreMoveTimeSnapshot): SimulatorResult<void> {
+    if (!Number.isSafeInteger(noteGroupIndex) || noteGroupIndex < 0 || noteGroupIndex > this.batches.length) {
+      return integrityFailure("note-manager.return-time-invalid-group", "ReturnTime requires a recorded chart group index.");
+    }
+    this.musicScoreController.restoreMoveTimeSnapshot(music);
+    this.nextBatchIndexValue = noteGroupIndex;
+    for (const owner of this.groupOwners) owner.resetUse();
+    for (const bpm of this.bpmPoolValue) bpm.resetForDispose();
+    this.activeBpmChangesValue.length = 0;
+    this.bpmPoolCursorValue = 0;
+    const adjusted = this.getAdjustedMusicPosition();
+    const launcher = this.musicScoreController.launcherMusicPosition;
+    for (const batch of this.batches) {
+      if (batch.absolutePos < adjusted || batch.absolutePos > launcher) continue;
+      const bpmCommand = findBatchBpmCommand(batch.informationList);
+      if (bpmCommand === undefined) continue;
+      const bpmObject = this.acquireBpmObject();
+      if (bpmObject.status !== "ok") return bpmObject;
+      bpmObject.value.setup(bpmCommand, (completed) => this.removeActiveBpmChange(completed));
+      this.activeBpmChangesValue.push(bpmObject.value);
+    }
+    // Pools hold one chart-ordered object per information, so each family resumes at the count
+    // already activated before the restored group.
+    const activatedByFamily = new Map<NoteFamily, number>();
+    for (let index = 0; index < noteGroupIndex; index += 1) {
+      for (const information of this.batches[index]!.informationList) {
+        if (isNonPlayableCommand(information)) continue;
+        const family = noteFamily(information);
+        if (family.status !== "ok") return family;
+        activatedByFamily.set(family.value, (activatedByFamily.get(family.value) ?? 0) + 1);
+      }
+    }
+    for (const pool of this.notePoolsValue.values()) {
+      for (const note of pool.objects) {
+        const reset = note.resetForDispose();
+        if (reset.status !== "ok") return reset;
+      }
+      pool.cursor = (activatedByFamily.get(pool.family) ?? 0) % Math.max(pool.objects.length, 1);
+    }
+    // MoveTime already turned every lane effect off; Hold ends from the returned notes still
+    // release their sound owners on the next replay step.
+    this.pendingTapLaneEffects.length = 0;
+    this.connectionPoolCursors.sync = 0;
+    this.connectionPoolCursors.directional = 0;
+    this.activeBySource.clear();
+    this.activeNotesValue.length = 0;
+    this.activeOrdinarySyncLines.fill(null);
+    this.pendingSyncTailNotes.length = 0;
+    this.pendingDirectionalSyncTailNotes.length = 0;
+    this.syncConnectionSequence = 0;
+    this.suppressedOrdinarySyncLinePairCountValue = 0;
+    this.activeMultipleDirectionalLines.fill(null);
+    this.directionalVisualTailOwners.clear();
+    this.completedSlidePresentationRoots.clear();
+    this.ordinaryLongRenderStates.clear();
+    this.ordinarySlideRenderStates.clear();
+    this.ordinarySlideRootExitApplied.clear();
+    this.ordinarySlideFrontExitIndex.clear();
+    return ok(undefined);
+  }
+
   private setupMultipleDirectionalGroups(): void {
     for (const batch of this.batches) {
       for (const group of groupMultipleDirectionalInformationList(batch.informationList)) {
-        const owner = new MultipleDirectionalGroupOwner(group);
+        const owner = this.trackGroupOwner(new MultipleDirectionalGroupOwner(group));
         for (const information of group) {
           this.multipleDirectionalGroups.set(information, owner);
         }
@@ -1121,7 +1198,7 @@ export class NoteManager {
       }
       this.longAfterMultipleGroups.set(
         root,
-        new MultipleDirectionalGroupOwner(members, directionalEndpointButton),
+        this.trackGroupOwner(new MultipleDirectionalGroupOwner(members, directionalEndpointButton)),
       );
     }
     return ok(undefined);
@@ -1159,7 +1236,7 @@ export class NoteManager {
       }
       this.slideAfterMultipleGroups.set(
         root,
-        new MultipleDirectionalGroupOwner(members, directionalEndpointButton),
+        this.trackGroupOwner(new MultipleDirectionalGroupOwner(members, directionalEndpointButton)),
       );
     }
     return ok(undefined);
@@ -2405,6 +2482,10 @@ class MultipleDirectionalGroupOwner implements MultipleDirectionalRuntimeGroup {
     if (this.usedValue || this.reservedTransactions.has(transaction)) return false;
     this.reservedTransactions.add(transaction);
     return true;
+  }
+
+  resetUse(): void {
+    this.usedValue = false;
   }
 
   markUsed(): SimulatorResult<void> {

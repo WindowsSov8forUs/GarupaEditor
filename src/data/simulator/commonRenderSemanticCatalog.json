@@ -979,6 +979,48 @@
               "borderRight": 0,
               "borderTop": 0,
               "borderBottom": 0
+            },
+            {
+              "exactKey": "icon_ingame_music",
+              "x": 989,
+              "y": 223,
+              "width": 32,
+              "height": 26,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "effect_bg_ingame_move_time",
+              "x": 401,
+              "y": 295,
+              "width": 96,
+              "height": 96,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
+            },
+            {
+              "exactKey": "effect_ingame_time_move",
+              "x": 539,
+              "y": 152,
+              "width": 45,
+              "height": 32,
+              "pivotX": 0,
+              "pivotY": 0,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
             }
           ],
           "materialRole": "hud",
@@ -1157,6 +1199,48 @@
           "mime": "image/png",
           "width": 99,
           "height": 121,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "rehearsal-advance-five.png",
+        "profile": {
+          "logicalAssetId": "hud/rehearsal/advance-five",
+          "role": "startup-ui",
+          "mime": "image/png",
+          "width": 104,
+          "height": 104,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": [],
+          "materialRole": "hud",
+          "animationRole": "none"
+        }
+      },
+      {
+        "file": "rehearsal-return-five.png",
+        "profile": {
+          "logicalAssetId": "hud/rehearsal/return-five",
+          "role": "startup-ui",
+          "mime": "image/png",
+          "width": 104,
+          "height": 104,
           "textureSettings": {
             "scaleMode": "linear",
             "wrapModeU": "clamp",
@@ -2957,6 +3041,20 @@
               "borderRight": 0,
               "borderTop": 0,
               "borderBottom": 0
+            },
+            {
+              "exactKey": "icon_result_fullcombo",
+              "x": 1014,
+              "y": 1315,
+              "width": 221,
+              "height": 40,
+              "pivotX": 0.5,
+              "pivotY": 0.5,
+              "pixelsPerUnit": 100,
+              "borderLeft": 0,
+              "borderRight": 0,
+              "borderTop": 0,
+              "borderBottom": 0
             }
           ]
         }
@@ -3467,6 +3565,69 @@
           "mime": "image/png",
           "width": 1024,
           "height": 1024,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": []
+        }
+      },
+      {
+        "file": "result-allperfect.png",
+        "profile": {
+          "logicalAssetId": "hud/result/allperfect",
+          "role": "hud-atlas",
+          "materialRole": "hud",
+          "animationRole": "none",
+          "mime": "image/png",
+          "width": 222,
+          "height": 40,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": []
+        }
+      },
+      {
+        "file": "result-allperfect-add.png",
+        "profile": {
+          "logicalAssetId": "hud/result/allperfect-add",
+          "role": "hud-atlas",
+          "materialRole": "hud",
+          "animationRole": "none",
+          "mime": "image/png",
+          "width": 222,
+          "height": 40,
+          "textureSettings": {
+            "scaleMode": "linear",
+            "wrapModeU": "clamp",
+            "wrapModeV": "clamp",
+            "mipmap": "off",
+            "premultiplyAlpha": false,
+            "blendMode": "normal"
+          },
+          "atlasRows": []
+        }
+      },
+      {
+        "file": "result-fullcombo-add.png",
+        "profile": {
+          "logicalAssetId": "hud/result/fullcombo-add",
+          "role": "hud-atlas",
+          "materialRole": "hud",
+          "animationRole": "none",
+          "mime": "image/png",
+          "width": 219,
+          "height": 37,
           "textureSettings": {
             "scaleMode": "linear",
             "wrapModeU": "clamp",

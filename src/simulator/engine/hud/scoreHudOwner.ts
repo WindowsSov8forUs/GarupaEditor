@@ -6,6 +6,7 @@ export class ScoreHudOwner {
   createState(
     record: InGameRecordSnapshot,
     gauge: SinglePlayScoreGaugeSnapshot,
+    scoreCountStop: RenderScoreHudState["scoreCountStop"] = "none",
   ): RenderScoreHudState {
     const thresholds = gauge.thresholdProfile;
     if (thresholds.source === undefined) throw new Error("Score HUD threshold source was not validated by the Gauge owner.");
@@ -33,6 +34,7 @@ export class ScoreHudOwner {
       rankMarkerBLocalX: float32State(gauge.rankMarkerBLocalX),
       rankMarkerALocalX: float32State(gauge.rankMarkerALocalX),
       rankMarkerSLocalX: float32State(gauge.rankMarkerSLocalX),
+      scoreCountStop,
       rankMarkerSSLocalX: float32State(gauge.rankMarkerSSLocalX),
       highRankEffect: gauge.highRankEffect,
       highRankEffectActive: gauge.highRankEffectActive,

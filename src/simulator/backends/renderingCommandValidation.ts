@@ -48,8 +48,9 @@ export function validateTypedRenderHudCommand(
         "beforeRank", "foregroundActive", "highRankEffect", "highRankEffectActive", "highRankEffectClip", "inGameMode", "indicatorLocalX",
         "meterKey", "rank", "rankChanged", "rankMarkerALocalX", "rankMarkerBLocalX",
         "rankMarkerCLocalX", "rankMarkerSLocalX", "rankMarkerSSLocalX", "ratio", "score",
-        "scoreMax", "scoreText", "sliderValue", "thresholds", "thresholdSource",
+        "scoreCountStop", "scoreMax", "scoreText", "sliderValue", "thresholds", "thresholdSource",
       ]) &&
+        ["none", "practice", "demo"].includes(state.scoreCountStop) &&
         validScoreThresholds(state.thresholds, state.scoreMax) && validThresholdSource(state.thresholdSource) &&
         isUInt32(state.score) && isUInt32(state.scoreMax) && Number.isInteger(state.inGameMode) && (state.inGameMode as number) >= 0 &&
         state.scoreText === expectedScoreText(state.score) &&

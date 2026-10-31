@@ -304,6 +304,8 @@ export interface RenderScoreHudState {
   readonly rankMarkerSSLocalX: RenderFloat32;
   readonly highRankEffect: "none" | "ScoreGaugeSS" | "ScoreGaugeSSS";
   readonly highRankEffectActive: boolean;
+  /** Score.StopCount: the ScoreCountStop placeholder replaces Progress and Base; Demo shows its DemoPlay label. */
+  readonly scoreCountStop: "none" | "practice" | "demo";
   /** Optional only for legacy source compilation; production validation requires both. */
   readonly highRankEffectClip?: "none" | "ScoreGaugeSS" | "ScoreGaugeSSS";
   readonly inGameMode?: number;

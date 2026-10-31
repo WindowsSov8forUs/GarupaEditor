@@ -52,6 +52,8 @@ export class InGameRecord {
   get moveTimeCount(): number { return this.moveTimeCountValue; }
 
   getClearStatus(totalScoringUnitCount: number): 1 | 2 | 3 {
+    // InGameManager.getClearStatus: a Rehearsal that used MoveTime is a plain Clear.
+    if (this.moveTimeCountValue !== 0) return 1;
     const perfectCount = this.resultCountsValue[4];
     if (perfectCount === totalScoringUnitCount) return 3;
     return perfectCount + this.resultCountsValue[3] === totalScoringUnitCount ? 2 : 1;

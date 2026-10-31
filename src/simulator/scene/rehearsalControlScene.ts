@@ -32,7 +32,6 @@ export interface RehearsalControlSceneLayout {
   };
   readonly timeLabelBoundsTopLeft: RehearsalControlBounds;
   readonly autoLiveCaptionBoundsTopLeft: RehearsalControlBounds;
-  readonly demoBadgeBoundsTopLeft: RehearsalControlBounds;
 }
 
 const issuedControlCapabilities = new WeakMap<object, Readonly<{
@@ -66,7 +65,6 @@ export function createRehearsalControlSceneLayout(
     },
     timeLabelBoundsTopLeft: bounds(layout.ui.moveTime.timeBackgroundBoundsTopLeft),
     autoLiveCaptionBoundsTopLeft: bounds(layout.ui.autoLiveCaptionBoundsTopLeft),
-    demoBadgeBoundsTopLeft: bounds(layout.ui.autoLiveCaptionBoundsTopLeft),
   });
 }
 

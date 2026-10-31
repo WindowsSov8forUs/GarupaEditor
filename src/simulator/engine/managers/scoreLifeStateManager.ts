@@ -80,6 +80,11 @@ export class ScoreLifeStateManager {
   private lastReflectBatchValue: ScoreLifeReflectBatch | null = null;
   private pendingReflect: PendingScoreLifeReflect | null = null;
   private timelineRevisionValue = 0;
+  /** InGameManager.ImmortalityTimer: while positive, AddIPower drops negative life deltas. */
+  private immortalitySecondsValue = Math.fround(0);
+  /** After a returnTime the replay judges returned notes again; InGameRecord.AddScore keeps
+   * accumulating without deduplication, so the CS-V1 maximum no longer bounds the record. */
+  private returnedTimeValue = false;
 
   private constructor(
     profile: ScoreLifeStateProfile,
@@ -206,7 +211,7 @@ export class ScoreLifeStateManager {
       }
       const scoreBefore = stagedRecord.snapshot().score;
       const scoreAfter = scoreBefore + business.addScore;
-      if (!isUInt32(scoreAfter) || scoreAfter > this.scoringPlan.scoreMaximum) {
+      if (!isUInt32(scoreAfter) || (!this.returnedTimeValue && scoreAfter > this.scoringPlan.scoreMaximum)) {
         return integrityFailure(
           "score-life.score-maximum-exceeded",
           "CS-V1 score accumulation is monotonic UInt32 and cannot exceed the chart-derived scoreMaximum.",
@@ -215,7 +220,9 @@ export class ScoreLifeStateManager {
       stagedConsumed.add(unit.id);
       stagedRecord.addCombo(entry.addCombo);
       stagedRecord.addScore(business.addScore);
-      const lifeDelta = stagedRecord.addLife(business.addPower);
+      const lifeDelta = stagedRecord.addLife(
+        this.immortalitySecondsValue > 0 && business.addPower < 0 ? 0 : business.addPower,
+      );
       stagedRecord.incrementResult(business.adjustedResult, entry.judgeTiming);
       stagedRecord.updateOneNoteMax(business.addScore);
       totalScore = addInt32(totalScore, business.addScore);
@@ -291,7 +298,7 @@ export class ScoreLifeStateManager {
       timelineRevision < 0 || !Number.isSafeInteger(moveTimeCount) || moveTimeCount <= 0) {
       return integrityFailure(
         "score-life.invalid-move-time-revision",
-        "A reconstructed Rehearsal timeline commits one non-negative revision and positive MoveTime count only after all Score/Life replay owners are settled.",
+        "A Rehearsal MoveTime commits one non-negative revision and positive MoveTime count only after all Score/Life owners are settled.",
       );
     }
     const record = this.record.cloneForPreflight();
@@ -300,7 +307,7 @@ export class ScoreLifeStateManager {
     } catch {
       return integrityFailure(
         "score-life.invalid-move-time-count",
-        "MoveTime count is monotonic across reconstructed timeline publications.",
+        "MoveTime count is monotonic across timeline publications.",
       );
     }
     return ok(Object.freeze({
@@ -320,6 +327,24 @@ export class ScoreLifeStateManager {
       "score-life.continue-excluded",
       "Premium-currency Continue remains outside the portable contract and performs no mutation.",
     );
+  }
+
+  /** NoteManager.ReturnTime resets every information's isResult: each scoring unit may be
+   * consumed once more from the returned clock. */
+  resetForReturnTime(): void {
+    this.consumedScoringUnitIds.clear();
+    this.returnedTimeValue = true;
+  }
+
+  /** onResumeFromMoveTime starts the one-second timer; Miss and Combo still apply. */
+  startMoveTimeImmortality(): void {
+    this.immortalitySecondsValue = Math.fround(1);
+  }
+
+  advanceImmortality(deltaTimeSeconds: number): void {
+    if (this.immortalitySecondsValue > 0) {
+      this.immortalitySecondsValue = Math.fround(this.immortalitySecondsValue - deltaTimeSeconds);
+    }
   }
 
   snapshot(): ScoreLifeStateSnapshot {

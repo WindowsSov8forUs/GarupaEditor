@@ -2,9 +2,9 @@ import type {
   ManualInputButtonResolution,
   ManualInputFrame,
   ManualInputPosition,
-  ManualInputTouch,
 } from "../engine/data/manualInput";
 import { copyManualInputPosition } from "../engine/data/manualInput";
+import { GameState } from "../engine/data/inGameState";
 import {
   validateSimulatorModeIdentity,
   type SimulatorModeIdentity,
@@ -24,6 +24,14 @@ import type { PauseControlSceneSnapshot } from "../scene/pauseControlScene";
 import type { SimulatorResultPresentationEngine, SimulatorResultRecord } from "./resultPresentation";
 import {
   commitMoveTimeTimelineRevision,
+  enterMoveTimeForWholeEngineReplay,
+  enterMoveTimeWait,
+  resumeFromMoveTime,
+  captureMoveTimeSnapshot,
+  returnToMoveTimeSnapshot,
+  type MoveTimeEngineSnapshot,
+  publishMoveTimeTimeline,
+  resumeMoveTimeInPlace,
   publishFreshEngineVisual,
   publishMoveTimeAudio,
   setMoveTimeVisualState,
@@ -46,7 +54,13 @@ export interface SimulatorTimelineControlState {
   readonly playable: boolean;
   readonly hudAlpha?: number;
   readonly paused: boolean;
+  /** 16 and the following 4: the countdown has resumed and MoveTime is unavailable. */
   readonly moveTimeInProgress: boolean;
+  /** 15: the countdown runs; only the MoveTime buttons are routed. */
+  readonly moveTimeWaiting: boolean;
+  readonly moveTimeCount: number;
+  /** The countdown arrow mirrors for returnTime (hasReturned). */
+  readonly moveTimeReturned: boolean;
   readonly terminalPresentationActive?: boolean;
   readonly resultPresentationActive?: boolean;
 }
@@ -73,54 +87,20 @@ export interface PortableReplaySimulatorEngine extends SimulatorEngine, Simulato
   replayResult(): Promise<SimulatorResult<void>>;
   publishPauseControlState(snapshot: PauseControlSceneSnapshot): SimulatorResult<void>;
   getTimelineControlState(): SimulatorResult<SimulatorTimelineControlState>;
+  resumeFromMoveTime(): SimulatorResult<void>;
 }
 
 interface PauseControlVisualEngine {
   publishPauseControlState(snapshot: PauseControlSceneSnapshot): SimulatorResult<void>;
 }
 
-type ReplayEvent =
-  | {
-      readonly kind: "resolve-manual-button";
-      readonly position: ManualInputPosition;
-      readonly resolutionId: number | null;
-      readonly timelineSecondsAfter: number;
-    }
-  | {
-      readonly kind: "step";
-      readonly deltaTimeSeconds: number;
-      readonly inputFrame: ReplayInputFrame | null;
-      readonly timelineSecondsAfter: number;
-    }
-  | { readonly kind: "pause"; readonly timelineSecondsAfter: number }
-  | { readonly kind: "resume"; readonly timelineSecondsAfter: number }
-  | { readonly kind: "continue-live"; readonly timelineSecondsAfter: number }
-  | {
-      readonly kind: "move-time-step";
-      readonly deltaTimeSeconds: number;
-      readonly timelineSecondsAfter: number;
-    }
-  | {
-      readonly kind: "move-time-resume";
-      readonly timelineRevision: number;
-      readonly moveTimeCount: number;
-      readonly timelineSecondsAfter: number;
-    }
-  | {
-      readonly kind: "complete-live";
-      readonly clearStatus: 1 | 2 | 3;
-      readonly timelineSecondsAfter: number;
-    };
-
-interface ReplayInputTouch {
-  readonly fingerId: number;
-  readonly phase: ManualInputTouch["phase"];
-  readonly position: ManualInputPosition;
-  readonly resolutionId: number | null;
-}
-interface ReplayInputFrame { readonly touches: readonly ReplayInputTouch[]; }
-
 const MOVE_TIME_SECONDS = 5;
+const SNAPSHOT_FIRST_FRAME_SECONDS = Math.fround(0.0083333);
+
+interface RecordedMoveTimeSnapshot {
+  readonly inGameSeconds: number;
+  readonly engine: MoveTimeEngineSnapshot;
+}
 const RETURN_REPLAY_LIMIT_SECONDS = 16;
 const MOVE_TIME_MAX_DELTA_SECONDS = Math.fround(0.01666666753590107);
 
@@ -164,14 +144,14 @@ export function createPortableReplaySimulatorEngine(
 class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine {
   private active: SimulatorEngine;
   private readonly usedEngines = new WeakSet<object>();
-  private readonly resolutionIds = new WeakMap<object, number>();
-  private currentResolutions = new Map<number, ManualInputButtonResolution>();
-  private events: ReplayEvent[] = [];
-  private nextResolutionId = 0;
   private generation = 0;
   private timelineSecondsValue = Math.fround(0);
   private timelineRevisionValue = 0;
   private moveTimeCountValue = 0;
+  private moveTimeReturnedValue = false;
+  /** InGameSnapshotController: slots 0..trunc(BGM length)-1, each recorded once. */
+  private readonly moveTimeSnapshots = new Map<number, RecordedMoveTimeSnapshot>();
+  private beforeFrameSeconds = Math.fround(0);
   private state: "ready" | "replaying" | "faulted" | "disposed" = "ready";
   private fault: SimulatorIntegrityFailure | null = null;
   private readonly controlMode: SimulatorTimelineControlState["mode"];
@@ -199,21 +179,18 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     if (!before.value.playable || before.value.gameplayBlocked) {
       return this.active.step(deltaTimeSeconds, inputFrame);
     }
-    const prepared = this.controlMode.sessionMode === "rehearsal"
-      ? this.prepareLiveInputFrame(inputFrame)
-      : ok({ engineFrame: inputFrame ?? null, replayFrame: null });
-    if (prepared.status !== "ok") return prepared;
-    const stepped = this.active.step(deltaTimeSeconds, prepared.value.engineFrame ?? undefined);
+    // The countdown before PlayingNone neither reads gameplay input nor advances the clock.
+    if (before.value.currentGameState === GameState.MoveTimeWaitForPlay ||
+      before.value.currentGameState === GameState.MoveTimeFinished) {
+      return this.active.step(deltaTimeSeconds);
+    }
+    const stepped = this.active.step(deltaTimeSeconds, inputFrame);
     if (stepped.status !== "ok") return stepped;
     if (!before.value.paused) {
       this.timelineSecondsValue = Math.fround(this.timelineSecondsValue + deltaTimeSeconds);
+      this.snapshotProcess(this.active, this.timelineSecondsValue);
     }
-    if (this.controlMode.sessionMode === "rehearsal") this.events.push(Object.freeze({
-      kind: "step",
-      deltaTimeSeconds,
-      inputFrame: prepared.value.replayFrame,
-      timelineSecondsAfter: this.timelineSecondsValue,
-    }));
+
     return ok(undefined);
   }
 
@@ -222,29 +199,14 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     if (available !== null) return available;
     const copied = copyManualInputPosition(position);
     if (copied.status !== "ok") return copied;
-    const resolved = this.active.resolveManualInputButton(copied.value);
-    if (resolved.status !== "ok") return resolved;
-    if (this.controlMode.sessionMode !== "rehearsal") return resolved;
-    let resolutionId: number | null = null;
-    if (resolved.value !== null) {
-      resolutionId = this.nextResolutionId++;
-      this.resolutionIds.set(resolved.value, resolutionId);
-      this.currentResolutions.set(resolutionId, resolved.value);
-    }
-    this.events.push(Object.freeze({
-      kind: "resolve-manual-button",
-      position: copied.value,
-      resolutionId,
-      timelineSecondsAfter: this.timelineSecondsValue,
-    }));
-    return resolved;
+    return this.active.resolveManualInputButton(copied.value);
   }
 
   pause(): SimulatorResult<void> {
-    return this.commitSimpleEvent("pause", () => this.active.pause());
+    return this.available<void>() ?? this.active.pause();
   }
   resume(): SimulatorResult<void> {
-    return this.commitSimpleEvent("resume", () => this.active.resume());
+    return this.available<void>() ?? this.active.resume();
   }
   startResultAudio(): SimulatorResult<void> { return this.active.startResultAudio(); }
   playResultEvaluationSound(failed: boolean): SimulatorResult<void> { return this.active.playResultEvaluationSound(failed); }
@@ -253,16 +215,10 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     return this.active.playUiDecisionSound();
   }
   continueLive(): SimulatorResult<void> {
-    return this.commitSimpleEvent("continue-live", () => this.active.continueLive());
+    return this.available<void>() ?? this.active.continueLive();
   }
   completeLiveAudio(clearStatus: 1 | 2 | 3): SimulatorResult<void> {
-    const result = this.active.completeLiveAudio(clearStatus);
-    if (result.status === "ok" && this.controlMode.sessionMode === "rehearsal") this.events.push(Object.freeze({
-      kind: "complete-live",
-      clearStatus,
-      timelineSecondsAfter: this.timelineSecondsValue,
-    }));
-    return result;
+    return this.active.completeLiveAudio(clearStatus);
   }
   advanceNaturalCompletionPresentation(deltaTimeSeconds: number): SimulatorResult<boolean> {
     return this.active.advanceNaturalCompletionPresentation(deltaTimeSeconds);
@@ -349,88 +305,19 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
       : this.timelineRevisionValue;
     const nextMoveCount = this.moveTimeCountValue + 1;
 
+    // returnTime restores the snapshot of max(destination - 16, 0) and returns silently without one.
+    const origin = direction === "return-five" ? this.moveTimeSnapshots.get(replayOriginSeconds) ?? null : null;
+    if (direction === "return-five" && origin === null) {
+      return ok(Object.freeze({
+        direction, fromSeconds, targetSeconds: fromSeconds, replayOriginSeconds,
+        timelineRevision: this.timelineRevisionValue, moveTimeCount: this.moveTimeCountValue,
+      }));
+    }
+
     const movingVisual = setMoveTimeVisualState(this.active, true);
     if (movingVisual.status !== "ok") return movingVisual;
     this.state = "replaying";
-    const freshResult = await this.createFreshCandidate("move-time-reconstruction");
-    if (freshResult.status !== "ok") {
-      setMoveTimeVisualState(this.active, false);
-      this.state = "ready";
-      return freshResult;
-    }
-    const fresh = freshResult.value;
-    const replayResolutions = new Map<number, ManualInputButtonResolution>();
-    const retained: ReplayEvent[] = [];
-    let replaySeconds = Math.fround(0);
-    const historyTargetSeconds = direction === "return-five"
-      ? targetSeconds
-      : replayOriginSeconds;
-    for (const event of this.events) {
-      if (event.timelineSecondsAfter > historyTargetSeconds) break;
-      const replayed = this.replayEvent(fresh, event, replayResolutions);
-      if (replayed.status !== "ok") return this.rejectCandidate(fresh, replayed);
-      retained.push(event);
-      replaySeconds = event.timelineSecondsAfter;
-    }
-
-    const generated: ReplayEvent[] = [];
-    while (replaySeconds < targetSeconds) {
-      const delta = Math.fround(Math.min(targetSeconds - replaySeconds, MOVE_TIME_MAX_DELTA_SECONDS));
-      if (!(delta > 0)) {
-        return this.rejectCandidate(fresh, rejected(
-          "timeline.movetime.float32-progress-stalled",
-          "MoveTime reconstruction requires positive Float32 progress and never jumps or clamps the clock.",
-        ));
-      }
-      const stepped = stepForMoveTime(fresh, delta);
-      if (stepped.status !== "ok") return this.rejectCandidate(fresh, stepped);
-      replaySeconds = Math.fround(replaySeconds + delta);
-      generated.push(Object.freeze({
-        kind: "move-time-step",
-        deltaTimeSeconds: delta,
-        timelineSecondsAfter: replaySeconds,
-      }));
-      if (fresh.getNaturalCompletionClearStatus() !== null && replaySeconds < targetSeconds) {
-        return this.rejectCandidate(fresh, rejected(
-          "timeline.movetime.target-after-natural-end",
-          "Advance-five is disabled when the bounded target cannot be reconstructed before natural completion.",
-        ));
-      }
-    }
-    const revised = commitMoveTimeTimelineRevision(fresh, nextRevision, nextMoveCount);
-    if (revised.status !== "ok") return this.rejectCandidate(fresh, revised);
-
-    const previous = this.active;
-    const disposed = await disposeSimulatorEngine(previous);
-    if (disposed.status !== "ok") {
-      return this.latchReplayFault(appendEngineCleanupFailure(disposed, await disposeSimulatorEngine(fresh)));
-    }
-    const published = publishMoveTimeAudio(fresh, targetSeconds);
-    if (published.status !== "ok") {
-      return this.latchReplayFault(appendEngineCleanupFailure(published, await disposeSimulatorEngine(fresh)));
-    }
-    this.active = fresh;
-    this.currentResolutions = replayResolutions;
-    for (const [id, resolution] of replayResolutions) this.resolutionIds.set(resolution, id);
-    this.events = [...retained, ...generated, Object.freeze({
-      kind: "move-time-resume" as const,
-      timelineRevision: nextRevision,
-      moveTimeCount: nextMoveCount,
-      timelineSecondsAfter: replaySeconds,
-    })];
-    this.timelineSecondsValue = replaySeconds;
-    this.timelineRevisionValue = nextRevision;
-    this.moveTimeCountValue = nextMoveCount;
-    this.generation += 1;
-    this.state = "ready";
-    return ok(Object.freeze({
-      direction,
-      fromSeconds,
-      targetSeconds,
-      replayOriginSeconds,
-      timelineRevision: nextRevision,
-      moveTimeCount: nextMoveCount,
-    }));
+    return this.moveInPlace(direction, fromSeconds, targetSeconds, replayOriginSeconds, origin, nextRevision, nextMoveCount);
   }
 
   getTimelineControlState(): SimulatorResult<SimulatorTimelineControlState> {
@@ -445,8 +332,16 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
         this.active.getNaturalCompletionClearStatus() === null,
       hudAlpha: snapshot.value.hudAlpha,
       paused: snapshot.value.paused,
-      moveTimeInProgress: false,
+      moveTimeInProgress: snapshot.value.moveTimePhase === "resuming",
+      moveTimeWaiting: snapshot.value.moveTimePhase === "waiting",
+      moveTimeCount: this.moveTimeCountValue,
+      moveTimeReturned: this.moveTimeReturnedValue,
     }));
+  }
+
+  resumeFromMoveTime(): SimulatorResult<void> {
+    const available = this.available<void>();
+    return available ?? resumeFromMoveTime(this.active);
   }
 
   async retrySession(): Promise<SimulatorResult<void>> {
@@ -496,11 +391,13 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
       }
     }
     this.active = fresh;
-    this.events = [];
-    this.currentResolutions.clear();
     this.timelineSecondsValue = Math.fround(0);
     this.timelineRevisionValue = 0;
     this.moveTimeCountValue = 0;
+    this.moveTimeReturnedValue = false;
+    // Retry loads a new scene whose Init creates a new InGameSnapshotController.
+    this.moveTimeSnapshots.clear();
+    this.beforeFrameSeconds = Math.fround(0);
     this.generation += 1;
     this.state = "ready";
     return ok(undefined);
@@ -510,21 +407,109 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     if (this.state === "disposed") return this.active.dispose();
     if (this.state === "replaying") {
       return rejected(
-        "timeline.replay.dispose-during-reconstruction",
-        "MoveTime reconstruction must settle before deterministic disposal.",
+        "timeline.replay.dispose-during-move",
+        "MoveTime or Retry must settle before deterministic disposal.",
       );
     }
     const result = this.active.dispose();
     if (result.status === "ok") {
       this.state = "disposed";
-      this.events = [];
-      this.currentResolutions.clear();
     }
     return result;
   }
 
   settleDisposal(): Promise<SimulatorResult<void>> {
     return this.active.settleDisposal?.() ?? Promise.resolve(ok(undefined));
+  }
+
+  /**
+   * InGameMoveTimeController works on the running scene. returnTime first restores the snapshot
+   * through both note managers; advanceTime then advances the ordinary update pipeline in MoveTime
+   * state (no touch input) by steps of at most 1/60 s to the target and resumes. No engine is
+   * rebuilt and no input history is replayed.
+   */
+  private moveInPlace(
+    direction: SimulatorMoveTimeDirection,
+    fromSeconds: number,
+    targetSeconds: number,
+    replayOriginSeconds: number,
+    origin: RecordedMoveTimeSnapshot | null,
+    nextRevision: number,
+    nextMoveCount: number,
+  ): SimulatorResult<SimulatorMoveTimeReceipt> {
+    const engine = this.active;
+    const fail = (failure: SimulatorIntegrityFailure): SimulatorResult<SimulatorMoveTimeReceipt> => this.latchReplayFault(failure);
+    const entered = enterMoveTimeForWholeEngineReplay(engine);
+    if (entered.status !== "ok") return fail(entered);
+    if (origin !== null) {
+      const returned = returnToMoveTimeSnapshot(engine, origin.engine);
+      if (returned.status !== "ok") return fail(returned);
+    }
+    let replaySeconds = Math.fround(origin?.inGameSeconds ?? fromSeconds);
+    while (replaySeconds < targetSeconds) {
+      const delta = Math.fround(Math.min(targetSeconds - replaySeconds, MOVE_TIME_MAX_DELTA_SECONDS));
+      if (!(delta > 0)) {
+        return fail(rejected(
+          "timeline.movetime.float32-progress-stalled",
+          "MoveTime requires positive Float32 progress and never jumps or clamps the clock.",
+        ));
+      }
+      const stepped = stepForMoveTime(engine, delta);
+      if (stepped.status !== "ok") return fail(stepped);
+      replaySeconds = Math.fround(replaySeconds + delta);
+      this.snapshotProcess(engine, replaySeconds);
+      if (engine.getNaturalCompletionClearStatus() !== null && replaySeconds < targetSeconds) {
+        return fail(rejected(
+          "timeline.movetime.target-after-natural-end",
+          "MoveTime is disabled when the bounded target lies after natural completion.",
+        ));
+      }
+    }
+    const revised = commitMoveTimeTimelineRevision(engine, nextRevision, nextMoveCount);
+    if (revised.status !== "ok") return fail(revised);
+    const resumed = resumeMoveTimeInPlace(engine);
+    if (resumed.status !== "ok") return fail(resumed);
+    const published = publishMoveTimeAudio(engine, targetSeconds);
+    if (published.status !== "ok") return fail(published);
+    const waiting = enterMoveTimeWait(engine);
+    if (waiting.status !== "ok") return fail(waiting);
+    const timeline = publishMoveTimeTimeline(engine, replaySeconds);
+    if (timeline.status !== "ok") return fail(timeline);
+    const visual = setMoveTimeVisualState(engine, false);
+    if (visual.status !== "ok") return fail(visual);
+
+    this.timelineSecondsValue = replaySeconds;
+    this.timelineRevisionValue = nextRevision;
+    this.moveTimeCountValue = nextMoveCount;
+    this.moveTimeReturnedValue = direction === "return-five";
+    this.generation += 1;
+    this.state = "ready";
+    return ok(Object.freeze({
+      direction,
+      fromSeconds,
+      targetSeconds,
+      replayOriginSeconds,
+      timelineRevision: nextRevision,
+      moveTimeCount: nextMoveCount,
+    }));
+  }
+
+  /** SnapshotProcess at the end of each logical update: a new integer second (or the first
+   * 0.0083333 s) records its slot once with the advanced InGameSec. */
+  private snapshotProcess(engine: SimulatorEngine, inGameSeconds: number): void {
+    if (this.controlMode.sessionMode !== "rehearsal") return;
+    const before = this.beforeFrameSeconds;
+    this.beforeFrameSeconds = inGameSeconds;
+    if (!(before < SNAPSHOT_FIRST_FRAME_SECONDS) && Math.trunc(inGameSeconds) === Math.trunc(before)) return;
+    const slot = Math.trunc(inGameSeconds);
+    if (slot < 0 || slot >= Math.trunc(this.factory.bgmDurationSeconds) || this.moveTimeSnapshots.has(slot)) return;
+    const captured = captureMoveTimeSnapshot(engine);
+    if (captured === null) return;
+    // Both group indexes are recorded as 0 before one second.
+    this.moveTimeSnapshots.set(slot, Object.freeze({
+      inGameSeconds,
+      engine: inGameSeconds >= 1 ? captured : Object.freeze({ ...captured, noteGroupIndex: 0 }),
+    }));
   }
 
   private async createFreshCandidate(
@@ -535,7 +520,7 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     catch {
       return rejected(
         "timeline.replay.factory-threw",
-        "A fresh-engine factory exception rejects MoveTime without publishing partial reconstructed state.",
+        "A fresh-engine factory exception rejects Retry without publishing a partial generation.",
       );
     }
     if (!isSimulatorResult(produced)) {
@@ -559,7 +544,7 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
       const failure = before.status === "ok"
         ? rejected(
             "timeline.replay.factory-engine-not-pristine",
-            "The reconstruction factory must return one pristine whole engine.",
+            "The Retry factory must return one pristine whole engine.",
           )
         : before;
       return appendEngineCleanupFailure(failure, await disposeSimulatorEngine(fresh));
@@ -569,107 +554,10 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     return ok(fresh);
   }
 
-  private async rejectCandidate<T>(fresh: SimulatorEngine, failure: SimulatorIntegrityFailure): Promise<SimulatorResult<T>> {
-    const disposed = await disposeSimulatorEngine(fresh);
-    setMoveTimeVisualState(this.active, false);
-    this.state = "ready";
-    return appendEngineCleanupFailure(failure, disposed);
-  }
-
-  private commitSimpleEvent(
-    kind: "pause" | "resume" | "continue-live",
-    operation: () => SimulatorResult<void>,
-  ): SimulatorResult<void> {
-    const available = this.available<void>();
-    if (available !== null) return available;
-    const result = operation();
-    if (result.status === "ok" && this.controlMode.sessionMode === "rehearsal") this.events.push(Object.freeze({
-      kind,
-      timelineSecondsAfter: this.timelineSecondsValue,
-    }));
-    return result;
-  }
-
-  private prepareLiveInputFrame(inputFrame: ManualInputFrame | undefined): SimulatorResult<{
-    readonly engineFrame: ManualInputFrame | null;
-    readonly replayFrame: ReplayInputFrame | null;
-  }> {
-    if (inputFrame === undefined) return ok(Object.freeze({ engineFrame: null, replayFrame: null }));
-    if (inputFrame === null || typeof inputFrame !== "object" || !Array.isArray(inputFrame.touches)) {
-      return rejected("timeline.replay.invalid-manual-frame", "Replay journaling accepts only an explicit touch array.");
-    }
-    const engineTouches: ManualInputTouch[] = [];
-    const replayTouches: ReplayInputTouch[] = [];
-    for (const touch of inputFrame.touches) {
-      if (touch === null || typeof touch !== "object") {
-        return rejected("timeline.replay.invalid-manual-touch", "Replay journaling requires immutable raw touch records.");
-      }
-      const copied = copyManualInputPosition(touch.position);
-      if (copied.status !== "ok") return copied;
-      let resolutionId: number | null = null;
-      let currentResolution: ManualInputButtonResolution | null = null;
-      if (touch.buttonResolution !== null) {
-        if (typeof touch.buttonResolution !== "object") {
-          return rejected("timeline.replay.invalid-resolution-capability", "Manual replay consumes wrapper-issued button capabilities only.");
-        }
-        resolutionId = this.resolutionIds.get(touch.buttonResolution) ?? null;
-        if (resolutionId === null) {
-          return rejected("timeline.replay.foreign-resolution-capability", "Foreign manual resolution capabilities are rejected.");
-        }
-        currentResolution = this.currentResolutions.get(resolutionId) ?? null;
-        if (currentResolution === null) {
-          return rejected("timeline.replay.stale-resolution-capability", "Discarded-future manual capabilities cannot cross MoveTime.");
-        }
-      }
-      engineTouches.push(Object.freeze({ fingerId: touch.fingerId, phase: touch.phase, position: copied.value, buttonResolution: currentResolution }));
-      replayTouches.push(Object.freeze({ fingerId: touch.fingerId, phase: touch.phase, position: copied.value, resolutionId }));
-    }
-    return ok(Object.freeze({
-      engineFrame: Object.freeze({ touches: Object.freeze(engineTouches) }),
-      replayFrame: Object.freeze({ touches: Object.freeze(replayTouches) }),
-    }));
-  }
-
-  private replayEvent(
-    engine: SimulatorEngine,
-    event: ReplayEvent,
-    resolutions: Map<number, ManualInputButtonResolution>,
-  ): SimulatorResult<void> {
-    switch (event.kind) {
-      case "resolve-manual-button": {
-        const resolved = engine.resolveManualInputButton(event.position);
-        if (resolved.status !== "ok") return resolved;
-        if ((resolved.value === null) !== (event.resolutionId === null)) {
-          return rejected("timeline.replay.manual-resolution-mismatch", "Timeline replay must reproduce manual geometry decisions.");
-        }
-        if (resolved.value !== null && event.resolutionId !== null) resolutions.set(event.resolutionId, resolved.value);
-        return ok(undefined);
-      }
-      case "step": {
-        if (event.inputFrame === null) return engine.step(event.deltaTimeSeconds);
-        const touches: ManualInputTouch[] = [];
-        for (const touch of event.inputFrame.touches) {
-          const resolution = touch.resolutionId === null ? null : resolutions.get(touch.resolutionId) ?? null;
-          if (touch.resolutionId !== null && resolution === null) {
-            return rejected("timeline.replay.missing-reconstructed-resolution", "A replayed touch references a missing prior geometry capability.");
-          }
-          touches.push(Object.freeze({ fingerId: touch.fingerId, phase: touch.phase, position: touch.position, buttonResolution: resolution }));
-        }
-        return engine.step(event.deltaTimeSeconds, Object.freeze({ touches: Object.freeze(touches) }));
-      }
-      case "pause": return engine.pause();
-      case "resume": return engine.resume();
-      case "continue-live": return engine.continueLive();
-      case "move-time-resume": return commitMoveTimeTimelineRevision(engine, event.timelineRevision, event.moveTimeCount);
-      case "move-time-step": return stepForMoveTime(engine, event.deltaTimeSeconds);
-      case "complete-live": return engine.completeLiveAudio(event.clearStatus);
-    }
-  }
-
   private available<T>(): SimulatorResult<T> | null {
     if (this.fault !== null) return this.fault;
     if (this.state === "disposed") return rejected("timeline.replay.after-dispose", "Disposed timeline owner rejects all new operations.");
-    if (this.state === "replaying") return rejected("timeline.replay.concurrent-operation", "No host operation may interleave with MoveTime reconstruction.");
+    if (this.state === "replaying") return rejected("timeline.replay.concurrent-operation", "No host operation may interleave with MoveTime or Retry.");
     return null;
   }
   private latchReplayFault<T>(fault: SimulatorIntegrityFailure): SimulatorResult<T> {

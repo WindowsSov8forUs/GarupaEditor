@@ -36,7 +36,7 @@ import type {
   OriginalLiveSettingsSnapshot,
 } from "../engine/data/originalLiveSettings";
 
-export type SimulatorEngineBuildPurpose = "initial" | "retry" | "move-time-reconstruction";
+export type SimulatorEngineBuildPurpose = "initial" | "retry";
 
 export interface SimulatorRenderingSessionInput {
   readonly sessionId: string;

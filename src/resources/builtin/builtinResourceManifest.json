@@ -512,6 +512,16 @@
       "sha256": "CCA98EEF0CD59CB4FD1E23F54DA169D6B4A698A548625E28BC7C5EA32B472049"
     },
     {
+      "path": "game/prefabs/bms/movetime/rehearsal-advance-five.png",
+      "byteLength": 5288,
+      "sha256": "5E8AE525011522A095E31196C428AAD9E9CD8ECE00C165B80F69F01B1FDE06A0"
+    },
+    {
+      "path": "game/prefabs/bms/movetime/rehearsal-return-five.png",
+      "byteLength": 5406,
+      "sha256": "4F792B3CD7A06A06CF1765345BD8E7CBB0422E35C1A9F43A85859E575588EB93"
+    },
+    {
       "path": "game/prefabs/bms/pause/countdown-1.png",
       "byteLength": 2024,
       "sha256": "6622E8DFE2FDDE79A1983875185B7E160BA7BDE8347FF2EFB16756774B9BF752"
@@ -545,6 +555,21 @@
       "path": "game/prefabs/bms/result/result-menu.png",
       "byteLength": 2231437,
       "sha256": "D07EEFBCA0817174DE1199215E801D6A495AEC1602BD90D651F027C2EDF9F8AA"
+    },
+    {
+      "path": "game/prefabs/bms/result/result-allperfect-add.png",
+      "byteLength": 13947,
+      "sha256": "C195F30127E1992F3C665BE0CB1F412D66B68FD500A84B61B9697FE311C3846A"
+    },
+    {
+      "path": "game/prefabs/bms/result/result-allperfect.png",
+      "byteLength": 12996,
+      "sha256": "62C287130BB8D99C8942EE90C97A5FC0B21546332F534C2F0F032AA3C3B4DB58"
+    },
+    {
+      "path": "game/prefabs/bms/result/result-fullcombo-add.png",
+      "byteLength": 13344,
+      "sha256": "232AF5463AFC77278934EE0533BD2D1037138ACB2856FF0D269B0849D30E750A"
     },
     {
       "path": "game/prefabs/bms/result/rhythmBG.png",

@@ -487,7 +487,7 @@ export class ParticleCommandProducer {
     if (this.state.suppressedUntilReplay) {
       return rejected(
         "particle.producer.duplicate-movetime",
-        "MoveTime suppression is entered once and can end only through whole-engine checkpoint/replay reconstruction.",
+        "MoveTime suppression is entered once and ends at its resume.",
       );
     }
     const projected = createEmptyState();
@@ -496,6 +496,21 @@ export class ParticleCommandProducer {
       Object.freeze({ kind: "clear-all", reason: "movetime" }),
       Object.freeze({ kind: "suppress-until-replay", reason: "movetime" }),
     ], projected);
+  }
+
+  /** In-place MoveTime resume (state 16): result particles play again on the same session. */
+  preflightMoveTimeResume(): SimulatorResult<ParticleCommandOwnerTransaction> {
+    const available = this.validateAvailable();
+    if (available.status !== "ok") return available;
+    if (!this.state.suppressedUntilReplay) {
+      return rejected(
+        "particle.producer.movetime-resume-without-suppression",
+        "MoveTime resume requires the suppression entered by the same MoveTime.",
+      );
+    }
+    const projected = cloneState(this.state);
+    projected.suppressedUntilReplay = false;
+    return this.stage([Object.freeze({ kind: "resume-after-movetime", reason: "movetime" })], projected);
   }
 
   preflightReturnTime(): SimulatorResult<never> {

@@ -1,6 +1,8 @@
 import { isSerializedTouchRelease } from "../../../components/SerializedButtonInput";
 import labelLayouts from "../../../data/simulator/resultLabelLayoutProfile.json";
-import { Container, Graphics, type NineSliceSprite, type Texture } from "pixi.js";
+import { Container, Graphics, Text, type NineSliceSprite, type Texture } from "pixi.js";
+import { linearTintFromSrgbColor } from "./hud/nguiMaterialPipeline";
+import { layoutNguiText } from "./hud/nguiTextLayout";
 import { createSerializedButtonPressCover, PixiSerializedButtonInput } from "../../../components/pixi/SerializedButton";
 import profile from "../../../data/simulator/resultClearProfile.json";
 import { StageClipAnimation } from "../../engine/rendering/stageClipAnimation";
@@ -31,6 +33,9 @@ export class PixiResultClearPage {
   private readonly gaugeMask = new Graphics();
   private readonly targetRatio: number;
   private readonly failed: boolean;
+  /** PracticeLiveResultController.setupScoreLabel: Demo or a used MoveTime hides the score label
+   * for demoPlayScoreLabel, and the finalScore closure counts the gauge to 0. */
+  private readonly omitScore: boolean;
   private readonly scoreLabel: PixiResultNumberLabel;
   private phase: "waiting" | "evaluating" | "next" | "transition" = "waiting";
   private elapsed = 0;
@@ -44,8 +49,9 @@ export class PixiResultClearPage {
   constructor(private readonly result: SimulatorResultRecord, resources: ResultWidgetResources,
     private readonly viewportHeight: number, layout: OriginalSurfaceLayout, sceneRoot: Container,
     stageLight: Texture, particleTexture: (name: string) => Texture) {
+    this.omitScore = result.isDemoPlayMode || result.record.moveTimeCount > 0;
     this.failed = result.record.score < result.scoreThresholds.scoreC;
-    this.targetRatio = Math.min(1, result.record.score / result.scoreThresholds.scoreMaximum);
+    this.targetRatio = this.omitScore ? 0 : Math.min(1, result.record.score / result.scoreThresholds.scoreMaximum);
     this.bannerAnimation = new StageClipAnimation(effects.bannerClips,
       result.isEnablePractice ? "practice" : this.failed ? "failed" : "success");
     this.widgets = new PixiResultWidgetGraph(profile.clearNodes, resources, labelLayouts["result-clear.json"].clearNodes, [gaugeRoot + "/RankObjectRoot"]);
@@ -65,6 +71,16 @@ export class PixiResultClearPage {
     const label = profile.clearNodes.find(n => n.path === scoreRoot + "/Background/Score")!.label!;
     this.scoreLabel = new PixiResultNumberLabel(resources.font, label.fontSize, label.spacing, label.size[0]!, 7, 0xff3b72);
     this.widgets.replaceNumber(scoreRoot + "/Background/Score", this.scoreLabel);
+    if (this.omitScore) {
+      // Background/DemoPlayScore: UILabel 300x50, pivot Right, sgm 40, spacing 0, #D2D2D2 "00000000".
+      this.widgets.nodes.get(scoreRoot + "/Background/Score")!.visible = false;
+      const placeholder = new Text({ text: "00000000", label: scoreRoot + "/Background/DemoPlayScore",
+        style: { fontFamily: resources.font, fontSize: 40, letterSpacing: 0, fill: linearTintFromSrgbColor(0xd2d2d2) } });
+      layoutNguiText(placeholder, 1, 0.5);
+      placeholder.position.set(538, 116); placeholder.zIndex = 15;
+      if (placeholder.width > 300) placeholder.scale.set(300 / placeholder.width);
+      this.widgets.nodes.get(scoreRoot + "/Background")!.addChild(placeholder); this.widgets.order.attach(placeholder);
+    }
     this.widgets.sprites.get(gaugeRoot + "/Mask")!.mask = this.gaugeMask;
     this.widgets.nodes.get(gaugeRoot + "/Mask")!.addChild(this.gaugeMask);
     this.setScore(0);
@@ -143,7 +159,7 @@ export class PixiResultClearPage {
   private setScore(progress: number): void {
     if (progress === this.gaugeProgress) return;
     this.gaugeProgress = progress;
-    this.scoreLabel.setText(String(Math.floor(this.result.record.score * progress)));
+    if (!this.omitScore) this.scoreLabel.setText(String(Math.floor(this.result.record.score * progress)));
     const mask = this.widgets.sprites.get(gaugeRoot + "/Mask")!;
     const left = this.targetRatio * progress * mask.width;
     // UISlider RightToLeft crops the remaining mask, keeping the score texture fixed.
@@ -153,12 +169,15 @@ export class PixiResultClearPage {
   private startEvaluation(): "success" | "failed" {
     this.phase = "evaluating"; this.elapsed = 0;
     this.banner.root.visible = true;
-    const showShine = !this.failed && !this.result.isAutoLive;
+    // SoloClearJudgement.playEffectsOnStart: Demo or MoveTime goes to playSuccess, bypassing the
+    // rank-selected base effects, like Auto.
+    const bypassRank = this.result.isAutoLive || this.omitScore;
+    const showShine = !this.failed && !bypassRank;
     this.widgets.nodes.get(gaugeRoot + "/GaugeShine")!.visible = showShine;
     this.widgets.sprites.get(gaugeRoot + "/GaugeShine")!.alpha = effects.gaugeShine.start;
     this.shineElapsed = showShine ? 0 : null;
     // Auto's playEffectsOnStart bypasses rank effects but still plays success SE.
-    return this.failed && !this.result.isAutoLive ? "failed" : "success";
+    return this.failed && !bypassRank ? "failed" : "success";
   }
 
   private advanceShine(delta: number): void {

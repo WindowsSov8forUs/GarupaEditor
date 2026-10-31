@@ -293,12 +293,15 @@ export class AutonomousSimulatorModule {
       return accepted(undefined);
     }
     if (command.kind === "platform-pause") {
-      return !controlState.playable || controlState.paused ? accepted(undefined) : this.session!.pause();
+      // The MoveTime countdown has no recovered application-pause route; it holds instead.
+      return !controlState.playable || controlState.paused || controlState.moveTimeWaiting ||
+        controlState.moveTimeInProgress ? accepted(undefined) : this.session!.pause();
     }
     if (command.kind === "platform-resume") {
       return controlState.playable && controlState.paused ? this.session!.resume() : accepted(undefined);
     }
-    if (command.kind === "pause" || command.kind === "resume" || command.kind === "retry" || command.kind === "abort" || command.kind === "ui-decide") {
+    if (command.kind === "pause" || command.kind === "resume" || command.kind === "retry" || command.kind === "abort" ||
+      command.kind === "ui-decide" || command.kind === "move-time-resume") {
       const consumed = consumePauseControlCommand(command, controlState, surface);
       if (consumed.status !== "ok") {
         return rejected("integrity-failure", consumed.capability, consumed.boundary);
@@ -306,6 +309,7 @@ export class AutonomousSimulatorModule {
       if (consumed.value === "pause") return this.session!.pause();
       if (consumed.value === "resume") return this.session!.resume();
       if (consumed.value === "ui-decide") return this.session!.playUiDecisionSound();
+      if (consumed.value === "move-time-resume") return this.session!.resumeFromMoveTime();
       if (consumed.value === "retry") return this.session!.retry();
       const report = this.session!.close("user-closed");
       this.closePublished(report);
