@@ -7,6 +7,7 @@ import {
   type SimulatorAssemblyResult,
 } from "./result";
 import { currentStartupFontSupports } from "../backends/resources/currentStartupFontCmap";
+import { currentChineseFontSupports } from "../backends/resources/currentChineseFontCmap";
 import { isStagePsylliumCommand, type StageCommandNote } from "../engine/data/stageCommand";
 export const STARTUP_JACKET_SIZE = Object.freeze({ width: 360, height: 360 });
 
@@ -37,11 +38,13 @@ export function copyAndFreezeSimulatorPresentation(
     presentation.song.composer,
     presentation.song.arranger,
   ].filter((text): text is string => text !== null);
-  if (localizedText.some((text) => [...text].some((scalar) => !currentStartupFontSupports(scalar.codePointAt(0)!)))) {
+  // Mainland labels draw with TTDaYuanGB3 (simplified Chinese); sgm covers the Japanese text.
+  const supported = (codePoint: number) => currentStartupFontSupports(codePoint) || currentChineseFontSupports(codePoint);
+  if (localizedText.some((text) => [...text].some((scalar) => !supported(scalar.codePointAt(0)!)))) {
     return rejected(
       "integrity-failure",
       "simulator.presentation.missing-font-glyph",
-      "Every caller-selected localized scalar must exist in the hash-locked current sgm cmap; browser or system-font fallback is forbidden.",
+      "Every caller-selected localized scalar must exist in the hash-locked sgm or mainland TTDaYuanGB3 cmap; browser or system-font fallback is forbidden.",
     );
   }
   if (!isSemanticObject(presentation.difficulty, "level,type") ||
