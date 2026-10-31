@@ -265,6 +265,34 @@ export class InGameManager {
     return ok(undefined);
   }
 
+  captureMoveTimeSnapshot(): Readonly<{ noteGroupIndex: number; music: ReturnType<InGameMusicScoreController["captureMoveTimeSnapshot"]> }> {
+    return Object.freeze({
+      noteGroupIndex: this.noteManager.noteGroupIndex,
+      music: this.musicScoreController.captureMoveTimeSnapshot(),
+    });
+  }
+
+  /** returnTime restores the snapshot through both note managers before the replay. CommandNoteManager
+   * only restores its index; Rehearsal never dispatches stage command groups here. */
+  returnToMoveTimeSnapshot(
+    snapshot: ReturnType<InGameManager["captureMoveTimeSnapshot"]>,
+  ): SimulatorResult<void> {
+    if (this.faultValue !== null) return this.faultValue;
+    if (this.lifecycleState !== "initialized" ||
+      (this.currentGameStateValue !== GameState.PlayingSound &&
+        this.currentGameStateValue !== GameState.MoveTimeWaitForPlay)) {
+      return integrityFailure(
+        "timeline.movetime.invalid-return-state",
+        "returnTime runs only from PlayingSound or an earlier MoveTime's countdown.",
+      );
+    }
+    const returned = this.noteManager.returnTime(snapshot.noteGroupIndex, snapshot.music);
+    if (returned.status !== "ok") return this.latchFault(returned);
+    this.garupaProduct?.resetForReturnTime();
+    this.scoreLifeStateManager?.resetForReturnTime();
+    return ok(undefined);
+  }
+
   /** onResumeFromMoveTime: the countdown's 1.4 s event writes 16 and starts the one-second
    * ImmortalityTimer before 16 -> 4 -> 5. */
   resumeFromMoveTime(): SimulatorResult<void> {

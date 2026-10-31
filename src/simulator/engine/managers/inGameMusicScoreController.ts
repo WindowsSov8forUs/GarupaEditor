@@ -30,6 +30,16 @@ export interface MusicScoreControllerSnapshot {
   readonly musicPositionCallbackCount: number;
 }
 
+/** The clock fields InGameSnapshotData records; BPM strings are not part of it. */
+export interface MusicScoreMoveTimeSnapshot {
+  readonly currentBpm: number;
+  readonly nextBpm: number;
+  readonly bar: number;
+  readonly beatProgress: number;
+  readonly launcherBar: number;
+  readonly launcherBeatProgress: number;
+}
+
 export class InGameMusicScoreController {
   readonly signedTempo: SignedTempo | undefined;
   private executeFrameValue = 0;
@@ -159,6 +169,27 @@ export class InGameMusicScoreController {
       launcherBeat = launcherAdvance.beatProgress;
     }
     return ok(undefined);
+  }
+
+  captureMoveTimeSnapshot(): MusicScoreMoveTimeSnapshot {
+    return Object.freeze({
+      currentBpm: this.currentBpmValue,
+      nextBpm: this.nextBpmValue,
+      bar: this.musicBarProgressValue,
+      beatProgress: this.musicBeatProgressValue,
+      launcherBar: this.launcherMusicBarProgressValue,
+      launcherBeatProgress: this.launcherMusicBeatProgressValue,
+    });
+  }
+
+  /** NoteManager.ReturnTime restores the BPM values and both clocks, not the BPM strings. */
+  restoreMoveTimeSnapshot(snapshot: MusicScoreMoveTimeSnapshot): void {
+    this.currentBpmValue = snapshot.currentBpm;
+    this.nextBpmValue = snapshot.nextBpm;
+    this.musicBarProgressValue = snapshot.bar;
+    this.musicBeatProgressValue = snapshot.beatProgress;
+    this.launcherMusicBarProgressValue = snapshot.launcherBar;
+    this.launcherMusicBeatProgressValue = snapshot.launcherBeatProgress;
   }
 
   get executeFrame(): number {

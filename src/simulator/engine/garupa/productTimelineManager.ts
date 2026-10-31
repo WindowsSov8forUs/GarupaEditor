@@ -97,6 +97,13 @@ export class GarupaProductTimelineManager {
     return ok(undefined);
   }
 
+  /** ReturnTime resets every information's result, so shared nodes may be judged again. */
+  resetForReturnTime(): void {
+    this.sharedJudgements.length = 0;
+    this.judgedSources.clear();
+    this.missedSources.clear();
+  }
+
   commitDispose(): void {
     this.render?.releaseInputs();
     this.sharedNodesByIndex.clear();

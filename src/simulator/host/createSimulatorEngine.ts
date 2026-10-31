@@ -594,6 +594,16 @@ class SimulatorEngineHost implements SimulatorEngine {
     return committed.status === "ok" ? committed : this.inGameManager.latchExternalFault(committed);
   }
 
+  captureMoveTimeSnapshot(): MoveTimeEngineSnapshot {
+    return this.inGameManager.captureMoveTimeSnapshot();
+  }
+
+  returnToMoveTimeSnapshot(snapshot: MoveTimeEngineSnapshot): SimulatorResult<void> {
+    const backendFault = this.pollAudioFault();
+    if (backendFault.status !== "ok") return backendFault;
+    return this.inGameManager.returnToMoveTimeSnapshot(snapshot);
+  }
+
   enterMoveTimeWait(): SimulatorResult<void> {
     const backendFault = this.pollAudioFault();
     if (backendFault.status !== "ok") return backendFault;
@@ -998,6 +1008,24 @@ export function resumeMoveTimeInPlace(
         "particle.movetime.foreign-engine",
         "In-place MoveTime resume accepts only an engine created by the portable simulator host.",
       );
+}
+
+export type MoveTimeEngineSnapshot = ReturnType<InGameManager["captureMoveTimeSnapshot"]>;
+
+/** InGameSnapshotData's scheduling fields after this update, or null for a foreign engine. */
+export function captureMoveTimeSnapshot(engine: SimulatorEngine): MoveTimeEngineSnapshot | null {
+  return resolveMoveTimeHost(engine)?.captureMoveTimeSnapshot() ?? null;
+}
+
+export function returnToMoveTimeSnapshot(
+  engine: SimulatorEngine,
+  snapshot: MoveTimeEngineSnapshot,
+): SimulatorResult<void> {
+  const host = resolveMoveTimeHost(engine);
+  return host !== null ? host.returnToMoveTimeSnapshot(snapshot) : integrityFailure(
+    "timeline.movetime.foreign-return-owner",
+    "returnTime belongs to an engine created by the simulator host.",
+  );
 }
 
 /** MoveTimeWaitForPlay after the MoveTime published its target. */

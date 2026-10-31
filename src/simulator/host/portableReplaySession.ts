@@ -28,6 +28,9 @@ import {
   enterMoveTimeForWholeEngineReplay,
   enterMoveTimeWait,
   resumeFromMoveTime,
+  captureMoveTimeSnapshot,
+  returnToMoveTimeSnapshot,
+  type MoveTimeEngineSnapshot,
   publishMoveTimeTimeline,
   resumeMoveTimeInPlace,
   publishFreshEngineVisual,
@@ -134,6 +137,12 @@ interface ReplayInputTouch {
 interface ReplayInputFrame { readonly touches: readonly ReplayInputTouch[]; }
 
 const MOVE_TIME_SECONDS = 5;
+const SNAPSHOT_FIRST_FRAME_SECONDS = Math.fround(0.0083333);
+
+interface RecordedMoveTimeSnapshot {
+  readonly inGameSeconds: number;
+  readonly engine: MoveTimeEngineSnapshot;
+}
 const RETURN_REPLAY_LIMIT_SECONDS = 16;
 const MOVE_TIME_MAX_DELTA_SECONDS = Math.fround(0.01666666753590107);
 
@@ -186,6 +195,9 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
   private timelineRevisionValue = 0;
   private moveTimeCountValue = 0;
   private moveTimeReturnedValue = false;
+  /** InGameSnapshotController: slots 0..trunc(BGM length)-1, each recorded once. */
+  private readonly moveTimeSnapshots = new Map<number, RecordedMoveTimeSnapshot>();
+  private beforeFrameSeconds = Math.fround(0);
   private state: "ready" | "replaying" | "faulted" | "disposed" = "ready";
   private fault: SimulatorIntegrityFailure | null = null;
   private readonly controlMode: SimulatorTimelineControlState["mode"];
@@ -226,6 +238,7 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     if (stepped.status !== "ok") return stepped;
     if (!before.value.paused) {
       this.timelineSecondsValue = Math.fround(this.timelineSecondsValue + deltaTimeSeconds);
+      this.snapshotProcess(this.active, this.timelineSecondsValue);
     }
     if (this.controlMode.sessionMode === "rehearsal") this.events.push(Object.freeze({
       kind: "step",
@@ -368,11 +381,20 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
       : this.timelineRevisionValue;
     const nextMoveCount = this.moveTimeCountValue + 1;
 
+    // returnTime restores the snapshot of max(destination - 16, 0) and returns silently without one.
+    const origin = direction === "return-five" ? this.moveTimeSnapshots.get(replayOriginSeconds) ?? null : null;
+    if (direction === "return-five" && origin === null) {
+      return ok(Object.freeze({
+        direction, fromSeconds, targetSeconds: fromSeconds, replayOriginSeconds,
+        timelineRevision: this.timelineRevisionValue, moveTimeCount: this.moveTimeCountValue,
+      }));
+    }
+
     const movingVisual = setMoveTimeVisualState(this.active, true);
     if (movingVisual.status !== "ok") return movingVisual;
     this.state = "replaying";
-    if (direction === "advance-five") {
-      return this.advanceInPlace(fromSeconds, targetSeconds, replayOriginSeconds, nextRevision, nextMoveCount);
+    if (direction === "advance-five" || origin !== null) {
+      return this.moveInPlace(direction, fromSeconds, targetSeconds, replayOriginSeconds, origin, nextRevision, nextMoveCount);
     }
     const freshResult = await this.createFreshCandidate("move-time-reconstruction");
     if (freshResult.status !== "ok") {
@@ -540,6 +562,10 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     this.timelineSecondsValue = Math.fround(0);
     this.timelineRevisionValue = 0;
     this.moveTimeCountValue = 0;
+    this.moveTimeReturnedValue = false;
+    // Retry loads a new scene whose Init creates a new InGameSnapshotController.
+    this.moveTimeSnapshots.clear();
+    this.beforeFrameSeconds = Math.fround(0);
     this.generation += 1;
     this.state = "ready";
     return ok(undefined);
@@ -567,14 +593,17 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
   }
 
   /**
-   * InGameMoveTimeController.advanceTime works on the running scene: it resets effects, advances the
-   * ordinary update pipeline in MoveTime state (input skipped) by steps of at most 1/60 s, then
-   * resumes. No engine is rebuilt and the history is not replayed.
+   * InGameMoveTimeController works on the running scene. returnTime first restores the snapshot
+   * through both note managers; advanceTime then advances the ordinary update pipeline in MoveTime
+   * state (no touch input) by steps of at most 1/60 s to the target and resumes. No engine is
+   * rebuilt and no input history is replayed.
    */
-  private advanceInPlace(
+  private moveInPlace(
+    direction: SimulatorMoveTimeDirection,
     fromSeconds: number,
     targetSeconds: number,
     replayOriginSeconds: number,
+    origin: RecordedMoveTimeSnapshot | null,
     nextRevision: number,
     nextMoveCount: number,
   ): SimulatorResult<SimulatorMoveTimeReceipt> {
@@ -582,7 +611,11 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     const fail = (failure: SimulatorIntegrityFailure): SimulatorResult<SimulatorMoveTimeReceipt> => this.latchReplayFault(failure);
     const entered = enterMoveTimeForWholeEngineReplay(engine);
     if (entered.status !== "ok") return fail(entered);
-    let replaySeconds = Math.fround(fromSeconds);
+    if (origin !== null) {
+      const returned = returnToMoveTimeSnapshot(engine, origin.engine);
+      if (returned.status !== "ok") return fail(returned);
+    }
+    let replaySeconds = Math.fround(origin?.inGameSeconds ?? fromSeconds);
     const generated: ReplayEvent[] = [];
     while (replaySeconds < targetSeconds) {
       const delta = Math.fround(Math.min(targetSeconds - replaySeconds, MOVE_TIME_MAX_DELTA_SECONDS));
@@ -595,6 +628,7 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
       const stepped = stepForMoveTime(engine, delta);
       if (stepped.status !== "ok") return fail(stepped);
       replaySeconds = Math.fround(replaySeconds + delta);
+      this.snapshotProcess(engine, replaySeconds);
       generated.push(Object.freeze({ kind: "move-time-step", deltaTimeSeconds: delta, timelineSecondsAfter: replaySeconds }));
       if (engine.getNaturalCompletionClearStatus() !== null && replaySeconds < targetSeconds) {
         return fail(rejected(
@@ -624,16 +658,34 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     this.timelineSecondsValue = replaySeconds;
     this.timelineRevisionValue = nextRevision;
     this.moveTimeCountValue = nextMoveCount;
-    this.moveTimeReturnedValue = false;
+    this.moveTimeReturnedValue = direction === "return-five";
     this.generation += 1;
     this.state = "ready";
     return ok(Object.freeze({
-      direction: "advance-five" as const,
+      direction,
       fromSeconds,
       targetSeconds,
       replayOriginSeconds,
       timelineRevision: nextRevision,
       moveTimeCount: nextMoveCount,
+    }));
+  }
+
+  /** SnapshotProcess at the end of each logical update: a new integer second (or the first
+   * 0.0083333 s) records its slot once with the advanced InGameSec. */
+  private snapshotProcess(engine: SimulatorEngine, inGameSeconds: number): void {
+    if (this.controlMode.sessionMode !== "rehearsal") return;
+    const before = this.beforeFrameSeconds;
+    this.beforeFrameSeconds = inGameSeconds;
+    if (!(before < SNAPSHOT_FIRST_FRAME_SECONDS) && Math.trunc(inGameSeconds) === Math.trunc(before)) return;
+    const slot = Math.trunc(inGameSeconds);
+    if (slot < 0 || slot >= Math.trunc(this.factory.bgmDurationSeconds) || this.moveTimeSnapshots.has(slot)) return;
+    const captured = captureMoveTimeSnapshot(engine);
+    if (captured === null) return;
+    // Both group indexes are recorded as 0 before one second.
+    this.moveTimeSnapshots.set(slot, Object.freeze({
+      inGameSeconds,
+      engine: inGameSeconds >= 1 ? captured : Object.freeze({ ...captured, noteGroupIndex: 0 }),
     }));
   }
 

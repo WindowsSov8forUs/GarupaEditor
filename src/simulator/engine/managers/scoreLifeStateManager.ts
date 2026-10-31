@@ -82,6 +82,9 @@ export class ScoreLifeStateManager {
   private timelineRevisionValue = 0;
   /** InGameManager.ImmortalityTimer: while positive, AddIPower drops negative life deltas. */
   private immortalitySecondsValue = Math.fround(0);
+  /** After a returnTime the replay judges returned notes again; InGameRecord.AddScore keeps
+   * accumulating without deduplication, so the CS-V1 maximum no longer bounds the record. */
+  private returnedTimeValue = false;
 
   private constructor(
     profile: ScoreLifeStateProfile,
@@ -208,7 +211,7 @@ export class ScoreLifeStateManager {
       }
       const scoreBefore = stagedRecord.snapshot().score;
       const scoreAfter = scoreBefore + business.addScore;
-      if (!isUInt32(scoreAfter) || scoreAfter > this.scoringPlan.scoreMaximum) {
+      if (!isUInt32(scoreAfter) || (!this.returnedTimeValue && scoreAfter > this.scoringPlan.scoreMaximum)) {
         return integrityFailure(
           "score-life.score-maximum-exceeded",
           "CS-V1 score accumulation is monotonic UInt32 and cannot exceed the chart-derived scoreMaximum.",
@@ -324,6 +327,13 @@ export class ScoreLifeStateManager {
       "score-life.continue-excluded",
       "Premium-currency Continue remains outside the portable contract and performs no mutation.",
     );
+  }
+
+  /** NoteManager.ReturnTime resets every information's isResult: each scoring unit may be
+   * consumed once more from the returned clock. */
+  resetForReturnTime(): void {
+    this.consumedScoringUnitIds.clear();
+    this.returnedTimeValue = true;
   }
 
   /** onResumeFromMoveTime starts the one-second timer; Miss and Combo still apply. */
