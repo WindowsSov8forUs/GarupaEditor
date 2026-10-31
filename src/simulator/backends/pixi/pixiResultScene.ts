@@ -316,10 +316,11 @@ export class PixiResultScene {
     if (this.rewardVisible) return this.rewardButtons.advance(delta, input);
     if (this.clearPage !== null) {
       const action = this.clearPage.advance(delta, input);
-      if ((action === "success" || action === "failed") && !this.isAutoLive) this.rank.play();
+      // The Practice result prefab and its banner carry no SCORE RANK badge.
+      if ((action === "success" || action === "failed") && !this.isAutoLive && !this.isPractice) this.rank.play();
       if (action !== "show-detail") return action;
       this.clearPage.dispose(); this.clearPage = null;
-      this.rank.play(true);
+      if (!this.isPractice) this.rank.play(true);
       this.graph.visible = true;
       this.drawOrder.visible = true;
       return "stay";
