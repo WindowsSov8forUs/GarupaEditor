@@ -196,8 +196,9 @@ export function createOriginalSurfaceLayout(
   const centerY = div(height, 2);
   const safeRight = add(safeArea.value.x, safeArea.value.width);
   const safeTop = add(safeArea.value.y, safeArea.value.height);
-  const timeCenterX = add(safeRight, mul(-16, screenToSafeChildScale));
-  const timeCenterY = add(safeTop, mul(-104, screenToSafeChildScale));
+  // InGameMoveTime/Time/BG: pivot TopRight at (-16,-104) from the safe-area top-right anchor.
+  const timeRightX = add(safeRight, mul(-16, screenToSafeChildScale));
+  const timeTopY = add(safeTop, mul(-104, screenToSafeChildScale));
   const timeWidth = mul(172, screenToSafeChildScale);
   const timeHeight = mul(32, screenToSafeChildScale);
   const captionCenterX = add(safeArea.value.x, mul(130, screenToSafeChildScale));
@@ -274,8 +275,8 @@ export function createOriginalSurfaceLayout(
         ] as const),
         hitCircleRadiusPixels: mul(MOVE_TIME_HIT_RADIUS_WORLD, pixelsPerWorldUnit),
         timeBackgroundBoundsTopLeft: Object.freeze([
-          sub(timeCenterX, div(timeWidth, 2)),
-          sub(height, add(timeCenterY, div(timeHeight, 2))),
+          sub(timeRightX, timeWidth),
+          sub(height, timeTopY),
           timeWidth,
           timeHeight,
         ] as const),
