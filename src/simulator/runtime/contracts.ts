@@ -24,6 +24,8 @@ export interface SimulatorFrameScheduler {
   start(
     consumer: (tick: SimulatorFrameTick) => Promise<void>,
   ): SimulatorAssemblyResult<SimulatorFrameSubscription>;
+  /** Starts the next frame's delta from now, excluding handoff work done in the current frame. */
+  resetClock?(): void;
 }
 
 export type SimulatorPlatformRuntimeCommand =

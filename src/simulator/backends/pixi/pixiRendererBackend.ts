@@ -1709,7 +1709,10 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
         case "sample-animation":
         case "stop-animation": {
           const object = getObject(command.renderObjectId)!;
-          if (!object.activeAnimationRoles.has(requireEvidenceAnimationRole(command.animationRole))) {
+          // Stopping an Animator that is not playing is a reset, as in the original MoveTime/HUD resets;
+          // only sampling requires a started role.
+          if (command.kind === "sample-animation" &&
+            !object.activeAnimationRoles.has(requireEvidenceAnimationRole(command.animationRole))) {
             return reject(
               "render.pixi.animation-owner-not-playing",
               "Animation sample/stop commands require the same owner-local role to have been started first.",

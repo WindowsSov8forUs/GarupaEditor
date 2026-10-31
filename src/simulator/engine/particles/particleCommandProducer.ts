@@ -498,6 +498,21 @@ export class ParticleCommandProducer {
     ], projected);
   }
 
+  /** In-place MoveTime resume (state 16): result particles play again on the same session. */
+  preflightMoveTimeResume(): SimulatorResult<ParticleCommandOwnerTransaction> {
+    const available = this.validateAvailable();
+    if (available.status !== "ok") return available;
+    if (!this.state.suppressedUntilReplay) {
+      return rejected(
+        "particle.producer.movetime-resume-without-suppression",
+        "MoveTime resume requires the suppression entered by the same MoveTime.",
+      );
+    }
+    const projected = cloneState(this.state);
+    projected.suppressedUntilReplay = false;
+    return this.stage([Object.freeze({ kind: "resume-after-movetime", reason: "movetime" })], projected);
+  }
+
   preflightReturnTime(): SimulatorResult<never> {
     return rejected(
       "particle.producer.particle-only-return-time-forbidden",

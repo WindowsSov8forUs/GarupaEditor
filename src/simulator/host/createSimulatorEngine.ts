@@ -550,6 +550,12 @@ class SimulatorEngineHost implements SimulatorEngine {
         "MoveTime requires one initialized particle session owned by the whole-engine replay host.",
       );
     }
+    // The running engine stays silent until publishMoveTimeAudio reloads the BGM at the target.
+    const suppress = this.backends.audio.suppressMoveTimeOutput;
+    if (this.audioProducer !== null && suppress !== undefined) {
+      const suppressed = mapAudioResult(suppress.call(this.backends.audio));
+      if (suppressed.status !== "ok") return this.inGameManager.latchExternalFault(suppressed);
+    }
     if (this.particleCoordinator.producer.snapshot().terminal) {
       return ok(undefined);
     }
@@ -579,6 +585,28 @@ class SimulatorEngineHost implements SimulatorEngine {
     );
     if (framePlan.status !== "ok") {
       for (const participant of [...participants].reverse()) participant.discard();
+      return framePlan;
+    }
+    const committed = framePlan.value.commit();
+    return committed.status === "ok" ? committed : this.inGameManager.latchExternalFault(committed);
+  }
+
+  /** Ends the MoveTime suppression on the same engine when an in-place MoveTime resumes. */
+  resumeMoveTimeInPlace(): SimulatorResult<void> {
+    if (this.inGameManager.fault !== null) return this.inGameManager.fault;
+    if (this.particleCoordinator === null || this.particleCoordinator.producer.snapshot().terminal) {
+      return ok(undefined);
+    }
+    const planned = this.particleCoordinator.preflightMoveTimeResume();
+    if (planned.status !== "ok") return planned;
+    const framePlan = FrameMutationPlan.create([Object.freeze({
+      identity: "particle",
+      commitExternal: () => planned.value.commitExternal(),
+      publishOwner: () => planned.value.publishDomain(),
+      discard: () => planned.value.discard(),
+    })], ["particle"], ["particle"]);
+    if (framePlan.status !== "ok") {
+      planned.value.discard();
       return framePlan;
     }
     const committed = framePlan.value.commit();
@@ -844,6 +872,7 @@ interface RegisteredMoveTimeWrapper {
   readonly host: SimulatorEngineHost;
   readonly publishVisual: () => SimulatorResult<void>;
   readonly setMoveTimeVisualState: (active: boolean) => SimulatorResult<void>;
+  readonly publishTimeline: (timelineSeconds: number) => SimulatorResult<void>;
 }
 const registeredMoveTimeWrappers = new WeakMap<object, RegisteredMoveTimeWrapper>();
 
@@ -852,6 +881,7 @@ export function registerSimulatorEngineMoveTimeWrapper(
   inner: SimulatorEngine,
   publishVisual: () => SimulatorResult<void>,
   setMoveTimeVisualState: (active: boolean) => SimulatorResult<void>,
+  publishTimeline: (timelineSeconds: number) => SimulatorResult<void>,
 ): SimulatorResult<void> {
   const host = resolveMoveTimeHost(inner);
   if (host === null || wrapper === inner || registeredMoveTimeWrappers.has(wrapper)) {
@@ -864,8 +894,18 @@ export function registerSimulatorEngineMoveTimeWrapper(
     host,
     publishVisual,
     setMoveTimeVisualState,
+    publishTimeline,
   }));
   return ok(undefined);
+}
+
+/** The mounted time label follows the MoveTime target clock instead of its own frame count. */
+export function publishMoveTimeTimeline(
+  engine: SimulatorEngine,
+  timelineSeconds: number,
+): SimulatorResult<void> {
+  const wrapper = registeredMoveTimeWrappers.get(engine);
+  return wrapper === undefined ? ok(undefined) : wrapper.publishTimeline(timelineSeconds);
 }
 
 export function setMoveTimeVisualState(
@@ -886,9 +926,14 @@ export function publishFreshEngineVisual(engine: SimulatorEngine): SimulatorResu
     : wrapper.publishVisual();
 }
 
+/**
+ * Reloads the BGM at the MoveTime target. A reconstructed generation then mounts its visuals;
+ * an in-place MoveTime keeps the mounted generation.
+ */
 export function publishMoveTimeAudio(
   engine: SimulatorEngine,
   targetSeconds: number,
+  generation: "fresh" | "in-place" = "fresh",
 ): SimulatorResult<void> {
   const host = resolveMoveTimeHost(engine);
   if (host === null) {
@@ -898,7 +943,7 @@ export function publishMoveTimeAudio(
     );
   }
   const audio = host.publishMoveTimeAudio(targetSeconds);
-  if (audio.status !== "ok") return audio;
+  if (audio.status !== "ok" || generation === "in-place") return audio;
   return registeredMoveTimeWrappers.get(engine)?.publishVisual() ?? ok(undefined);
 }
 
@@ -925,6 +970,18 @@ export function enterMoveTimeForWholeEngineReplay(
     : integrityFailure(
         "particle.movetime.foreign-engine",
         "Whole-engine replay accepts only an engine created by the portable simulator host.",
+      );
+}
+
+export function resumeMoveTimeInPlace(
+  engine: SimulatorEngine,
+): SimulatorResult<void> {
+  const host = resolveMoveTimeHost(engine);
+  return host !== null
+    ? host.resumeMoveTimeInPlace()
+    : integrityFailure(
+        "particle.movetime.foreign-engine",
+        "In-place MoveTime resume accepts only an engine created by the portable simulator host.",
       );
 }
 

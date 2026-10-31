@@ -24,6 +24,9 @@ import type { PauseControlSceneSnapshot } from "../scene/pauseControlScene";
 import type { SimulatorResultPresentationEngine, SimulatorResultRecord } from "./resultPresentation";
 import {
   commitMoveTimeTimelineRevision,
+  enterMoveTimeForWholeEngineReplay,
+  publishMoveTimeTimeline,
+  resumeMoveTimeInPlace,
   publishFreshEngineVisual,
   publishMoveTimeAudio,
   setMoveTimeVisualState,
@@ -352,6 +355,9 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     const movingVisual = setMoveTimeVisualState(this.active, true);
     if (movingVisual.status !== "ok") return movingVisual;
     this.state = "replaying";
+    if (direction === "advance-five") {
+      return this.advanceInPlace(fromSeconds, targetSeconds, replayOriginSeconds, nextRevision, nextMoveCount);
+    }
     const freshResult = await this.createFreshCandidate("move-time-reconstruction");
     if (freshResult.status !== "ok") {
       setMoveTimeVisualState(this.active, false);
@@ -408,6 +414,10 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     const published = publishMoveTimeAudio(fresh, targetSeconds);
     if (published.status !== "ok") {
       return this.latchReplayFault(appendEngineCleanupFailure(published, await disposeSimulatorEngine(fresh)));
+    }
+    const timeline = publishMoveTimeTimeline(fresh, replaySeconds);
+    if (timeline.status !== "ok") {
+      return this.latchReplayFault(appendEngineCleanupFailure(timeline, await disposeSimulatorEngine(fresh)));
     }
     this.active = fresh;
     this.currentResolutions = replayResolutions;
@@ -525,6 +535,74 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
 
   settleDisposal(): Promise<SimulatorResult<void>> {
     return this.active.settleDisposal?.() ?? Promise.resolve(ok(undefined));
+  }
+
+  /**
+   * InGameMoveTimeController.advanceTime works on the running scene: it resets effects, advances the
+   * ordinary update pipeline in MoveTime state (input skipped) by steps of at most 1/60 s, then
+   * resumes. No engine is rebuilt and the history is not replayed.
+   */
+  private advanceInPlace(
+    fromSeconds: number,
+    targetSeconds: number,
+    replayOriginSeconds: number,
+    nextRevision: number,
+    nextMoveCount: number,
+  ): SimulatorResult<SimulatorMoveTimeReceipt> {
+    const engine = this.active;
+    const fail = (failure: SimulatorIntegrityFailure): SimulatorResult<SimulatorMoveTimeReceipt> => this.latchReplayFault(failure);
+    const entered = enterMoveTimeForWholeEngineReplay(engine);
+    if (entered.status !== "ok") return fail(entered);
+    let replaySeconds = Math.fround(fromSeconds);
+    const generated: ReplayEvent[] = [];
+    while (replaySeconds < targetSeconds) {
+      const delta = Math.fround(Math.min(targetSeconds - replaySeconds, MOVE_TIME_MAX_DELTA_SECONDS));
+      if (!(delta > 0)) {
+        return fail(rejected(
+          "timeline.movetime.float32-progress-stalled",
+          "MoveTime reconstruction requires positive Float32 progress and never jumps or clamps the clock.",
+        ));
+      }
+      const stepped = stepForMoveTime(engine, delta);
+      if (stepped.status !== "ok") return fail(stepped);
+      replaySeconds = Math.fround(replaySeconds + delta);
+      generated.push(Object.freeze({ kind: "move-time-step", deltaTimeSeconds: delta, timelineSecondsAfter: replaySeconds }));
+      if (engine.getNaturalCompletionClearStatus() !== null && replaySeconds < targetSeconds) {
+        return fail(rejected(
+          "timeline.movetime.target-after-natural-end",
+          "Advance-five is disabled when the bounded target cannot be reconstructed before natural completion.",
+        ));
+      }
+    }
+    const revised = commitMoveTimeTimelineRevision(engine, nextRevision, nextMoveCount);
+    if (revised.status !== "ok") return fail(revised);
+    const resumed = resumeMoveTimeInPlace(engine);
+    if (resumed.status !== "ok") return fail(resumed);
+    const published = publishMoveTimeAudio(engine, targetSeconds, "in-place");
+    if (published.status !== "ok") return fail(published);
+    const timeline = publishMoveTimeTimeline(engine, replaySeconds);
+    if (timeline.status !== "ok") return fail(timeline);
+    const visual = setMoveTimeVisualState(engine, false);
+    if (visual.status !== "ok") return fail(visual);
+    this.events = [...this.events, ...generated, Object.freeze({
+      kind: "move-time-resume" as const,
+      timelineRevision: nextRevision,
+      moveTimeCount: nextMoveCount,
+      timelineSecondsAfter: replaySeconds,
+    })];
+    this.timelineSecondsValue = replaySeconds;
+    this.timelineRevisionValue = nextRevision;
+    this.moveTimeCountValue = nextMoveCount;
+    this.generation += 1;
+    this.state = "ready";
+    return ok(Object.freeze({
+      direction: "advance-five" as const,
+      fromSeconds,
+      targetSeconds,
+      replayOriginSeconds,
+      timelineRevision: nextRevision,
+      moveTimeCount: nextMoveCount,
+    }));
   }
 
   private async createFreshCandidate(

@@ -290,6 +290,7 @@ export interface SimulatorAudioBackend {
   execute(command: AudioCommand): AudioOperationResult<void>;
   getBgmPlaybackState?(): AudioOperationResult<AudioBgmPlaybackState>;
   getOneShotPlaybackState?(voiceKey: string): AudioOperationResult<AudioOneShotPlaybackState>;
+  suppressMoveTimeOutput?(): AudioOperationResult<void>;
   publishMoveTimeOutput?(seekMilliseconds: number): AudioOperationResult<void>;
   recordTerminalFault(capability: string, boundary: string): AudioOperationResult<never>;
   snapshot(): AudioBackendSnapshot;

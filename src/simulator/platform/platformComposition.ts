@@ -650,6 +650,12 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
         engine.value,
         () => mountedEngine.publishMount(),
         (active) => controlOverlay.value.setMoveTimeInProgress(active),
+        (timelineSeconds) => {
+          // The MoveTime computation belongs to the handoff, as a fresh mount's preparation does:
+          // the target clock and the reloaded BGM both continue from the next frame.
+          this.platform.scheduler.resetClock?.();
+          return mountedEngine.publishTimeline(timelineSeconds);
+        },
       );
       if (registered.status !== "ok") {
         return rejectedWithCleanup(fromIntegrity(registered), [
@@ -762,6 +768,11 @@ class MountedSimulatorEngine implements SimulatorEngine {
     this.mount = mounted.value;
     this.combinedScene.root.visible = true;
     return ok(undefined);
+  }
+
+  publishTimeline(timelineSeconds: number): SimulatorResult<void> {
+    this.timelineSeconds = Math.fround(timelineSeconds);
+    return this.controlOverlay.updateTimeline(this.timelineSeconds);
   }
 
   initialize(): SimulatorResult<void> {

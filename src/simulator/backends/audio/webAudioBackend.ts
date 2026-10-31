@@ -260,6 +260,8 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
     try {
       if (this.physicalOutputState !== "move-time-suppressed") {
         this.applyCommands(pending.commands);
+      } else {
+        this.trackSuppressedOwners(pending.commands);
       }
     } catch {
       // Physical AudioNode effects cannot be rolled back. Semantic commands and
@@ -314,6 +316,32 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
     const semantic = this.recording.getOneShotPlaybackState(voiceKey);
     if (semantic.status !== "accepted" || semantic.value === "not-started") return semantic;
     return audioAccepted(this.voices.has(`se:${voiceKey}`) ? "playing" : "ended");
+  }
+
+  /**
+   * In-place MoveTime on the running engine: silences the physical graph while the steps run;
+   * publishMoveTimeOutput then reloads the BGM at the target, as on a reconstructed engine.
+   */
+  suppressMoveTimeOutput(): AudioOperationResult<void> {
+    const context = this.requireRunningContext<void>();
+    if (context !== null) return context;
+    if (this.physicalOutputState === "move-time-suppressed") return audioAccepted(undefined);
+    try {
+      for (const voice of this.voices.values()) {
+        this.releaseVoice(voice);
+        if (voice.voiceKey.startsWith("hold:") || voice.voiceKey.startsWith("startup-loop:")) {
+          this.stolenOwners.add(voice.voiceKey);
+        }
+      }
+    } catch {
+      return this.recording.recordTerminalFault(
+        "audio.web.move-time-suppression-threw",
+        "Releasing the physical graph for in-place MoveTime failed and is terminal.",
+      );
+    }
+    this.voices.clear();
+    this.physicalOutputState = "move-time-suppressed";
+    return audioAccepted(undefined);
   }
 
   publishMoveTimeOutput(seekMilliseconds: number): AudioOperationResult<void> {
@@ -759,6 +787,18 @@ export class WebAudioSimulatorBackend implements SimulatorAudioBackend {
     action: (voice: WebAudioVoice) => void,
   ): void {
     for (const voice of [...this.voices.values()]) if (predicate(voice)) action(voice);
+  }
+
+  /** Owned loops started while suppressed have no physical voice; their later owner commands are no-ops. */
+  private trackSuppressedOwners(commands: readonly AudioCommand[]): void {
+    for (const command of commands) {
+      if (command.kind === "hold.start-loop") this.stolenOwners.add(`hold:${command.owner_key}`);
+      else if (command.kind === "se.start-owned-loop") this.stolenOwners.add(`startup-loop:${command.owner_key}`);
+      else if (command.kind === "hold.fade" && command.stop_at_zero) this.stolenOwners.delete(`hold:${command.owner_key}`);
+      else if (command.kind === "se.fade-owned-loop" && (command.duration_bits === "0x00000000" || command.stop_at_zero)) {
+        this.stolenOwners.delete(`startup-loop:${command.owner_key}`);
+      }
+    }
   }
 
   private releaseVoice(voice: WebAudioVoice): void {
