@@ -1,4 +1,3 @@
-import { usePreparationPending } from "./PagePreparation";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useApplicationResourceUrl } from "../resources/applicationResourceContext";
 import { fetchTestServerMedia, fetchBestdoriFileBlob, resolveBestdoriCommunitySongResourceUrls } from "../services/bestdori/api";
@@ -10,8 +9,7 @@ import { getOfficialMusicLibrary } from "../services/officialMusicLibrary";
 /** MusicInfoController: retain the texture until the next queued load finishes. */
 export function useMusicJacket(entry: MusicSelectionEntry | undefined) {
   const fallback = useApplicationResourceUrl("ui.default-cover");
-  const [settled, setSettled] = useState<MusicSelectionEntry>();
-  usePreparationPending(!!entry && settled !== entry);
+  // The list page shows before its jacket: a cover fills in when its queued load finishes.
   const [image, setImage] = useState<{ url: string; title: string }>();
   const session = useRef<{
     disposed: boolean; queue: Promise<void>; urls: Set<string>; decoding: Set<string>;
@@ -44,7 +42,7 @@ export function useMusicJacket(entry: MusicSelectionEntry | undefined) {
       entry.source === "ayachan" ? [entry.cover.hash, entry.cover.url]
         : entry.source === "official" ? entry.officialSong.jacketSlot : null]);
     const requestKey = JSON.stringify([key, fallback]);
-    if (state.lastRequest === requestKey) { setSettled(entry); return; }
+    if (state.lastRequest === requestKey) return;
     state.lastRequest = requestKey;
     // The original queue is FIFO; selecting again does not cancel older entries.
     state.queue = state.queue.then(async () => {
@@ -104,7 +102,6 @@ export function useMusicJacket(entry: MusicSelectionEntry | undefined) {
         }
       } finally {
         if (objectUrl) state.decoding.delete(objectUrl);
-        if (!state.disposed) setSettled(entry);
         if (release) { release(); state.releases.delete(release); }
       }
     });
