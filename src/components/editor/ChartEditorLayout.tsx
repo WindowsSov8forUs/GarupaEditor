@@ -42,6 +42,11 @@ type ChartEditorLayoutProps = {
 const CANVAS_INTERACTION_OVERSCAN_PX = 240;
 const CANVAS_INTERACTION_SNAP_PX = 96;
 
+/** Page switch slot identity: each music selection source is its own page. */
+function pageSwitchKey(page: AppPage, source: string): string {
+  return page === "search" ? `search:${source}` : page;
+}
+
 function isHalfBeatAligned(value: number): boolean {
   if (!Number.isFinite(value)) {
     return true;
@@ -1238,7 +1243,9 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         }}
         onWorkspaceBack={() => setPageStack(popPage)}
         showPageBack={page !== "entrance" || !!returnToTitle}
-        pageKey={page === "search" ? `search:${appOptionSettings.musicSelectionSource}` : page}
+        pageKey={pageSwitchKey(page, appOptionSettings.musicSelectionSource)}
+        stackPageKeys={pageStack.slice(0, -1).filter(entry => entry !== "editor")
+          .map(entry => pageSwitchKey(entry, appOptionSettings.musicSelectionSource))}
         pageId={page}
         section={page === "song" ? "歌曲" : page === "entrance" ? "首页" : "演出"}
         title={page === "live" ? songDetailSource.wording[preparationMode.sessionMode === "rehearsal"
