@@ -502,8 +502,12 @@ export function MusicSelectionPage({ source, onSourceChange: setSource, onLoad, 
   // and re-deciding the playing song keeps it (LoadSampleMusic skips an already playing BgmId).
   const decidedPreview = !entries.length ? null : preview;
   const reportPreview = useRef(onPreview); reportPreview.current = onPreview;
+  // The initial decision follows the selector's Show once its contents exist: a page still
+  // preparing offscreen has not decided anything audible yet.
+  const [shown, setShown] = useState(pageVisible);
+  useEffect(() => { if (pageVisible) setShown(true); }, [pageVisible]);
   // Unmounting for live preparation must not clear the cue (RemoveAllSoundBundle keeps the current one).
-  useEffect(() => { if (decidedPreview !== undefined) reportPreview.current(decidedPreview, busy); }, [decidedPreview, busy]);
+  useEffect(() => { if (shown && decidedPreview !== undefined) reportPreview.current(decidedPreview, busy); }, [shown, decidedPreview, busy]);
   const running = useRef(false), active = useRef(true);
   const releaseLoad = useRef<(() => void) | null>(null);
   useEffect(() => { active.current = true; return () => {

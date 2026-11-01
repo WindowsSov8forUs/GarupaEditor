@@ -276,6 +276,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   const answerMvDownload = (confirmed: boolean) => { mvDownloadAnswer?.(confirmed); setMvDownloadAnswer(null); };
   useEffect(() => {
     if (musicSelectionOpen) return;
+    // Leaving the selection flow ends its sample; entering again waits for the list's own decision.
+    setPreview({ request: null, paused: false });
     setPlaySelection(null); loadedPlay.current = null;
     vm.endPlaySession();
   }, [musicSelectionOpen, vm.endPlaySession]);
