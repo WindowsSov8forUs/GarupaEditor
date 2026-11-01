@@ -1,3 +1,4 @@
+import type { AudioSourceCodec, AudioSourceMime } from "./audio/audioSourceFormat";
 export type AudioBackendState =
   | "unprepared"
   | "preparing"
@@ -61,8 +62,9 @@ interface AudioResourceProfileBase {
   readonly cue: string;
   readonly byteLength: number;
   readonly sha256: string;
-  readonly mime: "audio/mpeg";
-  readonly codec: "mp3";
+  /** Fixed and leased cues are MP3; only the session BGM may use another host-decodable source. */
+  readonly mime: AudioSourceMime;
+  readonly codec: AudioSourceCodec;
   readonly sampleRate: number;
   readonly channels: 1 | 2;
   readonly durationSeconds: number;
@@ -125,7 +127,7 @@ export interface AudioResourceProvider {
 }
 
 export interface AudioDecodedResourceMetadata {
-  readonly codec: "mp3" | "f32le";
+  readonly codec: AudioSourceCodec | "f32le";
   readonly sampleRate: number;
   readonly channels: number;
   readonly durationSeconds: number;

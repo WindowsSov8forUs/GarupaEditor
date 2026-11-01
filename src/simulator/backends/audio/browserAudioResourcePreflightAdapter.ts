@@ -5,6 +5,7 @@ import type {
 } from "../audioContracts";
 import { audioAccepted, audioRejected } from "../audioValidation";
 import { sha256UpperHexAsync } from "../resources/sha256";
+import { inspectAudioSourceFormat } from "./audioSourceFormat";
 
 interface CachedBrowserDecode {
   readonly buffer: AudioBuffer;
@@ -70,21 +71,21 @@ export class BrowserAudioResourcePreflightAdapter
           "Browser decoding must produce positive integral sample rate, channel count and decoded sample frames.",
         );
       }
-      const source = inspectMp3SourceFormat(bytes);
-      if (source === null || source.channels !== decoded.numberOfChannels) {
+      const source = inspectAudioSourceFormat(bytes);
+      if (source === null || (source.channels !== null && source.channels !== decoded.numberOfChannels)) {
         return audioRejected(
           "audio-resource-decode",
-          "audio.preflight.mp3-source-format-mismatch",
-          "Browser decoding must agree with the strict MPEG Layer III source sample rate and channel mode.",
+          "audio.preflight.source-format-mismatch",
+          "Browser decoding must agree with the declared source container, sample rate and channel layout.",
         );
       }
       const sampleFrames = decoded.sampleRate === source.sampleRate
         ? decoded.length
         : Math.ceil(decoded.length * source.sampleRate / decoded.sampleRate);
       const metadata = Object.freeze({
-        codec: "mp3" as const,
+        codec: source.codec,
         sampleRate: source.sampleRate,
-        channels: source.channels,
+        channels: decoded.numberOfChannels,
         durationSeconds: Number((sampleFrames / source.sampleRate).toFixed(6)),
         sampleFrames,
       });
@@ -94,7 +95,7 @@ export class BrowserAudioResourcePreflightAdapter
       return audioRejected(
         "audio-resource-decode",
         "audio.preflight.decode-failed",
-        "MP3 decode failure is structured and has no alternate codec, network source or metadata fallback.",
+        "Decode failure is structured and has no alternate codec, network source or metadata fallback.",
       );
     }
   }
@@ -116,37 +117,4 @@ export class BrowserAudioResourcePreflightAdapter
         )
       : audioAccepted(cached.buffer);
   }
-}
-
-function inspectMp3SourceFormat(
-  bytes: Uint8Array,
-): { readonly sampleRate: number; readonly channels: 1 | 2 } | null {
-  if (bytes.byteLength < 4) return null;
-  let offset = 0;
-  if (bytes[0] === 0x49 && bytes[1] === 0x44 && bytes[2] === 0x33) {
-    if (bytes.byteLength < 10 ||
-      (bytes[6]! | bytes[7]! | bytes[8]! | bytes[9]!) >= 0x80) return null;
-    offset = 10 + ((bytes[6]! << 21) | (bytes[7]! << 14) |
-      (bytes[8]! << 7) | bytes[9]!);
-  }
-  if (offset > bytes.byteLength - 4) return null;
-  const first = bytes[offset]!;
-  const second = bytes[offset + 1]!;
-  const third = bytes[offset + 2]!;
-  const fourth = bytes[offset + 3]!;
-  const versionBits = (second >>> 3) & 0x03;
-  const layerBits = (second >>> 1) & 0x03;
-  const bitrateIndex = third >>> 4;
-  const sampleRateIndex = (third >>> 2) & 0x03;
-  if (first !== 0xff || (second & 0xe0) !== 0xe0 || versionBits === 1 ||
-    layerBits !== 1 || bitrateIndex === 0 || bitrateIndex === 15 || sampleRateIndex === 3) return null;
-  const rates = versionBits === 3
-    ? [44100, 48000, 32000]
-    : versionBits === 2
-      ? [22050, 24000, 16000]
-      : [11025, 12000, 8000];
-  return Object.freeze({
-    sampleRate: rates[sampleRateIndex]!,
-    channels: (fourth >>> 6) === 3 ? 1 as const : 2 as const,
-  });
 }

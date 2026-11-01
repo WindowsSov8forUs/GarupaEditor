@@ -9,6 +9,7 @@ import type {
   AudioSessionBgmResourceProfile,
   AudioSessionVoiceResourceProfile,
 } from "./audioContracts";
+import { SESSION_BGM_SOURCE_FORMATS } from "./audio/audioSourceFormat";
 
 import holdLoopProfile from "../../data/simulator/originalTapSeHoldLoopProfile.json";
 import resultMedia from "../../data/simulator/resultMediaProfile.json";
@@ -400,7 +401,7 @@ function validateSessionBgmResource(
     resource.role !== "bgm" || !isNonEmpty(resource.logicalId) || !isNonEmpty(resource.cue) ||
     !Number.isSafeInteger(resource.byteLength) || resource.byteLength <= 0 ||
     !SHA256_PATTERN.test(resource.sha256) ||
-    resource.mime !== "audio/mpeg" || resource.codec !== "mp3" ||
+    !SESSION_BGM_SOURCE_FORMATS.some(([mime, codec]) => resource.mime === mime && resource.codec === codec) ||
     !Number.isSafeInteger(resource.sampleRate) || resource.sampleRate <= 0 ||
     (resource.channels !== 1 && resource.channels !== 2) ||
     !Number.isFinite(resource.durationSeconds) || resource.durationSeconds <= 0 ||
@@ -410,7 +411,7 @@ function validateSessionBgmResource(
   ) {
     return rejectProfile(
       "audio.profile.invalid-session-bgm",
-      "Session BGM requires one explicit non-empty identity, positive MP3 metadata, uppercase SHA-256, no loop, and portable host classification.",
+      "Session BGM requires one explicit non-empty identity, positive metadata from a supported source container, uppercase SHA-256, no loop, and portable host classification.",
     );
   }
   return audioAccepted(Object.freeze({ ...resource }));
