@@ -5891,9 +5891,12 @@ function ChartEditorController() {
       abandon();
       exit("failed");
       const message = error instanceof Error ? error.message : String(error);
-      setStatusMessage(`播放器窗口启动失败：${message}`);
+      // A caller that owns the exit shows its own notice; the cause belongs in the log.
+      if (onExit) appLog("error", "simulator.window.launch-failed", { message });
+      else setStatusMessage(`播放器窗口启动失败：${message}`);
       if (simulatorWindow !== null) void simulatorWindow.close().catch((closeError: unknown) => {
-        setStatusMessage(`播放器窗口启动失败：${message}；关闭窗口失败：${String(closeError)}`);
+        if (onExit) appLog("error", "simulator.window.close-failed", { message, closeError: String(closeError) });
+        else setStatusMessage(`播放器窗口启动失败：${message}；关闭窗口失败：${String(closeError)}`);
       });
     };
     const publishDescriptor = async () => {
@@ -5919,7 +5922,8 @@ function ChartEditorController() {
         if (event.payload.status === "rejected") {
           const capability = event.payload.capability ?? "app.simulator.action-unavailable";
           const boundary = event.payload.boundary?.trim() ?? "当前播放器动作不可用，编辑器状态未改变。";
-          setStatusMessage(`播放器未启动或已安全结束：${capability}：${boundary}`);
+          if (onExit) appLog("error", "simulator.window.launch-rejected", { capability, boundary });
+          else setStatusMessage(`播放器未启动或已安全结束：${capability}：${boundary}`);
         }
       });
       if (!isMobileRuntime()) {

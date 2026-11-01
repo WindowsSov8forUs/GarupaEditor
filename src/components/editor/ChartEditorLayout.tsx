@@ -15,6 +15,7 @@ import { ImportJsonModal } from "../ImportJsonModal";
 import { SongInformationPage } from "../SongInformationPage";
 import { SONG_INFORMATION_CONTENT_BOUNDS } from "../OriginalSongDetailParts";
 import { LivePreparationPage, MvDownloadDialog } from "../LivePreparationPage";
+import { ResourceLoadErrorDialog } from "../OriginalConfirmDialog";
 import { downloadActivity } from "../../services/downloadActivity";
 import { SAMPLE_START_GAME_FADE_SECONDS, useMusicPreview } from "../useMusicPreview";
 import type { MusicPreviewRequest } from "../musicSelectionData";
@@ -278,9 +279,12 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   }, [musicSelectionOpen, vm.endPlaySession]);
   // もう1回ライブ comes back to this preparation and PlaySampleMusic restarts the sample from its
   // start before PushUIScreen(43); a launch that never ran stays here with the sample as well.
+  const [launchFailed, setLaunchFailed] = useState(false);
   const endLive = (exit: SimulatorWindowExit) => {
     if (exit === "leave") setPageStack(leaveLivePreparation);
     else setPreviewStopped(false);
+    // A live that never ran stays on this preparation behind the resource-read notice.
+    if (exit === "failed") setLaunchFailed(true);
   };
   // Launch from the render that holds the chart just loaded for play.
   useEffect(() => {
@@ -1957,6 +1961,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         onClose={closeBestdoriLoginModal}
       />
 
+      <ResourceLoadErrorDialog open={launchFailed} onConfirm={() => setLaunchFailed(false)} />
       <MvDownloadDialog open={mvDownloadAnswer !== null} onCancel={() => answerMvDownload(false)}
         onConfirm={() => answerMvDownload(true)} />
 
