@@ -1,3 +1,4 @@
+import { flushSync } from "react-dom";
 import { EditorMinimap } from "./EditorMinimap";
 import { EditorBeatDivision } from "./EditorBeatDivision";
 import { ORIGINAL_HEADER_MENU_BOUNDS } from "../OriginalPageHeader";
@@ -16,6 +17,7 @@ import { SongInformationPage } from "../SongInformationPage";
 import { SONG_INFORMATION_CONTENT_BOUNDS } from "../OriginalSongDetailParts";
 import { LivePreparationPage, MvDownloadDialog } from "../LivePreparationPage";
 import { ResourceLoadErrorDialog } from "../OriginalConfirmDialog";
+import { LiveInProgressCover, type LiveInProgressSong } from "../LiveInProgressCover";
 import { downloadActivity } from "../../services/downloadActivity";
 import { SAMPLE_START_GAME_FADE_SECONDS, useMusicPreview } from "../useMusicPreview";
 import type { MusicPreviewRequest } from "../musicSelectionData";
@@ -280,17 +282,28 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   // もう1回ライブ comes back to this preparation and PlaySampleMusic restarts the sample from its
   // start before PushUIScreen(43); a launch that never ran stays here with the sample as well.
   const [launchFailed, setLaunchFailed] = useState(false);
-  const endLive = (exit: SimulatorWindowExit) => {
+  const [liveSong, setLiveSong] = useState<LiveInProgressSong | null>(null);
+  // The chart and media loaded for this live are current in the render that launches it.
+  const currentLiveSong = (): LiveInProgressSong => {
+    const shown = playSelection ? { ...metadata, title: playSelection.title, difficulty: playSelection.difficulty } : metadata;
+    return { title: shown.title, bandName: shown.artist, difficulty: shown.difficulty,
+      isFullLength: shown.isFullLength === true };
+  };
+  // Committed synchronously: the in-progress cover leaves in the same commit as the page switch,
+  // before the opener releases the start Loading.
+  const endLive = (exit: SimulatorWindowExit) => flushSync(() => {
+    setLiveSong(null);
     if (exit === "leave") setPageStack(leaveLivePreparation);
     else setPreviewStopped(false);
     // A live that never ran stays on this preparation behind the resource-read notice.
     if (exit === "failed") setLaunchFailed(true);
-  };
+  });
   // Launch from the render that holds the chart just loaded for play.
   useEffect(() => {
     const pending = pendingLaunch.current;
     if (pending === null) return;
     pendingLaunch.current = null;
+    setLiveSong(currentLiveSong());
     void openSimulatorWindow(pending.mode, endLive).finally(pending.done);
   }, [launchRevision]);
   const startLive = async (mode: SimulatorModeSelection) => {
@@ -304,7 +317,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     // gameplay surface is presented; transfers add the download gauge.
     const releaseLoading = downloadActivity.holdScreen();
     try {
-      if (selection === null) return await openSimulatorWindow(mode, endLive);
+      if (selection === null) { setLiveSong(currentLiveSong()); return await openSimulatorWindow(mode, endLive); }
       if (loadedPlay.current?.key !== key || needsMv) {
         await vm.beginPlaySession();
         const progress = { progress: () => {} };
@@ -1961,6 +1974,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         onClose={closeBestdoriLoginModal}
       />
 
+      <LiveInProgressCover song={liveSong} jacketUrl={vm.coverImageSrc} />
       <ResourceLoadErrorDialog open={launchFailed} onConfirm={() => setLaunchFailed(false)} />
       <MvDownloadDialog open={mvDownloadAnswer !== null} onCancel={() => answerMvDownload(false)}
         onConfirm={() => answerMvDownload(true)} />

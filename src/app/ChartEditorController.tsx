@@ -5888,8 +5888,9 @@ function ChartEditorController() {
     };
     const fail = (error: unknown) => {
       if (abandoned) return;
-      abandon();
+      // The opener's cover and notice settle before the start Loading is released.
       exit("failed");
+      abandon();
       const message = error instanceof Error ? error.message : String(error);
       // A caller that owns the exit shows its own notice; the cause belongs in the log.
       if (onExit) appLog("error", "simulator.window.launch-failed", { message });
@@ -5917,8 +5918,8 @@ function ChartEditorController() {
       targetUrl.hash = `simulator?request=${encodeURIComponent(requestId)}`;
       closedUnlisten = await listen<SimulatorWindowClosedPayload>(SIMULATOR_WINDOW_CLOSED_EVENT, (event) => {
         if (event.payload?.requestId !== requestId) return;
-        abandon();
         exit(event.payload.status === "rejected" ? "failed" : event.payload.reason === "play-again" ? "play-again" : "leave");
+        abandon();
         if (event.payload.status === "rejected") {
           const capability = event.payload.capability ?? "app.simulator.action-unavailable";
           const boundary = event.payload.boundary?.trim() ?? "当前播放器动作不可用，编辑器状态未改变。";
@@ -5948,7 +5949,7 @@ function ChartEditorController() {
           fail(event?.payload ? JSON.stringify(event.payload) : "播放器窗口创建失败");
         });
         // Closing the window from the system frame retires the live like the Pause menu.
-        void simulatorWindow.once("tauri://destroyed", () => { abandon(); exit("leave"); });
+        void simulatorWindow.once("tauri://destroyed", () => { exit("leave"); abandon(); });
         timeoutId = window.setTimeout(() => {
           if (readyLabel === null && !abandoned) fail("播放器窗口握手超时，请重试。");
         }, 15000);
