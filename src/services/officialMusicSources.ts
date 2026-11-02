@@ -1,4 +1,5 @@
 import { fetchBestdoriJson, type BestdoriSongServerName } from "./bestdori/api";
+import { explorerFolder, parseBestdoriExplorerInfo, parseBestdoriFileList } from "./bestdori/explorerParsing";
 
 export const OFFICIAL_SERVER_ORDER = ["jp", "cn", "tw", "en"] as const;
 export type OfficialServer = typeof OFFICIAL_SERVER_ORDER[number];
@@ -45,12 +46,14 @@ export async function fetchOfficialSourceMedia(previous?: OfficialSourceMedia): 
     if (family === undefined) {
       const endpoint = `/api/explorer/${server}/assets/_info.json`;
       try {
-        const assets = await fetchBestdoriJson<Record<string, Record<string, unknown>>>(endpoint);
-        if (!assets?.musicjacket || !assets.musicscore || !assets.sound) throw new Error("官方资源目录无效");
+        const assets = parseBestdoriExplorerInfo(await fetchBestdoriJson<unknown>(endpoint));
+        const folders = { musicjacket: explorerFolder(assets, "musicjacket"), musicscore: explorerFolder(assets, "musicscore") };
+        const sound = explorerFolder(assets, "sound");
+        if (!folders.musicjacket || !folders.musicscore || !sound) throw new Error("官方资源目录缺少 musicjacket、musicscore 或 sound");
         for (const family of ["musicjacket", "musicscore"] as const) {
-          for (const folder of Object.keys(assets[family]!).sort()) {
+          for (const folder of Object.keys(folders[family]!).sort()) {
             const key = `${server}/${family}/${folder}`;
-            const version = JSON.stringify(assets[family]![folder]);
+            const version = JSON.stringify(folders[family]![folder]);
             const prefix = `${family}/${folder}_rip/`;
             const known = previous?.folders?.[key];
             const hasLegacy = known === undefined && Object.values(family === "musicjacket" ? previous?.jackets ?? {} : previous?.previews ?? {})
@@ -61,7 +64,7 @@ export async function fetchOfficialSourceMedia(previous?: OfficialSourceMedia): 
             } else jobs.push({ server, family, folder, version });
           }
         }
-        for (const folder of Object.keys(assets.sound)) {
+        for (const folder of Object.keys(sound)) {
           if (!/^bgm[\w-]+$/.test(folder)) continue;
           (result.audio[folder] ??= []).push({ server, logicalPath: `sound/${folder}/${folder}.mp3`,
             url: `https://bestdori.com/assets/${server}/sound/${folder}_rip/${folder}.mp3` });
@@ -75,8 +78,7 @@ export async function fetchOfficialSourceMedia(previous?: OfficialSourceMedia): 
     const endpoint = `/api/explorer/${server}/assets/${family}/${folder}.json`;
     let files: string[];
     try {
-      files = await fetchBestdoriJson<string[]>(endpoint);
-      if (!Array.isArray(files) || files.some(file => typeof file !== "string")) throw new Error("资源清单无效");
+      files = parseBestdoriFileList(await fetchBestdoriJson<unknown>(endpoint));
     } catch (error) {
       result.failures!.push(`${endpoint}: ${String(error)}`);
       retain(server, `${family}/${folder}_rip/`);
