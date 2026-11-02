@@ -611,9 +611,26 @@ export async function bestdoriLogout(): Promise<void> {
   return invokeTauriCommand<void>("bestdori_logout");
 }
 
-export async function bestdoriGetMe(): Promise<BestdoriUserMeResponse> {
+/**
+ * The stored login as Bestdori sees it now: signed in, never signed in, expired (the server no
+ * longer accepts it; it has been cleared), or unverified when Bestdori could not be reached.
+ */
+export type BestdoriSession =
+  | { status: "signed-in"; me: BestdoriUserMeResponse }
+  | { status: "signed-out" }
+  | { status: "expired" }
+  | { status: "unverified"; me: BestdoriUserMeResponse | null; error: string };
+const sessionExpiredListeners = new Set<() => void>();
+/** Called whenever a check finds the stored login expired, wherever the check was made. */
+export function onBestdoriSessionExpired(listener: () => void): () => void {
+  sessionExpiredListeners.add(listener);
+  return () => { sessionExpiredListeners.delete(listener); };
+}
+export async function bestdoriCheckSession(): Promise<BestdoriSession> {
   ensureBestdoriBackendAvailable();
-  return invokeTauriCommand<BestdoriUserMeResponse>("bestdori_get_me");
+  const session = await invokeTauriCommand<BestdoriSession>("bestdori_get_me");
+  if (session.status === "expired") for (const listener of [...sessionExpiredListeners]) listener();
+  return session;
 }
 
 async function requestBestdoriJson<T>(

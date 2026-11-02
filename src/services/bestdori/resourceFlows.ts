@@ -6,7 +6,7 @@ import type { ChartMetadata } from "../../chartCore";
 import { normalizeSourcePng } from "../../resources/normalizeImagePng";
 import {
   SONOLUS_TEST_SERVER_ROOT,
-  bestdoriGetMe,
+  bestdoriCheckSession,
   buildBestdoriCommunityChartPostPayload,
   buildBestdoriUploadedFileUrl,
   createBestdoriCommunityChartPost,
@@ -253,10 +253,10 @@ export async function publishBestdoriCommunityChartFlow(
   params: PublishBestdoriCommunityChartFlowParams,
 ): Promise<PublishBestdoriCommunityChartFlowResult> {
   params.onStage?.("checking-login");
-  const me = await bestdoriGetMe();
-  if (!me.result) {
-    throw new Error("bestdori account is not logged in");
-  }
+  const session = await bestdoriCheckSession();
+  if (session.status === "expired") throw new Error("Bestdori 登录已失效，请重新登录。");
+  if (session.status === "signed-out") throw new Error("bestdori account is not logged in");
+  if (session.status === "unverified") throw new Error(`无法确认 Bestdori 登录状态：${session.error}`);
 
   const metadata = params.metadata;
   const diff = BESTDORI_DIFFICULTY_TO_DIFF[metadata.difficulty] ?? 0;

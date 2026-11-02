@@ -32,7 +32,8 @@ import { musicPlaySelection, type MusicPlaySelection } from "../musicSelectionDa
 import { DownloadProgressModal } from "../DownloadProgressModal";
 import { OverlayDialogModal } from "../OverlayDialogModal";
 import { SkinSettingsModal } from "../SkinSettingsModal";
-import { bestdoriGetMe, bestdoriLogin, bestdoriLogout } from "../../services/bestdori/api";
+import { bestdoriCheckSession, bestdoriLogin, bestdoriLogout, onBestdoriSessionExpired } from "../../services/bestdori/api";
+import { appLog } from "../../logging/applicationLogger";
 import { isMobileRuntime } from "../../app/mobileRuntime";
 import { SidebarPanel } from "./SidebarPanel";
 import { useUiViewport } from "../useUiViewport";
@@ -357,21 +358,27 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   const [bestdoriNicknameDisplay, setBestdoriNicknameDisplay] = useState("");
   const [bestdoriUsernameDisplay, setBestdoriUsernameDisplay] = useState("");
 
+  // A login Bestdori no longer accepts, found at startup or before an upload, is shown signed out.
+  useEffect(() => onBestdoriSessionExpired(() => {
+    bestdoriAuthRevision.current += 1;
+    setBestdoriUsernameDisplay("");
+    setBestdoriNicknameDisplay("");
+    setStatusMessage("Bestdori 登录已失效，请重新登录。");
+  }), [setStatusMessage]);
   useEffect(() => {
     let disposed = false;
     const revision = bestdoriAuthRevision.current;
     void (async () => {
       try {
-        const response = await bestdoriGetMe();
-        if (!response.result || disposed || revision !== bestdoriAuthRevision.current) {
-          return;
-        }
-        const resolvedUsername = typeof response.username === "string" ? response.username.trim() : "";
-        const resolvedNickname = typeof response.nickname === "string" ? response.nickname.trim() : "";
-        setBestdoriUsernameDisplay(resolvedUsername);
-        setBestdoriNicknameDisplay(resolvedNickname);
-      } catch {
-        // Ignore "not logged in" and transient network errors; user can log in manually.
+        const session = await bestdoriCheckSession();
+        if (disposed || revision !== bestdoriAuthRevision.current) return;
+        // Offline, the stored account stays shown; it is checked again before it is used.
+        const me = session.status === "signed-in" ? session.me : session.status === "unverified" ? session.me : null;
+        if (!me) return;
+        setBestdoriUsernameDisplay(me.username?.trim() ?? "");
+        setBestdoriNicknameDisplay(me.nickname?.trim() ?? "");
+      } catch (error) {
+        appLog("warn", "auth.session-check-failed", { error });
       }
     })();
     return () => {

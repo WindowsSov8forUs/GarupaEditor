@@ -1770,26 +1770,38 @@ async fn bestdori_login(
     Ok(me_payload)
 }
 
+/// The stored Bestdori login as the server sees it now. A login the server no longer accepts
+/// (/api/user/me answers result false) is cleared; when the server cannot be reached the stored
+/// account is returned unverified.
+#[derive(Serialize)]
+#[serde(tag = "status", rename_all = "kebab-case")]
+enum BestdoriSession {
+    SignedIn { me: BestdoriUserMeResponse },
+    SignedOut,
+    Expired,
+    Unverified { me: Option<BestdoriUserMeResponse>, error: String },
+}
+
 #[tauri::command]
 async fn bestdori_get_me(
     app: tauri::AppHandle,
     auth_state: tauri::State<'_, BestdoriAuthState>,
-) -> Result<BestdoriUserMeResponse, String> {
-    if let Some(cached_me) = get_bestdori_user_me(&auth_state)? {
-        if cached_me.result {
-            return Ok(cached_me);
-        }
-    }
-    let cookie_header = get_bestdori_cookie_header(&auth_state)?
-        .ok_or_else(|| "bestdori is not logged in".to_string())?;
+) -> Result<BestdoriSession, String> {
+    let Some(cookie_header) = get_bestdori_cookie_header(&auth_state)? else {
+        return Ok(BestdoriSession::SignedOut);
+    };
     let client = build_bestdori_http_client()?;
-    let me_payload = request_bestdori_me(&client, &cookie_header).await?;
+    let me_payload = match request_bestdori_me(&client, &cookie_header).await {
+        Ok(payload) => payload,
+        Err(error) => return Ok(BestdoriSession::Unverified { me: get_bestdori_user_me(&auth_state)?, error }),
+    };
     if !me_payload.result {
         clear_bestdori_auth_state_and_persist(&app, &auth_state)?;
-        return Err("bestdori /api/user/me returned result=false".to_string());
+        application_log::record("warn", "auth.session-expired", serde_json::json!({}));
+        return Ok(BestdoriSession::Expired);
     }
     persist_bestdori_user_me_state(&app, &auth_state, &me_payload)?;
-    Ok(me_payload)
+    Ok(BestdoriSession::SignedIn { me: me_payload })
 }
 
 #[tauri::command]
