@@ -1458,9 +1458,11 @@ fn build_scoped_request_context(
 ) -> Result<(String, reqwest::Client, Option<String>), String> {
     let normalized_url = normalize_scoped_remote_url(url, label, host_scope)?;
     let client = build_bestdori_http_client()?;
+    // Only Bestdori itself receives the Bestdori login; the test servers and community media
+    // hosts need no login.
     let cookie_header = match RemoteHostScope::from_optional(host_scope)? {
-        RemoteHostScope::CommunityMedia => None,
-        _ => get_bestdori_cookie_header(auth_state)?,
+        RemoteHostScope::Bestdori => get_bestdori_cookie_header(auth_state)?,
+        RemoteHostScope::Sonolus | RemoteHostScope::CommunityMedia => None,
     };
     Ok((normalized_url, client, cookie_header))
 }
