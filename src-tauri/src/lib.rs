@@ -1079,6 +1079,10 @@ fn normalize_url(value: &str, label: &str) -> Result<String, String> {
 enum RemoteHostScope {
     Bestdori,
     Sonolus,
+    /// Song media of community chart posts hosted outside Bestdori, as the Bestdori front end
+    /// resolves them: osu! covers and audio, and LLSIF assets (card.niconi.co.ni/asset/ now
+    /// redirects to card.ganbaru.by/asset/). Requests carry no Bestdori cookie.
+    CommunityMedia,
 }
 
 impl RemoteHostScope {
@@ -1087,6 +1091,7 @@ impl RemoteHostScope {
         match normalized.as_str() {
             "" | "bestdori" => Ok(Self::Bestdori),
             "sonolus" => Ok(Self::Sonolus),
+            "community-media" => Ok(Self::CommunityMedia),
             _ => Err(format!("unsupported host scope: {normalized}")),
         }
     }
@@ -1095,6 +1100,7 @@ impl RemoteHostScope {
         match self {
             Self::Bestdori => host == "bestdori.com" || host == "www.bestdori.com",
             Self::Sonolus => host == "sonolus.ayachan.fun" || host == "chengdu.sov8.cn" || host == "notgarupa.sov8.cn",
+            Self::CommunityMedia => host == "assets.ppy.sh" || host == "beatconnect.io" || host == "card.ganbaru.by",
         }
     }
 
@@ -1102,6 +1108,7 @@ impl RemoteHostScope {
         match self {
             Self::Bestdori => "bestdori.com",
             Self::Sonolus => "notgarupa.sov8.cn",
+            Self::CommunityMedia => "assets.ppy.sh, beatconnect.io or card.ganbaru.by",
         }
     }
 }
@@ -1451,7 +1458,10 @@ fn build_scoped_request_context(
 ) -> Result<(String, reqwest::Client, Option<String>), String> {
     let normalized_url = normalize_scoped_remote_url(url, label, host_scope)?;
     let client = build_bestdori_http_client()?;
-    let cookie_header = get_bestdori_cookie_header(auth_state)?;
+    let cookie_header = match RemoteHostScope::from_optional(host_scope)? {
+        RemoteHostScope::CommunityMedia => None,
+        _ => get_bestdori_cookie_header(auth_state)?,
+    };
     Ok((normalized_url, client, cookie_header))
 }
 

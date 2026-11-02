@@ -54,7 +54,7 @@ import {
 } from "../modeChartRegression";
 import { applyHabahiroSlideWidths } from "../habahiroSlideWidth";
 import {
-  fetchBestdoriCommunityPostDetails, isBestdoriChartPost,
+  fetchBestdoriCommunityPostDetails, isBestdoriChartPost, communitySongMediaHostScope, fetchBestdoriFileBlob,
   fetchTestServerChart, fetchTestServerMedia,
   fetchBestdoriOfficialChartImportPayload,
   resolveBestdoriCommunitySongResourceUrls,
@@ -1487,33 +1487,26 @@ export function useEditorIoAndShortcuts(params: any) {
 
       const audioUrl = typeof songResources?.audioUrl === "string" ? songResources.audioUrl.trim() : "";
       const coverUrl = typeof songResources?.coverUrl === "string" ? songResources.coverUrl.trim() : "";
-      const audioServer = audioUrl.length === 0 ? null : bestdoriServerFromUrl(audioUrl);
-      const coverServer = coverUrl.length === 0 ? null : bestdoriServerFromUrl(coverUrl);
-      if (audioUrl.length > 0 && audioServer === null) {
-        throw new Error("社区歌曲音频不属于已注册Bestdori资源源，不能保留裸URL。");
-      }
-      if (coverUrl.length > 0 && coverServer === null) {
-        throw new Error("社区歌曲封面不属于已注册Bestdori资源源，不能保留裸URL。");
-      }
+      // Bestdori assets install as registered Bestdori resources; osu! and LLSIF media come from
+      // the community media hosts and install as workspace media, like test-server media.
+      const installCommunityMedia = async (url: string, purpose: "bgm" | "cover", fileName: string) => {
+        if (url.length === 0) return null;
+        const hostScope = communitySongMediaHostScope(url);
+        if (hostScope === null) throw new Error(`社区歌曲${purpose === "bgm" ? "音频" : "封面"}不属于已支持的资源源，不能保留裸URL。`);
+        if (hostScope === "bestdori") {
+          return materializeBestdoriMediaInWorkspace({ server: bestdoriServerFromUrl(url)!, purpose,
+            nativeId: `community-${postId}-${purpose}`, title: fileName, url });
+        }
+        const bytes = new Uint8Array(await (await fetchBestdoriFileBlob(url, "application/octet-stream", "社区歌曲媒体", hostScope)).arrayBuffer());
+        const mediaType = detectUserMediaType(bytes);
+        if (!mediaType) throw new Error(`社区歌曲${purpose === "bgm" ? "音频" : "封面"}返回了不支持的媒体格式`);
+        const installed = await resourceManager.importWorkspaceMedia({ purpose, bytes, fileName, mediaType });
+        if (installed.status === "rejected") throw new ResourceFailureError(installed.failure);
+        return installed.value.ref;
+      };
       pushImportProgress(66, "正在安装社区歌曲媒体…");
-      const bgmRef = audioServer === null
-        ? null
-        : await materializeBestdoriMediaInWorkspace({
-            server: audioServer,
-            purpose: "bgm",
-            nativeId: `community-${postId}-bgm`,
-            title: resolveFileNameFromUrl(audioUrl, `community-post-${postId}.mp3`),
-            url: audioUrl,
-          });
-      const coverRef = coverServer === null
-        ? null
-        : await materializeBestdoriMediaInWorkspace({
-            server: coverServer,
-            purpose: "cover",
-            nativeId: `community-${postId}-cover`,
-            title: `community-post-${postId}-cover`,
-            url: coverUrl,
-          });
+      const bgmRef = await installCommunityMedia(audioUrl, "bgm", resolveFileNameFromUrl(audioUrl, `community-post-${postId}.mp3`));
+      const coverRef = await installCommunityMedia(coverUrl, "cover", `community-post-${postId}-cover`);
       pushImportProgress(82, "正在应用谱面与工程媒体…");
       const summary = applyParsedGarupaChartJson(converted, preserveForPlay);
       setChartMediaResources((current: typeof chartMediaResources) => Object.freeze({

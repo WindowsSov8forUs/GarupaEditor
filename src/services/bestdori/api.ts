@@ -138,7 +138,16 @@ export interface SonolusUploadLevelParams {
   hidden?: boolean;
 }
 
-type RequestHostScope = "bestdori" | "sonolus";
+export type RequestHostScope = "bestdori" | "sonolus" | "community-media";
+/** Hosts of community song media outside Bestdori (osu! covers and audio, LLSIF assets). */
+const COMMUNITY_MEDIA_HOSTS = ["assets.ppy.sh", "beatconnect.io", "card.ganbaru.by"];
+/** The scope a community song's media URL downloads under; null for hosts outside both. */
+export function communitySongMediaHostScope(url: string): "bestdori" | "community-media" | null {
+  let host: string;
+  try { const parsed = new URL(url); if (parsed.protocol !== "https:") return null; host = parsed.host.toLowerCase(); }
+  catch { return null; }
+  return host === "bestdori.com" || host === "www.bestdori.com" ? "bestdori" : COMMUNITY_MEDIA_HOSTS.includes(host) ? "community-media" : null;
+}
 
 const BESTDORI_SONG_SERVER_NAME_MAP: Readonly<Record<BestdoriSongServerIndex, BestdoriSongServerName>> = {
   0: "jp",
@@ -164,7 +173,9 @@ const BESTDORI_CHART_DIFFICULTY_TO_METADATA: Readonly<
   special: "SPECIAL",
 };
 const BESTDORI_ASSETS_ROOT = "https://bestdori.com/assets";
-const BESTDORI_LLSIF_ASSET_ROOT = "https://card.niconi.co.ni";
+// The Bestdori front end reads LLSIF assets from card.niconi.co.ni/asset/, which now redirects
+// permanently to card.ganbaru.by/asset/.
+const BESTDORI_LLSIF_ASSET_ROOT = "https://card.ganbaru.by/asset";
 const BESTDORI_LLSIF_MISC_INDEX = 10;
 const BESTDORI_COMMUNITY_DEFAULT_CATEGORY_NAME = "SELF_POST";
 const BESTDORI_COMMUNITY_DEFAULT_CATEGORY_ID = "chart";
@@ -797,7 +808,7 @@ function rememberPrefetched(url: string, bytes: Uint8Array): void {
  */
 export function hasSongPreviewMedia(url: string): boolean { return prefetchedMedia.has(url); }
 
-export async function fetchSongPreviewMedia(url: string, hostScope: "bestdori" | "sonolus", signal: AbortSignal): Promise<Uint8Array | null> {
+export async function fetchSongPreviewMedia(url: string, hostScope: RequestHostScope, signal: AbortSignal): Promise<Uint8Array | null> {
   const cached = prefetched(url);
   if (cached !== undefined) return cached;
   if (signal.aborted) return null;
@@ -830,10 +841,11 @@ export async function fetchBestdoriFileBlob(
   url: string,
   mimeType: string,
   label = "bestdori file",
+  hostScope: RequestHostScope = "bestdori",
 ): Promise<Blob> {
   const cached = prefetched(url);
   if (cached !== undefined) return new Blob([Uint8Array.from(cached)], { type: mimeType });
-  const base64 = await requestBestdoriBinaryBase64(url, label);
+  const base64 = await requestBestdoriBinaryBase64(url, label, { hostScope });
   const buffer = decodeBase64ToArrayBuffer(base64);
   return new Blob([buffer], { type: mimeType });
 }
@@ -1186,6 +1198,17 @@ export async function resolveBestdoriCommunitySongResourceUrls(
       songId,
       audioUrl: buildBestdoriSongAudioUrl(songId, songInfo),
       coverUrl: buildBestdoriSongJacketUrl(songId, songInfo),
+    };
+  }
+  if (song.type === "osu") {
+    // The Bestdori front end's osu! sources: the beatmap set's list cover and beatconnect audio.
+    const beatmapId = normalizeBestdoriSongId(song.diff);
+    return {
+      type: "osu",
+      isFullLength: false,
+      songId,
+      audioUrl: `https://beatconnect.io/audio/${songId}/${beatmapId}/`,
+      coverUrl: `https://assets.ppy.sh/beatmaps/${songId}/covers/list@2x.jpg`,
     };
   }
   const llsifMisc = await fetchBestdoriLlsifMisc();

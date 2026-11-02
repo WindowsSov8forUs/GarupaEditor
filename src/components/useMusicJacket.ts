@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useApplicationResourceUrl } from "../resources/applicationResourceContext";
-import { fetchTestServerMedia, fetchBestdoriFileBlob, resolveBestdoriCommunitySongResourceUrls } from "../services/bestdori/api";
+import { communitySongMediaHostScope, fetchTestServerMedia, fetchBestdoriFileBlob,
+  resolveBestdoriCommunitySongResourceUrls } from "../services/bestdori/api";
 import { appLog } from "../logging/applicationLogger";
 import { originalLoading } from "./originalLoadingState";
 import type { MusicSelectionEntry } from "./musicSelectionData";
@@ -70,7 +71,9 @@ export function useMusicJacket(entry: MusicSelectionEntry | undefined) {
             const resources = await resolveBestdoriCommunitySongResourceUrls(entry.post.song);
             if (state.disposed) return;
             if (!resources?.coverUrl) throw new Error("Community song has no cover URL");
-            blob = await fetchBestdoriFileBlob(resources.coverUrl, "image/png", "选曲封面");
+            const hostScope = communitySongMediaHostScope(resources.coverUrl);
+            if (hostScope === null) throw new Error(`社区歌曲封面不在支持的资源源：${resources.coverUrl}`);
+            blob = await fetchBestdoriFileBlob(resources.coverUrl, "image/png", "选曲封面", hostScope);
           }
         }
         if (state.disposed) return;

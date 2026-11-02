@@ -1,6 +1,7 @@
 import { originalLoading } from "./originalLoadingState";
-import { fetchSongPreviewMedia, hasSongPreviewMedia, resolveBestdoriCommunitySongResourceUrls,
-  resolveTestServerResourceUrl, type BestdoriChartPost, type BestdoriPostSong, type SonolusLevelItem } from "../services/bestdori/api";
+import { communitySongMediaHostScope, fetchSongPreviewMedia, hasSongPreviewMedia, resolveBestdoriCommunitySongResourceUrls,
+  resolveTestServerResourceUrl, type BestdoriChartPost, type BestdoriPostSong, type RequestHostScope,
+  type SonolusLevelItem } from "../services/bestdori/api";
 import { getOfficialMusicLibrary, type OfficialSong, type OfficialDifficulty } from "../services/officialMusicLibrary";
 
 /** Page input, independent of community search and pagination. */
@@ -45,15 +46,16 @@ export interface MusicPreviewRequest {
   read(signal: AbortSignal): Promise<Uint8Array | null>;
 }
 
-const communityAudioUrls = new Map<string, Promise<string | null>>();
-function communityAudioUrl(song: BestdoriPostSong): Promise<string | null> {
+type CommunityAudio = { url: string; hostScope: "bestdori" | "community-media" };
+const communityAudioUrls = new Map<string, Promise<CommunityAudio | null>>();
+function communityAudioUrl(song: BestdoriPostSong): Promise<CommunityAudio | null> {
   const key = JSON.stringify(song);
   let url = communityAudioUrls.get(key);
   if (!url) {
     url = resolveBestdoriCommunitySongResourceUrls(song).then(resources => {
       const audio = resources?.audioUrl?.trim() ?? "";
-      try { return audio && ["bestdori.com", "www.bestdori.com"].includes(new URL(audio).host.toLowerCase()) ? audio : null; }
-      catch { return null; }
+      const hostScope = audio ? communitySongMediaHostScope(audio) : null;
+      return hostScope === null ? null : { url: audio, hostScope };
     });
     communityAudioUrls.set(key, url);
     void url.catch(() => { if (communityAudioUrls.get(key) === url) communityAudioUrls.delete(key); });
@@ -66,7 +68,7 @@ function communityAudioUrl(song: BestdoriPostSong): Promise<string | null> {
  * Downloading a song's preview while browsing is the occasion of a missing jacket: a Spot-style
  * on-demand download under NetworkIndicator with its single-transfer progress, no input block.
  */
-async function downloadPreview(url: string, hostScope: "bestdori" | "sonolus", signal: AbortSignal): Promise<Uint8Array | null> {
+async function downloadPreview(url: string, hostScope: RequestHostScope, signal: AbortSignal): Promise<Uint8Array | null> {
   if (hasSongPreviewMedia(url)) return fetchSongPreviewMedia(url, hostScope, signal);
   const indicator = originalLoading.hold("network", {}, { downloadProgress: true });
   try { return await fetchSongPreviewMedia(url, hostScope, signal); }
@@ -93,7 +95,7 @@ export function musicPreviewRequest(entry: MusicSelectionEntry): MusicPreviewReq
     return { key: `test:${url}`, read: signal => downloadPreview(url, "sonolus", signal) };
   }
   return { key: `bestdori:${entry.id}`, read: async signal => {
-    const url = await communityAudioUrl(entry.post.song);
-    return url === null || signal.aborted ? null : downloadPreview(url, "bestdori", signal);
+    const audio = await communityAudioUrl(entry.post.song);
+    return audio === null || signal.aborted ? null : downloadPreview(audio.url, audio.hostScope, signal);
   } };
 }
