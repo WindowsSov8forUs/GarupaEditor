@@ -1575,6 +1575,28 @@ async fn bestdori_fetch_json(
     parse_json_value_for_url(&bytes, &normalized_url).map_err(Into::into)
 }
 
+/// A JSON resource revalidated against a stored copy: not-modified (304 to the stored ETag), or
+/// fetched with the body and its new ETag.
+#[derive(Serialize)]
+#[serde(tag = "status", rename_all = "kebab-case")]
+enum ConditionalJson { NotModified, Fetched { etag: Option<String>, body: serde_json::Value } }
+
+#[tauri::command]
+async fn bestdori_fetch_json_conditional(
+    auth_state: tauri::State<'_, BestdoriAuthState>,
+    url: String,
+    host_scope: Option<String>,
+    etag: Option<String>,
+) -> Result<ConditionalJson, download::CommandError> {
+    let (normalized_url, client, cookie_header) =
+        build_scoped_request_context(&auth_state, &url, "url", host_scope.as_deref())?;
+    let mut conditional = download::Conditional { if_none_match: etag.as_deref(), etag: None, not_modified: false };
+    let bytes = download::get_conditional(&client, &normalized_url, cookie_header.as_deref(), &mut conditional, || Ok(Vec::new())).await?;
+    if conditional.not_modified { return Ok(ConditionalJson::NotModified); }
+    let body = parse_json_value_for_url(&bytes, &normalized_url)?;
+    Ok(ConditionalJson::Fetched { etag: conditional.etag, body })
+}
+
 #[tauri::command]
 async fn bestdori_post_json(
     auth_state: tauri::State<'_, BestdoriAuthState>,
@@ -2323,6 +2345,7 @@ pub fn run() {
             bestdori_get_me,
             bestdori_logout,
             bestdori_fetch_json,
+            bestdori_fetch_json_conditional,
             bestdori_post_json,
             bestdori_post_multipart_file,
             notgarupa_upload::notgarupa_upload_level,

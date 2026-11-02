@@ -1089,13 +1089,39 @@ export async function fetchBestdoriSongInfo(songId: number): Promise<BestdoriSon
   return parseBestdoriSongInfo(await requestBestdoriJson<unknown>(endpoint, "bestdori song info"));
 }
 
-export async function fetchBestdoriSongIndex(): Promise<BestdoriSongIndex> {
-  return parseBestdoriSongIndex(await requestBestdoriJson<unknown>(`${BESTDORI_ROOT}/api/songs/all.8.json`, "bestdori songs all.8"));
+/**
+ * A stored Bestdori JSON file revalidated by its ETag: Bestdori answers 304 while the file is
+ * unchanged. Without a stored copy the file is fetched in full.
+ */
+export interface StoredBestdoriJson<T> { etag: string | null; value: T }
+async function revalidateBestdoriJson<T>(url: string, label: string, stored: StoredBestdoriJson<T> | undefined,
+  parse: (value: unknown) => T): Promise<StoredBestdoriJson<T> & { notModified: boolean }> {
+  const etag = stored?.etag ?? null;
+  if (isTauriRuntimeEnvironment()) {
+    const result = await invokeTauriCommand<{ status: "not-modified" } | { status: "fetched"; etag: string | null; body: unknown }>(
+      "bestdori_fetch_json_conditional", { url, hostScope: "bestdori", etag });
+    if (result.status === "not-modified") {
+      if (!stored) throw new Error(`${label} 未请求条件下载却得到 304`);
+      return { ...stored, notModified: true };
+    }
+    return { etag: result.etag, value: parse(result.body), notModified: false };
+  }
+  const response = await fetch(url, { cache: "no-store", headers: etag ? { "If-None-Match": etag } : {} });
+  if (response.status === 304 && stored && etag) return { ...stored, notModified: true };
+  if (!response.ok) throw new Error(`${label} http status ${response.status}`);
+  return { etag: response.headers.get("ETag"), value: parse(await response.json()), notModified: false };
+}
+
+export async function fetchBestdoriSongIndex(stored?: StoredBestdoriJson<BestdoriSongIndex>) {
+  return revalidateBestdoriJson(`${BESTDORI_ROOT}/api/songs/all.8.json`, "bestdori songs all.8", stored, value => parseBestdoriSongIndex(value));
 }
 
 export async function fetchBestdoriBandsAll1(): Promise<BestdoriBandsAll1> {
   const endpoint = "https://bestdori.com/api/bands/all.1.json";
   return parseBestdoriBandsAll1(await requestBestdoriJson<unknown>(endpoint, "bestdori bands all.1"));
+}
+export async function revalidateBestdoriBandsAll1(stored?: StoredBestdoriJson<BestdoriBandsAll1>) {
+  return revalidateBestdoriJson(`${BESTDORI_ROOT}/api/bands/all.1.json`, "bestdori bands all.1", stored, value => parseBestdoriBandsAll1(value));
 }
 
 export async function createBestdoriCommunityChartPost(

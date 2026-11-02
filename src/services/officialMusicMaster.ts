@@ -2,6 +2,7 @@ import { invokeTauriCommand } from "./bestdori/transport";
 import { appLog } from "../logging/applicationLogger";
 import { checkOfficialMasterShape } from "./officialMasterShape";
 import protocols from "../data/originalOfficialRegionalMasterProtocol.json";
+import masterProtocol from "../data/originalOfficialMasterProtocol.json";
 import type { OfficialServer } from "./officialMusicSources";
 
 /*
@@ -66,7 +67,21 @@ export interface OfficialMaster {
   masterMusicVideo3dIdListMap: { entries: Record<string, { entries: number[] }> };
   masterCollaboOriginalMusicPageList?: { entries?: MasterCollaboOriginalMusicPage[] };
 }
-export interface OfficialMasterSnapshot { clientVersion: string; dataVersion: string; masterDataVersion: string; master: OfficialMaster }
+export interface OfficialMasterSnapshot {
+  clientVersion: string; dataVersion: string; masterDataVersion: string; master: OfficialMaster;
+  /** Fingerprint of the schema the master was decoded with; absent in stores from before it was kept. */
+  schema?: string;
+}
+/**
+ * The decoding schema for a server (shared schema less its regional omissions). A stored master
+ * decoded with another schema lacks or misreads fields, so it counts as changed.
+ */
+async function schemaFingerprint(server: OfficialServer): Promise<string> {
+  const omissions = (protocols[server] as { omitSchemaFields?: unknown }).omitSchemaFields ?? null;
+  const text = JSON.stringify({ schema: masterProtocol.schema, omissions });
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
+}
 /** AppGetResponse; the fields past the version and status ones are not read here. */
 interface AppVersion {
   clientVersion: string; dataVersion: string; masterDataVersion: string; appStatus: string; clientStatus: string;
@@ -140,14 +155,17 @@ export async function refreshOfficialMaster(previous?: OfficialMasterSnapshot, s
     || !versionPattern.test(version.dataVersion) || !masterVersionPattern.test(version.masterDataVersion))
     throw new Error("原作主数据暂不可用或客户端版本不兼容");
   appLog("info", "official.master-version-checked", { server, appStatus: version.appStatus, clientStatus: version.clientStatus, clientVersion, dataVersion: version.dataVersion, masterDataVersion: version.masterDataVersion, previousMasterDataVersion: previous?.masterDataVersion });
-  if (previous && previous.masterDataVersion === version.masterDataVersion && previous.dataVersion === version.dataVersion && previous.clientVersion === clientVersion) {
+  const schema = await schemaFingerprint(server);
+  if (previous && previous.masterDataVersion === version.masterDataVersion && previous.dataVersion === version.dataVersion
+    && previous.clientVersion === clientVersion && previous.schema === schema) {
     validateOfficialMaster(previous.master);
     return { ...previous, clientVersion, dataVersion: version.dataVersion };
   }
+  if (previous && previous.schema !== schema) appLog("info", "official.master-schema-changed", { server, masterDataVersion: version.masterDataVersion });
   const master = await request<OfficialMaster>({
     clientVersion, dataVersion: version.dataVersion, masterVersion: version.masterDataVersion, server,
   }, "主表下载");
   validateOfficialMaster(master);
   appLog("info", "official.master-update-validated", { server, masterDataVersion: version.masterDataVersion, songs: master.masterMusicList.entries.length });
-  return { clientVersion, dataVersion: version.dataVersion, masterDataVersion: version.masterDataVersion, master };
+  return { clientVersion, dataVersion: version.dataVersion, masterDataVersion: version.masterDataVersion, master, schema };
 }

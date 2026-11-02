@@ -100,7 +100,19 @@ pub async fn get<W: Write>(
     destination: impl FnMut() -> std::io::Result<W>,
     progress: impl FnMut(u64, Option<u64>),
 ) -> Result<W, DownloadError> {
-    receive(client, url, cookie, destination, progress, false, true, false).await
+    receive(client, url, cookie, destination, progress, false, true, false, None).await
+}
+
+/// A conditional GET: with the ETag of a stored copy, the server answers 304 when it still holds.
+pub struct Conditional<'a> { pub if_none_match: Option<&'a str>, pub etag: Option<String>, pub not_modified: bool }
+pub async fn get_conditional<W: Write>(
+    client: &reqwest::Client,
+    url: &str,
+    cookie: Option<&str>,
+    conditional: &mut Conditional<'_>,
+    destination: impl FnMut() -> std::io::Result<W>,
+) -> Result<W, DownloadError> {
+    receive(client, url, cookie, destination, |_, _| {}, false, true, false, Some(conditional)).await
 }
 
 /// A background transfer: it reports progress but does not open the application's download screen.
@@ -110,11 +122,11 @@ pub async fn get_untracked<W: Write>(
     cookie: Option<&str>,
     destination: impl FnMut() -> std::io::Result<W>,
 ) -> Result<W, DownloadError> {
-    receive(client, url, cookie, destination, |_, _| {}, false, true, true).await
+    receive(client, url, cookie, destination, |_, _| {}, false, true, true, None).await
 }
 
 pub async fn probe(client: &reqwest::Client, url: &str, cookie: Option<&str>) -> Result<bool, String> {
-    match receive(client, url, cookie, || Ok(std::io::sink()), |_, _| {}, true, true, false).await {
+    match receive(client, url, cookie, || Ok(std::io::sink()), |_, _| {}, true, true, false, None).await {
         Ok(_) => Ok(true),
         Err(error) if error.status.is_some() => Ok(false),
         Err(error) => Err(error.message),
@@ -130,14 +142,25 @@ async fn receive<W: Write>(
     headers_only: bool,
     track: bool,
     background: bool,
+    mut conditional: Option<&mut Conditional<'_>>,
 ) -> Result<W, DownloadError> {
     let mut activity = track.then(|| if background { ActiveTransfer::begin_background() } else { ActiveTransfer::begin() });
     for attempt in 1..=ATTEMPTS {
         if let Some(activity) = activity.as_mut() { activity.progress(0, None); }
         let result = async {
-            let mut response = super::with_optional_cookie_header(client.get(url), cookie)
-                .send().await.map_err(DownloadError::network)?;
+            let mut request = super::with_optional_cookie_header(client.get(url), cookie);
+            if let Some(etag) = conditional.as_ref().and_then(|c| c.if_none_match) {
+                request = request.header(reqwest::header::IF_NONE_MATCH, etag);
+            }
+            let mut response = request.send().await.map_err(DownloadError::network)?;
             let status = response.status();
+            if let Some(conditional) = conditional.as_mut() {
+                // 304 is an answer only to a request that named a stored copy.
+                conditional.not_modified = status == reqwest::StatusCode::NOT_MODIFIED && conditional.if_none_match.is_some();
+                conditional.etag = response.headers().get(reqwest::header::ETAG)
+                    .and_then(|value| value.to_str().ok()).map(str::to_owned);
+                if conditional.not_modified { return destination().map_err(DownloadError::local); }
+            }
             if !status.is_success() {
                 let retry_after = response.headers().get(reqwest::header::RETRY_AFTER)
                     .and_then(|value| value.to_str().ok())

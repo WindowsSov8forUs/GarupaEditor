@@ -1,13 +1,13 @@
 import { mergeOfficialMusic, type OfficialMasterSources, type MasterServer } from "./mergeOfficialMusic";
 import { fetchOfficialSourceMedia, OFFICIAL_SERVER_ORDER, isOfficialServer, availableOfficialMedia, OFFICIAL_SERVER_INDEX, type OfficialSourceMedia } from "./officialMusicSources";
-import { fetchBestdoriSongIndex, fetchBestdoriBandsAll1, fetchBestdoriFileBlob, buildBestdoriSongJacketUrl,
+import { fetchBestdoriSongIndex, revalidateBestdoriBandsAll1, fetchBestdoriFileBlob, buildBestdoriSongJacketUrl, type StoredBestdoriJson,
   type BestdoriBandsAll1, type BestdoriPerServerValue, type BestdoriSongCommon, type BestdoriSongDifficultyIndex,
   type BestdoriSongIndex, type BestdoriSongServerName } from "./bestdori/api";
 import { refreshOfficialMaster, validateOfficialMaster, type OfficialMasterSnapshot, type MasterSong,
   type MasterDifficulty, type MasterVideo } from "./officialMusicMaster";
 import { parseBestdoriBandsAll1, parseBestdoriSongCommon, parseBestdoriSongIndex, parsePerServer } from "./bestdori/songParsing";
 import { checkOfficialMasterRow } from "./officialMasterShape";
-import { ResponseShapeError, arrayOf, finite, idKey, integer, oneOf, optional, record, recordOf, string, type Reader } from "./responseShape";
+import { ResponseShapeError, arrayOf, finite, idKey, integer, nullable, oneOf, optional, record, recordOf, string, type Reader } from "./responseShape";
 import type { ApplicationResourceManager } from "../resources/applicationResourceManager";
 import type { ResourceCatalogProvider } from "../resources/backend";
 import { createResourceRef, resourceAccepted, resourceRejected, type NetworkResourceDescriptor,
@@ -35,6 +35,8 @@ export interface OfficialSong {
 interface LibraryMetadata {
   masters?: OfficialMasterSources; songServers?: Record<string, MasterServer>; difficultyServers?: Record<string, MasterServer>;
   version: 2; official: OfficialMasterSnapshot; index: BestdoriSongIndex; songs: Record<string, OfficialSongInfo>;
+  /** ETag of index (songs/all.8) and Bestdori's own bands/all.1 with its ETag; bands holds them merged with the masters. */
+  indexEtag?: string | null; bandsSource?: StoredBestdoriJson<BestdoriBandsAll1>;
   bands: BestdoriBandsAll1; previewUrls: Record<string, string>; jacketUrls?: Record<string, string>; capturedAt: number; sourceMedia?: OfficialSourceMedia;
 }
 export interface OfficialLibrary {
@@ -56,7 +58,8 @@ export function parseLibraryMetadata(value: unknown): LibraryMetadata {
     const master = item.master as OfficialMasterSnapshot["master"];
     validateOfficialMaster(master);
     return { clientVersion: string(item.clientVersion, `${p}.clientVersion`), dataVersion: string(item.dataVersion, `${p}.dataVersion`),
-      masterDataVersion: string(item.masterDataVersion, `${p}.masterDataVersion`), master };
+      masterDataVersion: string(item.masterDataVersion, `${p}.masterDataVersion`), master,
+      schema: optional(item.schema, `${p}.schema`, string) };
   };
   const location = (v: unknown, p: string) => {
     const item = record(v, p);
@@ -104,6 +107,11 @@ export function parseLibraryMetadata(value: unknown): LibraryMetadata {
     previewUrls: urls(stored.previewUrls, "catalog.previewUrls"),
     jacketUrls: optional(stored.jacketUrls, "catalog.jacketUrls", urls),
     capturedAt: finite(stored.capturedAt, "catalog.capturedAt"),
+    indexEtag: optional(stored.indexEtag, "catalog.indexEtag", (v, p) => nullable(v, p, string)),
+    bandsSource: optional(stored.bandsSource, "catalog.bandsSource", (v, p) => {
+      const source = record(v, p);
+      return { etag: nullable(source.etag, `${p}.etag`, string), value: parseBestdoriBandsAll1(source.value, `${p}.value`) };
+    }),
     sourceMedia: optional(stored.sourceMedia, "catalog.sourceMedia", (v, p) => {
       const media = record(v, p);
       return { jackets: locations(media.jackets, `${p}.jackets`), previews: locations(media.previews, `${p}.previews`),
@@ -205,19 +213,11 @@ async function initialize(manager: ApplicationResourceManager, progress: (ratio:
           const masterRequests = Promise.allSettled(OFFICIAL_SERVER_ORDER.map(async server => [server,
             await refreshOfficialMaster(previous?.masters?.[server] ?? (server === "jp" && !previous?.masters ? previous?.official : undefined), server),
           ] as const));
-          const unchanged = masterRequests.then(rows => rows.every(row => {
-            if (row.status !== "fulfilled") return false;
-            const [server, current] = row.value;
-            const old = previous?.masters?.[server];
-            return old && old.clientVersion === current.clientVersion && old.dataVersion === current.dataVersion
-              && old.masterDataVersion === current.masterDataVersion;
-          }));
           const results = await Promise.allSettled([
             masterRequests,
-            unchanged.then(same => same && previous?.index ? previous.index
-              : fetchBestdoriSongIndex()),
-            unchanged.then(same => same && previous?.bands ? structuredClone(previous.bands)
-              : fetchBestdoriBandsAll1()),
+            // Revalidated every start: Bestdori corrects these files between master updates.
+            fetchBestdoriSongIndex(previous?.index && previous.indexEtag ? { etag: previous.indexEtag, value: previous.index } : undefined),
+            revalidateBestdoriBandsAll1(previous?.bandsSource),
             mediaScan,
           ] as const);
           const unwrap = <T,>(result: PromiseSettledResult<T>): T => {
@@ -225,7 +225,9 @@ async function initialize(manager: ApplicationResourceManager, progress: (ratio:
             return result.value;
           };
           const masters = Object.fromEntries(unwrap(results[0]).map(unwrap)) as Record<MasterServer, OfficialMasterSnapshot>;
-          const index = unwrap(results[1]), bands = unwrap(results[2]), sourceMedia = unwrap(results[3]);
+          const indexSource = unwrap(results[1]), bandsSource = unwrap(results[2]), sourceMedia = unwrap(results[3]);
+          appLog("info", "official.bestdori-revalidated", { indexNotModified: indexSource.notModified, bandsNotModified: bandsSource.notModified });
+          const index = indexSource.value, bands = structuredClone(bandsSource.value);
           const { jp, cn } = masters;
           const capturedAt = Date.now();
           const merged = mergeOfficialMusic(masters, capturedAt);
@@ -284,7 +286,8 @@ async function initialize(manager: ApplicationResourceManager, progress: (ratio:
           progress(0.2);
           const previewUrls = Object.fromEntries(Object.entries(sourceMedia.previews).map(([key, values]) => [key, values[0]!.url]));
           const jacketUrls = Object.fromEntries(Object.entries(sourceMedia.jackets).map(([key, values]) => [key, values[0]!.url]));
-          metadata = { version: 2, official, masters, songServers: merged.songServers, difficultyServers: merged.difficultyServers, index, songs, bands, previewUrls, jacketUrls, sourceMedia, capturedAt };
+          metadata = { version: 2, official, masters, indexEtag: indexSource.etag,
+            bandsSource: { etag: bandsSource.etag, value: bandsSource.value }, songServers: merged.songServers, difficultyServers: merged.difficultyServers, index, songs, bands, previewUrls, jacketUrls, sourceMedia, capturedAt };
           bytes = new TextEncoder().encode(JSON.stringify(metadata)); mediaType = "application/json";
         } else {
           const blob = await fetchBestdoriFileBlob(resource.source.assetBaseUrl,
