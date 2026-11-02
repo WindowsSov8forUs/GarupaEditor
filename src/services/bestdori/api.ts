@@ -86,7 +86,8 @@ export interface BestdoriOfficialChartImportPayload {
   bands: BestdoriBandsAll1;
   resources: BestdoriSongResourceUrls;
   metadata: {
-    isFullLength: boolean;
+    /** The master's musicDataType for an official library song; null for Bestdori song data, which has no such mark. */
+    isFullLength: boolean | null;
     title: string;
     artist: string;
     charter: string;
@@ -112,7 +113,6 @@ export interface BestdoriCreateCommunityChartPostPayload {
 }
 
 export interface BestdoriCommunitySongResourceUrls {
-  isFullLength: boolean;
   type: BestdoriPostSong["type"];
   songId: number | null;
   audioUrl: string | null;
@@ -1224,7 +1224,6 @@ export async function resolveBestdoriCommunitySongResourceUrls(
   }
   if (song.type === "custom") {
     return {
-      isFullLength: false,
       type: "custom",
       songId: null,
       audioUrl: trimNonEmptyStringOrNull(song.audio),
@@ -1237,7 +1236,6 @@ export async function resolveBestdoriCommunitySongResourceUrls(
     const songInfo = await fetchBestdoriSongInfo(songId);
     return {
       type: song.type,
-      isFullLength: isBestdoriFullLengthSong(songInfo),
       songId,
       audioUrl: buildBestdoriSongAudioUrl(songId, songInfo),
       coverUrl: buildBestdoriSongJacketUrl(songId, songInfo),
@@ -1248,7 +1246,6 @@ export async function resolveBestdoriCommunitySongResourceUrls(
     const beatmapId = normalizeBestdoriSongId(song.diff);
     return {
       type: "osu",
-      isFullLength: false,
       songId,
       audioUrl: `https://beatconnect.io/audio/${songId}/${beatmapId}/`,
       coverUrl: `https://assets.ppy.sh/beatmaps/${songId}/covers/list@2x.jpg`,
@@ -1258,16 +1255,12 @@ export async function resolveBestdoriCommunitySongResourceUrls(
   const llsifInfo = llsifMisc[String(songId)];
   return {
     type: "llsif",
-    isFullLength: false,
     songId,
     audioUrl: buildBestdoriLlsifAssetUrl(llsifInfo?.sound_asset),
     coverUrl: buildBestdoriLlsifAssetUrl(llsifInfo?.live_icon_asset),
   };
 }
 
-export function isBestdoriFullLengthSong(songInfo: SongResourceInfo): boolean {
-  return "musicDataType" in songInfo ? songInfo.musicDataType === "full" : songInfo.tag === "full";
-}
 
 export function resolveBestdoriSongServerName(songInfo: SongResourceInfo): BestdoriSongServerName {
   return BESTDORI_SONG_SERVER_NAME_MAP[resolveBestdoriSongServerIndex(songInfo)];
@@ -1394,7 +1387,7 @@ export async function fetchBestdoriOfficialChartImportPayload(
     bands,
     resources,
     metadata: {
-      isFullLength: isBestdoriFullLengthSong(songInfo),
+      isFullLength: "musicDataType" in songInfo ? songInfo.musicDataType === "full" : null,
       title: resolveBestdoriSongTitle(songInfo),
       artist: resolveBestdoriBandArtist(songInfo, bands),
       charter: BESTDORI_OFFICIAL_CHART_TEAM,

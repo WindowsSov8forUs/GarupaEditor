@@ -177,6 +177,14 @@ function includedInOfficialLibrary(start: number, end: number | undefined, type:
 /** One startup-owned snapshot. Selection consumers never fetch or refresh it. */
 let library: OfficialLibrary | undefined;
 let pending: Promise<OfficialLibrary> | undefined;
+/**
+ * Whether the original master marks a song full-length (musicDataType "full"), from this start's
+ * merged master; null when the library did not load or the master has no such song.
+ */
+export function officialSongIsFullLength(musicId: number): boolean | null {
+  const song = library?.metadata?.official.master.masterMusicList.entries.find(row => row.musicId === musicId);
+  return song ? song.musicDataType === "full" : null;
+}
 export function getOfficialMusicLibrary(): OfficialLibrary {
   if (!library) throw new Error("官方曲库尚未完成启动初始化");
   return library;

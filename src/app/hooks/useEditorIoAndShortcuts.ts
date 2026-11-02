@@ -1,6 +1,7 @@
 import { downloadActivity } from "../../services/downloadActivity";
 import { availableOfficialMedia } from "../../services/officialMusicSources";
-import { getOfficialMusicLibrary, type OfficialDifficulty } from "../../services/officialMusicLibrary";
+import { getOfficialMusicLibrary, officialSongIsFullLength, type OfficialDifficulty } from "../../services/officialMusicLibrary";
+
 import { detectUserMediaType } from "../../resources/userMediaFormat";
 import { projectGarupaChart } from "../../project/projectChartAdapter";
 import { userFacingErrorMessage } from "../../services/downloadError";
@@ -66,6 +67,9 @@ import {
   uploadSonolusLevelFlow,
 } from "../../services/bestdori/resourceFlows";
 import { isTauriRuntimeEnvironment } from "../../services/bestdori/transport";
+
+// An import that cannot tell whether its song is full-length says so; the song settings can change it.
+const FULL_LENGTH_UNKNOWN = "（无法确定是否完整版，可在歌曲设定中修改）";
 
 type ParsedJsonNote = {
   note: ChartNote;
@@ -1384,10 +1388,12 @@ export function useEditorIoAndShortcuts(params: any) {
       setAudioFileName(payload.audioFileName);
       setAudioDurationSec(0);
       pushImportProgress(92, "正在写入谱面元信息…");
+      // The master's musicDataType: from the library song, else looked up in this start's master.
+      const fullLength = payload.metadata.isFullLength ?? officialSongIsFullLength(chartId);
       setMetadata((current: ChartMetadata) => ({
         ...current,
         title: resolveTrimmedString(payload.metadata.title),
-        isFullLength: payload.metadata.isFullLength,
+        isFullLength: fullLength ?? false,
         artist: resolveTrimmedString(payload.metadata.artist),
         charter: resolveTrimmedString(payload.metadata.charter),
         difficulty: resolveCommunityPostDifficulty(payload.metadata.difficulty),
@@ -1397,7 +1403,7 @@ export function useEditorIoAndShortcuts(params: any) {
           : 0,
         mvOffsetMs: payload.metadata.mvOffsetMs,
       }));
-      const label = `已导入官方谱面 ${chartId}/${difficulty} 并同步歌曲信息`;
+      const label = `已导入官方谱面 ${chartId}/${difficulty} 并同步歌曲信息${fullLength === null ? FULL_LENGTH_UNKNOWN : ""}`;
       applyChartImportStatus(label, summary);
       completeDownloadProgress("官方谱面导入完成。");
       setImportJsonModalLevel("chart");
@@ -1520,10 +1526,14 @@ export function useEditorIoAndShortcuts(params: any) {
       setAudioDurationSec(0);
 
       pushImportProgress(92, "正在写入谱面元信息…");
+      // Bestdori has no full-length mark. Posts citing an official song take the master's
+      // musicDataType; custom, llsif and osu songs are not full-length.
+      const fullLength = post.song.type === "bandori" || post.song.type === "original"
+        ? officialSongIsFullLength(post.song.id) : false;
       setMetadata((current: ChartMetadata) => ({
         ...current,
         title: resolveTrimmedString(post.title),
-        isFullLength: songResources?.isFullLength === true,
+        isFullLength: fullLength ?? false,
         artist: resolveTrimmedString(post.artists),
         charter: resolveCommunityPostCharter(post.author),
         difficulty: resolveCommunityPostDifficulty(post.diff),
@@ -1534,9 +1544,9 @@ export function useEditorIoAndShortcuts(params: any) {
         mvOffsetMs: 0,
       }));
 
-      const label = audioUrl.length > 0
+      const label = (audioUrl.length > 0
         ? `已导入社区谱面 ${postId} 并同步歌曲信息`
-        : `已导入社区谱面 ${postId}`;
+        : `已导入社区谱面 ${postId}`) + (fullLength === null ? FULL_LENGTH_UNKNOWN : "");
       applyChartImportStatus(label, summary);
       completeDownloadProgress("社区谱面导入完成。");
       setImportJsonModalLevel("chart");
