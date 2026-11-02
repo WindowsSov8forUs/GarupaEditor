@@ -444,7 +444,7 @@ export class InGameManager {
           this.oneFrameJudgementController.discardReflectOneFrameData(reflectPlan.value);
           return this.latchFault(particlePlan);
         }
-        const audioPlan = this.audioProducer?.preflightJudgement(batch) ?? null;
+        const audioPlan = this.audioProducer?.preflightJudgement(batch, this.isMoveTime) ?? null;
         if (audioPlan?.status === "integrity-failure") {
           if (particlePlan?.status === "ok") particlePlan.value.discard();
           if (businessPlan?.status === "ok") {

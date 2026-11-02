@@ -384,8 +384,13 @@ export class AudioCommandProducer {
     return this.preflightCommands([oneShot("decide_1", "pause-ui")]);
   }
 
+  /**
+   * onJudgeNote plays the judgement cue unless TapSEStatusData.ShouldSilent or get_isOnMoveTime
+   * holds, and records the judgement in TapSEStatusData either way.
+   */
   preflightJudgement(
     batch: OneFrameJudgementBatch,
+    onMoveTime = false,
   ): SimulatorResult<AudioOwnerTransaction> {
     const nextTap = { ...(this.outerFrameTapStatus ?? this.tapStatus) };
     const activeHolds = new Set(
@@ -409,7 +414,7 @@ export class AudioCommandProducer {
       // themselves before this note's onJudgeNote: it never consults or
       // updates TapSEStatusData, and the normal cue below still follows it.
       if (isSkillTapJudgement(entry, note)) commands.push(oneShot("SE_RHYTHM_TAP_SKILL", "one-shot-0"));
-      if (!shouldSilent(nextTap, entry)) {
+      if (!shouldSilent(nextTap, entry) && !onMoveTime) {
         const cue = judgementCue(entry);
         if (cue.status !== "ok") return cue;
         if (cue.value !== null) commands.push(oneShot(cue.value, "one-shot-0"));
