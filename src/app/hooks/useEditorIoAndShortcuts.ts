@@ -1959,6 +1959,32 @@ export function useEditorIoAndShortcuts(params: any) {
     setStatusMessage("自定义背景已移除。");
   };
 
+  // A preset saved while the window is minimized waits for the window to be restored.
+  const pendingWindowPresetRef = useRef<{ presetId: string; options?: { silent?: boolean } } | null>(null);
+  const applyWindowPresetRef = useRef<(presetId: string, options?: { silent?: boolean }) => Promise<void>>(async () => {});
+  useEffect(() => {
+    if (!isTauriRuntimeEnvironment()) return;
+    let appWindow: any;
+    try { appWindow = getCurrentWindow(); } catch { return; }
+    if (!appWindow) return;
+    let disposed = false;
+    const unlisteners: UnlistenFn[] = [];
+    // Restoring raises a resize on Windows and Linux; a focus change also covers platforms
+    // that restore without one. Neither listener shows or focuses the window.
+    const applyPending = async () => {
+      const pending = pendingWindowPresetRef.current;
+      if (!pending || await appWindow.isMinimized().catch(() => true)) return;
+      pendingWindowPresetRef.current = null;
+      await applyWindowPresetRef.current(pending.presetId, pending.options);
+    };
+    for (const subscribe of [appWindow.onResized, appWindow.onFocusChanged]) {
+      void subscribe.call(appWindow, () => void applyPending()).then((unlisten: UnlistenFn) => {
+        if (disposed) unlisten(); else unlisteners.push(unlisten);
+      }).catch(() => {});
+    }
+    return () => { disposed = true; unlisteners.forEach(unlisten => unlisten()); };
+  }, [getCurrentWindow]);
+
   const applyWindowPresetById = async (
     presetId: string,
     options?: { silent?: boolean },
@@ -1981,6 +2007,16 @@ export function useEditorIoAndShortcuts(params: any) {
         }
         return;
       }
+
+      // setSize on a minimized window leaves the size it restores to unchanged.
+      if (await appWindow.isMinimized().catch(() => false)) {
+        pendingWindowPresetRef.current = { presetId, options };
+        if (!options?.silent) {
+          setStatusMessage(`窗口分辨率将在窗口还原后设置为 ${preset.label}。`);
+        }
+        return;
+      }
+      pendingWindowPresetRef.current = null;
 
       // Best-effort: some environments/capability sets may reject this.
       try {
@@ -2075,6 +2111,7 @@ export function useEditorIoAndShortcuts(params: any) {
       }
     }
   };
+  applyWindowPresetRef.current = applyWindowPresetById;
 
   const applyBestdoriSkinSelection = async (
     selection: SkinSelection,
