@@ -1,21 +1,7 @@
 import { originalLoading } from "./originalLoadingState";
-import { fetchBestdoriCommunityPostDetails, fetchSongPreviewMedia, hasSongPreviewMedia, isBestdoriChartPost,
-  resolveBestdoriCommunitySongResourceUrls, resolveTestServerResourceUrl, type BestdoriChartPost, type BestdoriPostSong,
-  type SonolusLevelItem } from "../services/bestdori/api";
+import { fetchSongPreviewMedia, hasSongPreviewMedia, resolveBestdoriCommunitySongResourceUrls,
+  resolveTestServerResourceUrl, type BestdoriChartPost, type BestdoriPostSong, type SonolusLevelItem } from "../services/bestdori/api";
 import { getOfficialMusicLibrary, type OfficialSong, type OfficialDifficulty } from "../services/officialMusicLibrary";
-
-const charters = new Map<number, Promise<string>>();
-export function loadMusicSelectionCharter(id: number): Promise<string> {
-  const cached = charters.get(id);
-  if (cached) return cached;
-  const request = fetchBestdoriCommunityPostDetails(id).then(response =>
-    response.result && isBestdoriChartPost(response.post)
-      ? response.post.author.nickname?.trim() || response.post.author.username.trim() : "");
-  charters.set(id, request);
-  if (charters.size > 64) charters.delete(charters.keys().next().value!);
-  void request.catch(() => { if (charters.get(id) === request) charters.delete(id); });
-  return request;
-}
 
 /** Page input, independent of community search and pagination. */
 interface MusicSelectionBase {
