@@ -121,7 +121,7 @@ const MusicInformation = memo(function MusicInformation({ entry, jacket, onConfi
   const official = entry.source === "official";
   const available = official ? entry.officialSong.available : undefined;
   const separatorModel = useMemo(() => new OriginalPrefabModel(difficultyModel.prefab, { nodes: { 4: { active: !official || !!available?.includes("SPECIAL") } } }), [official, available]);
-  const charterText = official ? "" : ayachan ? entry.author : charter?.id === entry.id ? charter.text : "";
+  const charterText = official ? "" : ayachan ? entry.item.author : charter?.id === entry.id ? charter.text : "";
   const idComponents = {
     308: { mText: "ID", mEncoding: false, mAlignment: 1, mPivot: 3, mWidth: idLabelWidth },
     263: { mText: String(entry.id), mEncoding: false, mAlignment: 1, mPivot: 3, mWidth: idLabelWidth },

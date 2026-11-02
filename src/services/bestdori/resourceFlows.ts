@@ -126,35 +126,35 @@ export async function uploadBestdoriFileFlow(
   const fileSize = fileData.byteLength;
 
   const prepareResult = await prepareBestdoriFileUpload(fileHash, fileSize, { ver: 3 });
-  const prepareCode = normalizeBestdoriUploadCode(prepareResult.code);
-  if (prepareResult.result === false) {
-    if (prepareCode === "ALREADY_UPLOADED") {
+  if (!prepareResult.result) {
+    if (prepareResult.code === "ALREADY_UPLOADED") {
       return {
         fileHash,
         fileUrl: buildBestdoriUploadedFileUrl(fileHash),
         reused: true,
       };
     }
-    throw new Error(`bestdori upload prepare failed: ${prepareCode ?? "unknown error"}`);
+    throw new Error(`bestdori upload prepare failed: ${normalizeBestdoriUploadCode(prepareResult.code) ?? "unknown error"}`);
   }
 
   const uploadResult = await uploadBestdoriFile(fileName, fileData, {
     fieldName: "file",
     mimeType: params.mimeType,
   });
-  if (uploadResult.result === false) {
-    const uploadCode = normalizeBestdoriUploadCode(uploadResult.code);
-    throw new Error(`bestdori upload file failed: ${uploadCode ?? "unknown error"}`);
+  if (!uploadResult.result) {
+    throw new Error(`bestdori upload file failed: ${normalizeBestdoriUploadCode(uploadResult.code) ?? "unknown error"}`);
   }
 
-  const uploadedHash = normalizeBestdoriUploadHash(uploadResult.hash) ?? fileHash;
+  const uploadedHash = normalizeBestdoriUploadHash(uploadResult.hash);
+  if (uploadedHash === null) throw new Error(`bestdori upload file failed: invalid hash ${JSON.stringify(uploadResult.hash)}`);
+  // As the Bestdori front end: result false means the status is not known yet and is asked
+  // again; not_found means the upload was lost; other statuses are processing states.
   for (let check = 0; check < maxStatusChecks; check += 1) {
     const statusResult = await fetchBestdoriFileUploadStatus(uploadedHash);
-    if (statusResult.result === false) {
-      const statusCode = normalizeBestdoriUploadCode(statusResult.code);
-      throw new Error(`bestdori upload status failed: ${statusCode ?? "unknown error"}`);
+    if (statusResult.result && statusResult.status === "not_found") {
+      throw new Error("bestdori upload status failed: not_found");
     }
-    if (normalizeBestdoriUploadCode(statusResult.status) === "available") {
+    if (statusResult.result && statusResult.status === "available") {
       return {
         fileHash: uploadedHash,
         fileUrl: buildBestdoriUploadedFileUrl(uploadedHash),
@@ -335,15 +335,15 @@ export async function publishBestdoriCommunityChartFlow(
     throw new Error(`bestdori post request failed: ${message}\npayload:\n${requestPayloadText}`);
   }
 
-  if (response.result === false) {
+  if (!response.result) {
     throw new Error(
       `bestdori post failed: ${normalizeBestdoriUploadCode(response.code) ?? "unknown error"}\n`
       + `payload:\n${requestPayloadText}`,
     );
   }
 
-  const postId = Math.trunc(Number(response.id));
-  if (!Number.isFinite(postId) || postId < 1) {
+  const postId = response.id;
+  if (postId < 1) {
     throw new Error("bestdori post failed: invalid post id");
   }
 

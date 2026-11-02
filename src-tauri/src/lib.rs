@@ -264,10 +264,56 @@ struct BestdoriAuthState {
     user_me: Mutex<Option<BestdoriUserMeResponse>>,
 }
 
-#[derive(Deserialize)]
-struct BestdoriLoginResponse {
-    result: bool,
-    code: Option<serde_json::Value>,
+/// The account responses as the Bestdori front end reads them. /api/user/login answers
+/// {result:true} or {result:false, code}; /api/user/me answers the signed-in account
+/// (username, nickname, titles, email, messageCount) or {result:false, code} (LOGIN_REQUIRED).
+/// nickname, titles and email are null for an account without them, as for post authors.
+fn bestdori_account_object(bytes: &[u8], label: &str) -> Result<serde_json::Map<String, serde_json::Value>, String> {
+    match serde_json::from_slice::<serde_json::Value>(bytes) {
+        Ok(serde_json::Value::Object(object)) => Ok(object),
+        Ok(_) => Err(format!("{label} 响应不是对象")),
+        Err(error) => Err(format!("{label} 响应不是 JSON：{error}")),
+    }
+}
+fn bestdori_account_result(object: &serde_json::Map<String, serde_json::Value>, label: &str) -> Result<Result<(), String>, String> {
+    match object.get("result") {
+        Some(serde_json::Value::Bool(true)) => Ok(Ok(())),
+        Some(serde_json::Value::Bool(false)) => match object.get("code") {
+            Some(serde_json::Value::String(code)) => Ok(Err(code.clone())),
+            _ => Err(format!("{label} 响应字段 code 不符合数据模型：应为字符串")),
+        },
+        _ => Err(format!("{label} 响应字段 result 不符合数据模型：应为布尔值")),
+    }
+}
+fn parse_bestdori_login(bytes: &[u8]) -> Result<Result<(), String>, String> {
+    bestdori_account_result(&bestdori_account_object(bytes, "bestdori login")?, "bestdori login")
+}
+fn parse_bestdori_user_me(bytes: &[u8]) -> Result<BestdoriUserMeResponse, String> {
+    let label = "bestdori me";
+    let object = bestdori_account_object(bytes, label)?;
+    let field = |name: &str, expected: &str| format!("{label} 响应字段 {name} 不符合数据模型：应为{expected}");
+    if bestdori_account_result(&object, label)?.is_err() {
+        return Ok(BestdoriUserMeResponse { result: false, username: None, nickname: None, titles: Vec::new(), email: None, message_count: None });
+    }
+    let nullable_text = |name: &str| match object.get(name) {
+        None | Some(serde_json::Value::Null) => Ok(None),
+        Some(serde_json::Value::String(text)) => Ok(Some(text.clone())),
+        Some(_) => Err(field(name, "字符串或 null")),
+    };
+    let username = match object.get("username") {
+        Some(serde_json::Value::String(text)) => text.clone(),
+        _ => return Err(field("username", "字符串")),
+    };
+    let titles = match object.get("titles") {
+        None | Some(serde_json::Value::Null) => Vec::new(),
+        Some(value) => serde_json::from_value::<Vec<BestdoriUserTitle>>(value.clone()).map_err(|_| field("titles", "称号数组或 null"))?,
+    };
+    let message_count = match object.get("messageCount") {
+        None | Some(serde_json::Value::Null) => None,
+        Some(value) => Some(value.as_i64().filter(|count| *count >= 0).ok_or_else(|| field("messageCount", "非负整数"))?),
+    };
+    Ok(BestdoriUserMeResponse { result: true, username: Some(username), nickname: nullable_text("nickname")?,
+        titles, email: nullable_text("email")?, message_count })
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -494,13 +540,6 @@ fn normalize_login_value(value: &str, label: &str) -> Result<String, String> {
         return Err(format!("{label} cannot be empty"));
     }
     Ok(trimmed.to_string())
-}
-
-fn format_login_error_code(code: &Option<serde_json::Value>) -> String {
-    match code {
-        Some(value) => value.to_string(),
-        None => "unknown".to_string(),
-    }
 }
 
 fn extract_cookie_header_from_response(response: &reqwest::Response) -> Result<String, String> {
@@ -1666,9 +1705,7 @@ async fn request_bestdori_me(
     cookie_header: &str,
 ) -> Result<BestdoriUserMeResponse, String> {
     let bytes = download_url_bytes(client, BESTDORI_ME_API, Some(cookie_header)).await?;
-    let payload = serde_json::from_slice::<BestdoriUserMeResponse>(&bytes)
-        .map_err(|error| format!("parse bestdori me response failed: {error}"))?;
-    Ok(payload)
+    parse_bestdori_user_me(&bytes)
 }
 
 #[tauri::command]
@@ -1708,13 +1745,8 @@ async fn bestdori_login(
         .bytes()
         .await
         .map_err(|error| format!("read bestdori login response failed: {error}"))?;
-    let login_payload = serde_json::from_slice::<BestdoriLoginResponse>(&login_bytes)
-        .map_err(|error| format!("parse bestdori login response failed: {error}"))?;
-    if !login_payload.result {
-        return Err(format!(
-            "bestdori login failed: code={}",
-            format_login_error_code(&login_payload.code)
-        ));
+    if let Err(code) = parse_bestdori_login(&login_bytes)? {
+        return Err(format!("bestdori login failed: code={code}"));
     }
 
     // Validate the candidate session before replacing the current account.

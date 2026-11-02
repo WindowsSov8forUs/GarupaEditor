@@ -54,7 +54,7 @@ import {
 } from "../modeChartRegression";
 import { applyHabahiroSlideWidths } from "../habahiroSlideWidth";
 import {
-  fetchBestdoriCommunityPostDetails,
+  fetchBestdoriCommunityPostDetails, isBestdoriChartPost,
   fetchTestServerChart, fetchTestServerMedia,
   fetchBestdoriOfficialChartImportPayload,
   resolveBestdoriCommunitySongResourceUrls,
@@ -1465,16 +1465,15 @@ export function useEditorIoAndShortcuts(params: any) {
     try {
       pushImportProgress(12, "正在请求社区帖子详情…");
       const details = await fetchBestdoriCommunityPostDetails(postId);
+      if (!details.result) {
+        throw new Error(`社区帖子不存在或已删除（${details.code}）。`);
+      }
       const post = details.post;
-      if (!post || typeof post !== "object") {
-        throw new Error("社区帖子详情缺失 post。");
+      if (!isBestdoriChartPost(post)) {
+        throw new Error(`该帖子不是社区谱面（${post.categoryName}/${post.categoryId}）。`);
       }
-      if (post.categoryName !== "SELF_POST" || post.categoryId !== "chart") {
-        throw new Error("该帖子不是社区谱面（仅支持 SELF_POST/chart）。");
-      }
-      if (!Array.isArray(post.chart)) {
-        throw new Error("该帖子不包含可导入的谱面数据。");
-      }
+      // The details parser requires the chart; only the list omits it.
+      if (post.chart === undefined) throw new Error("社区帖子详情缺少谱面数据。");
 
       pushImportProgress(34, "正在转换谱面结构…");
       const converted = convertBestdoriV2ToGarupaChartJson(post.chart);

@@ -39,7 +39,7 @@ export function useMusicJacket(entry: MusicSelectionEntry | undefined) {
     const state = session.current!;
     if (!entry) { state.lastRequest = undefined; return; }
     const key = JSON.stringify([entry.source ?? "bestdori", entry.id,
-      entry.source === "ayachan" ? [entry.cover.hash, entry.cover.url]
+      entry.source === "ayachan" ? [entry.item.cover.hash ?? null, entry.item.cover.url ?? null]
         : entry.source === "official" ? entry.officialSong.jacketSlot : null]);
     const requestKey = JSON.stringify([key, fallback]);
     if (state.lastRequest === requestKey) return;
@@ -63,12 +63,11 @@ export function useMusicJacket(entry: MusicSelectionEntry | undefined) {
             const bytes = await lease.readBytes(entry.officialSong.jacketSlot, "payload");
             blob = new Blob([Uint8Array.from(bytes)], { type: "image/png" });
           } else if (entry.source === "ayachan") {
-            if (!entry.cover.url) throw new Error("Ayachan song has no cover URL");
-            const bytes = await fetchTestServerMedia(entry.cover.url);
+            if (!entry.item.cover.url) throw new Error("Ayachan song has no cover URL");
+            const bytes = await fetchTestServerMedia(entry.item.cover.url);
             blob = new Blob([new Uint8Array(bytes)]);
           } else {
-            const resources = entry.song.type === "osu" ? undefined
-              : await resolveBestdoriCommunitySongResourceUrls(entry.song);
+            const resources = await resolveBestdoriCommunitySongResourceUrls(entry.post.song);
             if (state.disposed) return;
             if (!resources?.coverUrl) throw new Error("Community song has no cover URL");
             blob = await fetchBestdoriFileBlob(resources.coverUrl, "image/png", "选曲封面");

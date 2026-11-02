@@ -1,6 +1,29 @@
 import { readDownloadBody } from "../download";
 import { downloadActivity } from "../downloadActivity";
 import { downloadBytes } from "../download";
+import { appLog } from "../../logging/applicationLogger";
+import {
+  parseBestdoriCommunityListResponse, parseBestdoriCreatePostResponse, parseBestdoriPostDetailResponse, parseBestdoriPostTagSearchResponse,
+  parseBestdoriUploadPrepareResponse, parseBestdoriUploadResponse, parseBestdoriUploadStatusResponse,
+  type BestdoriCommunityListResponse, type BestdoriCreatePostResponse, type BestdoriPostContentSegment, type BestdoriPostDetailResponse,
+  type BestdoriPostSong, type BestdoriPostTag, type BestdoriPostTagSearchResponse, type BestdoriUploadPrepareResponse,
+  type BestdoriUploadResponse, type BestdoriUploadStatusResponse, type BestdoriUserTitle,
+} from "./postParsing";
+import {
+  parseBestdoriBandsAll1, parseBestdoriLlsifMisc, parseBestdoriSongIndex, parseBestdoriSongInfo,
+  type BestdoriBandsAll1, type BestdoriLlsifMisc, type BestdoriPerServerValue, type BestdoriSongDifficultyIndex,
+  type BestdoriSongIndex, type BestdoriSongInfo, type BestdoriSongMusicVideo,
+} from "./songParsing";
+import { parseAyachanUploadResponse, parseNotGarupaUploadFailure, parseNotGarupaUploadSuccess, parseSonolusItemDetails,
+  parseSonolusItemList, parseSonolusLevelItem, type SonolusLevelItem } from "./sonolusParsing";
+export type * from "./postParsing";
+export { isBestdoriChartPost } from "./postParsing";
+export type * from "./songParsing";
+export type * from "./sonolusParsing";
+import type { OfficialSongInfo } from "../officialMusicLibrary";
+
+/** Song data the resource and import helpers read: a Bestdori song, or an official library song built from the master. */
+export type SongResourceInfo = BestdoriSongInfo | OfficialSongInfo;
 import {
   decodeBase64ToArrayBuffer,
   invokeTauriCommand,
@@ -25,12 +48,6 @@ export type BestdoriAssetFamily =
 export const BESTDORI_ASSET_SERVERS: readonly BestdoriAssetServer[] = ["jp", "en", "tw", "cn", "kr"];
 export const DEFAULT_BESTDORI_ASSET_SERVER: BestdoriAssetServer = "jp";
 
-export interface BestdoriUserTitle {
-  id: number;
-  type: string;
-  server: number;
-}
-
 export interface BestdoriUserMeResponse {
   result: boolean;
   username?: string | null;
@@ -41,8 +58,6 @@ export interface BestdoriUserMeResponse {
 }
 
 export type BestdoriOfficialChartDifficulty = "easy" | "normal" | "hard" | "expert" | "special";
-export type BestdoriSongDifficultyIndex = "0" | "1" | "2" | "3" | "4";
-export type BestdoriPerServerValue<T> = [T | null, T | null, T | null, T | null, T | null];
 export type BestdoriSongServerIndex = 0 | 1 | 2 | 3 | 4;
 export type BestdoriSongServerName = "jp" | "en" | "tw" | "cn" | "kr";
 
@@ -63,17 +78,11 @@ export interface BestdoriSongResourceUrls {
   movies: readonly BestdoriSongMovieResource[];
 }
 
-export interface BestdoriBandsAll1Band {
-  bandName: BestdoriPerServerValue<string>;
-}
-
-export type BestdoriBandsAll1 = Record<string, BestdoriBandsAll1Band>;
-
 export interface BestdoriOfficialChartImportPayload {
   chartId: number;
   difficulty: BestdoriOfficialChartDifficulty;
   chart: unknown;
-  songInfo: BestdoriSongInfo;
+  songInfo: SongResourceInfo;
   bands: BestdoriBandsAll1;
   resources: BestdoriSongResourceUrls;
   metadata: {
@@ -89,146 +98,6 @@ export interface BestdoriOfficialChartImportPayload {
   audioFileName: string;
 }
 
-export interface BestdoriSongAchievement {
-  musicId: number;
-  achievementType: string;
-  rewardType: string;
-  rewardId?: number;
-  quantity: number;
-}
-
-export interface BestdoriSongDifficultyMultiLiveScore {
-  musicId: number;
-  musicDifficulty: BestdoriOfficialChartDifficulty;
-  multiLiveDifficultyId: number;
-  scoreS: number;
-  scoreA: number;
-  scoreB: number;
-  scoreC: number;
-  multiLiveDifficultyType: string;
-  scoreSS: number;
-  scoreSSS: number;
-}
-
-export interface BestdoriSongDifficulty {
-  playLevel: number;
-  publishedAt?: BestdoriPerServerValue<string>;
-  multiLiveScoreMap?: Record<string, BestdoriSongDifficultyMultiLiveScore>;
-  notesQuantity?: number;
-  scoreC?: number;
-  scoreB?: number;
-  scoreA?: number;
-  scoreS?: number;
-  scoreSS?: number;
-}
-
-export interface BestdoriSongBpm {
-  bpm: number;
-  start: number;
-  end: number;
-}
-
-export interface BestdoriSongMusicVideo {
-  assetBundleName: string;
-  /** MasterMusicVideo seq; present in official master rows, absent from Bestdori song info. */
-  seq?: number;
-  musicStartDelayMilliseconds?: number;
-  thumbAssetBundleName?: string;
-  title?: BestdoriPerServerValue<string>;
-  description?: BestdoriPerServerValue<string>;
-  startAt?: BestdoriPerServerValue<string>;
-  endAt?: BestdoriPerServerValue<string>;
-}
-
-export interface BestdoriSongInfo {
-  musicDataType?: string;
-  bgmId: string;
-  bgmFile: string;
-  tag: string;
-  bandId: number;
-  achievements: BestdoriSongAchievement[];
-  jacketImage: string[];
-  seq: number;
-  musicTitle: BestdoriPerServerValue<string>;
-  ruby: BestdoriPerServerValue<string>;
-  phonetic: BestdoriPerServerValue<string>;
-  lyricist: BestdoriPerServerValue<string>;
-  composer: BestdoriPerServerValue<string>;
-  arranger: BestdoriPerServerValue<string>;
-  howToGet: BestdoriPerServerValue<string>;
-  description?: BestdoriPerServerValue<string>;
-  publishedAt: BestdoriPerServerValue<string>;
-  closedAt: BestdoriPerServerValue<string>;
-  difficulty: Record<BestdoriSongDifficultyIndex, BestdoriSongDifficulty>;
-  musicVideos?: Record<string, BestdoriSongMusicVideo>;
-  musicVideo?: Record<string, BestdoriSongMusicVideo>;
-  length: number;
-  notes: Partial<Record<BestdoriSongDifficultyIndex, number>>;
-  bpm: Partial<Record<BestdoriSongDifficultyIndex, BestdoriSongBpm[]>>;
-}
-
-export interface BestdoriPostTag {
-  type: string;
-  data: string;
-}
-
-export interface BestdoriPostAuthor {
-  username: string;
-  nickname?: string | null;
-  titles?: BestdoriUserTitle[] | null;
-}
-
-export interface BestdoriPostSongCustom {
-  type: "custom";
-  audio?: string;
-  cover?: string;
-}
-
-export interface BestdoriPostSongProvided {
-  type: "bandori" | "llsif";
-  id: number;
-}
-
-export type BestdoriPostSong = BestdoriPostSongCustom | BestdoriPostSongProvided;
-
-export interface BestdoriPostInfo {
-  categoryName: string;
-  categoryId: string;
-  title?: string;
-  song?: BestdoriPostSong;
-  artists?: string;
-  diff?: number;
-  level?: number;
-  chart?: unknown[];
-  content: Array<Record<string, unknown>>;
-  time: number;
-  author: BestdoriPostAuthor;
-  likes: number;
-  liked: boolean;
-  tags: BestdoriPostTag[];
-}
-
-export interface BestdoriPostDetailResponse {
-  result: boolean;
-  post: BestdoriPostInfo;
-}
-
-export interface BestdoriPostTagSearchEntry {
-  type: string;
-  data: string;
-  count: number;
-}
-
-export interface BestdoriPostTagSearchResponse {
-  result: boolean;
-  tags: BestdoriPostTagSearchEntry[];
-}
-
-export interface BestdoriPostContentSegment {
-  type: string;
-  [key: string]: unknown;
-}
-
 export interface BestdoriCreateCommunityChartPostPayload {
   title?: string;
   artists?: string;
@@ -242,37 +111,12 @@ export interface BestdoriCreateCommunityChartPostPayload {
   categoryId?: string;
 }
 
-export interface BestdoriCreateCommunityChartPostResponse {
-  result?: boolean;
-  code?: unknown;
-  id?: unknown;
-}
-
 export interface BestdoriCommunitySongResourceUrls {
   isFullLength: boolean;
   type: BestdoriPostSong["type"];
   songId: number | null;
   audioUrl: string | null;
   coverUrl: string | null;
-}
-
-export interface BestdoriFileUploadPrepareResponse {
-  result: boolean;
-  code?: unknown;
-  hash?: unknown;
-}
-
-export interface BestdoriFileUploadResponse {
-  result?: boolean;
-  code?: unknown;
-  hash?: unknown;
-}
-
-export interface BestdoriFileUploadStatusResponse {
-  result?: boolean;
-  code?: unknown;
-  hash?: unknown;
-  status?: unknown;
 }
 
 export interface SonolusUploadLevelParams {
@@ -294,12 +138,6 @@ export interface SonolusUploadLevelParams {
   hidden?: boolean;
 }
 
-interface BestdoriLlsifMiscEntry {
-  live_icon_asset?: string;
-  sound_asset?: string;
-}
-
-type BestdoriLlsifMisc = Record<string, BestdoriLlsifMiscEntry>;
 type RequestHostScope = "bestdori" | "sonolus";
 
 const BESTDORI_SONG_SERVER_NAME_MAP: Readonly<Record<BestdoriSongServerIndex, BestdoriSongServerName>> = {
@@ -605,7 +443,7 @@ function isNonEmptyPerServerString(value: string | null | undefined): boolean {
   return typeof value === "string" && value.trim().length > 0;
 }
 
-function resolveBestdoriSongServerIndex(songInfo: BestdoriSongInfo): BestdoriSongServerIndex {
+function resolveBestdoriSongServerIndex(songInfo: SongResourceInfo): BestdoriSongServerIndex {
   const candidates: Array<BestdoriPerServerValue<string> | undefined> = [
     songInfo.publishedAt,
     songInfo.closedAt,
@@ -648,7 +486,7 @@ function resolveBestdoriSongJacketFolderIndex(songId: number): string {
   return String(bucket).padStart(2, "0");
 }
 
-function resolveBestdoriSongJacketImageName(songInfo: BestdoriSongInfo): string {
+function resolveBestdoriSongJacketImageName(songInfo: SongResourceInfo): string {
   if (!Array.isArray(songInfo.jacketImage) || songInfo.jacketImage.length === 0) {
     throw new Error("song info missing jacketImage");
   }
@@ -659,14 +497,13 @@ function resolveBestdoriSongJacketImageName(songInfo: BestdoriSongInfo): string 
   return value;
 }
 
-function resolveBestdoriSongMusicVideos(songInfo: BestdoriSongInfo): Record<string, BestdoriSongMusicVideo> {
-  if (songInfo.musicVideos && typeof songInfo.musicVideos === "object") {
-    return songInfo.musicVideos;
-  }
-  if (songInfo.musicVideo && typeof songInfo.musicVideo === "object") {
-    return songInfo.musicVideo;
-  }
-  return {};
+function resolveBestdoriSongMusicVideos(songInfo: SongResourceInfo): Record<string, SongResourceInfoVideo> {
+  return songInfo.musicVideos ?? {};
+}
+type SongResourceInfoVideo = BestdoriSongMusicVideo | OfficialSongInfo["musicVideos"][string];
+/** Bestdori MVs title per server; official library MVs carry the master row's single title. */
+function resolveMusicVideoTitle(video: SongResourceInfoVideo): string | null {
+  return typeof video.title === "string" ? video.title.trim() || null : resolveFirstNonEmptyPerServerValue(video.title);
 }
 
 function resolveFirstNonEmptyPerServerValue(value: BestdoriPerServerValue<string> | undefined): string | null {
@@ -685,11 +522,11 @@ function resolveFirstNonEmptyPerServerValue(value: BestdoriPerServerValue<string
   return null;
 }
 
-function resolveBestdoriSongTitle(songInfo: BestdoriSongInfo): string {
+function resolveBestdoriSongTitle(songInfo: SongResourceInfo): string {
   return resolveFirstNonEmptyPerServerValue(songInfo.musicTitle) ?? "Untitled";
 }
 
-function resolveBestdoriBandArtist(songInfo: BestdoriSongInfo, bands: BestdoriBandsAll1): string {
+function resolveBestdoriBandArtist(songInfo: SongResourceInfo, bands: BestdoriBandsAll1): string {
   const bandIdKey = String(Math.trunc(Number(songInfo.bandId)));
   const band = bands[bandIdKey];
   if (band && Array.isArray(band.bandName)) {
@@ -702,7 +539,7 @@ function resolveBestdoriBandArtist(songInfo: BestdoriSongInfo, bands: BestdoriBa
 }
 
 function resolveBestdoriSongDifficultyLevel(
-  songInfo: BestdoriSongInfo,
+  songInfo: SongResourceInfo,
   difficulty: BestdoriOfficialChartDifficulty,
 ): string {
   const index = BESTDORI_CHART_DIFFICULTY_TO_INDEX[difficulty];
@@ -715,12 +552,13 @@ function resolveBestdoriSongDifficultyLevel(
 
 // Solo Live uses the persisted MV seq, seq 1 when none is stored; the editor stores none.
 const ORIGINAL_DEFAULT_MV_SEQ = 1;
-function resolveOriginalMusicVideoKey(songInfo: BestdoriSongInfo): string | null {
+function resolveOriginalMusicVideoKey(songInfo: SongResourceInfo): string | null {
   const videos = resolveBestdoriSongMusicVideos(songInfo);
-  return Object.keys(videos).find(key => videos[key]?.seq === ORIGINAL_DEFAULT_MV_SEQ) ?? null;
+  // Bestdori MVs have no seq; only official library songs carry the master row's.
+  return Object.keys(videos).find(key => { const video = videos[key]; return !!video && "seq" in video && video.seq === ORIGINAL_DEFAULT_MV_SEQ; }) ?? null;
 }
 
-function resolveBestdoriSongMvOffsetMs(songInfo: BestdoriSongInfo): number {
+function resolveBestdoriSongMvOffsetMs(songInfo: SongResourceInfo): number {
   const key = resolveOriginalMusicVideoKey(songInfo);
   // The original MusicVideoModel reads zero delay when no master row matches the seq.
   if (key === null) {
@@ -733,7 +571,7 @@ function resolveBestdoriSongMvOffsetMs(songInfo: BestdoriSongInfo): number {
   return Math.round(rawOffset);
 }
 
-function resolveBestdoriSongAudioFileName(songId: number, songInfo: BestdoriSongInfo): string {
+function resolveBestdoriSongAudioFileName(songId: number, songInfo: SongResourceInfo): string {
   const bgmFile = typeof songInfo.bgmFile === "string" ? songInfo.bgmFile.trim() : "";
   if (bgmFile.length > 0) {
     return bgmFile.toLowerCase().endsWith(".mp3") ? bgmFile : `${bgmFile}.mp3`;
@@ -1009,11 +847,11 @@ export async function prepareBestdoriFileUpload(
   hash: string,
   size: number,
   options?: { ver?: number },
-): Promise<BestdoriFileUploadPrepareResponse> {
+): Promise<BestdoriUploadPrepareResponse> {
   const normalizedHash = normalizeBestdoriFileHash(hash);
   const normalizedSize = normalizeBestdoriUploadFileSize(size);
   const normalizedVersion = normalizeBestdoriNonNegativeInteger(options?.ver ?? 3, "upload version");
-  return requestBestdoriPostJson<BestdoriFileUploadPrepareResponse>(
+  return parseBestdoriUploadPrepareResponse(await requestBestdoriPostJson<unknown>(
     BESTDORI_UPLOAD_PREPARE_ENDPOINT,
     "bestdori upload prepare",
     {
@@ -1021,18 +859,18 @@ export async function prepareBestdoriFileUpload(
       hash: normalizedHash,
       size: normalizedSize,
     },
-  );
+  ));
 }
 
 export async function uploadBestdoriFile(
   fileName: string,
   fileBytes: ArrayBuffer | Uint8Array,
   options?: { fieldName?: string; mimeType?: string },
-): Promise<BestdoriFileUploadResponse> {
+): Promise<BestdoriUploadResponse> {
   const normalizedFileName = normalizeBestdoriUploadFileName(fileName);
   const normalizedBytes = normalizeBestdoriFileBytes(fileBytes);
   const fieldName = normalizeBestdoriUploadFileName(options?.fieldName ?? "file");
-  return requestBestdoriPostMultipartFileJson<BestdoriFileUploadResponse>(
+  return parseBestdoriUploadResponse(await requestBestdoriPostMultipartFileJson<unknown>(
     BESTDORI_UPLOAD_ENDPOINT,
     "bestdori upload file",
     {
@@ -1041,13 +879,13 @@ export async function uploadBestdoriFile(
       fileBytes: normalizedBytes,
       mimeType: options?.mimeType,
     },
-  );
+  ));
 }
 
-export async function fetchBestdoriFileUploadStatus(hash: string): Promise<BestdoriFileUploadStatusResponse> {
+export async function fetchBestdoriFileUploadStatus(hash: string): Promise<BestdoriUploadStatusResponse> {
   const normalizedHash = normalizeBestdoriFileHash(hash);
   const endpoint = `https://bestdori.com/api/upload/status/${normalizedHash}`;
-  return requestBestdoriJson<BestdoriFileUploadStatusResponse>(endpoint, "bestdori upload status");
+  return parseBestdoriUploadStatusResponse(await requestBestdoriJson<unknown>(endpoint, "bestdori upload status"));
 }
 
 function normalizeSonolusUploadTitle(value: string): string {
@@ -1081,19 +919,6 @@ function normalizeSonolusUploadLifetime(value: number | undefined): number {
   return normalized;
 }
 
-function extractSonolusUploadUid(value: unknown): string {
-  if (typeof value === "string") {
-    const normalized = value.trim();
-    if (normalized) {
-      return normalized;
-    }
-  }
-  if (typeof value === "number" && Number.isFinite(value)) {
-    return String(Math.trunc(value));
-  }
-  throw new Error("sonolus level upload response missing uid");
-}
-
 export async function uploadSonolusLevel(params: SonolusUploadLevelParams): Promise<string> {
   const title = normalizeSonolusUploadTitle(params.title);
   const chart = normalizeSonolusUploadChart(params.chart);
@@ -1113,7 +938,7 @@ export async function uploadSonolusLevel(params: SonolusUploadLevelParams): Prom
   if (params.hidden === true) {
     fields.hidden = "true";
   }
-  const response = await requestBestdoriPostMultipartFileJson<{ uid?: unknown }>(
+  const response = await requestBestdoriPostMultipartFileJson<unknown>(
     SONOLUS_TEST_LEVELS_ENDPOINT,
     "sonolus level upload",
     {
@@ -1125,7 +950,7 @@ export async function uploadSonolusLevel(params: SonolusUploadLevelParams): Prom
       hostScope: "sonolus",
     },
   );
-  return extractSonolusUploadUid(response.uid);
+  return parseAyachanUploadResponse(response);
 }
 
 export interface NotGarupaUploadFile {
@@ -1150,9 +975,10 @@ export interface NotGarupaUploadLevelParams {
   hidden?: boolean;
 }
 
+/** The host's view of the upload: HTTP status, the body if it was JSON, and Retry-After. */
 interface NotGarupaUploadResponse {
   status: number;
-  body: { uid?: unknown; error?: unknown } | null;
+  body: unknown;
   retryAfter: number | null;
 }
 
@@ -1195,12 +1021,13 @@ export async function uploadNotGarupaLevel(params: NotGarupaUploadLevelParams): 
       })),
     },
   });
-  if (response.status === 200) return extractSonolusUploadUid(response.body?.uid);
-  throw new Error(describeNotGarupaUploadFailure(response));
+  // Both published and pending (waiting for review) levels have their uid.
+  if (response.status === 200) return parseNotGarupaUploadSuccess(response.body).uid;
+  throw new Error(describeNotGarupaUploadFailure(response.status, parseNotGarupaUploadFailure(response.body), response.retryAfter));
 }
 
-function describeNotGarupaUploadFailure({ status, body, retryAfter }: NotGarupaUploadResponse): string {
-  const detail = typeof body?.error === "string" && body.error.trim() ? `（${body.error.trim()}）` : "";
+function describeNotGarupaUploadFailure(status: number, body: { error: string } | null, retryAfter: number | null): string {
+  const detail = body?.error.trim() ? `（${body.error.trim()}）` : "";
   switch (status) {
     case 400: return `服务器拒绝了上传的内容${detail}`;
     case 401: return `服务器未接受此 GarupaEditor 的签名，请使用正式发布的版本并检查系统时间${detail}`;
@@ -1230,24 +1057,28 @@ export async function fetchBestdoriOfficialChart(
 export async function fetchBestdoriSongInfo(songId: number): Promise<BestdoriSongInfo> {
   const normalizedSongId = normalizeBestdoriSongId(songId);
   const endpoint = `https://bestdori.com/api/songs/${normalizedSongId}.json`;
-  return requestBestdoriJson<BestdoriSongInfo>(endpoint, "bestdori song info");
+  return parseBestdoriSongInfo(await requestBestdoriJson<unknown>(endpoint, "bestdori song info"));
+}
+
+export async function fetchBestdoriSongIndex(): Promise<BestdoriSongIndex> {
+  return parseBestdoriSongIndex(await requestBestdoriJson<unknown>(`${BESTDORI_ROOT}/api/songs/all.8.json`, "bestdori songs all.8"));
 }
 
 export async function fetchBestdoriBandsAll1(): Promise<BestdoriBandsAll1> {
   const endpoint = "https://bestdori.com/api/bands/all.1.json";
-  return requestBestdoriJson<BestdoriBandsAll1>(endpoint, "bestdori bands all.1");
+  return parseBestdoriBandsAll1(await requestBestdoriJson<unknown>(endpoint, "bestdori bands all.1"));
 }
 
 export async function createBestdoriCommunityChartPost(
   input: BestdoriCreateCommunityChartPostPayload,
-): Promise<BestdoriCreateCommunityChartPostResponse> {
+): Promise<BestdoriCreatePostResponse> {
   const payload = buildBestdoriCommunityChartPostPayload(input);
   validateBestdoriCommunityChartPostRequestPayload(payload);
-  return requestBestdoriPostJson<BestdoriCreateCommunityChartPostResponse>(
+  return parseBestdoriCreatePostResponse(await requestBestdoriPostJson<unknown>(
     "https://bestdori.com/api/post",
     "bestdori create community chart post",
     payload,
-  );
+  ));
 }
 
 export function buildBestdoriCommunityChartPostPayload(
@@ -1293,23 +1124,22 @@ export function buildBestdoriCommunityChartPostPayload(
   return payload;
 }
 
-export interface BestdoriCommunityListResponse {
-  result: boolean; count: number; posts: (BestdoriPostInfo & { id: number })[]; code?: string;
-}
 /** Public read-only search; transport and host policy stay shared with other Bestdori calls. */
-export async function searchBestdoriCommunityCharts(search: string, order: "TIME_DESC" | "TIME_ASC", offset: number): Promise<BestdoriCommunityListResponse> {
-  const response = await requestBestdoriPostJson<BestdoriCommunityListResponse>(
+export async function searchBestdoriCommunityCharts(search: string, order: "TIME_DESC" | "TIME_ASC", offset: number):
+  Promise<Extract<BestdoriCommunityListResponse, { result: true }>> {
+  const raw = await requestBestdoriPostJson<unknown>(
     BESTDORI_ROOT + "/api/post/list", "bestdori community chart search",
     { search, categoryName: "SELF_POST", categoryId: "chart", tags: [], order, limit: 50, offset });
-  if (!response.result || !Array.isArray(response.posts) || !Number.isFinite(response.count))
-    throw new Error("Bestdori 谱面搜索失败：" + (response.code ?? "响应无效"));
+  const response = parseBestdoriCommunityListResponse(raw, (error, index) =>
+    appLog("warn", "bestdori.community-list.invalid-post", { offset, index, path: error.path, message: error.message }));
+  if (!response.result) throw new Error("Bestdori 谱面搜索失败：" + response.code);
   return response;
 }
 
 export async function fetchBestdoriCommunityPostDetails(postId: number): Promise<BestdoriPostDetailResponse> {
   const normalizedPostId = normalizeBestdoriPostId(postId);
   const endpoint = `https://bestdori.com/api/post/details?id=${normalizedPostId}`;
-  return requestBestdoriJson<BestdoriPostDetailResponse>(endpoint, "bestdori community post details");
+  return parseBestdoriPostDetailResponse(await requestBestdoriJson<unknown>(endpoint, "bestdori community post details"));
 }
 
 export async function fetchBestdoriCommunityPostTags(
@@ -1322,13 +1152,13 @@ export async function fetchBestdoriCommunityPostTags(
     throw new Error("community tag type cannot be empty");
   }
   const endpoint = `https://bestdori.com/api/post/tag?type=${encodeURIComponent(normalizedType)}&data=${encodeURIComponent(data)}&fuzzy=${fuzzy ? "true" : "false"}`;
-  return requestBestdoriJson<BestdoriPostTagSearchResponse>(endpoint, "bestdori community post tag");
+  return parseBestdoriPostTagSearchResponse(await requestBestdoriJson<unknown>(endpoint, "bestdori community post tag"));
 }
 
 export async function fetchBestdoriLlsifMisc(index = BESTDORI_LLSIF_MISC_INDEX): Promise<BestdoriLlsifMisc> {
   const normalizedIndex = normalizeBestdoriNonNegativeInteger(index, "llsif misc index");
   const endpoint = `https://bestdori.com/api/misc/llsif.${normalizedIndex}.json`;
-  return requestBestdoriJson<BestdoriLlsifMisc>(endpoint, "bestdori llsif misc");
+  return parseBestdoriLlsifMisc(await requestBestdoriJson<unknown>(endpoint, "bestdori llsif misc"));
 }
 
 export async function resolveBestdoriCommunitySongResourceUrls(
@@ -1347,10 +1177,11 @@ export async function resolveBestdoriCommunitySongResourceUrls(
     };
   }
   const songId = normalizeBestdoriSongId(song.id);
-  if (song.type === "bandori") {
+  // The Bestdori front end resolves original exactly as bandori.
+  if (song.type === "bandori" || song.type === "original") {
     const songInfo = await fetchBestdoriSongInfo(songId);
     return {
-      type: "bandori",
+      type: song.type,
       isFullLength: isBestdoriFullLengthSong(songInfo),
       songId,
       audioUrl: buildBestdoriSongAudioUrl(songId, songInfo),
@@ -1368,43 +1199,44 @@ export async function resolveBestdoriCommunitySongResourceUrls(
   };
 }
 
-export function isBestdoriFullLengthSong(songInfo: Pick<BestdoriSongInfo, "tag" | "musicDataType">): boolean {
-  return songInfo.musicDataType !== undefined ? songInfo.musicDataType === "full" : songInfo.tag === "full";
+export function isBestdoriFullLengthSong(songInfo: SongResourceInfo): boolean {
+  return "musicDataType" in songInfo ? songInfo.musicDataType === "full" : songInfo.tag === "full";
 }
 
-export function resolveBestdoriSongServerName(songInfo: BestdoriSongInfo): BestdoriSongServerName {
+export function resolveBestdoriSongServerName(songInfo: SongResourceInfo): BestdoriSongServerName {
   return BESTDORI_SONG_SERVER_NAME_MAP[resolveBestdoriSongServerIndex(songInfo)];
 }
 
-export function buildBestdoriSongAudioLogicalPath(songInfo: BestdoriSongInfo): string {
+export function buildBestdoriSongAudioLogicalPath(songInfo: SongResourceInfo): string {
   const bgmId = normalizeBestdoriAssetSegment(songInfo.bgmId, "song bgmId");
   return `sound/${bgmId}/${bgmId}.mp3`;
 }
 
-export function buildBestdoriSongAudioUrl(_songId: number, songInfo: BestdoriSongInfo): string {
+export function buildBestdoriSongAudioUrl(_songId: number, songInfo: SongResourceInfo): string {
   const server = resolveBestdoriSongServerName(songInfo);
   const logicalPath = buildBestdoriSongAudioLogicalPath(songInfo);
   const [sound, bgmId, file] = logicalPath.split("/") as [string, string, string];
   return `${BESTDORI_ASSETS_ROOT}/${server}/${sound}/${bgmId}_rip/${file}`;
 }
 
-export function buildBestdoriSongJacketLogicalPath(songId: number, songInfo: BestdoriSongInfo): string {
+export function buildBestdoriSongJacketLogicalPath(songId: number, songInfo: SongResourceInfo): string {
   const normalizedSongId = normalizeBestdoriSongId(songId);
   const jacketImage = normalizeBestdoriAssetSegment(resolveBestdoriSongJacketImageName(songInfo), "song jacket image", true);
   const jacketFolder = `musicjacket${resolveBestdoriSongJacketFolderIndex(normalizedSongId)}`;
   return `musicjacket/${jacketFolder}/assets-star-forassetbundle-startapp-musicjacket-${jacketFolder}-${jacketImage}-jacket.png`;
 }
 
-export function buildBestdoriSongJacketUrl(songId: number, songInfo: BestdoriSongInfo): string {
+export function buildBestdoriSongJacketUrl(songId: number, songInfo: SongResourceInfo): string {
   const server = resolveBestdoriSongServerName(songInfo);
   const logicalPath = buildBestdoriSongJacketLogicalPath(songId, songInfo);
   const [root, folder, file] = logicalPath.split("/") as [string, string, string];
   return `${BESTDORI_ASSETS_ROOT}/${server}/${root}/${folder}_rip/${encodeURIComponent(file)}`;
 }
 
-export function buildBestdoriSongMovieResources(songInfo: BestdoriSongInfo): readonly BestdoriSongMovieResource[] {
-  const videos = resolveBestdoriSongMusicVideos(songInfo);
-  const server = resolveBestdoriSongServerName(songInfo);
+export function buildBestdoriSongMovieResources(songInfo: SongResourceInfo): readonly BestdoriSongMovieResource[] {
+  return buildMovieResources(resolveBestdoriSongMusicVideos(songInfo), resolveBestdoriSongServerName(songInfo));
+}
+function buildMovieResources(videos: Record<string, SongResourceInfoVideo>, server: BestdoriSongServerName): readonly BestdoriSongMovieResource[] {
   const resources: BestdoriSongMovieResource[] = [];
   for (const key of Object.keys(videos).sort()) {
     const target = videos[key];
@@ -1416,20 +1248,20 @@ export function buildBestdoriSongMovieResources(songInfo: BestdoriSongInfo): rea
     resources.push(Object.freeze({
       logicalPath,
       url: `${BESTDORI_ASSETS_ROOT}/${server}/movie/mv/${packageName}_rip/${fileName}`,
-      title: resolveFirstNonEmptyPerServerValue(target.title),
+      title: resolveMusicVideoTitle(target),
     }));
   }
   return Object.freeze(resources);
 }
 
-export function buildBestdoriSongMvUrl(songInfo: BestdoriSongInfo): string | null {
+export function buildBestdoriSongMvUrl(songInfo: SongResourceInfo): string | null {
   const movies = buildBestdoriSongMovieResources(songInfo);
   return movies.length === 0 ? null : movies[movies.length - 1]!.url;
 }
 
 export async function fetchBestdoriSongResourceUrls(
   songId: number,
-  options?: { songInfo?: BestdoriSongInfo; server?: BestdoriSongServerName },
+  options?: { songInfo?: SongResourceInfo; server?: BestdoriSongServerName },
 ): Promise<BestdoriSongResourceUrls> {
   const songInfo = options?.songInfo ?? (await fetchBestdoriSongInfo(songId));
   const server = options?.server ?? resolveBestdoriSongServerName(songInfo);
@@ -1441,7 +1273,7 @@ export async function fetchBestdoriSongResourceUrls(
   const movies = buildBestdoriSongMovieResources(songInfo).map(movie => ({ ...movie, url: fromServer(movie.url) }));
   const selectedKey = resolveOriginalMusicVideoKey(songInfo);
   const selectedMovie = selectedKey === null ? null
-    : buildBestdoriSongMovieResources({ ...songInfo, musicVideos: { [selectedKey]: resolveBestdoriSongMusicVideos(songInfo)[selectedKey]! }, musicVideo: undefined })
+    : buildMovieResources({ [selectedKey]: resolveBestdoriSongMusicVideos(songInfo)[selectedKey]! }, resolveBestdoriSongServerName(songInfo))
       .map(movie => ({ ...movie, url: fromServer(movie.url) }))[0] ?? null;
   return {
     server,
@@ -1458,7 +1290,7 @@ export async function fetchBestdoriSongResourceUrls(
 export async function fetchBestdoriOfficialChartImportPayload(
   chartId: number,
   difficulty: BestdoriOfficialChartDifficulty,
-  snapshot?: { songInfo: BestdoriSongInfo; bands: BestdoriBandsAll1; server?: BestdoriSongServerName },
+  snapshot?: { songInfo: SongResourceInfo; bands: BestdoriBandsAll1; server?: BestdoriSongServerName },
 ): Promise<BestdoriOfficialChartImportPayload> {
   const normalizedChartId = normalizeBestdoriSongId(chartId);
   const normalizedDifficulty = normalizeBestdoriOfficialChartDifficulty(difficulty);
@@ -1470,7 +1302,7 @@ export async function fetchBestdoriOfficialChartImportPayload(
     throw new Error(`官方谱面获取失败：${message}`);
   }
 
-  let songInfo: BestdoriSongInfo;
+  let songInfo: SongResourceInfo;
   try {
     songInfo = snapshot?.songInfo ?? await fetchBestdoriSongInfo(normalizedChartId);
   } catch (error) {
@@ -1516,27 +1348,25 @@ export function resolveTestServerResourceUrl(value: string): string {
     throw new Error("测试服资源地址不属于已支持的资源源");
   return url.href;
 }
-export async function fetchTestServerChart(id: string): Promise<{chart: unknown[]; item: Record<string, any>}> {
+/** A missing or expired level is HTTP 404; the level page is a Sonolus ServerItemDetails<LevelItem>. */
+export async function fetchTestServerChart(id: string): Promise<{chart: unknown[]; item: SonolusLevelItem}> {
   if (!/^[A-Za-z0-9_-]+$/.test(id)) throw new Error("测试服谱面 ID 格式无效");
   const endpoint = `${SONOLUS_TEST_LEVELS_ENDPOINT}/${encodeURIComponent(id)}`;
-  const detail = await requestBestdoriJson<{item?: Record<string, any>}>(endpoint, "test server level", {hostScope:"sonolus"});
-  if (!detail.item || typeof detail.item !== "object") throw new Error("测试服谱面不存在或已过期");
+  const detail = parseSonolusItemDetails(await requestBestdoriJson<unknown>(endpoint, "test server level", {hostScope:"sonolus"}),
+    parseSonolusLevelItem);
   const chart = await requestBestdoriJson<unknown>(`${endpoint}/bdv2.json`, "test server chart", {hostScope:"sonolus"});
   if (!Array.isArray(chart)) throw new Error("测试服未返回有效的 Bestdori v2 谱面");
   return {chart, item:detail.item};
 }
-export interface AyachanLevelItem {
-  name: string; title: string; artists: string; author: string; rating: number;
-  cover?: { url: string; hash: string }; bgm?: { url: string }; data?: { url: string };
-}
-export async function fetchAyachanLevelList(page: number, id: string): Promise<{ pageCount: number; items: AyachanLevelItem[] }> {
+/**
+ * One page of Ayachan levels. The first page leads with an announcement level whose name is not
+ * a chart id (“置顶公告#”); it is a complete LevelItem, and the selection skips it.
+ */
+export async function fetchAyachanLevelList(page: number, id: string): Promise<{ pageCount: number; items: SonolusLevelItem[] }> {
   const query = new URLSearchParams({ page: String(page) });
   if (id.trim()) query.set("keywords", id.trim());
-  const result = await requestBestdoriJson<{pageCount: number; items: AyachanLevelItem[]}>(
-    `${SONOLUS_TEST_LEVELS_ENDPOINT}/list?${query}`, "Ayachan level list", { hostScope: "sonolus" });
-  if (!Number.isInteger(result.pageCount) || result.pageCount < 0 || !Array.isArray(result.items))
-    throw new Error("Ayachan 返回了无效的谱面列表");
-  return result;
+  return parseSonolusItemList(await requestBestdoriJson<unknown>(
+    `${SONOLUS_TEST_LEVELS_ENDPOINT}/list?${query}`, "Ayachan level list", { hostScope: "sonolus" }), parseSonolusLevelItem);
 }
 export async function fetchTestServerMedia(url: string): Promise<Uint8Array> {
   const cached = prefetched(resolveTestServerResourceUrl(url));
