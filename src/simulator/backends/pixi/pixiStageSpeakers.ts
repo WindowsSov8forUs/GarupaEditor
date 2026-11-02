@@ -29,9 +29,10 @@ export class PixiStageSpeakers {
     for (const speaker of this.speakers) this.publish(speaker, true);
   }
 
+  /** InGameManager.onJudgeNote passes OneFrameData.adjustedResult (+0x34) to OnJudgeNote. */
   reflect(batch: OneFrameJudgementBatch): void {
     for (const entry of batch.entries) {
-      const clip = stageSpeakerClipForJudgement(entry.noteType, entry.rawResult);
+      const clip = stageSpeakerClipForJudgement(entry.noteType, entry.adjustedResult);
       if (clip === null) continue;
       for (const button of entry.buttonTypes) {
         if (button !== 0 && button !== 6) continue;
