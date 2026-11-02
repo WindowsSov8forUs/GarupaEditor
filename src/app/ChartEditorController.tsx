@@ -42,7 +42,8 @@ import { useCanvasPlayfieldBackend } from "./hooks/useCanvasPlayfieldBackend";
 import { useCanvasRenderResources } from "./hooks/useCanvasRenderResources";
 import { useIsStartingApplication, useStartupReadiness } from "./startupReadiness";
 import { useEditorGeometry } from "./hooks/useEditorGeometry";
-import { useEditorIoAndShortcuts } from "./hooks/useEditorIoAndShortcuts";
+import { FULL_LENGTH_UNKNOWN, useEditorIoAndShortcuts } from "./hooks/useEditorIoAndShortcuts";
+import { BESTDORI_SESSION_EXPIRED_MESSAGE } from "../services/bestdori/api";
 import { useEditorSessionCache } from "./hooks/useEditorSessionCache";
 import { useEditorRenderModel } from "./hooks/useEditorRenderModel";
 import {
@@ -382,6 +383,13 @@ function routeStatusMessage(rawMessage: string): StatusMessageRoute {
   const message = rawMessage.trim();
   if (message.length <= 0) {
     return { channel: "ignore" };
+  }
+  // The status line is not shown; these notices must reach the user.
+  if (message === BESTDORI_SESSION_EXPIRED_MESSAGE) {
+    return { channel: "dialog", tone: "info", message: "Bestdori 登录已失效，\n请重新登录。" };
+  }
+  if (message.includes(FULL_LENGTH_UNKNOWN)) {
+    return { channel: "dialog", tone: "info", message: "无法确定是否为完整版，\n可在歌曲设定中修改。" };
   }
 
   if (message === "已停止播放。") {

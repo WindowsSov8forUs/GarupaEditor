@@ -32,7 +32,8 @@ import { musicPlaySelection, type MusicPlaySelection } from "../musicSelectionDa
 import { DownloadProgressModal } from "../DownloadProgressModal";
 import { OverlayDialogModal } from "../OverlayDialogModal";
 import { SkinSettingsModal } from "../SkinSettingsModal";
-import { bestdoriCheckSession, bestdoriLogin, bestdoriLogout, onBestdoriSessionExpired } from "../../services/bestdori/api";
+import { BESTDORI_SESSION_EXPIRED_MESSAGE, bestdoriCheckSession, bestdoriLogin, bestdoriLogout,
+  onBestdoriSessionExpired } from "../../services/bestdori/api";
 import { appLog } from "../../logging/applicationLogger";
 import { isMobileRuntime } from "../../app/mobileRuntime";
 import { SidebarPanel } from "./SidebarPanel";
@@ -363,7 +364,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     bestdoriAuthRevision.current += 1;
     setBestdoriUsernameDisplay("");
     setBestdoriNicknameDisplay("");
-    setStatusMessage("Bestdori 登录已失效，请重新登录。");
+    setStatusMessage(BESTDORI_SESSION_EXPIRED_MESSAGE);
   }), [setStatusMessage]);
   useEffect(() => {
     let disposed = false;

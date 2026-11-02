@@ -69,7 +69,7 @@ import {
 import { isTauriRuntimeEnvironment } from "../../services/bestdori/transport";
 
 // An import that cannot tell whether its song is full-length says so; the song settings can change it.
-const FULL_LENGTH_UNKNOWN = "（无法确定是否完整版，可在歌曲设定中修改）";
+export const FULL_LENGTH_UNKNOWN = "（无法确定是否完整版，可在歌曲设定中修改）";
 
 type ParsedJsonNote = {
   note: ChartNote;

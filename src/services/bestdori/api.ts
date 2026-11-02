@@ -620,6 +620,7 @@ export type BestdoriSession =
   | { status: "signed-out" }
   | { status: "expired" }
   | { status: "unverified"; me: BestdoriUserMeResponse | null; error: string };
+export const BESTDORI_SESSION_EXPIRED_MESSAGE = "Bestdori 登录已失效，请重新登录。";
 const sessionExpiredListeners = new Set<() => void>();
 /** Called whenever a check finds the stored login expired, wherever the check was made. */
 export function onBestdoriSessionExpired(listener: () => void): () => void {
