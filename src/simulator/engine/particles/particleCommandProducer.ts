@@ -308,7 +308,7 @@ export class ParticleCommandProducer {
           ? productNode.lane + (productNode.type === "Directional" ? 0 : (productNode.width - 1) / 2)
           : (span.start + span.end) / 2;
         let buttonType = span === undefined
-          ? originalEffectCenter(entry.buttonTypes)
+          ? originalEffectCenter(entry.spanButtonTypes)
           : center !== null && isFixedButtonLane(center) ? center : null;
         if (groupButtons.value !== null) buttonType = groupButtons.value.body;
         const rangeLength = entry.rangeLength;
@@ -372,7 +372,7 @@ export class ParticleCommandProducer {
           if (fingerRoot.value === null) continue;
           const fingerButton = groupButtons.value?.finger ?? directionalFingerButtonType(
             buttonType,
-            entry.buttonTypes,
+            entry.spanButtonTypes,
             fingerRoot.value,
             this.isAutoPlay,
             entry.multipleDirectionalFlickNoteCount,
@@ -736,7 +736,7 @@ export class ParticleCommandProducer {
       entry.phase === "tail" && unique.afterNoteAbsolutePos === entry.absolutePosition)) return ok(unique);
     const candidates = this.notesByJudgementKey.get(judgementKey(
       entry.absolutePosition,
-      entry.buttonTypes,
+      entry.spanButtonTypes,
     )) ?? [];
     const indexed = candidates.filter((note) => note.index === entry.noteIndex);
     const tailOwners = entry.phase === "tail"
@@ -1238,7 +1238,8 @@ function isJudgementBatchShape(
 function isJudgementButtonSpan(
   entry: OneFrameJudgementBatch["entries"][number],
 ): boolean {
-  return Array.isArray(entry.buttonTypes) && entry.buttonTypes.every(isButtonType) &&
+  return Array.isArray(entry.spanButtonTypes) && entry.spanButtonTypes.every(isButtonType) &&
+    Array.isArray(entry.buttonTypes) && entry.buttonTypes.every(isButtonType) &&
     entry.laneSpan !== null && typeof entry.laneSpan === "object" &&
     Number.isFinite(entry.laneSpan.start) && Number.isFinite(entry.laneSpan.end) &&
     entry.laneSpan.end >= entry.laneSpan.start;

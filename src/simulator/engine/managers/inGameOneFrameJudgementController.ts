@@ -32,7 +32,7 @@ import {
   type SimulatorResult,
 } from "../result";
 import { validateAutoLiveActivationGraph } from "../notes/noteTypes";
-import { judgementGeometry } from "../data/judgementGeometry";
+import { judgementGeometry, noteButtonTypes } from "../data/judgementGeometry";
 import { hasContinuousNoteGeometry } from "../chart/noteGeometry";
 import { isSlideGestureNode, slideFlickJudgeNoteType, slideGestureAfterType } from "../chart/slideFlickNodes";
 
@@ -401,6 +401,7 @@ export class InGameOneFrameJudgementController {
         containerId: container.containerId,
         ...container.payload,
         buttonTypes: Object.freeze([...container.payload.buttonTypes]),
+        spanButtonTypes: Object.freeze([...container.payload.spanButtonTypes]),
       }));
     }
 
@@ -503,7 +504,8 @@ export class InGameOneFrameJudgementController {
         isUse: container.inUse,
         payload: container.payload === null
           ? null
-          : { ...container.payload, buttonTypes: [...container.payload.buttonTypes] },
+          : { ...container.payload, buttonTypes: [...container.payload.buttonTypes],
+            spanButtonTypes: [...container.payload.spanButtonTypes] },
       })),
       inUseContainerIds: this.collectOneFrameData().map(
         (container) => container.containerId,
@@ -520,7 +522,8 @@ export class InGameOneFrameJudgementController {
     const judgement: OneFrameJudgementData = Object.freeze({
       noteIndex: request.noteInformation.index,
       ...judgementGeometry(request.noteInformation, request.noteInformation.buttonTypesArray,
-        ownership?.judgementLaneSpan ?? request.noteInformation.laneSpan),
+        ownership?.judgementLaneSpan ?? request.noteInformation.laneSpan,
+        originalJudgementButtons(request, request.phase, ownership, true)),
       noteType: request.noteType,
       phase: request.phase,
       rawResult: 4,
@@ -575,7 +578,8 @@ export class InGameOneFrameJudgementController {
           request.noteInformation.buttonTypesArray);
     const judgement: ManualJudgementData = Object.freeze({
       noteIndex: request.noteInformation.index,
-      ...judgementGeometry(request.noteInformation, buttonTypes, ownership.judgementLaneSpan ?? request.noteInformation.laneSpan),
+      ...judgementGeometry(request.noteInformation, buttonTypes, ownership.judgementLaneSpan ?? request.noteInformation.laneSpan,
+        originalJudgementButtons(request, phase, ownership, false)),
       noteType: request.noteType,
       phase,
       rawResult: request.rawResult,
@@ -655,6 +659,36 @@ export class InGameOneFrameJudgementController {
         : null;
     return validateAutoLiveJudgementRequest(request, ownership);
   }
+}
+
+/**
+ * OneFrameData.buttonTypes where the original's array differs from the judged span:
+ * - Multiple directional front (JudgeNoteType 10): judgeFrontNote packs the hit note's own
+ *   ButtonTypes in manual play, and in auto play the single getEffectButton lane (a left group's
+ *   rightmost member, a right group's leftmost).
+ * - Long multiple directional end (7): NoteLong.judgeAfterNote packs the root's ButtonTypesArray;
+ *   the end's Add members are never appended to it.
+ * - Slide multiple directional end (7): NoteSlide.afterNoteJudge packs the end node's
+ *   ButtonTypesArray, which setupSlideNoteSet extends with the end's Add members.
+ */
+function originalJudgementButtons(request: AutoLiveJudgementRequest | ManualJudgementRequest, phase: string | undefined,
+  ownership: ManualJudgementOwnership | null | undefined, autoPlay: boolean): readonly number[] | undefined {
+  const note = request.noteInformation;
+  if (request.noteType === 7 && phase === "tail" && note.fireNoteType === FrontNoteType.Long) return noteButtonTypes(note);
+  if (request.noteType === 7 && phase === "tail" && ownership?.slidePhase === "tail" && ownership.slideButtonTypes !== null) {
+    return ownership.slideButtonTypes;
+  }
+  if (request.noteType !== 10 || (phase ?? "head") !== "head" || note.fireNoteType !== FrontNoteType.MultipleDirectionalFlick) {
+    return undefined;
+  }
+  if (!autoPlay) return noteButtonTypes(note);
+  const group = ownership?.multipleDirectionalFlickButtonTypes ?? [];
+  const span = ownership?.judgementLaneSpan ?? (group.length === 0 ? undefined
+    : { start: Math.min(...group), end: Math.max(...group) });
+  if (span === undefined) return undefined;
+  const lane = note.gameNoteType === GameNoteType.DirectionalFlickLeft ? span.end : span.start;
+  // A projected lane off the playable 0..6 has no GamePlayButton receiver.
+  return Number.isInteger(lane) && lane >= ButtonType.Button_00_BMS_1P_SC && lane <= ButtonType.Button_06_BMS_1P_06 ? [lane] : [];
 }
 
 function judgementDirectionalCount(request: AutoLiveJudgementRequest | ManualJudgementRequest,
@@ -980,6 +1014,7 @@ function cloneBatch(batch: OneFrameJudgementBatch): OneFrameJudgementBatch {
     entries: batch.entries.map((entry) => ({
       ...entry,
       buttonTypes: [...entry.buttonTypes],
+      spanButtonTypes: [...entry.spanButtonTypes],
     })),
   };
 }
