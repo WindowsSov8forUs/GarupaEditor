@@ -515,7 +515,8 @@ export class InGameManager {
         }
         const committedFrame = framePlan.value.commit();
         if (committedFrame.status !== "ok") return this.latchFault(committedFrame);
-        this.startupDirection?.reflectStageJudgements(batch);
+        // onJudgeNote skips the background's OnJudgeNote during MoveTime (get_isOnMoveTime).
+        if (!this.isMoveTime) this.startupDirection?.reflectStageJudgements(batch);
         if (businessPlan?.status === "ok") this.startupDirection?.reflectLife(businessPlan.value.record.currentLife);
         particleAdvanced ||= particlePlan?.status === "ok";
         firstJudgementBatch = false;
