@@ -1100,7 +1100,7 @@ export function createSimulatorEngine(
         Object.freeze({
           hideCombo: input.runtime.originalLiveSettings.hideCombo,
           hideFastSlow: input.runtime.originalLiveSettings.hideFastSlow,
-          isAutoPlay: input.runtime.mode.isAutoPlay,
+          isAutoLive: input.runtime.mode.isAutoLive,
           allPerfectStatusPresentationEnabled:
             input.runtime.originalLiveSettings.allPerfectStatusDisplayMode,
           scoreCountStop: input.runtime.mode.isDemoPlayMode ? "demo"

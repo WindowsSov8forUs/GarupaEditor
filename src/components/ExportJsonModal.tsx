@@ -116,7 +116,8 @@ export function ExportJsonModal({
           if (tagSearchSeqRef.current !== currentSeq) {
             return;
           }
-          setTagCandidates(Array.isArray(result.tags) ? result.tags : []);
+          if (!result.result) throw new Error(`Bestdori 拒绝了标签搜索（${result.code}）`);
+          setTagCandidates(result.tags);
           setTagCandidatesError("");
         } catch (error) {
           if (tagSearchSeqRef.current !== currentSeq) {

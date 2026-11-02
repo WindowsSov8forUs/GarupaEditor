@@ -1,7 +1,7 @@
-import { usePreparationPending } from "./PagePreparation";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useApplicationResourceUrl } from "../resources/applicationResourceContext";
-import { fetchTestServerMedia, fetchBestdoriFileBlob, resolveBestdoriCommunitySongResourceUrls } from "../services/bestdori/api";
+import { communitySongMediaHostScope, fetchTestServerMedia, fetchBestdoriFileBlob,
+  resolveBestdoriCommunitySongResourceUrls } from "../services/bestdori/api";
 import { appLog } from "../logging/applicationLogger";
 import { originalLoading } from "./originalLoadingState";
 import type { MusicSelectionEntry } from "./musicSelectionData";
@@ -10,8 +10,7 @@ import { getOfficialMusicLibrary } from "../services/officialMusicLibrary";
 /** MusicInfoController: retain the texture until the next queued load finishes. */
 export function useMusicJacket(entry: MusicSelectionEntry | undefined) {
   const fallback = useApplicationResourceUrl("ui.default-cover");
-  const [settled, setSettled] = useState<MusicSelectionEntry>();
-  usePreparationPending(!!entry && settled !== entry);
+  // The list page shows before its jacket: a cover fills in when its queued load finishes.
   const [image, setImage] = useState<{ url: string; title: string }>();
   const session = useRef<{
     disposed: boolean; queue: Promise<void>; urls: Set<string>; decoding: Set<string>;
@@ -41,10 +40,10 @@ export function useMusicJacket(entry: MusicSelectionEntry | undefined) {
     const state = session.current!;
     if (!entry) { state.lastRequest = undefined; return; }
     const key = JSON.stringify([entry.source ?? "bestdori", entry.id,
-      entry.source === "ayachan" ? [entry.cover.hash, entry.cover.url]
+      entry.source === "ayachan" ? [entry.item.cover.hash ?? null, entry.item.cover.url ?? null]
         : entry.source === "official" ? entry.officialSong.jacketSlot : null]);
     const requestKey = JSON.stringify([key, fallback]);
-    if (state.lastRequest === requestKey) { setSettled(entry); return; }
+    if (state.lastRequest === requestKey) return;
     state.lastRequest = requestKey;
     // The original queue is FIFO; selecting again does not cancel older entries.
     state.queue = state.queue.then(async () => {
@@ -65,15 +64,16 @@ export function useMusicJacket(entry: MusicSelectionEntry | undefined) {
             const bytes = await lease.readBytes(entry.officialSong.jacketSlot, "payload");
             blob = new Blob([Uint8Array.from(bytes)], { type: "image/png" });
           } else if (entry.source === "ayachan") {
-            if (!entry.cover.url) throw new Error("Ayachan song has no cover URL");
-            const bytes = await fetchTestServerMedia(entry.cover.url);
+            if (!entry.item.cover.url) throw new Error("Ayachan song has no cover URL");
+            const bytes = await fetchTestServerMedia(entry.item.cover.url);
             blob = new Blob([new Uint8Array(bytes)]);
           } else {
-            const resources = entry.song.type === "osu" ? undefined
-              : await resolveBestdoriCommunitySongResourceUrls(entry.song);
+            const resources = await resolveBestdoriCommunitySongResourceUrls(entry.post.song);
             if (state.disposed) return;
             if (!resources?.coverUrl) throw new Error("Community song has no cover URL");
-            blob = await fetchBestdoriFileBlob(resources.coverUrl, "image/png", "选曲封面");
+            const hostScope = communitySongMediaHostScope(resources.coverUrl);
+            if (hostScope === null) throw new Error(`社区歌曲封面不在支持的资源源：${resources.coverUrl}`);
+            blob = await fetchBestdoriFileBlob(resources.coverUrl, "image/png", "选曲封面", hostScope);
           }
         }
         if (state.disposed) return;
@@ -104,7 +104,6 @@ export function useMusicJacket(entry: MusicSelectionEntry | undefined) {
         }
       } finally {
         if (objectUrl) state.decoding.delete(objectUrl);
-        if (!state.disposed) setSettled(entry);
         if (release) { release(); state.releases.delete(release); }
       }
     });

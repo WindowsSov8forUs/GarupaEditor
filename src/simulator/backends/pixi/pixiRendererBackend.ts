@@ -2508,7 +2508,8 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
       timeBackground.tint = 0xffffff;
       timeBackground.zIndex = 20;
       // InGameMoveTime/Time/BG (172x32, pivot TopRight) holds Icon (32x26, Center at -148,-17),
-      // Now (pink, pivot Right at -77,-23) and Max ("/" + total, gray, pivot Left at -76,-23); font 20.
+      // Now (pink, pivot Right at -77,-23) and Max ("/" + total, gray, pivot Left at -76,-23); font 20,
+      // spacingY 8, which NGUI adds to the printed line height before centring it on the pivot.
       const unit = timeRegion.width / 172;
       const right = timeRegion.x + timeRegion.width, top = timeRegion.y;
       const icon = new Sprite({ texture: timeIconTexture, anchor: 0.5, label: "rehearsal-time-icon" });
@@ -2543,8 +2544,8 @@ class PixiInGameControlOverlayOwner implements PixiInGameControlOverlay {
     const slash = formatted.value.indexOf("/");
     this.timeNowText.text = formatted.value.slice(0, slash);
     this.timeMaxText.text = formatted.value.slice(slash);
-    layoutNguiText(this.timeNowText, 1, 0.5);
-    layoutNguiText(this.timeMaxText, 0, 0.5);
+    layoutNguiText(this.timeNowText, 1, 0.5, REHEARSAL_TIME_LABEL_SPACING_Y);
+    layoutNguiText(this.timeMaxText, 0, 0.5, REHEARSAL_TIME_LABEL_SPACING_Y);
     this.applyAvailability();
     return ok(undefined);
   }
@@ -5132,6 +5133,8 @@ function createEvidenceMeshData(
   };
 }
 
+/** InGameMoveTime/Time/BG/Now and Max UILabel mSpacingY. */
+const REHEARSAL_TIME_LABEL_SPACING_Y = 8;
 const frozenIndexBuffers = new WeakMap<readonly number[], Uint32Array>();
 
 /** Index data for Pixi; the frozen strip topologies are converted once and shared. */

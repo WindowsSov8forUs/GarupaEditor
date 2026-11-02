@@ -84,7 +84,6 @@ export interface SimulatorWholeEngineReplayFactory {
 export interface PortableReplaySimulatorEngine extends SimulatorEngine, SimulatorResultPresentationEngine {
   moveTime(direction: SimulatorMoveTimeDirection): Promise<SimulatorResult<SimulatorMoveTimeReceipt>>;
   retrySession(): Promise<SimulatorResult<void>>;
-  replayResult(): Promise<SimulatorResult<void>>;
   publishPauseControlState(snapshot: PauseControlSceneSnapshot): SimulatorResult<void>;
   getTimelineControlState(): SimulatorResult<SimulatorTimelineControlState>;
   resumeFromMoveTime(): SimulatorResult<void>;
@@ -232,13 +231,10 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     return typeof active.showResult === "function" ? active.showResult(record)
       : rejected("timeline.result.visual-owner-unavailable", "The active production generation must own its result presentation.");
   }
-  private resultReplayRequested = false;
   advanceResult(deltaSeconds: number, input: ManualInputFrame | null): SimulatorResult<"stay" | "exit" | "replay"> {
     const active = this.active as SimulatorEngine & Partial<SimulatorResultPresentationEngine>;
-    const result = typeof active.advanceResult === "function" ? active.advanceResult(deltaSeconds, input)
+    return typeof active.advanceResult === "function" ? active.advanceResult(deltaSeconds, input)
       : rejected("timeline.result.visual-owner-unavailable", "The active production generation must own its result presentation.");
-    if (result.status === "ok" && result.value === "replay") this.resultReplayRequested = true;
-    return result;
   }
   publishPauseControlState(snapshot: PauseControlSceneSnapshot): SimulatorResult<void> {
     const active = this.active as SimulatorEngine & Partial<PauseControlVisualEngine>;
@@ -358,16 +354,7 @@ class PortableReplaySimulatorEngineHost implements PortableReplaySimulatorEngine
     return this.replaceSession();
   }
 
-  async replayResult(): Promise<SimulatorResult<void>> {
-    const available = this.available<void>();
-    if (available !== null) return available;
-    if (!this.resultReplayRequested) return rejected("timeline.result.replay-without-decision",
-      "Result replay requires a released result button and completed decision sound.");
-    this.resultReplayRequested = false;
-    return this.replaceSession();
-  }
-
-  /** Pause Retry and result replay share resource reuse and fresh generation ownership. */
+  /** Pause Retry reuses resources under a fresh generation. */
   private async replaceSession(): Promise<SimulatorResult<void>> {
     const visual = setMoveTimeVisualState(this.active, true);
     if (visual.status !== "ok") return visual;

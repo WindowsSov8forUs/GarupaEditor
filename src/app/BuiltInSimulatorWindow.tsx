@@ -27,7 +27,7 @@ import {
 } from "./simulator/transportContracts";
 import {
   isMobileRuntime,
-  navigateBackToEditor,
+  leaveMobileSimulatorRoute,
   readMobileRoutePayload,
   removeMobileRoutePayload,
   setMobileSimulatorImmersive,
@@ -59,10 +59,11 @@ function BuiltInSimulatorWindow() {
   const mobile = isMobileRuntime();
 
   useEffect(() => { loading.report("module"); }, [loading]);
+  // Only a transport failure keeps this window for its overlay; a rejected or closed launch leaves
+  // the host at once, so presenting it would only flash an empty window over the opener.
   useEffect(() => {
-    if (transportFailure !== null || launchState.phase === "rejected" || launchState.phase === "closing" ||
-        launchState.phase === "closed" || launchState.phase === "disposed") loading.finish();
-  }, [loading, launchState.phase, transportFailure]);
+    if (transportFailure !== null) loading.finish();
+  }, [loading, transportFailure]);
 
   useEffect(() => {
     if (!mobile) return;
@@ -193,7 +194,7 @@ function BuiltInSimulatorWindow() {
         },
         async leaveHost() {
           await flushLogs();
-          if (mobile) navigateBackToEditor();
+          if (mobile) leaveMobileSimulatorRoute();
           else await getCurrentWebviewWindow().close();
         },
       },
@@ -223,10 +224,11 @@ function BuiltInSimulatorWindow() {
     await emit(SIMULATOR_WINDOW_CLOSED_EVENT, {
       requestId,
       status: transportFailure === null ? "closed" : "rejected",
+      reason: transportFailure === null ? "user-closed" : null,
       capability: transportFailure === null ? null : "app.simulator.transport-failed",
       boundary: transportFailure,
     });
-    if (mobile) navigateBackToEditor();
+    if (mobile) leaveMobileSimulatorRoute();
     else await getCurrentWebviewWindow().close();
   }, [mobile, requestId, transportFailure]);
 

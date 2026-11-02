@@ -19,47 +19,20 @@ import {
   BESTDORI_ASSET_SERVERS,
   fetchBestdoriFileBlob,
   fetchBestdoriJson,
+  fetchBestdoriSongIndex,
+  type BestdoriSongIndex,
   type BestdoriAssetFamily,
   type BestdoriAssetServer,
 } from "../../services/bestdori/api";
-
-interface BestdoriInfoEntry {
-  readonly assetBundleName?: unknown;
-  readonly skinName?: unknown;
-}
-
-interface BestdoriAssetsInfo {
-  readonly thumb?: { readonly limitedskin?: unknown };
-  readonly tutorial?: unknown;
-  readonly ingameskin?: {
-    readonly noteskin?: Record<string, unknown>;
-    readonly fieldskin?: Record<string, unknown>;
-    readonly bgskin?: Record<string, unknown>;
-    readonly judgeskin?: Record<string, unknown>;
-    readonly tapeffect?: Record<string, unknown>;
-    readonly stageskin?: Record<string, unknown>;
-  };
-  readonly sound?: Record<string, unknown> & {
-    readonly tapseskin?: Record<string, unknown>;
-    readonly common?: unknown;
-  };
-  readonly musicjacket?: Record<string, unknown>;
-  readonly movie?: {
-    readonly mv?: Record<string, unknown>;
-  };
-}
-
-interface BestdoriSongCatalogEntry {
-  readonly jacketImage?: unknown;
-  readonly musicTitle?: unknown;
-}
+import { explorerFolder, parseBestdoriExplorerInfo, parseBestdoriSkinNames, type BestdoriExplorerFolder,
+  type BestdoriSkinName } from "../../services/bestdori/explorerParsing";
 
 interface BestdoriNames {
-  readonly note: Record<string, BestdoriInfoEntry>;
-  readonly directional: Record<string, BestdoriInfoEntry>;
-  readonly field: Record<string, BestdoriInfoEntry>;
-  readonly effect: Record<string, BestdoriInfoEntry>;
-  readonly background: Record<string, BestdoriInfoEntry>;
+  readonly note: Record<string, BestdoriSkinName>;
+  readonly directional: Record<string, BestdoriSkinName>;
+  readonly field: Record<string, BestdoriSkinName>;
+  readonly effect: Record<string, BestdoriSkinName>;
+  readonly background: Record<string, BestdoriSkinName>;
 }
 
 export function createBestdoriNetworkMediaDescriptor(input: {
@@ -299,10 +272,10 @@ async function loadBestdoriNetworkResourceDescriptors(previous: ResourceCatalogS
 }> {
   const [assets, names, songResult] = await Promise.all([
     Promise.allSettled(BESTDORI_ASSET_SERVERS.map((server) =>
-      fetchBestdoriJson<BestdoriAssetsInfo>(`/api/explorer/${server}/assets/_info.json`, `bestdori ${server} assets info`))),
+      fetchBestdoriJson<unknown>(`/api/explorer/${server}/assets/_info.json`, `bestdori ${server} assets info`)
+        .then(value => parseBestdoriExplorerInfo(value)))),
     loadNames(),
-    Promise.allSettled([fetchBestdoriJson<Record<string, BestdoriSongCatalogEntry>>(
-      "/api/songs/all.8.json", "bestdori complete song media catalog")]),
+    Promise.allSettled([fetchBestdoriSongIndex().then(index => index.value)]),
   ]);
   const refreshFailures: Record<string, string> = {};
   const song = songResult[0]!;
@@ -320,19 +293,19 @@ async function loadBestdoriNetworkResourceDescriptors(previous: ResourceCatalogS
       continue;
     }
     const info = result.value;
-    collect(resources, server, "noteskin", info.ingameskin?.noteskin, names, observedAt);
-    collect(resources, server, "fieldskin", info.ingameskin?.fieldskin, names, observedAt);
-    collect(resources, server, "bgskin", info.ingameskin?.bgskin, names, observedAt);
-    collect(resources, server, "judgeskin", info.ingameskin?.judgeskin, names, observedAt);
-    collect(resources, server, "tapeffect", info.ingameskin?.tapeffect, names, observedAt);
-    collect(resources, server, "stageskin", info.ingameskin?.stageskin, names, observedAt);
-    collect(resources, server, "tapseskin", info.sound?.tapseskin, names, observedAt);
-    collect(resources, server, "bgm", directBgmPackages(info.sound), names, observedAt);
-    collect(resources, server, "musicjacket", info.musicjacket, names, observedAt);
-    collect(resources, server, "movie-mv", info.movie?.mv, names, observedAt);
-    if (info.sound?.common !== undefined) resources.push(commonSoundDescriptor(server, observedAt));
+    collect(resources, server, "noteskin", explorerFolder(info, "ingameskin", "noteskin"), names, observedAt);
+    collect(resources, server, "fieldskin", explorerFolder(info, "ingameskin", "fieldskin"), names, observedAt);
+    collect(resources, server, "bgskin", explorerFolder(info, "ingameskin", "bgskin"), names, observedAt);
+    collect(resources, server, "judgeskin", explorerFolder(info, "ingameskin", "judgeskin"), names, observedAt);
+    collect(resources, server, "tapeffect", explorerFolder(info, "ingameskin", "tapeffect"), names, observedAt);
+    collect(resources, server, "stageskin", explorerFolder(info, "ingameskin", "stageskin"), names, observedAt);
+    collect(resources, server, "tapseskin", explorerFolder(info, "sound", "tapseskin"), names, observedAt);
+    collect(resources, server, "bgm", directBgmPackages(explorerFolder(info, "sound")), names, observedAt);
+    collect(resources, server, "musicjacket", explorerFolder(info, "musicjacket"), names, observedAt);
+    collect(resources, server, "movie-mv", explorerFolder(info, "movie", "mv"), names, observedAt);
+    if (explorerFolder(info, "sound")?.common !== undefined) resources.push(commonSoundDescriptor(server, observedAt));
     if (info.tutorial !== undefined) resources.push(tutorialDescriptor(server, observedAt));
-    if (info.thumb?.limitedskin !== undefined) resources.push(limitedSkinThumbnailDescriptor(server, observedAt));
+    if (explorerFolder(info, "thumb")?.limitedskin !== undefined) resources.push(limitedSkinThumbnailDescriptor(server, observedAt));
     if (song.status === "fulfilled") collectSongMedia(resources, server, index, song.value, info, observedAt);
     else {
       refreshFailures[`${server}/musicjacket`] = String(song.reason);
@@ -397,8 +370,8 @@ function collectSongMedia(
   output: NetworkResourceDescriptor[],
   server: BestdoriAssetServer,
   serverIndex: number,
-  songs: Record<string, BestdoriSongCatalogEntry>,
-  info: BestdoriAssetsInfo,
+  songs: BestdoriSongIndex,
+  info: BestdoriExplorerFolder,
   observedAt: string,
 ): void {
   for (const [songIdText, song] of Object.entries(songs)) {
@@ -407,7 +380,7 @@ function collectSongMedia(
     if (!Number.isSafeInteger(songId) || songId < 1) continue;
     const title = localizedString(song.musicTitle, serverIndex) ?? `Song ${songId}`;
     const bgmId = `bgm${String(songId).padStart(3, "0")}`;
-    if (info.sound?.[bgmId] !== undefined) {
+    if (explorerFolder(info, "sound")?.[bgmId] !== undefined) {
       const logicalPath = `sound/${bgmId}/${bgmId}.mp3`;
       const descriptor = createBestdoriNetworkMediaDescriptor({
         server,
@@ -422,7 +395,7 @@ function collectSongMedia(
     const jacket = lastSafeAssetSegment(song.jacketImage);
     if (jacket === null) continue;
     const folder = `musicjacket${String(Math.ceil(songId / 10) * 10).padStart(2, "0")}`;
-    if (info.musicjacket?.[folder] === undefined) continue;
+    if (explorerFolder(info, "musicjacket")?.[folder] === undefined) continue;
     const file = `assets-star-forassetbundle-startapp-musicjacket-${folder}-${jacket}-jacket.png`;
     const logicalPath = `musicjacket/${folder}/${file}`;
     const descriptor = createBestdoriNetworkMediaDescriptor({
@@ -449,7 +422,7 @@ function lastSafeAssetSegment(value: unknown): string | null {
   return typeof candidate === "string" && /^[A-Za-z0-9._-]+$/.test(candidate) ? candidate : null;
 }
 
-function directBgmPackages(sound: BestdoriAssetsInfo["sound"]): Record<string, unknown> | undefined {
+function directBgmPackages(sound: BestdoriExplorerFolder | undefined): Record<string, unknown> | undefined {
   if (sound === undefined) return undefined;
   const output: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(sound)) {
@@ -532,11 +505,8 @@ function tutorialDescriptor(server: BestdoriAssetServer, observedAt: string): Ne
 
 async function loadNames(): Promise<BestdoriNames> {
   const results = await Promise.allSettled([
-    fetchBestdoriJson<Record<string, BestdoriInfoEntry>>("/api/skin/notes.all.3.json", "bestdori note skin names"),
-    fetchBestdoriJson<Record<string, BestdoriInfoEntry>>("/api/skin/directionalFlicks.all.3.json", "bestdori directional skin names"),
-    fetchBestdoriJson<Record<string, BestdoriInfoEntry>>("/api/skin/lanes.all.3.json", "bestdori field skin names"),
-    fetchBestdoriJson<Record<string, BestdoriInfoEntry>>("/api/skin/effects.all.3.json", "bestdori effect skin names"),
-    fetchBestdoriJson<Record<string, BestdoriInfoEntry>>("/api/skin/backgrounds.all.3.json", "bestdori background names"),
+    ...(["notes", "directionalFlicks", "lanes", "effects", "backgrounds"] as const).map(kind =>
+      fetchBestdoriJson<unknown>(`/api/skin/${kind}.all.3.json`, `bestdori ${kind} skin names`).then(value => parseBestdoriSkinNames(value))),
   ]);
   const keys = ["note", "directional", "field", "effect", "background"] as const;
   return Object.fromEntries(results.map((result, index) => {
@@ -562,8 +532,8 @@ function titleFor(
           ? (nativeId.startsWith("directionalflick") ? names.directional : names.effect)
           : {};
   for (const entry of Object.values(candidates)) {
-    if (entry?.assetBundleName !== nativeId || !Array.isArray(entry.skinName)) continue;
-    const name = entry.skinName.find((value): value is string => typeof value === "string" && value.trim().length > 0);
+    if (entry.assetBundleName !== nativeId) continue;
+    const name = entry.skinName.find((value): value is string => value !== null && value.trim().length > 0);
     if (name !== undefined) return name.trim();
   }
   return nativeId;

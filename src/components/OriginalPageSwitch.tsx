@@ -13,9 +13,11 @@ import "./OriginalPageSwitch.css";
 
 type Page = { logicalId: string; pageId: string; title: string; section: string; showPageBack: boolean; content: ReactNode };
 /** Prepare offscreen, then run each page's entry/exit only while presented. */
-export function OriginalPageSwitch({ workspaceReady = true, open, title, section = "歌曲", pageId = "song", pageKey = pageId, onBack, onWorkspaceBack,
+export function OriginalPageSwitch({ workspaceReady = true, open, title, section = "歌曲", pageId = "song", pageKey = pageId, stackPageKeys = [], onBack, onWorkspaceBack,
   showPageBack = true, onOpenMenu, menuOpen, onPageShown, onRestorePage, children, page }: {
   workspaceReady?: boolean; open: boolean; title: string; onBack(): void; onOpenMenu(): void; menuOpen: boolean;
+  /** Pages still below the requested one: they stay mounted and prepared, as ScreenManager keeps them. */
+  stackPageKeys?: readonly string[];
   section?: string; pageId?: string; pageKey?: string; onWorkspaceBack?(): void; showPageBack?: boolean;
   onRestorePage?(pageId: string | null, pageKey?: string | null): void; onPageShown?(pageId: string | null): void; children: ReactNode; page: ReactNode;
 }) {
@@ -37,6 +39,8 @@ export function OriginalPageSwitch({ workspaceReady = true, open, title, section
   const latest = useRef<Page>({ logicalId: pageId, pageId: pageKey, title, section, showPageBack, content: page });
   latest.current = { logicalId: pageId, pageId: pageKey, title, section, showPageBack, content: page };
   const retained = useRef(slots); retained.current = slots;
+  const stacked = useRef(stackPageKeys); stacked.current = stackPageKeys;
+  const kept = (id: string) => id === requested || id === visible.current || stacked.current.includes(id);
   const returnFocus = useRef<{ node: HTMLElement; keyboard: boolean } | null>(null);
   const waiting = requested !== displayed;
   const busy = waiting || animating;
@@ -56,8 +60,8 @@ export function OriginalPageSwitch({ workspaceReady = true, open, title, section
   useLayoutEffect(() => {
     forward.current = !backRequested.current;
     backRequested.current = false;
-    setSlots(previous => previous.filter(slot => slot.pageId === requested || slot.pageId === visible.current));
-    setReady(previous => new Set([...previous].filter(id => id === requested || id === visible.current)));
+    setSlots(previous => previous.filter(slot => kept(slot.pageId)));
+    setReady(previous => new Set([...previous].filter(kept)));
     if (!requested) return;
     if (!returnFocus.current && document.activeElement instanceof HTMLElement) {
       const node = document.activeElement;
@@ -119,8 +123,8 @@ export function OriginalPageSwitch({ workspaceReady = true, open, title, section
           exiting = false; final = false; start = undefined;
         } else {
           setAnimating(false);
-          setSlots(previous => previous.filter(slot => slot.pageId === requested));
-          setReady(previous => new Set([...previous].filter(id => id === requested)));
+          setSlots(previous => previous.filter(slot => slot.pageId === requested || stacked.current.includes(slot.pageId)));
+          setReady(previous => new Set([...previous].filter(id => id === requested || stacked.current.includes(id))));
           if (requested === null) { restoreOriginalFocus(returnFocus.current?.node ?? null, returnFocus.current?.keyboard ?? false); returnFocus.current = null; }
           else nodes.current.get(requested)?.focus({ preventScroll: true });
           return;
@@ -131,7 +135,9 @@ export function OriginalPageSwitch({ workspaceReady = true, open, title, section
     frame = requestAnimationFrame(update);
     return () => { cancelAnimationFrame(frame); const node = nodes.current.get(visible.current); if (node) { node.style.opacity = "1"; node.style.transform = ""; } };
   }, [requested, targetReady, presented]);
-  useLayoutEffect(() => { if (waiting) return originalLoading.hold("network", {}).release; }, [waiting]);
+  // Pushing or popping a page shows no loading layer itself; only a target still preparing waits
+  // under the NetworkIndicator, not the exit animation of the outgoing page.
+  useLayoutEffect(() => { if (waiting && !targetReady) return originalLoading.hold("network", {}).release; }, [waiting, targetReady]);
   useLayoutEffect(() => {
     if (requested === null && displayed === null && !busy) return;
     const key = (event: KeyboardEvent) => {

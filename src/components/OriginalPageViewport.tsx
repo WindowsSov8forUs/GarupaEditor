@@ -4,10 +4,12 @@ import { OriginalPrefabModel, originalRef } from "./originalPrefabModel";
 
 export interface OriginalPageScrollState { value: number }
 
-export function OriginalPageViewport({ model, bindings, children, scrollState, layout }: {
+export function OriginalPageViewport({ model, bindings, children, scrollState, layout, overlays }: {
   model: OriginalPrefabModel; bindings: OriginalViewBindings; children?: ReactNode;
   scrollState?: OriginalPageScrollState;
   layout?: { scroll: string; content: string; bar: string; contentHeight?: number };
+  /** Further views of the page's prefab placed in the same content and scroll range. */
+  overlays?: readonly { model: OriginalPrefabModel; bindings: OriginalViewBindings }[];
 }) {
   const scroll = model.nodeAt(layout?.scroll ?? "Contents/ScrollView"), content = model.nodeAt(layout?.content ?? "Contents/ScrollView/Contents");
   const panel = model.componentAt(scroll.id, "UIPanel")!;
@@ -18,7 +20,7 @@ export function OriginalPageViewport({ model, bindings, children, scrollState, l
   const drag = useRef<{ pointer: number; grab: number } | null>(null);
   const [scrollTop, setScrollTop] = useState(0);
   const contentHeight = useMemo(() => {
-    const bottoms = [...model.components.values()].filter(item =>
+    const bottoms = [{ model, bindings }, ...overlays ?? []].flatMap(({ model, bindings }) => [...model.components.values()].filter(item =>
       model.isWithin(item.node, content.id) && model.isActive(item.node) && !bindings.omit?.has(item.id))
       .flatMap(item => {
         if (["UISprite", "UILabel", "UITexture"].includes(item.kind)) {
@@ -31,9 +33,9 @@ export function OriginalPageViewport({ model, bindings, children, scrollState, l
         const lastRow = Math.floor((count - 1) / item.data.columnCount);
         const height = bindings.radios?.[item.id]?.labelHeight ?? 100;
         return [-start.y + (lastRow * item.data.heightMargin + height / 2) * Math.abs(start.scaleY) - y];
-      });
+      }));
     return Math.max(clip.w, layout?.contentHeight ?? 0, ...bottoms);
-  }, [model, bindings.omit, bindings.radios, content.id, clip.w, y, layout?.contentHeight]);
+  }, [model, bindings.omit, bindings.radios, overlays, content.id, clip.w, y, layout?.contentHeight]);
   const maximum = Math.max(0, contentHeight - clip.w);
   useLayoutEffect(() => {
     if (viewport.current && scrollState) viewport.current.scrollTop = scrollState.value;
@@ -85,6 +87,7 @@ export function OriginalPageViewport({ model, bindings, children, scrollState, l
       <div style={{ position: "relative", width: clip.z, height: contentHeight }}>
         <div className="original-prefab-origin" style={{ left: -x, top: -y }}>
           <OriginalPrefabView model={model} root={content.id} bindings={bindings} />
+          {overlays?.map((overlay, index) => <OriginalPrefabView key={index} model={overlay.model} root={content.id} bindings={overlay.bindings} />)}
           {children}
         </div>
       </div>

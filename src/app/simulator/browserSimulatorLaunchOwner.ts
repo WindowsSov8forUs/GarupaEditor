@@ -1,6 +1,7 @@
 import { appLog } from "../../logging/applicationLogger";
 import type { ResourceConsumerLease } from "../../resources/contracts";
 import type {
+  SimulatorModuleCloseReason,
   SimulatorModuleCloseReport,
   SimulatorModuleLaunchRequest,
   SimulatorModuleLaunchResult,
@@ -59,6 +60,7 @@ export interface BrowserSimulatorLaunchOwnerDependencies {
   launch(request: SimulatorModuleLaunchRequest): Promise<SimulatorModuleLaunchResult>;
   publishClosed(input: {
     readonly status: "closed" | "rejected";
+    readonly reason: SimulatorModuleCloseReason | null;
     readonly capability: string | null;
     readonly boundary: string | null;
   }): Promise<void>;
@@ -258,6 +260,7 @@ export class BrowserSimulatorLaunchOwner {
     if (report.failure !== null) {
       await this.publishClosedOnce({
         status: "rejected",
+        reason: null,
         capability: report.failure.capability,
         boundary: report.failure.boundary,
       });
@@ -269,7 +272,7 @@ export class BrowserSimulatorLaunchOwner {
       await this.leaveHostOnce();
       return;
     }
-    await this.publishClosedOnce({ status: "closed", capability: null, boundary: null });
+    await this.publishClosedOnce({ status: "closed", reason: report.reason, capability: null, boundary: null });
     await this.cleanup();
     this.publish("closed", null);
     await this.leaveHostOnce();
@@ -279,7 +282,7 @@ export class BrowserSimulatorLaunchOwner {
     if (this.terminal) return;
     this.terminal = true;
     this.publish("closing", null);
-    await this.publishClosedOnce({ status: "closed", capability: null, boundary: null });
+    await this.publishClosedOnce({ status: "closed", reason: "user-closed", capability: null, boundary: null });
     await this.cleanup();
     this.publish("closed", null);
     await this.leaveHostOnce();
@@ -291,6 +294,7 @@ export class BrowserSimulatorLaunchOwner {
     const failure = normalizeFailure(error);
     await this.publishClosedOnce({
       status: "rejected",
+      reason: null,
       capability: failure.capability,
       boundary: failure.boundary,
     });
@@ -301,6 +305,7 @@ export class BrowserSimulatorLaunchOwner {
 
   private async publishClosedOnce(input: {
     readonly status: "closed" | "rejected";
+    readonly reason: SimulatorModuleCloseReason | null;
     readonly capability: string | null;
     readonly boundary: string | null;
   }): Promise<void> {

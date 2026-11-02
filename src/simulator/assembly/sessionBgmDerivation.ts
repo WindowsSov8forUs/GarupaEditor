@@ -2,6 +2,7 @@ import type {
   AudioResourcePreflightAdapter,
   AudioSessionBgmResourceProfile,
 } from "../backends/audioContracts";
+import { inspectAudioSourceFormat } from "../backends/audio/audioSourceFormat";
 import { sha256UpperHexAsync } from "../backends/resources/sha256";
 import {
   rejected,
@@ -35,8 +36,17 @@ export async function deriveSessionBgmResource(
     );
   }
   const bytes = Uint8Array.from(sourceBytes);
-  const mp3 = inspectMp3FirstFrame(bytes);
-  if (mp3.status === "rejected") return mp3;
+  // MP3 keeps its strict first-frame check; other supported containers declare their own format.
+  const mp3 = isMp3Candidate(bytes) ? inspectMp3FirstFrame(bytes) : null;
+  if (mp3?.status === "rejected") return mp3;
+  const source = inspectAudioSourceFormat(bytes);
+  if (source === null) {
+    return rejected(
+      "resource-decode",
+      "simulator.audio.unsupported-bgm-source",
+      "Session BGM must be MP3, WAV, Ogg Vorbis/Opus or audio-only MP4/AAC.",
+    );
+  }
 
   let decoded;
   try {
@@ -58,15 +68,16 @@ export async function deriveSessionBgmResource(
   const metadata = decoded.value;
   if (
     metadata === null || typeof metadata !== "object" ||
-    metadata.codec !== "mp3" ||
-    metadata.sampleRate !== mp3.value.sampleRate ||
-    metadata.channels !== mp3.value.channels ||
+    metadata.codec !== source.codec ||
+    metadata.sampleRate !== source.sampleRate ||
+    (metadata.channels !== 1 && metadata.channels !== 2) ||
+    (source.channels !== null && metadata.channels !== source.channels) ||
     !Number.isSafeInteger(metadata.sampleFrames) || metadata.sampleFrames <= 0
   ) {
     return rejected(
       "resource-decode",
-      "simulator.audio.bgm-mp3-decoded-metadata-mismatch",
-      "Decoded codec, sample rate, channels and positive sample frames must agree with the validated MPEG Layer III first frame.",
+      "simulator.audio.bgm-decoded-metadata-mismatch",
+      "Decoded codec, sample rate, mono/stereo channels and positive sample frames must agree with the declared source format.",
     );
   }
   const durationSeconds = Number((metadata.sampleFrames / metadata.sampleRate).toFixed(6));
@@ -87,10 +98,10 @@ export async function deriveSessionBgmResource(
     cue,
     byteLength: bytes.byteLength,
     sha256,
-    mime: "audio/mpeg",
-    codec: "mp3",
+    mime: source.mime,
+    codec: source.codec,
     sampleRate: metadata.sampleRate,
-    channels: metadata.channels,
+    channels: metadata.channels as 1 | 2,
     durationSeconds,
     sampleFrames: metadata.sampleFrames,
     loop: null,
@@ -155,6 +166,12 @@ export function inspectMp3FirstFrame(
     sampleRate: sampleRates[sampleRateIndex]!,
     channels: channelMode === 3 ? 1 as const : 2 as const,
   }));
+}
+
+/** An ID3v2 tag or an MPEG audio frame sync marks bytes that must pass the strict MP3 check. */
+function isMp3Candidate(bytes: Uint8Array): boolean {
+  return (bytes[0] === 0x49 && bytes[1] === 0x44 && bytes[2] === 0x33) ||
+    (bytes[0] === 0xff && (bytes[1]! & 0xe0) === 0xe0);
 }
 
 function invalidMp3(boundary: string): SimulatorAssemblyResult<never> {

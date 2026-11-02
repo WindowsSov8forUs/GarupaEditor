@@ -264,10 +264,56 @@ struct BestdoriAuthState {
     user_me: Mutex<Option<BestdoriUserMeResponse>>,
 }
 
-#[derive(Deserialize)]
-struct BestdoriLoginResponse {
-    result: bool,
-    code: Option<serde_json::Value>,
+/// The account responses as the Bestdori front end reads them. /api/user/login answers
+/// {result:true} or {result:false, code}; /api/user/me answers the signed-in account
+/// (username, nickname, titles, email, messageCount) or {result:false, code} (LOGIN_REQUIRED).
+/// nickname, titles and email are null for an account without them, as for post authors.
+fn bestdori_account_object(bytes: &[u8], label: &str) -> Result<serde_json::Map<String, serde_json::Value>, String> {
+    match serde_json::from_slice::<serde_json::Value>(bytes) {
+        Ok(serde_json::Value::Object(object)) => Ok(object),
+        Ok(_) => Err(format!("{label} 响应不是对象")),
+        Err(error) => Err(format!("{label} 响应不是 JSON：{error}")),
+    }
+}
+fn bestdori_account_result(object: &serde_json::Map<String, serde_json::Value>, label: &str) -> Result<Result<(), String>, String> {
+    match object.get("result") {
+        Some(serde_json::Value::Bool(true)) => Ok(Ok(())),
+        Some(serde_json::Value::Bool(false)) => match object.get("code") {
+            Some(serde_json::Value::String(code)) => Ok(Err(code.clone())),
+            _ => Err(format!("{label} 响应字段 code 不符合数据模型：应为字符串")),
+        },
+        _ => Err(format!("{label} 响应字段 result 不符合数据模型：应为布尔值")),
+    }
+}
+fn parse_bestdori_login(bytes: &[u8]) -> Result<Result<(), String>, String> {
+    bestdori_account_result(&bestdori_account_object(bytes, "bestdori login")?, "bestdori login")
+}
+fn parse_bestdori_user_me(bytes: &[u8]) -> Result<BestdoriUserMeResponse, String> {
+    let label = "bestdori me";
+    let object = bestdori_account_object(bytes, label)?;
+    let field = |name: &str, expected: &str| format!("{label} 响应字段 {name} 不符合数据模型：应为{expected}");
+    if bestdori_account_result(&object, label)?.is_err() {
+        return Ok(BestdoriUserMeResponse { result: false, username: None, nickname: None, titles: Vec::new(), email: None, message_count: None });
+    }
+    let nullable_text = |name: &str| match object.get(name) {
+        None | Some(serde_json::Value::Null) => Ok(None),
+        Some(serde_json::Value::String(text)) => Ok(Some(text.clone())),
+        Some(_) => Err(field(name, "字符串或 null")),
+    };
+    let username = match object.get("username") {
+        Some(serde_json::Value::String(text)) => text.clone(),
+        _ => return Err(field("username", "字符串")),
+    };
+    let titles = match object.get("titles") {
+        None | Some(serde_json::Value::Null) => Vec::new(),
+        Some(value) => serde_json::from_value::<Vec<BestdoriUserTitle>>(value.clone()).map_err(|_| field("titles", "称号数组或 null"))?,
+    };
+    let message_count = match object.get("messageCount") {
+        None | Some(serde_json::Value::Null) => None,
+        Some(value) => Some(value.as_i64().filter(|count| *count >= 0).ok_or_else(|| field("messageCount", "非负整数"))?),
+    };
+    Ok(BestdoriUserMeResponse { result: true, username: Some(username), nickname: nullable_text("nickname")?,
+        titles, email: nullable_text("email")?, message_count })
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -494,13 +540,6 @@ fn normalize_login_value(value: &str, label: &str) -> Result<String, String> {
         return Err(format!("{label} cannot be empty"));
     }
     Ok(trimmed.to_string())
-}
-
-fn format_login_error_code(code: &Option<serde_json::Value>) -> String {
-    match code {
-        Some(value) => value.to_string(),
-        None => "unknown".to_string(),
-    }
 }
 
 fn extract_cookie_header_from_response(response: &reqwest::Response) -> Result<String, String> {
@@ -1040,6 +1079,10 @@ fn normalize_url(value: &str, label: &str) -> Result<String, String> {
 enum RemoteHostScope {
     Bestdori,
     Sonolus,
+    /// Song media of community chart posts hosted outside Bestdori, as the Bestdori front end
+    /// resolves them: osu! covers and audio, and LLSIF assets (card.niconi.co.ni/asset/ now
+    /// redirects to card.ganbaru.by/asset/). Requests carry no Bestdori cookie.
+    CommunityMedia,
 }
 
 impl RemoteHostScope {
@@ -1048,6 +1091,7 @@ impl RemoteHostScope {
         match normalized.as_str() {
             "" | "bestdori" => Ok(Self::Bestdori),
             "sonolus" => Ok(Self::Sonolus),
+            "community-media" => Ok(Self::CommunityMedia),
             _ => Err(format!("unsupported host scope: {normalized}")),
         }
     }
@@ -1056,6 +1100,7 @@ impl RemoteHostScope {
         match self {
             Self::Bestdori => host == "bestdori.com" || host == "www.bestdori.com",
             Self::Sonolus => host == "sonolus.ayachan.fun" || host == "chengdu.sov8.cn" || host == "notgarupa.sov8.cn",
+            Self::CommunityMedia => host == "assets.ppy.sh" || host == "beatconnect.io" || host == "card.ganbaru.by",
         }
     }
 
@@ -1063,6 +1108,7 @@ impl RemoteHostScope {
         match self {
             Self::Bestdori => "bestdori.com",
             Self::Sonolus => "notgarupa.sov8.cn",
+            Self::CommunityMedia => "assets.ppy.sh, beatconnect.io or card.ganbaru.by",
         }
     }
 }
@@ -1412,7 +1458,12 @@ fn build_scoped_request_context(
 ) -> Result<(String, reqwest::Client, Option<String>), String> {
     let normalized_url = normalize_scoped_remote_url(url, label, host_scope)?;
     let client = build_bestdori_http_client()?;
-    let cookie_header = get_bestdori_cookie_header(auth_state)?;
+    // Only Bestdori itself receives the Bestdori login; the test servers and community media
+    // hosts need no login.
+    let cookie_header = match RemoteHostScope::from_optional(host_scope)? {
+        RemoteHostScope::Bestdori => get_bestdori_cookie_header(auth_state)?,
+        RemoteHostScope::Sonolus | RemoteHostScope::CommunityMedia => None,
+    };
     Ok((normalized_url, client, cookie_header))
 }
 
@@ -1522,6 +1573,28 @@ async fn bestdori_fetch_json(
         build_scoped_request_context(&auth_state, &url, "url", host_scope.as_deref())?;
     let bytes = download::get(&client, &normalized_url, cookie_header.as_deref(), || Ok(Vec::new()), |_, _| {}).await?;
     parse_json_value_for_url(&bytes, &normalized_url).map_err(Into::into)
+}
+
+/// A JSON resource revalidated against a stored copy: not-modified (304 to the stored ETag), or
+/// fetched with the body and its new ETag.
+#[derive(Serialize)]
+#[serde(tag = "status", rename_all = "kebab-case")]
+enum ConditionalJson { NotModified, Fetched { etag: Option<String>, body: serde_json::Value } }
+
+#[tauri::command]
+async fn bestdori_fetch_json_conditional(
+    auth_state: tauri::State<'_, BestdoriAuthState>,
+    url: String,
+    host_scope: Option<String>,
+    etag: Option<String>,
+) -> Result<ConditionalJson, download::CommandError> {
+    let (normalized_url, client, cookie_header) =
+        build_scoped_request_context(&auth_state, &url, "url", host_scope.as_deref())?;
+    let mut conditional = download::Conditional { if_none_match: etag.as_deref(), etag: None, not_modified: false };
+    let bytes = download::get_conditional(&client, &normalized_url, cookie_header.as_deref(), &mut conditional, || Ok(Vec::new())).await?;
+    if conditional.not_modified { return Ok(ConditionalJson::NotModified); }
+    let body = parse_json_value_for_url(&bytes, &normalized_url)?;
+    Ok(ConditionalJson::Fetched { etag: conditional.etag, body })
 }
 
 #[tauri::command]
@@ -1666,9 +1739,7 @@ async fn request_bestdori_me(
     cookie_header: &str,
 ) -> Result<BestdoriUserMeResponse, String> {
     let bytes = download_url_bytes(client, BESTDORI_ME_API, Some(cookie_header)).await?;
-    let payload = serde_json::from_slice::<BestdoriUserMeResponse>(&bytes)
-        .map_err(|error| format!("parse bestdori me response failed: {error}"))?;
-    Ok(payload)
+    parse_bestdori_user_me(&bytes)
 }
 
 #[tauri::command]
@@ -1708,13 +1779,8 @@ async fn bestdori_login(
         .bytes()
         .await
         .map_err(|error| format!("read bestdori login response failed: {error}"))?;
-    let login_payload = serde_json::from_slice::<BestdoriLoginResponse>(&login_bytes)
-        .map_err(|error| format!("parse bestdori login response failed: {error}"))?;
-    if !login_payload.result {
-        return Err(format!(
-            "bestdori login failed: code={}",
-            format_login_error_code(&login_payload.code)
-        ));
+    if let Err(code) = parse_bestdori_login(&login_bytes)? {
+        return Err(format!("bestdori login failed: code={code}"));
     }
 
     // Validate the candidate session before replacing the current account.
@@ -1726,26 +1792,38 @@ async fn bestdori_login(
     Ok(me_payload)
 }
 
+/// The stored Bestdori login as the server sees it now. A login the server no longer accepts
+/// (/api/user/me answers result false) is cleared; when the server cannot be reached the stored
+/// account is returned unverified.
+#[derive(Serialize)]
+#[serde(tag = "status", rename_all = "kebab-case")]
+enum BestdoriSession {
+    SignedIn { me: BestdoriUserMeResponse },
+    SignedOut,
+    Expired,
+    Unverified { me: Option<BestdoriUserMeResponse>, error: String },
+}
+
 #[tauri::command]
 async fn bestdori_get_me(
     app: tauri::AppHandle,
     auth_state: tauri::State<'_, BestdoriAuthState>,
-) -> Result<BestdoriUserMeResponse, String> {
-    if let Some(cached_me) = get_bestdori_user_me(&auth_state)? {
-        if cached_me.result {
-            return Ok(cached_me);
-        }
-    }
-    let cookie_header = get_bestdori_cookie_header(&auth_state)?
-        .ok_or_else(|| "bestdori is not logged in".to_string())?;
+) -> Result<BestdoriSession, String> {
+    let Some(cookie_header) = get_bestdori_cookie_header(&auth_state)? else {
+        return Ok(BestdoriSession::SignedOut);
+    };
     let client = build_bestdori_http_client()?;
-    let me_payload = request_bestdori_me(&client, &cookie_header).await?;
+    let me_payload = match request_bestdori_me(&client, &cookie_header).await {
+        Ok(payload) => payload,
+        Err(error) => return Ok(BestdoriSession::Unverified { me: get_bestdori_user_me(&auth_state)?, error }),
+    };
     if !me_payload.result {
         clear_bestdori_auth_state_and_persist(&app, &auth_state)?;
-        return Err("bestdori /api/user/me returned result=false".to_string());
+        application_log::record("warn", "auth.session-expired", serde_json::json!({}));
+        return Ok(BestdoriSession::Expired);
     }
     persist_bestdori_user_me_state(&app, &auth_state, &me_payload)?;
-    Ok(me_payload)
+    Ok(BestdoriSession::SignedIn { me: me_payload })
 }
 
 #[tauri::command]
@@ -2267,6 +2345,7 @@ pub fn run() {
             bestdori_get_me,
             bestdori_logout,
             bestdori_fetch_json,
+            bestdori_fetch_json_conditional,
             bestdori_post_json,
             bestdori_post_multipart_file,
             notgarupa_upload::notgarupa_upload_level,

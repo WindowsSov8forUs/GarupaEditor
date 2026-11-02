@@ -15,14 +15,14 @@ export type EditorSettingsModalProps = {
   playbackMvMode: boolean;
   playbackMvAlphaPercent: number;
   playbackAllPerfectStatusDisplayMode: boolean;
-  windowPresets: Array<{ id: string; label: string }>;
+  windowPresets: Array<{ id: string; label: string; width: number; height: number }>;
   onWindowPresetIdChange: (value: string) => void;
   onPlaybackWindowPresetIdChange: (value: string) => void;
   onPlaybackFpsChange: (value: number) => void;
   onPlaybackMvModeChange: (value: boolean) => void;
   onPlaybackMvAlphaPercentChange: (value: number) => void;
   onPlaybackAllPerfectStatusDisplayModeChange: (value: boolean) => void;
-  onApplyWindowPreset: () => void;
+  onApplyWindowPreset: (presetId: string) => void;
   optionSettings: EditorOptionSettings;
   onApplyOptionSettings: (value: EditorOptionSettings) => boolean | void | Promise<boolean | void>;
 };
@@ -249,7 +249,7 @@ export function EditorSettingsModal({
   };
 
   const applyDisplaySettings = () => {
-    onApplyWindowPreset();
+    onApplyWindowPreset(windowPresetId);
     setChildPage(null);
   };
 

@@ -13,7 +13,9 @@ import { useOriginalSkinSound } from "./useOriginalSkinSound";
 import { OriginalSettingsGuide, type OriginalSettingsGuideKey } from "./OriginalSettingsGuide";
 import { OriginalRhythmAdjustDialog } from "./OriginalRhythmAdjustDialog";
 import { OriginalPrefabModel, ORIGINAL_PREFABS, originalRef, type OriginalData } from "./originalPrefabModel";
-import { buildOriginalSettingsPage, type OriginalSettingsDraft } from "./originalSettingsPage";
+import { buildOriginalSettingsPage, buildOriginalWindowSection, type OriginalSettingsDraft } from "./originalSettingsPage";
+import { isDesktopRuntime } from "../app/mobileRuntime";
+import { DEFAULT_PLAYBACK_WINDOW_PRESET_ID, DEFAULT_WINDOW_PRESET_ID } from "../chartCore";
 import { OriginalPageVisible, type OriginalButtonBinding } from "./OriginalPrefabView";
 import { resolveOriginalPreviewSkin } from "../simulator/public/settings";
 import { OriginalSpecialSkinRow } from "./OriginalSpecialSkinRow";
@@ -26,7 +28,9 @@ const shell = new OriginalPrefabModel(ORIGINAL_PREFABS.rhythmgamesettingdialog!)
 const tabComponents = [...shell.components.values()].filter(item => item.kind === "LockableTabButton")
   .sort((a, b) => a.data.tabIndex - b.data.tabIndex);
 const fromProps = (props: Props): OriginalSettingsDraft => ({ options: props.optionSettings, fps: props.playbackFps,
-  mv: props.playbackMvMode, alpha: props.playbackMvAlphaPercent, combo: props.playbackAllPerfectStatusDisplayMode });
+  mv: props.playbackMvMode, alpha: props.playbackMvAlphaPercent, combo: props.playbackAllPerfectStatusDisplayMode,
+  window: props.windowPresetId, playbackWindow: props.playbackWindowPresetId });
+const windowDefaults = { window: DEFAULT_WINDOW_PRESET_ID, playbackWindow: DEFAULT_PLAYBACK_WINDOW_PRESET_ID };
 
 export function OriginalGameSettingsModal(props: Props) {
   const [draft, setDraft] = useState(() => fromProps(props));
@@ -89,6 +93,9 @@ export function OriginalGameSettingsModal(props: Props) {
   if (props.open && ready) for (let index = 0; index < 4; index++) visitedPages.current.add(index);
   const pages = useMemo(() => Array.from({ length: 4 }, (_, index) =>
     buildOriginalSettingsPage(index, draft, setDraft, setGuide, () => setRhythmAdjust(true))), [draft]);
+  // Window sizes exist only for desktop windows.
+  const windowSection = useMemo(() => isDesktopRuntime()
+    ? buildOriginalWindowSection(draft, setDraft, props.windowPresets, windowDefaults) : undefined, [draft, props.windowPresets]);
   const commitSpecial = (special: SelectedSpecialSkin) => {
     setDraft(old => ({ ...old, options: { ...old.options, simulatorSettings: { ...old.options.simulatorSettings,
       skin: { ...old.options.simulatorSettings.skin, special: hasAppliedSpecialComponent(special) ? special : { kind: "none" } },
@@ -141,6 +148,10 @@ export function OriginalGameSettingsModal(props: Props) {
       if (accepted === false) { finish("Settings application rejected"); return; }
       props.onPlaybackFpsChange(draft.fps); props.onPlaybackMvModeChange(draft.mv);
       props.onPlaybackMvAlphaPercentChange(draft.alpha); props.onPlaybackAllPerfectStatusDisplayModeChange(draft.combo);
+      if (isDesktopRuntime()) {
+        props.onPlaybackWindowPresetIdChange(draft.playbackWindow);
+        if (draft.window !== props.windowPresetId) { props.onWindowPresetIdChange(draft.window); props.onApplyWindowPreset(draft.window); }
+      }
       finish(); setReady(false); props.onClose();
     } catch (error) {
       finish(error);
@@ -185,7 +196,8 @@ export function OriginalGameSettingsModal(props: Props) {
             onKind={setSpecialKind} onSelect={() => { if (enabledSpecial.kind !== "none") setSpecialDialog(enabledSpecial.kind); }}
             onDetail={() => { if (enabledSpecial.kind !== "none") { setSpecialDetail(enabledSpecial); setSpecialDialog("detail"); } }} />}
           draft={draft} visible={index === tab} onError={props.onSettingsError} scrollState={scrollStates.current[index]} />
-          : <OriginalPageViewport model={pages[index]!.model} bindings={pages[index]!.bindings} scrollState={scrollStates.current[index]} />}
+          : <OriginalPageViewport model={pages[index]!.model} bindings={pages[index]!.bindings} scrollState={scrollStates.current[index]}
+            overlays={index === 0 ? windowSection : undefined} />}
       </div></OriginalPageVisible.Provider>)}
     </div>}
   </OriginalAuthoredDialog>

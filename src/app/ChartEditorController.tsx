@@ -21,7 +21,7 @@ import {
   type MouseEvent as ReactMouseEvent,
 } from "react";
 import { emitTo, listen, type UnlistenFn } from "@tauri-apps/api/event";
-import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
+import { getCurrentWebviewWindow, WebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { LogicalSize, getCurrentWindow } from "@tauri-apps/api/window";
 import { ChartEditorLayout } from "../components/editor/ChartEditorLayout";
 import { createEditorDisplayAxis } from "./editorDisplayAxis";
@@ -42,7 +42,8 @@ import { useCanvasPlayfieldBackend } from "./hooks/useCanvasPlayfieldBackend";
 import { useCanvasRenderResources } from "./hooks/useCanvasRenderResources";
 import { useIsStartingApplication, useStartupReadiness } from "./startupReadiness";
 import { useEditorGeometry } from "./hooks/useEditorGeometry";
-import { useEditorIoAndShortcuts } from "./hooks/useEditorIoAndShortcuts";
+import { FULL_LENGTH_UNKNOWN, useEditorIoAndShortcuts } from "./hooks/useEditorIoAndShortcuts";
+import { BESTDORI_SESSION_EXPIRED_MESSAGE } from "../services/bestdori/api";
 import { useEditorSessionCache } from "./hooks/useEditorSessionCache";
 import { useEditorRenderModel } from "./hooks/useEditorRenderModel";
 import {
@@ -102,6 +103,8 @@ import {
   NOTE_SPECS,
   NOTE_TYPES,
   WINDOW_SIZE_PRESETS,
+  DEFAULT_WINDOW_PRESET_ID,
+  DEFAULT_PLAYBACK_WINDOW_PRESET_ID,
   approxEq,
   beatToSeconds,
   buildBpmTimeline,
@@ -165,6 +168,7 @@ import {
   SIMULATOR_WINDOW_PAYLOAD_EVENT,
   SIMULATOR_WINDOW_READY_EVENT,
   type SimulatorWindowClosedPayload,
+  type SimulatorWindowExit,
   type SimulatorWindowReadyPayload,
 } from "./simulator/transportContracts";
 import {
@@ -381,6 +385,13 @@ function routeStatusMessage(rawMessage: string): StatusMessageRoute {
   const message = rawMessage.trim();
   if (message.length <= 0) {
     return { channel: "ignore" };
+  }
+  // The status line is not shown; these notices must reach the user.
+  if (message === BESTDORI_SESSION_EXPIRED_MESSAGE) {
+    return { channel: "dialog", tone: "info", message: "Bestdori 登录已失效，\n请重新登录。" };
+  }
+  if (message.includes(FULL_LENGTH_UNKNOWN)) {
+    return { channel: "dialog", tone: "info", message: "无法确定是否为完整版，\n可在歌曲设定中修改。" };
   }
 
   if (message === "已停止播放。") {
@@ -1207,8 +1218,8 @@ function ChartEditorController() {
   const widthInputEditingRef = useRef(false);
   const slideVibrationInputEditingRef = useRef(false);
 
-  const [windowPresetId, setWindowPresetId] = useState(WINDOW_SIZE_PRESETS[1].id);
-  const [playbackWindowPresetId, setPlaybackWindowPresetId] = useState(WINDOW_SIZE_PRESETS[0].id);
+  const [windowPresetId, setWindowPresetId] = useState(DEFAULT_WINDOW_PRESET_ID);
+  const [playbackWindowPresetId, setPlaybackWindowPresetId] = useState(DEFAULT_PLAYBACK_WINDOW_PRESET_ID);
   const [playbackFps, setPlaybackFps] = useState(60);
   const [playbackMvMode, setPlaybackMvMode] = useState(false);
   const [playbackMvAlphaPercent, setPlaybackMvAlphaPercent] = useState(100);
@@ -3108,7 +3119,6 @@ function ChartEditorController() {
     handleMvUpload,
     handleIllustBackgroundUpload,
     removeIllustBackground,
-    applyWindowPreset,
     applyWindowPresetById,
     applyBestdoriSkinSelection,
     downloadProgress,
@@ -3170,7 +3180,6 @@ function ChartEditorController() {
     sanitizeFileName,
     setIsAppSettingsOpen,
     setIsSkinSettingsOpen,
-    windowPresetId,
     WINDOW_SIZE_PRESETS,
     LogicalSize,
     getCurrentWindow,
@@ -5844,8 +5853,15 @@ function ChartEditorController() {
     updatePreviewLoadingProgress,
   ]);
 
-  const openSimulatorWindow = useCallback(async (mode: SimulatorModeSelection = SIMULATOR_PRE_ADAPTATION_DEFAULTS) => {
+  const openSimulatorWindow = useCallback(async (mode: SimulatorModeSelection = SIMULATOR_PRE_ADAPTATION_DEFAULTS,
+    onExit?: (exit: SimulatorWindowExit) => void) => {
     appLog("info", "editor.window.request", { kind: "openSimulatorWindow", sessionMode: mode.sessionMode, inputMode: mode.inputMode });
+    let exited = false;
+    const exit = (value: SimulatorWindowExit) => {
+      if (exited) return;
+      exited = true;
+      onExit?.(value);
+    };
     let releasePreparation: (() => void) | undefined;
     let readyUnlisten: UnlistenFn | null = null;
     let closedUnlisten: UnlistenFn | null = null;
@@ -5880,11 +5896,16 @@ function ChartEditorController() {
     };
     const fail = (error: unknown) => {
       if (abandoned) return;
+      // The opener's cover and notice settle before the start Loading is released.
+      exit("failed");
       abandon();
       const message = error instanceof Error ? error.message : String(error);
-      setStatusMessage(`播放器窗口启动失败：${message}`);
+      // A caller that owns the exit shows its own notice; the cause belongs in the log.
+      if (onExit) appLog("error", "simulator.window.launch-failed", { message });
+      else setStatusMessage(`播放器窗口启动失败：${message}`);
       if (simulatorWindow !== null) void simulatorWindow.close().catch((closeError: unknown) => {
-        setStatusMessage(`播放器窗口启动失败：${message}；关闭窗口失败：${String(closeError)}`);
+        if (onExit) appLog("error", "simulator.window.close-failed", { message, closeError: String(closeError) });
+        else setStatusMessage(`播放器窗口启动失败：${message}；关闭窗口失败：${String(closeError)}`);
       });
     };
     const publishDescriptor = async () => {
@@ -5905,11 +5926,13 @@ function ChartEditorController() {
       targetUrl.hash = `simulator?request=${encodeURIComponent(requestId)}`;
       closedUnlisten = await listen<SimulatorWindowClosedPayload>(SIMULATOR_WINDOW_CLOSED_EVENT, (event) => {
         if (event.payload?.requestId !== requestId) return;
+        exit(event.payload.status === "rejected" ? "failed" : event.payload.reason === "play-again" ? "play-again" : "leave");
         abandon();
         if (event.payload.status === "rejected") {
           const capability = event.payload.capability ?? "app.simulator.action-unavailable";
           const boundary = event.payload.boundary?.trim() ?? "当前播放器动作不可用，编辑器状态未改变。";
-          setStatusMessage(`播放器未启动或已安全结束：${capability}：${boundary}`);
+          if (onExit) appLog("error", "simulator.window.launch-rejected", { capability, boundary });
+          else setStatusMessage(`播放器未启动或已安全结束：${capability}：${boundary}`);
         }
       });
       if (!isMobileRuntime()) {
@@ -5927,12 +5950,14 @@ function ChartEditorController() {
           visible: false,
           title: `${metadata.title} - playing`,
           width, height, center: true, resizable: false,
+          parent: getCurrentWebviewWindow(),
           url: targetUrl.toString(),
         });
         void simulatorWindow.once("tauri://error", (event) => {
           fail(event?.payload ? JSON.stringify(event.payload) : "播放器窗口创建失败");
         });
-        void simulatorWindow.once("tauri://destroyed", abandon);
+        // Closing the window from the system frame retires the live like the Pause menu.
+        void simulatorWindow.once("tauri://destroyed", () => { exit("leave"); abandon(); });
         timeoutId = window.setTimeout(() => {
           if (readyLabel === null && !abandoned) fail("播放器窗口握手超时，请重试。");
         }, 15000);
@@ -6332,7 +6357,7 @@ function ChartEditorController() {
         bestdoriCatalogStatus,
         formatTypeLabel,
         skinAssets,
-        applyWindowPreset,
+        applyWindowPresetById,
         applyAppOptionSettings,
         setMusicSelectionSource: (musicSelectionSource: EditorOptionSettings["musicSelectionSource"]) =>
           setAppOptionSettings(value => ({ ...value, musicSelectionSource })),

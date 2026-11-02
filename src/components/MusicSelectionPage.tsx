@@ -18,7 +18,7 @@ import { useUiViewport } from "./useUiViewport";
 import { useMusicJacket } from "./useMusicJacket";
 import { MusicSelectionCarousel } from "./musicSelectionCarousel";
 import { musicSelectionLayout, musicCarouselRows, musicSelectionScale } from "./musicSelectionLayout";
-import { loadMusicSelectionCharter, musicPreviewRequest, type MusicPreviewRequest, type MusicSelectionEntry } from "./musicSelectionData";
+import { musicPreviewRequest, type MusicPreviewRequest, type MusicSelectionEntry } from "./musicSelectionData";
 import profile from "../data/originalMusicSelectionProfile.json";
 import detail from "../data/originalSongDetailProfile.json";
 import "./MusicSelectionPage.css";
@@ -105,23 +105,13 @@ const MusicInformation = memo(function MusicInformation({ entry, jacket, onConfi
   jacket: ReturnType<typeof useMusicJacket>;
   entry: MusicSelectionEntry; onConfirm(): void; onImport(): void; busy: boolean; onDifficulty(value: OfficialDifficulty): void;
 }) {
-  const [charterSettled, setCharterSettled] = useState<number>();
-  usePreparationPending(entry.source !== "official" && entry.source !== "ayachan" && charterSettled !== entry.id);
-  const [charter, setCharter] = useState<{ id: number; text: string }>();
-  useEffect(() => {
-    if (entry.source === "ayachan" || entry.source === "official") return;
-    let active = true;
-    const loading = originalLoading.hold("network", {});
-    void loadMusicSelectionCharter(entry.id).then(text => { if (active) setCharter({ id: entry.id, text }); }, failure => {
-      appLog("warn", "music-selection.charter-load-failed", { id: entry.id, error: String(failure) });
-    }).finally(() => { loading.release(); if (active) setCharterSettled(entry.id); });
-    return () => { active = false; loading.release(); };
-  }, [entry.id, entry.source]);
   const ayachan = entry.source === "ayachan";
   const official = entry.source === "official";
   const available = official ? entry.officialSong.available : undefined;
   const separatorModel = useMemo(() => new OriginalPrefabModel(difficultyModel.prefab, { nodes: { 4: { active: !official || !!available?.includes("SPECIAL") } } }), [official, available]);
-  const charterText = official ? "" : ayachan ? entry.author : charter?.id === entry.id ? charter.text : "";
+  // Community posts carry their author in the list response itself; nothing extra is awaited.
+  const charterText = official ? "" : ayachan ? entry.item.author
+    : entry.post.author.nickname?.trim() || entry.post.author.username.trim();
   const idComponents = {
     308: { mText: "ID", mEncoding: false, mAlignment: 1, mPivot: 3, mWidth: idLabelWidth },
     263: { mText: String(entry.id), mEncoding: false, mAlignment: 1, mPivot: 3, mWidth: idLabelWidth },
@@ -502,8 +492,12 @@ export function MusicSelectionPage({ source, onSourceChange: setSource, onLoad, 
   // and re-deciding the playing song keeps it (LoadSampleMusic skips an already playing BgmId).
   const decidedPreview = !entries.length ? null : preview;
   const reportPreview = useRef(onPreview); reportPreview.current = onPreview;
+  // The initial decision follows the selector's Show once its contents exist: a page still
+  // preparing offscreen has not decided anything audible yet.
+  const [shown, setShown] = useState(pageVisible);
+  useEffect(() => { if (pageVisible) setShown(true); }, [pageVisible]);
   // Unmounting for live preparation must not clear the cue (RemoveAllSoundBundle keeps the current one).
-  useEffect(() => { if (decidedPreview !== undefined) reportPreview.current(decidedPreview, busy); }, [decidedPreview, busy]);
+  useEffect(() => { if (shown && decidedPreview !== undefined) reportPreview.current(decidedPreview, busy); }, [shown, decidedPreview, busy]);
   const running = useRef(false), active = useRef(true);
   const releaseLoad = useRef<(() => void) | null>(null);
   useEffect(() => { active.current = true; return () => {

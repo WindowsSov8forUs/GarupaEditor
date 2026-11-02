@@ -1,14 +1,14 @@
 import type { RenderResultHudState } from "../../backends/renderingContracts";
 
 export class ResultHudOwner {
-  constructor(private readonly isAutoPlay: boolean, private readonly hideFastSlow = false) {}
+  constructor(private readonly isAutoLive: boolean, private readonly hideFastSlow = false) {}
 
   createState(
     result: 0 | 1 | 2 | 3 | 4,
     timing: 0 | 1 | 2,
   ): RenderResultHudState {
     return Object.freeze({
-      judgeKey: resolveResultJudgeKey(result, this.isAutoPlay),
+      judgeKey: resolveResultJudgeKey(result, this.isAutoLive),
       timingKey: this.hideFastSlow ? null : timingKeyForJudgeTiming(timing),
     });
   }
@@ -16,9 +16,9 @@ export class ResultHudOwner {
 
 export function resolveResultJudgeKey(
   result: 0 | 1 | 2 | 3 | 4,
-  isAutoPlay: boolean,
+  isAutoLive: boolean,
 ): RenderResultHudState["judgeKey"] {
-  return isAutoPlay
+  return isAutoLive
     ? "judge_auto"
     : (["judge_miss", "judge_bad", "judge_good", "judge_great", "judge_perfect"] as const)[result];
 }

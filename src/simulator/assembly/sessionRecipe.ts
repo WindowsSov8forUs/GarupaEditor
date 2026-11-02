@@ -15,6 +15,7 @@ import {
   simulatorCleanupFailure,
 } from "../public/failures";
 import type {
+  SimulatorModuleCloseReason,
   SimulatorModuleCloseReport,
   SimulatorModuleFailure,
   SimulatorModuleLaunchRequest,
@@ -196,15 +197,8 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
     if (this.resultPresentationActive) {
       const result = this.engine.advanceResult(deltaTimeSeconds, manualFrame);
       if (result.status !== "ok") return rejectedStep(result);
-      if (result.value === "replay") {
-        const replayed = await this.engine.replayResult();
-        if (replayed.status !== "ok") return rejectedStep(replayed);
-        this.resultPresentationActive = false;
-        this.naturalCompletionPresentationActive = false;
-        this.naturalCompletionReadyForResult = false;
-        this.finalSnapshot = null;
-        this.gameOverElapsedSeconds = null;
-      }
+      // もう1回ライブ leaves the result for the same song's live preparation (PushUIScreen 43).
+      if (result.value === "replay") return Object.freeze({ status: "closed" as const, report: this.finish("play-again", null) });
       return result.value === "exit"
         ? Object.freeze({ status: "closed" as const, report: this.finish("completed", null) })
         : Object.freeze({ status: "running" as const });
@@ -367,7 +361,7 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
   }
 
   private finish(
-    reason: "completed" | "game-over" | "user-closed" | "terminal-fault",
+    reason: SimulatorModuleCloseReason,
     failure: SimulatorModuleFailure | null,
   ): SimulatorModuleCloseReport {
     const snapshot = this.finalSnapshot === null ? this.engine.snapshot() : ok(this.finalSnapshot);

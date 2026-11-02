@@ -1,39 +1,97 @@
 import { invokeTauriCommand } from "./bestdori/transport";
 import { appLog } from "../logging/applicationLogger";
+import { checkOfficialMasterShape } from "./officialMasterShape";
 import protocols from "../data/originalOfficialRegionalMasterProtocol.json";
+import masterProtocol from "../data/originalOfficialMasterProtocol.json";
 import type { OfficialServer } from "./officialMusicSources";
 
+/*
+ * Rows of the original master, every ProtoMember the schema lists (originalOfficialMasterProtocol).
+ * protobuf omits default values, so a field absent from a row is 0, "", false or empty; required
+ * marks below are the fields validateOfficialMaster demands.
+ */
+export interface MasterMultiLiveScore {
+  musicId?: number; musicDifficulty?: string; multiLiveDifficultyId?: number; multiLiveDifficultyType?: string;
+  scoreS?: number; scoreA?: number; scoreB?: number; scoreC?: number; scoreSS?: number; scoreSSS?: number;
+}
+export interface MasterMusicAchievement { musicId?: number; achievementType?: string; rewardType?: string; rewardId?: number; quantity?: number }
 export interface MasterSong {
   musicId: number; musicTitle: string; bgmId: string; bgmFile: string; bandId: number;
   jacketImage: string; seq: number; publishedAt: number; closedAt?: number;
   tag: string; musicDataType: string; categorySetId?: number;
   ruby?: string; phonetic?: string; lyricist?: string; composer?: string; arranger?: string; howToGet?: string;
+  description?: string; transitionMethod?: string; transitionId?: number; achievements?: MasterMusicAchievement[];
 }
 export interface MasterDifficulty {
   musicId: number; difficulty: string; playLevel: number; publishedAt?: number;
   enableSpecialNotes?: boolean; notesQuantity?: number;
+  multiLiveScoreMap?: Record<string, MasterMultiLiveScore>;
+  scoreS?: number; scoreA?: number; scoreB?: number; scoreC?: number; scoreSS?: number;
+  /** Nullable<uint>: null when the row sets none. */
+  scoreLevel?: number | null;
 }
 export interface MasterCategory { id: number; seq: number; category: string; categoryName: string; categoryColor?: string; mediumCategoryColor?: string }
-export interface MasterVideo { musicId: number; assetBundleName: string; startAt?: number; endAt?: number; seq?: number; musicStartDelayMilliseconds?: number }
+export interface MasterVideo {
+  musicId: number; assetBundleName: string; startAt?: number; endAt?: number; seq?: number; musicStartDelayMilliseconds?: number;
+  title?: string; thumbAssetBundleName?: string; description?: string;
+}
+export interface MasterBand {
+  bandId: number; bandName: string; resourceId?: number; color?: string; leader?: number;
+  member1?: number; member2?: number; member3?: number; member4?: number;
+  seq?: number; bandType?: string; introductions?: string; phonetic?: string; musicId?: number;
+}
+export interface MasterMusicJacket { musicJacketId?: number; musicId: number; seq: number; jacketImage: string; startAt?: number; endAt?: number }
+export interface MasterMusicVideo3d {
+  musicVideo3dId: number; musicId: number; seq?: number; typeName?: string; startAt?: number; endAt?: number;
+  originalMember1?: number; originalMember2?: number; originalMember3?: number; originalMember4?: number; originalMember5?: number;
+  member1Position?: number; member2Position?: number; member3Position?: number; member4Position?: number; member5Position?: number;
+  backgroundAssetBundleName?: string; backgroundColorId?: number;
+}
+export interface MasterCollaboOriginalMusicPage {
+  collaboOriginalPageId?: number; assetBundleName?: string; ruleSlideBundleName?: string; url?: string; musicIdList?: number[];
+  publishedAt?: number; closedAt?: number; description?: string; shortDescription?: string; label?: string; labelColor?: string;
+  backgroundName?: string; animationName?: string; isDisplaySpecialDifficulty?: boolean;
+}
 export interface OfficialMaster {
   masterMusicList: { entries: MasterSong[] };
   masterMusicDifficultyList: { entries: MasterDifficulty[] };
-  masterBandMap: { entries: Record<string, { bandId: number; bandName: string }> };
+  masterBandMap: { entries: Record<string, MasterBand> };
   masterMusicLargeCategoryDataMap: { entries: Record<string, MasterCategory> };
   masterMusicMediumCategoryDataMap: { entries: Record<string, MasterCategory> };
   masterMusicCategoryInfoMap: { entries: Record<string, { id: number; targetType: string; largeCategoryId: number; mediumCategoryId?: number }> };
-  masterMusicCategoryInfoTargets: { musicCategoryIdList: number[] };
+  masterMusicCategoryInfoTargets: { musicCategoryIdList: number[]; shopCategoryIdList?: number[] };
   masterMusicCategorySetMap: { entries: Record<string, { id: number; musicCategoryInfoIdList: number[] }> };
   masterMusicVideoListMap: { entries: Record<string, { entries: MasterVideo[] }> };
-  masterMusicJacketMap: { entries: Record<string, { entries: { musicId: number; jacketImage: string; seq: number; startAt?: number; endAt?: number }[] }> };
-  masterMusicVideo3dMap: { entries: Record<string, { musicVideo3dId: number; musicId: number; startAt?: number; endAt?: number }> };
+  masterMusicJacketMap: { entries: Record<string, { entries: MasterMusicJacket[] }> };
+  masterMusicVideo3dMap: { entries: Record<string, MasterMusicVideo3d> };
   masterMusicVideo3dIdListMap: { entries: Record<string, { entries: number[] }> };
+  masterCollaboOriginalMusicPageList?: { entries?: MasterCollaboOriginalMusicPage[] };
 }
-export interface OfficialMasterSnapshot { clientVersion: string; dataVersion: string; masterDataVersion: string; master: OfficialMaster }
-interface AppVersion { clientVersion: string; dataVersion: string; masterDataVersion: string; appStatus: string; clientStatus: string }
+export interface OfficialMasterSnapshot {
+  clientVersion: string; dataVersion: string; masterDataVersion: string; master: OfficialMaster;
+  /** Fingerprint of the schema the master was decoded with; absent in stores from before it was kept. */
+  schema?: string;
+}
+/**
+ * The decoding schema for a server (shared schema less its regional omissions). A stored master
+ * decoded with another schema lacks or misreads fields, so it counts as changed.
+ */
+async function schemaFingerprint(server: OfficialServer): Promise<string> {
+  const omissions = (protocols[server] as { omitSchemaFields?: unknown }).omitSchemaFields ?? null;
+  const text = JSON.stringify({ schema: masterProtocol.schema, omissions });
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
+}
+/** AppGetResponse; the fields past the version and status ones are not read here. */
+interface AppVersion {
+  clientVersion: string; dataVersion: string; masterDataVersion: string; appStatus: string; clientStatus: string;
+  schema?: string; gacha?: string; multiLive?: string; starShop?: string; photonAppId?: string;
+  monthlyRankingStatues?: { monthlyRankingId?: number; status?: string }[];
+}
 const versionPattern = /^\d+(?:\.\d+){1,5}$/;
 const masterVersionPattern = /^\d+(?:\.\d+){0,5}$/;
 export function validateOfficialMaster(master: OfficialMaster): void {
+  checkOfficialMasterShape(master, "SuiteMasterGetResponse");
   const fail = (): never => { throw new Error("官方主表结构或关联不完整，保留旧缓存"); };
   if (!master?.masterMusicList?.entries?.length || !Array.isArray(master.masterMusicDifficultyList?.entries)) fail();
   const ids = new Set<number>();
@@ -77,7 +135,11 @@ export async function refreshOfficialMaster(previous?: OfficialMasterSnapshot, s
     try { return await invokeTauriCommand<T>("official_music_request", args); }
     catch (error) { throw new Error(`${server} ${stage}失败：${String(error)}`); }
   };
-  const requestVersion = () => request<AppVersion>({ clientVersion, server }, "主表版本检查");
+  const requestVersion = async () => {
+    const version = await request<AppVersion>({ clientVersion, server }, "主表版本检查");
+    checkOfficialMasterShape(version, "AppGetResponse", "application");
+    return version;
+  };
   let version = await requestVersion();
   if (version.clientVersion !== clientVersion) {
     if (!versionPattern.test(version.clientVersion)) throw new Error("原作返回无效客户端版本");
@@ -93,14 +155,17 @@ export async function refreshOfficialMaster(previous?: OfficialMasterSnapshot, s
     || !versionPattern.test(version.dataVersion) || !masterVersionPattern.test(version.masterDataVersion))
     throw new Error("原作主数据暂不可用或客户端版本不兼容");
   appLog("info", "official.master-version-checked", { server, appStatus: version.appStatus, clientStatus: version.clientStatus, clientVersion, dataVersion: version.dataVersion, masterDataVersion: version.masterDataVersion, previousMasterDataVersion: previous?.masterDataVersion });
-  if (previous && previous.masterDataVersion === version.masterDataVersion && previous.dataVersion === version.dataVersion && previous.clientVersion === clientVersion) {
+  const schema = await schemaFingerprint(server);
+  if (previous && previous.masterDataVersion === version.masterDataVersion && previous.dataVersion === version.dataVersion
+    && previous.clientVersion === clientVersion && previous.schema === schema) {
     validateOfficialMaster(previous.master);
     return { ...previous, clientVersion, dataVersion: version.dataVersion };
   }
+  if (previous && previous.schema !== schema) appLog("info", "official.master-schema-changed", { server, masterDataVersion: version.masterDataVersion });
   const master = await request<OfficialMaster>({
     clientVersion, dataVersion: version.dataVersion, masterVersion: version.masterDataVersion, server,
   }, "主表下载");
   validateOfficialMaster(master);
   appLog("info", "official.master-update-validated", { server, masterDataVersion: version.masterDataVersion, songs: master.masterMusicList.entries.length });
-  return { clientVersion, dataVersion: version.dataVersion, masterDataVersion: version.masterDataVersion, master };
+  return { clientVersion, dataVersion: version.dataVersion, masterDataVersion: version.masterDataVersion, master, schema };
 }

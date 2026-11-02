@@ -1,4 +1,4 @@
-import { fetchBestdoriCommunityPostDetails, searchBestdoriCommunityCharts,
+import { fetchBestdoriCommunityPostDetails, isBestdoriChartPost, searchBestdoriCommunityCharts,
   type BestdoriPostInfo } from "../services/bestdori/api";
 import type { MusicSelectionEntry } from "./musicSelectionData";
 
@@ -23,12 +23,10 @@ export function bestdoriSearchKey(filter: BestdoriMusicFilter): string {
   return JSON.stringify([filter.id.trim(), filter.keyword.trim(), filter.order]);
 }
 const difficulties = ["EASY", "NORMAL", "HARD", "EXPERT", "SPECIAL"] as const;
+/** Text, story and comment posts are not charts; looking one up by id lists nothing. */
 export function bestdoriMusicEntry(post: BestdoriPostInfo, id: number): MusicSelectionEntry | null {
-  if (post.categoryName !== "SELF_POST" || post.categoryId !== "chart" || !post.song ||
-      !Number.isSafeInteger(id) || id <= 0 || !Number.isInteger(post.diff) || !difficulties[post.diff!] ||
-      !Number.isFinite(post.level)) return null;
-  return { id, title: post.title ?? "", artists: post.artists ?? "", difficulty: difficulties[post.diff!]!,
-    level: String(post.level), song: post.song };
+  if (!isBestdoriChartPost(post) || !Number.isSafeInteger(id) || id <= 0) return null;
+  return { id, title: post.title, artists: post.artists, difficulty: difficulties[post.diff], level: String(post.level), post };
 }
 export function matchesBestdoriMusic(entry: MusicSelectionEntry, filter: BestdoriMusicFilter): boolean {
   return entry.artists.toLocaleLowerCase().includes(filter.artist.trim().toLocaleLowerCase()) &&
@@ -41,14 +39,15 @@ export async function fetchBestdoriMusicPage(filter: BestdoriMusicFilter, offset
     if (offset || !/^[1-9]\d*$/.test(filter.id.trim()) || !Number.isSafeInteger(Number(filter.id)))
       return { entries: [], nextOffset: offset, hasMore: false };
     const id = Number(filter.id), response = await fetchBestdoriCommunityPostDetails(id);
-    const entry = response.result && response.post ? bestdoriMusicEntry(response.post, id) : null;
+    // A missing or removed post answers result false: nothing to list.
+    const entry = response.result ? bestdoriMusicEntry(response.post, id) : null;
     return { entries: entry ? [entry] : [], nextOffset: 1, hasMore: false };
   }
   const response = await searchBestdoriCommunityCharts(filter.keyword.trim(), filter.order, offset);
   const entries = response.posts.map(post => bestdoriMusicEntry(post, post.id))
     .filter((entry): entry is MusicSelectionEntry => !!entry);
-  const nextOffset = offset + response.posts.length;
-  return { entries, nextOffset, hasMore: response.posts.length > 0 && nextOffset < response.count };
+  const nextOffset = offset + response.pageLength;
+  return { entries, nextOffset, hasMore: response.pageLength > 0 && nextOffset < response.count };
 }
 
 export interface BestdoriSearchState {

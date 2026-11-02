@@ -346,7 +346,8 @@ type PresentedObject = { readonly plan: NotePresentation; readonly visible: bool
 export interface RenderHudSessionMode {
   readonly hideCombo: boolean;
   readonly hideFastSlow: boolean;
-  readonly isAutoPlay: boolean;
+  /** CE.Result.changeSprite shows judge_auto only for AutoLive (CalculatedData+0x188), not for Demo auto play. */
+  readonly isAutoLive: boolean;
   readonly allPerfectStatusPresentationEnabled: boolean;
   /** Score.AwakeStart: Demo stops the score count at once; Practice prepares ScoreCountStop for MoveTime. */
   readonly scoreCountStop?: "none" | "practice-ready" | "demo";
@@ -354,7 +355,7 @@ export interface RenderHudSessionMode {
 
 const DEFAULT_RENDER_HUD_SESSION_MODE: RenderHudSessionMode = Object.freeze({
   hideCombo: false, hideFastSlow: false,
-  isAutoPlay: false,
+  isAutoLive: false,
   allPerfectStatusPresentationEnabled: true,
 });
 
@@ -396,7 +397,7 @@ export class RenderCommandProducer {
   ) {
     this.scoreCountStopValue = hudSessionMode.scoreCountStop === "demo" ? "demo" : "none";
     this.hud = new InGameHudController(
-      hudSessionMode.isAutoPlay,
+      hudSessionMode.isAutoLive,
       hudSessionMode.allPerfectStatusPresentationEnabled,
       hudSessionMode.hideFastSlow,
     );
@@ -417,7 +418,7 @@ export class RenderCommandProducer {
       snapshot.fault !== null ||
       typeof this.hudSessionMode.hideCombo !== "boolean" ||
       typeof this.hudSessionMode.hideFastSlow !== "boolean" ||
-      typeof this.hudSessionMode.isAutoPlay !== "boolean" ||
+      typeof this.hudSessionMode.isAutoLive !== "boolean" ||
       typeof this.hudSessionMode.allPerfectStatusPresentationEnabled !== "boolean" ||
       !isNonEmpty(this.resources.noteAtlasLogicalAssetId) ||
       !isNonEmpty(this.resources.directionalAtlasLogicalAssetId) ||

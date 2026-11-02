@@ -8,7 +8,10 @@ export interface AutoLiveJudgementData {
   readonly laneSpan: NoteLaneSpan;
   readonly rangeLength: number;
   readonly noteIndex: number;
+  /** OneFrameData.buttonTypes: what the original passes on (stage speakers). */
   readonly buttonTypes: readonly number[];
+  /** Fixed lanes of the judged span, for GarupaEditor's particle routing. */
+  readonly spanButtonTypes: readonly number[];
   readonly noteType: number;
   readonly phase: "head" | "intermediate" | "tail";
   readonly rawResult: 4;
@@ -23,7 +26,10 @@ export interface ManualJudgementData {
   readonly laneSpan: NoteLaneSpan;
   readonly rangeLength: number;
   readonly noteIndex: number;
+  /** OneFrameData.buttonTypes: what the original passes on (stage speakers). */
   readonly buttonTypes: readonly number[];
+  /** Fixed lanes of the judged span, for GarupaEditor's particle routing. */
+  readonly spanButtonTypes: readonly number[];
   readonly noteType: number;
   readonly phase: "head" | "intermediate" | "tail";
   readonly rawResult: 0 | 1 | 2 | 3 | 4;

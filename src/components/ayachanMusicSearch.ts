@@ -1,4 +1,4 @@
-import { fetchAyachanLevelList, type AyachanLevelItem } from "../services/bestdori/api";
+import { fetchAyachanLevelList, type SonolusLevelItem } from "../services/bestdori/api";
 import type { AyachanSelectionEntry } from "./musicSelectionData";
 
 export interface AyachanMusicFilter { id: string; minimum: number; maximum: number }
@@ -9,13 +9,14 @@ export function normalizeAyachanFilter(filter: AyachanMusicFilter): AyachanMusic
   const minimum = Math.min(maximum, Math.max(AYACHAN_LEVEL_MIN, filter.minimum));
   return minimum === filter.minimum && maximum === filter.maximum ? filter : { ...filter, minimum, maximum };
 }
-export function ayachanMusicEntry(item: AyachanLevelItem): AyachanSelectionEntry | null {
+export function ayachanMusicEntry(item: SonolusLevelItem): AyachanSelectionEntry | null {
   const id = Number(item.name);
-  // The service inserts an unplayable announcement before the first public page.
-  if (!/^[1-9]\d*$/.test(item.name) || !Number.isSafeInteger(id) || !Number.isFinite(item.rating) ||
-      !item.bgm?.url || !item.data?.url || typeof item.title !== "string") return null;
-  return { source: "ayachan", id, title: item.title, artists: item.artists ?? "", author: item.author ?? "",
-    level: String(item.rating), difficulty: null, cover: item.cover ?? { url: "", hash: "" }, bgm: item.bgm.url };
+  const bgm = item.bgm.url;
+  // The service inserts an unplayable announcement (named “置顶公告#”) before the first
+  // public page; a level whose bgm or data has no URL cannot be played either.
+  if (!/^[1-9]\d*$/.test(item.name) || !Number.isSafeInteger(id) || !bgm || !item.data.url) return null;
+  return { source: "ayachan", id, title: item.title, artists: item.artists, level: String(item.rating), difficulty: null,
+    item: { ...item, bgm: { ...item.bgm, url: bgm } } };
 }
 export interface AyachanSearchState {
   entries: readonly AyachanSelectionEntry[]; page: number; hasMore: boolean; loading: boolean; error: string;

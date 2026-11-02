@@ -16,7 +16,12 @@ import type { SimulatorMenuSettings } from "../app/simulator/menuSettings";
 import { OriginalPrefabModel, ORIGINAL_PREFABS, originalRef, type OriginalData, type OriginalOverrides } from "./originalPrefabModel";
 import type { OriginalButtonBinding, OriginalRadioBinding, OriginalSliderBinding, OriginalViewBindings } from "./OriginalPrefabView";
 
-export interface OriginalSettingsDraft { options: EditorOptionSettings; fps: number; mv: boolean; alpha: number; combo: boolean }
+export interface OriginalSettingsDraft {
+  options: EditorOptionSettings; fps: number; mv: boolean; alpha: number; combo: boolean;
+  /** Editor and simulator window preset ids (desktop only). */
+  window: string; playbackWindow: string;
+}
+export interface OriginalWindowPreset { id: string; width: number; height: number }
 export const ORIGINAL_SETTINGS_PAGES = ["livesettingstabpage", "liveeffectvolumetabpage", "liveskintabpage", "systemtabpage"] as const;
 type PageUpdate = (change: (previous: OriginalSettingsDraft) => OriginalSettingsDraft) => void;
 
@@ -248,4 +253,56 @@ export function buildOriginalSettingsPage(page: number, draft: OriginalSettingsD
   }
   const bindings: OriginalViewBindings = { buttons, radios, sliders, checkboxes };
   return { model, bindings };
+}
+
+/**
+ * The desktop editor's 窗口 section on the 演出设定 page. Each row is the page's own
+ * rhythm-icon caption and size stepper, placed below the combo section with the
+ * authored section gap and row pitch; the stepper wraps like the page's numbers.
+ */
+export function buildOriginalWindowSection(draft: OriginalSettingsDraft, update: PageUpdate,
+  presets: readonly OriginalWindowPreset[], defaults: { window: string; playbackWindow: string }) {
+  const source = new OriginalPrefabModel(ORIGINAL_PREFABS.livesettingstabpage!);
+  const root = "Contents/ScrollView/Contents";
+  const rhythm = source.nodeAt(`${root}/RhythmIcon`), combo = source.nodeAt(`${root}/Combo`);
+  const rhythmLast = source.nodeAt(`${root}/RhythmIcon/VisibleTapLaneEffect`);
+  const comboLast = source.nodeAt(`${root}/Combo/ComboHorizontalPosition`);
+  const sectionY = combo.position.y + comboLast.position.y
+    - (rhythm.position.y + rhythmLast.position.y - combo.position.y);
+  const rowYs = [source.nodeAt(`${root}/RhythmIcon/HiSpeed`).position.y, source.nodeAt(`${root}/RhythmIcon/NoteSize`).position.y];
+  const stepper = source.components.get(569)!;
+  const caption = source.nodeAt(`${root}/RhythmIcon/OptionPageCaption`);
+  const row = stepper.node;
+  const [minus, plus, reset] = (stepper.data.buttonArray as OriginalData[]).map(originalRef);
+  const valueLabel = source.components.get(originalRef(stepper.data.label))!;
+  const valueBox = source.componentAt(source.nodes.get(valueLabel.node)!.parent!, "UISprite")!;
+  const title = [...source.components.values()].find(item => item.kind === "UILabel" &&
+    source.isWithin(item.node, row) && source.nodes.get(item.node)?.path.endsWith("/SubTitle/base/label"))!;
+  const captionLabel = [...source.components.values()].find(item => item.kind === "UILabel" && source.isWithin(item.node, caption.id))!;
+  const rows = [
+    { key: "window" as const, label: "分辨率" },
+    { key: "playbackWindow" as const, label: "模拟器分辨率" },
+  ];
+  return rows.map(({ key, label }, index) => {
+    const nodes: Record<number, { active?: boolean; x?: number; y?: number }> = { [combo.id]: { active: false }, [rhythm.id]: { y: sectionY } };
+    for (const child of source.nodes.values()) {
+      if (child.parent === rhythm.id && child.id !== row && !(index === 0 && child.id === caption.id)) nodes[child.id] = { active: false };
+    }
+    nodes[row] = { y: rowYs[index]! };
+    const current = Math.max(0, presets.findIndex(preset => preset.id === draft[key]));
+    const preset = presets[current]!;
+    const set = (next: number) => update(old => ({ ...old, [key]: presets[next]!.id }));
+    const step = (direction: number) => set(current + direction >= presets.length ? 0 : current + direction < 0 ? presets.length - 1 : current + direction);
+    const model = new OriginalPrefabModel(source.prefab, { nodes, components: {
+      [captionLabel.id]: { mText: "窗口" },
+      [title.id]: { mText: label },
+      // ShrinkContent on one line within the value box keeps the resolution inside it.
+      [valueLabel.id]: { mText: `${preset.width}x${preset.height}`, mWidth: valueBox.data.mWidth, mMaxLineCount: 1 },
+    } });
+    const bindings: OriginalViewBindings = { buttons: {
+      [minus!]: { action: () => step(-1) }, [plus!]: { action: () => step(1) },
+      [reset!]: { action: () => set(Math.max(0, presets.findIndex(item => item.id === defaults[key]))) },
+    } };
+    return { model, bindings };
+  });
 }

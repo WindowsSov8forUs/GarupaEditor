@@ -1,3 +1,4 @@
+import { flushSync } from "react-dom";
 import { EditorMinimap } from "./EditorMinimap";
 import { EditorBeatDivision } from "./EditorBeatDivision";
 import { ORIGINAL_HEADER_MENU_BOUNDS } from "../OriginalPageHeader";
@@ -5,7 +6,7 @@ import { editorNoteHeight, editorDirectionalSegmentWidth } from "../../app/edito
 import { OriginalMenuBackground } from "../OriginalMenuBackground";
 import { useApplicationPresentation, useReturnToTitle } from "../../app/titleNavigation";
 import { useStartupReadiness } from "../../app/startupReadiness";
-import { EDITOR_STACK, HOME_STACK, openDetailPage, popPage, pushPage, returnToPage, topPage, type AppPage, type PageStack } from "./pageStack";
+import { EDITOR_STACK, HOME_STACK, leaveLivePreparation, openDetailPage, popPage, pushPage, returnToPage, topPage, type AppPage, type PageStack } from "./pageStack";
 import { AppSettingsModal } from "../AppSettingsModal";
 import { OriginalUiSoundProvider } from "../OriginalUiSound";
 import { BestdoriLoginModal } from "../BestdoriLoginModal";
@@ -15,12 +16,15 @@ import { ImportJsonModal } from "../ImportJsonModal";
 import { SongInformationPage } from "../SongInformationPage";
 import { SONG_INFORMATION_CONTENT_BOUNDS } from "../OriginalSongDetailParts";
 import { LivePreparationPage, MvDownloadDialog } from "../LivePreparationPage";
+import { ResourceLoadErrorDialog } from "../OriginalConfirmDialog";
+import { LiveInProgressCover, type LiveInProgressSong } from "../LiveInProgressCover";
 import { downloadActivity } from "../../services/downloadActivity";
 import { SAMPLE_START_GAME_FADE_SECONDS, useMusicPreview } from "../useMusicPreview";
 import type { MusicPreviewRequest } from "../musicSelectionData";
 import songDetailSource from "../../data/originalSongDetailProfile.json";
 import { songHasSpecialNotes } from "../songNoteStatistics";
 import { SIMULATOR_PRE_ADAPTATION_DEFAULTS, type SimulatorModeSelection } from "../../app/simulator/preAdaptationContract";
+import type { SimulatorWindowExit } from "../../app/simulator/transportContracts";
 import { OriginalPageSwitch } from "../OriginalPageSwitch";
 import { LiveSelectionPage } from "../LiveSelectionPage";
 import { MusicSelectionPage } from "../MusicSelectionPage";
@@ -28,7 +32,9 @@ import { musicPlaySelection, type MusicPlaySelection } from "../musicSelectionDa
 import { DownloadProgressModal } from "../DownloadProgressModal";
 import { OverlayDialogModal } from "../OverlayDialogModal";
 import { SkinSettingsModal } from "../SkinSettingsModal";
-import { bestdoriGetMe, bestdoriLogin, bestdoriLogout } from "../../services/bestdori/api";
+import { BESTDORI_SESSION_EXPIRED_MESSAGE, bestdoriCheckSession, bestdoriLogin, bestdoriLogout,
+  onBestdoriSessionExpired } from "../../services/bestdori/api";
+import { appLog } from "../../logging/applicationLogger";
 import { isMobileRuntime } from "../../app/mobileRuntime";
 import { SidebarPanel } from "./SidebarPanel";
 import { useUiViewport } from "../useUiViewport";
@@ -40,6 +46,11 @@ type ChartEditorLayoutProps = {
 
 const CANVAS_INTERACTION_OVERSCAN_PX = 240;
 const CANVAS_INTERACTION_SNAP_PX = 96;
+
+/** Page switch slot identity: each music selection source is its own page. */
+function pageSwitchKey(page: AppPage, source: string): string {
+  return page === "search" ? `search:${source}` : page;
+}
 
 function isHalfBeatAligned(value: number): boolean {
   if (!Number.isFinite(value)) {
@@ -208,7 +219,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     bestdoriSkinCatalogOptions,
     bestdoriCatalogStatus,
     formatTypeLabel,
-    applyWindowPreset,
+    applyWindowPresetById,
     applyAppOptionSettings,
     applyBestdoriSkinSelection,
     downloadProgress,
@@ -267,15 +278,37 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   const answerMvDownload = (confirmed: boolean) => { mvDownloadAnswer?.(confirmed); setMvDownloadAnswer(null); };
   useEffect(() => {
     if (musicSelectionOpen) return;
+    // Leaving the selection flow ends its sample; entering again waits for the list's own decision.
+    setPreview({ request: null, paused: false });
     setPlaySelection(null); loadedPlay.current = null;
     vm.endPlaySession();
   }, [musicSelectionOpen, vm.endPlaySession]);
+  // もう1回ライブ comes back to this preparation and PlaySampleMusic restarts the sample from its
+  // start before PushUIScreen(43); a launch that never ran stays here with the sample as well.
+  const [launchFailed, setLaunchFailed] = useState(false);
+  const [liveSong, setLiveSong] = useState<LiveInProgressSong | null>(null);
+  // The chart and media loaded for this live are current in the render that launches it.
+  const currentLiveSong = (): LiveInProgressSong => {
+    const shown = playSelection ? { ...metadata, title: playSelection.title, difficulty: playSelection.difficulty } : metadata;
+    return { title: shown.title, bandName: shown.artist, difficulty: shown.difficulty,
+      isFullLength: shown.isFullLength === true };
+  };
+  // Committed synchronously: the in-progress cover leaves in the same commit as the page switch,
+  // before the opener releases the start Loading.
+  const endLive = (exit: SimulatorWindowExit) => flushSync(() => {
+    setLiveSong(null);
+    if (exit === "leave") setPageStack(leaveLivePreparation);
+    else setPreviewStopped(false);
+    // A live that never ran stays on this preparation behind the resource-read notice.
+    if (exit === "failed") setLaunchFailed(true);
+  });
   // Launch from the render that holds the chart just loaded for play.
   useEffect(() => {
     const pending = pendingLaunch.current;
     if (pending === null) return;
     pendingLaunch.current = null;
-    void openSimulatorWindow(pending.mode).finally(pending.done);
+    setLiveSong(currentLiveSong());
+    void openSimulatorWindow(pending.mode, endLive).finally(pending.done);
   }, [launchRevision]);
   const startLive = async (mode: SimulatorModeSelection) => {
     const selection = playSelection;
@@ -288,7 +321,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     // gameplay surface is presented; transfers add the download gauge.
     const releaseLoading = downloadActivity.holdScreen();
     try {
-      if (selection === null) return await openSimulatorWindow(mode);
+      if (selection === null) { setLiveSong(currentLiveSong()); return await openSimulatorWindow(mode, endLive); }
       if (loadedPlay.current?.key !== key || needsMv) {
         await vm.beginPlaySession();
         const progress = { progress: () => {} };
@@ -326,21 +359,27 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   const [bestdoriNicknameDisplay, setBestdoriNicknameDisplay] = useState("");
   const [bestdoriUsernameDisplay, setBestdoriUsernameDisplay] = useState("");
 
+  // A login Bestdori no longer accepts, found at startup or before an upload, is shown signed out.
+  useEffect(() => onBestdoriSessionExpired(() => {
+    bestdoriAuthRevision.current += 1;
+    setBestdoriUsernameDisplay("");
+    setBestdoriNicknameDisplay("");
+    setStatusMessage(BESTDORI_SESSION_EXPIRED_MESSAGE);
+  }), [setStatusMessage]);
   useEffect(() => {
     let disposed = false;
     const revision = bestdoriAuthRevision.current;
     void (async () => {
       try {
-        const response = await bestdoriGetMe();
-        if (!response.result || disposed || revision !== bestdoriAuthRevision.current) {
-          return;
-        }
-        const resolvedUsername = typeof response.username === "string" ? response.username.trim() : "";
-        const resolvedNickname = typeof response.nickname === "string" ? response.nickname.trim() : "";
-        setBestdoriUsernameDisplay(resolvedUsername);
-        setBestdoriNicknameDisplay(resolvedNickname);
-      } catch {
-        // Ignore "not logged in" and transient network errors; user can log in manually.
+        const session = await bestdoriCheckSession();
+        if (disposed || revision !== bestdoriAuthRevision.current) return;
+        // Offline, the stored account stays shown; it is checked again before it is used.
+        const me = session.status === "signed-in" ? session.me : session.status === "unverified" ? session.me : null;
+        if (!me) return;
+        setBestdoriUsernameDisplay(me.username?.trim() ?? "");
+        setBestdoriNicknameDisplay(me.nickname?.trim() ?? "");
+      } catch (error) {
+        appLog("warn", "auth.session-check-failed", { error });
       }
     })();
     return () => {
@@ -1231,7 +1270,9 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         }}
         onWorkspaceBack={() => setPageStack(popPage)}
         showPageBack={page !== "entrance" || !!returnToTitle}
-        pageKey={page === "search" ? `search:${appOptionSettings.musicSelectionSource}` : page}
+        pageKey={pageSwitchKey(page, appOptionSettings.musicSelectionSource)}
+        stackPageKeys={pageStack.slice(0, -1).filter(entry => entry !== "editor")
+          .map(entry => pageSwitchKey(entry, appOptionSettings.musicSelectionSource))}
         pageId={page}
         section={page === "song" ? "歌曲" : page === "entrance" ? "首页" : "演出"}
         title={page === "live" ? songDetailSource.wording[preparationMode.sessionMode === "rehearsal"
@@ -1943,6 +1984,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         onClose={closeBestdoriLoginModal}
       />
 
+      <LiveInProgressCover song={liveSong} jacketUrl={vm.coverImageSrc} />
+      <ResourceLoadErrorDialog open={launchFailed} onConfirm={() => setLaunchFailed(false)} />
       <MvDownloadDialog open={mvDownloadAnswer !== null} onCancel={() => answerMvDownload(false)}
         onConfirm={() => answerMvDownload(true)} />
 
@@ -1970,7 +2013,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         onPlaybackMvModeChange={setPlaybackMvMode}
         onPlaybackMvAlphaPercentChange={setPlaybackMvAlphaPercent}
         onPlaybackAllPerfectStatusDisplayModeChange={setPlaybackAllPerfectStatusDisplayMode}
-        onApplyWindowPreset={() => void applyWindowPreset()}
+        onApplyWindowPreset={presetId => void applyWindowPresetById(presetId)}
         optionSettings={appOptionSettings}
         onApplyOptionSettings={applyAppOptionSettings}
       />

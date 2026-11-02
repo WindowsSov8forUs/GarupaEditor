@@ -1,5 +1,6 @@
 use aes::cipher::{block_padding::NoPadding, BlockDecryptMut, KeyIvInit};
 use serde_json::{Map, Value};
+use std::collections::BTreeSet;
 use std::io::Read;
 use std::time::Duration;
 
@@ -45,10 +46,11 @@ pub async fn official_music_request(client_version: String, data_version: Option
         .build().map_err(|e| e.to_string())?;
     let bytes = super::download::get(&client, url.as_str(), None, || Ok(Vec::new()), |_, _| {})
         .await.map_err(|e| e.message)?;
-    tauri::async_runtime::spawn_blocking(move || decode_response(bytes, master, &protocol)).await.map_err(|e| e.to_string())?
+    let server = server.to_owned();
+    tauri::async_runtime::spawn_blocking(move || decode_response(bytes, master, &protocol, &server)).await.map_err(|e| e.to_string())?
 }
 
-pub fn decode_response(mut bytes: Vec<u8>, master: bool, protocol: &Value) -> Result<Value, String> {
+pub fn decode_response(mut bytes: Vec<u8>, master: bool, protocol: &Value, server: &str) -> Result<Value, String> {
     let codec = &protocol["codec"];
     let key = codec["key"].as_str().ok_or("Missing official key")?.as_bytes();
     let iv = codec["iv"].as_str().ok_or("Missing official IV")?.as_bytes();
@@ -63,7 +65,16 @@ pub fn decode_response(mut bytes: Vec<u8>, master: bool, protocol: &Value) -> Re
         bzip2::read::BzDecoder::new(bytes.as_slice()).read_to_end(&mut plain).map_err(|e| format!("官方主表解压失败：{e}"))?;
         bytes = plain;
     }
-    decode_message(&bytes, if master { "SuiteMasterGetResponse" } else { "AppGetResponse" }, &protocol["schema"], 0)
+    let root = if master { "SuiteMasterGetResponse" } else { "AppGetResponse" };
+    let mut undeclared = BTreeSet::new();
+    let value = decode_message(&bytes, root, &protocol["schema"], 0, &mut undeclared)?;
+    // Field numbers the schema does not declare (a newer client's additions) are skipped and
+    // reported. Suite lists only its song-related entries, so its other entries are not reported.
+    if !undeclared.is_empty() {
+        let fields: Vec<String> = undeclared.iter().map(|(ty, number)| format!("{ty}.{number}")).collect();
+        crate::application_log::record("warn", "official.master-undeclared-fields", serde_json::json!({"server": server, "message": root, "fields": fields}));
+    }
+    Ok(value)
 }
 
 fn varint(bytes: &[u8], cursor: &mut usize) -> Result<u64, String> {
@@ -96,31 +107,37 @@ fn fields(bytes: &[u8]) -> Result<Vec<(u64, Field<'_>)>, String> {
     }
     Ok(result)
 }
-fn scalar(field: &Field<'_>, ty: &str, schema: &Value, depth: usize) -> Result<Value, String> {
-    if let Some(inner) = ty.strip_prefix("Nullable<").and_then(|v| v.strip_suffix('>')) { return scalar(field, inner, schema, depth); }
+type Undeclared = BTreeSet<(String, u64)>;
+fn scalar(field: &Field<'_>, ty: &str, schema: &Value, depth: usize, undeclared: &mut Undeclared) -> Result<Value, String> {
+    if let Some(inner) = ty.strip_prefix("Nullable<").and_then(|v| v.strip_suffix('>')) { return scalar(field, inner, schema, depth, undeclared); }
     match (ty, field) {
         ("string", Field::Bytes(bytes)) => Ok(Value::String(std::str::from_utf8(bytes).map_err(|_| "Invalid master text")?.into())),
         ("bool", Field::Integer(v)) => Ok(Value::Bool(*v != 0)),
-        ("int", Field::Integer(v)) => Ok(Value::from(*v as i32)),
-        ("uint" | "ulong", Field::Integer(v)) => Ok(Value::from(*v)),
-        (_, Field::Bytes(bytes)) if schema.get(ty).is_some() => decode_message(bytes, ty, schema, depth + 1),
+        // int32 negatives arrive sign-extended to 64 bits; anything outside int32/uint32 is malformed.
+        ("int", Field::Integer(v)) => i32::try_from(*v as i64).map(Value::from).map_err(|_| "Master int out of range".into()),
+        ("uint", Field::Integer(v)) => u32::try_from(*v).map(Value::from).map_err(|_| "Master uint out of range".into()),
+        ("ulong", Field::Integer(v)) => Ok(Value::from(*v)),
+        (_, Field::Bytes(bytes)) if schema.get(ty).is_some() => decode_message(bytes, ty, schema, depth + 1, undeclared),
         _ => Err(format!("Master field type mismatch: {ty}")),
     }
 }
-fn decode_message(bytes: &[u8], ty: &str, schema: &Value, depth: usize) -> Result<Value, String> {
+fn decode_message(bytes: &[u8], ty: &str, schema: &Value, depth: usize, undeclared: &mut Undeclared) -> Result<Value, String> {
     if depth > 32 { return Err("Master schema nesting exceeded".into()); }
     let definition = schema[ty].as_object().ok_or_else(|| format!("Unknown master type: {ty}"))?;
     let mut output = Map::new();
     for (number, field) in fields(bytes)? {
-        let Some(property) = definition.get(&number.to_string()) else { continue; };
+        let Some(property) = definition.get(&number.to_string()) else {
+            if ty != "SuiteMasterGetResponse" { undeclared.insert((ty.to_owned(), number)); }
+            continue;
+        };
         let name = property["name"].as_str().ok_or("Invalid master schema name")?;
         let field_type = property["type"].as_str().ok_or("Invalid master schema type")?;
         if let Some(pair_type) = field_type.strip_prefix("Dictionary<").and_then(|v| v.strip_suffix('>')) {
             let (key_type, value_type) = pair_type.split_once(", ").ok_or("Invalid map schema")?;
             let Field::Bytes(data) = field else { return Err("Invalid master map".into()); };
             let pair = fields(data)?;
-            let key = scalar(&pair.iter().find(|(n,_)| *n == 1).ok_or("Missing map key")?.1, key_type, schema, depth)?;
-            let value = scalar(&pair.iter().find(|(n,_)| *n == 2).ok_or("Missing map value")?.1, value_type, schema, depth)?;
+            let key = scalar(&pair.iter().find(|(n,_)| *n == 1).ok_or("Missing map key")?.1, key_type, schema, depth, undeclared)?;
+            let value = scalar(&pair.iter().find(|(n,_)| *n == 2).ok_or("Missing map value")?.1, value_type, schema, depth, undeclared)?;
             let map = output.entry(name.to_owned()).or_insert_with(|| Value::Object(Map::new())).as_object_mut().ok_or("Invalid map state")?;
             let key = key.as_str().map(str::to_owned).unwrap_or_else(|| key.to_string());
             if map.insert(key, value).is_some() { return Err("Duplicate master map key".into()); }
@@ -129,13 +146,13 @@ fn decode_message(bytes: &[u8], ty: &str, schema: &Value, depth: usize) -> Resul
             if let Field::Bytes(data) = &field {
                 if matches!(element, "uint" | "ulong" | "int") {
                     let mut cursor = 0;
-                    while cursor < data.len() { array.push(scalar(&Field::Integer(varint(data, &mut cursor)?), element, schema, depth)?); }
+                    while cursor < data.len() { array.push(scalar(&Field::Integer(varint(data, &mut cursor)?), element, schema, depth, undeclared)?); }
                     continue;
                 }
             }
-            array.push(scalar(&field, element, schema, depth)?);
+            array.push(scalar(&field, element, schema, depth, undeclared)?);
         } else {
-            if output.insert(name.to_owned(), scalar(&field, field_type, schema, depth)?).is_some() { return Err("Duplicate master scalar field".into()); }
+            if output.insert(name.to_owned(), scalar(&field, field_type, schema, depth, undeclared)?).is_some() { return Err("Duplicate master scalar field".into()); }
         }
     }
     Ok(Value::Object(output))

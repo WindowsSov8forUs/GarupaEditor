@@ -12,11 +12,11 @@ export class InGameHudController {
   readonly addScore = new AddScoreHudOwner();
 
   constructor(
-    isAutoPlay: boolean,
+    isAutoLive: boolean,
     allPerfectStatusDisplayMode: boolean,
     hideFastSlow = false,
   ) {
     this.combo = new ComboHudOwner(allPerfectStatusDisplayMode);
-    this.result = new ResultHudOwner(isAutoPlay, hideFastSlow);
+    this.result = new ResultHudOwner(isAutoLive, hideFastSlow);
   }
 }

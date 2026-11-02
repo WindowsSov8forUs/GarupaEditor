@@ -6,7 +6,8 @@ import type { ChartMetadata } from "../../chartCore";
 import { normalizeSourcePng } from "../../resources/normalizeImagePng";
 import {
   SONOLUS_TEST_SERVER_ROOT,
-  bestdoriGetMe,
+  bestdoriCheckSession,
+  BESTDORI_SESSION_EXPIRED_MESSAGE,
   buildBestdoriCommunityChartPostPayload,
   buildBestdoriUploadedFileUrl,
   createBestdoriCommunityChartPost,
@@ -126,35 +127,35 @@ export async function uploadBestdoriFileFlow(
   const fileSize = fileData.byteLength;
 
   const prepareResult = await prepareBestdoriFileUpload(fileHash, fileSize, { ver: 3 });
-  const prepareCode = normalizeBestdoriUploadCode(prepareResult.code);
-  if (prepareResult.result === false) {
-    if (prepareCode === "ALREADY_UPLOADED") {
+  if (!prepareResult.result) {
+    if (prepareResult.code === "ALREADY_UPLOADED") {
       return {
         fileHash,
         fileUrl: buildBestdoriUploadedFileUrl(fileHash),
         reused: true,
       };
     }
-    throw new Error(`bestdori upload prepare failed: ${prepareCode ?? "unknown error"}`);
+    throw new Error(`bestdori upload prepare failed: ${normalizeBestdoriUploadCode(prepareResult.code) ?? "unknown error"}`);
   }
 
   const uploadResult = await uploadBestdoriFile(fileName, fileData, {
     fieldName: "file",
     mimeType: params.mimeType,
   });
-  if (uploadResult.result === false) {
-    const uploadCode = normalizeBestdoriUploadCode(uploadResult.code);
-    throw new Error(`bestdori upload file failed: ${uploadCode ?? "unknown error"}`);
+  if (!uploadResult.result) {
+    throw new Error(`bestdori upload file failed: ${normalizeBestdoriUploadCode(uploadResult.code) ?? "unknown error"}`);
   }
 
-  const uploadedHash = normalizeBestdoriUploadHash(uploadResult.hash) ?? fileHash;
+  const uploadedHash = normalizeBestdoriUploadHash(uploadResult.hash);
+  if (uploadedHash === null) throw new Error(`bestdori upload file failed: invalid hash ${JSON.stringify(uploadResult.hash)}`);
+  // As the Bestdori front end: result false means the status is not known yet and is asked
+  // again; not_found means the upload was lost; other statuses are processing states.
   for (let check = 0; check < maxStatusChecks; check += 1) {
     const statusResult = await fetchBestdoriFileUploadStatus(uploadedHash);
-    if (statusResult.result === false) {
-      const statusCode = normalizeBestdoriUploadCode(statusResult.code);
-      throw new Error(`bestdori upload status failed: ${statusCode ?? "unknown error"}`);
+    if (statusResult.result && statusResult.status === "not_found") {
+      throw new Error("bestdori upload status failed: not_found");
     }
-    if (normalizeBestdoriUploadCode(statusResult.status) === "available") {
+    if (statusResult.result && statusResult.status === "available") {
       return {
         fileHash: uploadedHash,
         fileUrl: buildBestdoriUploadedFileUrl(uploadedHash),
@@ -253,10 +254,10 @@ export async function publishBestdoriCommunityChartFlow(
   params: PublishBestdoriCommunityChartFlowParams,
 ): Promise<PublishBestdoriCommunityChartFlowResult> {
   params.onStage?.("checking-login");
-  const me = await bestdoriGetMe();
-  if (!me.result) {
-    throw new Error("bestdori account is not logged in");
-  }
+  const session = await bestdoriCheckSession();
+  if (session.status === "expired") throw new Error(BESTDORI_SESSION_EXPIRED_MESSAGE);
+  if (session.status === "signed-out") throw new Error("bestdori account is not logged in");
+  if (session.status === "unverified") throw new Error(`无法确认 Bestdori 登录状态：${session.error}`);
 
   const metadata = params.metadata;
   const diff = BESTDORI_DIFFICULTY_TO_DIFF[metadata.difficulty] ?? 0;
@@ -335,15 +336,15 @@ export async function publishBestdoriCommunityChartFlow(
     throw new Error(`bestdori post request failed: ${message}\npayload:\n${requestPayloadText}`);
   }
 
-  if (response.result === false) {
+  if (!response.result) {
     throw new Error(
       `bestdori post failed: ${normalizeBestdoriUploadCode(response.code) ?? "unknown error"}\n`
       + `payload:\n${requestPayloadText}`,
     );
   }
 
-  const postId = Math.trunc(Number(response.id));
-  if (!Number.isFinite(postId) || postId < 1) {
+  const postId = response.id;
+  if (postId < 1) {
     throw new Error("bestdori post failed: invalid post id");
   }
 

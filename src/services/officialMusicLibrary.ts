@@ -1,8 +1,13 @@
 import { mergeOfficialMusic, type OfficialMasterSources, type MasterServer } from "./mergeOfficialMusic";
 import { fetchOfficialSourceMedia, OFFICIAL_SERVER_ORDER, isOfficialServer, availableOfficialMedia, OFFICIAL_SERVER_INDEX, type OfficialSourceMedia } from "./officialMusicSources";
-import { fetchBestdoriJson, fetchBestdoriFileBlob, buildBestdoriSongJacketUrl,
-  type BestdoriSongInfo, type BestdoriBandsAll1, type BestdoriPerServerValue, type BestdoriSongServerName } from "./bestdori/api";
-import { refreshOfficialMaster, validateOfficialMaster, type OfficialMasterSnapshot, type MasterSong } from "./officialMusicMaster";
+import { fetchBestdoriSongIndex, revalidateBestdoriBandsAll1, fetchBestdoriFileBlob, buildBestdoriSongJacketUrl, type StoredBestdoriJson,
+  type BestdoriBandsAll1, type BestdoriPerServerValue, type BestdoriSongCommon, type BestdoriSongDifficultyIndex,
+  type BestdoriSongIndex, type BestdoriSongServerName } from "./bestdori/api";
+import { refreshOfficialMaster, validateOfficialMaster, type OfficialMasterSnapshot, type MasterSong,
+  type MasterDifficulty, type MasterVideo } from "./officialMusicMaster";
+import { parseBestdoriBandsAll1, parseBestdoriSongCommon, parseBestdoriSongIndex, parsePerServer } from "./bestdori/songParsing";
+import { checkOfficialMasterRow } from "./officialMasterShape";
+import { ResponseShapeError, arrayOf, finite, idKey, integer, nullable, oneOf, optional, record, recordOf, string, type Reader } from "./responseShape";
 import type { ApplicationResourceManager } from "../resources/applicationResourceManager";
 import type { ResourceCatalogProvider } from "../resources/backend";
 import { createResourceRef, resourceAccepted, resourceRejected, type NetworkResourceDescriptor,
@@ -12,14 +17,26 @@ import { detectUserMediaType } from "../resources/userMediaFormat";
 
 export const OFFICIAL_DIFFICULTIES = ["EASY", "NORMAL", "HARD", "EXPERT", "SPECIAL"] as const;
 export type OfficialDifficulty = typeof OFFICIAL_DIFFICULTIES[number];
+/**
+ * A library song: Bestdori's index fields (texts per server, length, notes, bpm) with the
+ * master's song, difficulty and MV rows. Master timestamps become per-server strings, set on the
+ * server the row came from.
+ */
+export interface OfficialSongInfo extends BestdoriSongCommon {
+  bgmId: string; bgmFile: string; seq: number; musicDataType: string; howToGet: BestdoriPerServerValue<string>;
+  difficulty: Partial<Record<BestdoriSongDifficultyIndex, Omit<MasterDifficulty, "publishedAt"> & { publishedAt: BestdoriPerServerValue<string> }>>;
+  musicVideos: Record<string, Omit<MasterVideo, "startAt" | "endAt"> & { startAt: BestdoriPerServerValue<string>; endAt: BestdoriPerServerValue<string> }>;
+}
 export interface OfficialSong {
-  id: number; server: MasterServer; info: BestdoriSongInfo; title: string; artist: string; available: readonly OfficialDifficulty[];
+  id: number; server: MasterServer; info: OfficialSongInfo; title: string; artist: string; available: readonly OfficialDifficulty[];
   jacketSlot: string; previewSlot: string | null;
   master: MasterSong; hasMv: boolean; has3d: boolean; specialNotes: readonly OfficialDifficulty[];
 }
 interface LibraryMetadata {
   masters?: OfficialMasterSources; songServers?: Record<string, MasterServer>; difficultyServers?: Record<string, MasterServer>;
-  version: 2; official: OfficialMasterSnapshot; index: Record<string, BestdoriSongInfo>; songs: Record<string, BestdoriSongInfo>;
+  version: 2; official: OfficialMasterSnapshot; index: BestdoriSongIndex; songs: Record<string, OfficialSongInfo>;
+  /** ETag of index (songs/all.8) and Bestdori's own bands/all.1 with its ETag; bands holds them merged with the masters. */
+  indexEtag?: string | null; bandsSource?: StoredBestdoriJson<BestdoriBandsAll1>;
   bands: BestdoriBandsAll1; previewUrls: Record<string, string>; jacketUrls?: Record<string, string>; capturedAt: number; sourceMedia?: OfficialSourceMedia;
 }
 export interface OfficialLibrary {
@@ -27,6 +44,82 @@ export interface OfficialLibrary {
   error: string; mediaFailures: readonly string[];
 }
 const owner = "official-music";
+/**
+ * The stored library, read with its full model. Older stores lack masters, songServers,
+ * difficultyServers, jacketUrls or sourceMedia; those are earlier formats, not damage. Anything
+ * else that does not fit makes the store invalid, and startup downloads the library again.
+ */
+export function parseLibraryMetadata(value: unknown): LibraryMetadata {
+  const stored = record(value, "catalog");
+  if (stored.version !== 2) throw new ResponseShapeError("catalog.version", "2");
+  const servers = (v: unknown, p: string) => recordOf(v, p, (item, itemPath) => oneOf(item, itemPath, OFFICIAL_SERVER_ORDER));
+  const snapshot: Reader<OfficialMasterSnapshot> = (v, p) => {
+    const item = record(v, p);
+    const master = item.master as OfficialMasterSnapshot["master"];
+    validateOfficialMaster(master);
+    return { clientVersion: string(item.clientVersion, `${p}.clientVersion`), dataVersion: string(item.dataVersion, `${p}.dataVersion`),
+      masterDataVersion: string(item.masterDataVersion, `${p}.masterDataVersion`), master,
+      schema: optional(item.schema, `${p}.schema`, string) };
+  };
+  const location = (v: unknown, p: string) => {
+    const item = record(v, p);
+    return { server: oneOf(item.server, `${p}.server`, ["jp", "en", "tw", "cn", "kr"]),
+      url: string(item.url, `${p}.url`), logicalPath: string(item.logicalPath, `${p}.logicalPath`) };
+  };
+  const locations = (v: unknown, p: string) => recordOf(v, p, (list, listPath) => arrayOf(list, listPath, location));
+  const urls = (v: unknown, p: string) => recordOf(v, p, string);
+  const text = (v: unknown, p: string) => parsePerServer(v, p, string);
+  const song: Reader<OfficialSongInfo> = (v, p) => {
+    const item = record(v, p);
+    return {
+      ...parseBestdoriSongCommon(item, p),
+      bgmId: string(item.bgmId, `${p}.bgmId`), bgmFile: string(item.bgmFile, `${p}.bgmFile`), seq: integer(item.seq, `${p}.seq`),
+      musicDataType: string(item.musicDataType, `${p}.musicDataType`), howToGet: text(item.howToGet, `${p}.howToGet`),
+      difficulty: recordOf(item.difficulty, `${p}.difficulty`, (row, rowPath) => {
+        const { publishedAt, ...master } = record(row, rowPath);
+        checkOfficialMasterRow(master, "MasterMusicDifficultyGetResponse", rowPath);
+        return { ...master as Omit<MasterDifficulty, "publishedAt">, musicId: integer(master.musicId, `${rowPath}.musicId`),
+          difficulty: string(master.difficulty, `${rowPath}.difficulty`), playLevel: integer(master.playLevel, `${rowPath}.playLevel`),
+          publishedAt: text(publishedAt, `${rowPath}.publishedAt`) };
+      }, (key, keyPath) => oneOf(key, keyPath, ["0", "1", "2", "3", "4"])),
+      musicVideos: recordOf(item.musicVideos, `${p}.musicVideos`, (row, rowPath) => {
+        const { startAt, endAt, ...master } = record(row, rowPath);
+        checkOfficialMasterRow(master, "MasterMusicVideo", rowPath);
+        return { ...master as Omit<MasterVideo, "startAt" | "endAt">, musicId: integer(master.musicId, `${rowPath}.musicId`),
+          assetBundleName: string(master.assetBundleName, `${rowPath}.assetBundleName`),
+          startAt: text(startAt, `${rowPath}.startAt`), endAt: text(endAt, `${rowPath}.endAt`) };
+      }),
+    };
+  };
+  return {
+    version: 2,
+    masters: optional(stored.masters, "catalog.masters", (v, p) => {
+      const result: OfficialMasterSources = {};
+      for (const [server, item] of Object.entries(record(v, p))) result[oneOf(server, `${p} 的键`, OFFICIAL_SERVER_ORDER)] = snapshot(item, `${p}.${server}`);
+      return result;
+    }),
+    songServers: optional(stored.songServers, "catalog.songServers", servers),
+    difficultyServers: optional(stored.difficultyServers, "catalog.difficultyServers", servers),
+    official: snapshot(stored.official, "catalog.official"),
+    index: parseBestdoriSongIndex(stored.index, "catalog.index"),
+    songs: recordOf(stored.songs, "catalog.songs", song, idKey),
+    bands: parseBestdoriBandsAll1(stored.bands, "catalog.bands"),
+    previewUrls: urls(stored.previewUrls, "catalog.previewUrls"),
+    jacketUrls: optional(stored.jacketUrls, "catalog.jacketUrls", urls),
+    capturedAt: finite(stored.capturedAt, "catalog.capturedAt"),
+    indexEtag: optional(stored.indexEtag, "catalog.indexEtag", (v, p) => nullable(v, p, string)),
+    bandsSource: optional(stored.bandsSource, "catalog.bandsSource", (v, p) => {
+      const source = record(v, p);
+      return { etag: nullable(source.etag, `${p}.etag`, string), value: parseBestdoriBandsAll1(source.value, `${p}.value`) };
+    }),
+    sourceMedia: optional(stored.sourceMedia, "catalog.sourceMedia", (v, p) => {
+      const media = record(v, p);
+      return { jackets: locations(media.jackets, `${p}.jackets`), previews: locations(media.previews, `${p}.previews`),
+        audio: locations(media.audio, `${p}.audio`), failures: optional(media.failures, `${p}.failures`, (f, fp) => arrayOf(f, fp, string)),
+        folders: optional(media.folders, `${p}.folders`, urls) };
+    }),
+  };
+}
 function cachedSourceMedia(metadata: LibraryMetadata | undefined): OfficialSourceMedia | undefined {
   if (!metadata || metadata.sourceMedia) return metadata?.sourceMedia;
   const result: OfficialSourceMedia = { jackets: {}, previews: {}, audio: {} };
@@ -62,14 +155,14 @@ async function parallel<T>(values: readonly T[], action: (value: T) => Promise<v
 export function officialText(values: readonly (string | null)[] | undefined): string {
   return values?.[3]?.trim() || OFFICIAL_SERVER_ORDER.map(server => values?.[OFFICIAL_SERVER_INDEX[server]]?.trim()).find(Boolean) || "";
 }
-export function officialAvailable(info: BestdoriSongInfo, now: number): OfficialDifficulty[] {
+export function officialAvailable(info: OfficialSongInfo, now: number): OfficialDifficulty[] {
   return OFFICIAL_DIFFICULTIES.filter((_, index) => {
     const data = info.difficulty?.[String(index) as keyof typeof info.difficulty];
-    const date = (data as { publishedAt?: (string | null)[] } | undefined)?.publishedAt;
+    const date = data?.publishedAt;
     return !!data && (!date || OFFICIAL_SERVER_ORDER.some(server => { const value = date[OFFICIAL_SERVER_INDEX[server]]; return value != null && Number(value) <= now; }));
   });
 }
-export function officialPublished(info: BestdoriSongInfo, now: number): boolean {
+export function officialPublished(info: OfficialSongInfo, now: number): boolean {
   return OFFICIAL_SERVER_ORDER.some(server => {
     const index = OFFICIAL_SERVER_INDEX[server], start = info.publishedAt?.[index];
     return start != null && includedInOfficialLibrary(Number(start), info.closedAt?.[index] == null ? undefined : Number(info.closedAt[index]), info.musicDataType, now);
@@ -84,6 +177,14 @@ function includedInOfficialLibrary(start: number, end: number | undefined, type:
 /** One startup-owned snapshot. Selection consumers never fetch or refresh it. */
 let library: OfficialLibrary | undefined;
 let pending: Promise<OfficialLibrary> | undefined;
+/**
+ * Whether the original master marks a song full-length (musicDataType "full"), from this start's
+ * merged master; null when the library did not load or the master has no such song.
+ */
+export function officialSongIsFullLength(musicId: number): boolean | null {
+  const song = library?.metadata?.official.master.masterMusicList.entries.find(row => row.musicId === musicId);
+  return song ? song.musicDataType === "full" : null;
+}
 export function getOfficialMusicLibrary(): OfficialLibrary {
   if (!library) throw new Error("官方曲库尚未完成启动初始化");
   return library;
@@ -120,19 +221,11 @@ async function initialize(manager: ApplicationResourceManager, progress: (ratio:
           const masterRequests = Promise.allSettled(OFFICIAL_SERVER_ORDER.map(async server => [server,
             await refreshOfficialMaster(previous?.masters?.[server] ?? (server === "jp" && !previous?.masters ? previous?.official : undefined), server),
           ] as const));
-          const unchanged = masterRequests.then(rows => rows.every(row => {
-            if (row.status !== "fulfilled") return false;
-            const [server, current] = row.value;
-            const old = previous?.masters?.[server];
-            return old && old.clientVersion === current.clientVersion && old.dataVersion === current.dataVersion
-              && old.masterDataVersion === current.masterDataVersion;
-          }));
           const results = await Promise.allSettled([
             masterRequests,
-            unchanged.then(same => same && previous?.index ? previous.index
-              : fetchBestdoriJson<Record<string, BestdoriSongInfo>>("/api/songs/all.8.json")),
-            unchanged.then(same => same && previous?.bands ? structuredClone(previous.bands)
-              : fetchBestdoriJson<BestdoriBandsAll1>("/api/bands/all.1.json")),
+            // Revalidated every start: Bestdori corrects these files between master updates.
+            fetchBestdoriSongIndex(previous?.index && previous.indexEtag ? { etag: previous.indexEtag, value: previous.index } : undefined),
+            revalidateBestdoriBandsAll1(previous?.bandsSource),
             mediaScan,
           ] as const);
           const unwrap = <T,>(result: PromiseSettledResult<T>): T => {
@@ -140,14 +233,16 @@ async function initialize(manager: ApplicationResourceManager, progress: (ratio:
             return result.value;
           };
           const masters = Object.fromEntries(unwrap(results[0]).map(unwrap)) as Record<MasterServer, OfficialMasterSnapshot>;
-          const index = unwrap(results[1]), bands = unwrap(results[2]), sourceMedia = unwrap(results[3]);
+          const indexSource = unwrap(results[1]), bandsSource = unwrap(results[2]), sourceMedia = unwrap(results[3]);
+          appLog("info", "official.bestdori-revalidated", { indexNotModified: indexSource.notModified, bandsNotModified: bandsSource.notModified });
+          const index = indexSource.value, bands = structuredClone(bandsSource.value);
           const { jp, cn } = masters;
           const capturedAt = Date.now();
           const merged = mergeOfficialMusic(masters, capturedAt);
           const official = { ...jp, master: merged.master };
           const cnSongs = new Map(cn.master.masterMusicList.entries.map(song => [song.musicId, song]));
           if (!index || !bands) throw new Error("官方曲库响应格式无效");
-          const songs: Record<string, BestdoriSongInfo> = {};
+          const songs: Record<string, OfficialSongInfo> = {};
           const localize = (value: string | undefined, values?: BestdoriPerServerValue<string>, server: MasterServer = "jp"): BestdoriPerServerValue<string> => {
             const result: BestdoriPerServerValue<string> = [values?.[0] ?? null, values?.[1] ?? null, values?.[2] ?? null, values?.[3] ?? null, values?.[4] ?? null];
             if (value !== undefined) result[OFFICIAL_SERVER_INDEX[server]] = value;
@@ -168,22 +263,23 @@ async function initialize(manager: ApplicationResourceManager, progress: (ratio:
             const server = merged.songServers[id]!;
             const chinese = cnSongs.get(row.musicId);
             const text = (key: "musicTitle" | "ruby" | "phonetic" | "lyricist" | "composer" | "arranger" | "howToGet") => {
-              const values = localize(row[key], extra?.[key], server);
+              // The Bestdori index has no howToGet; only the master's is available.
+              const values = localize(row[key], key === "howToGet" ? undefined : extra?.[key], server);
               return chinese?.[key] ? localize(chinese[key], values, "cn") : values;
             };
-            const difficulty = {} as BestdoriSongInfo["difficulty"];
+            const difficulty: OfficialSongInfo["difficulty"] = {};
             for (const diff of difficulties.get(row.musicId) ?? []) {
               const key = String(OFFICIAL_DIFFICULTIES.indexOf(diff.difficulty.toUpperCase() as OfficialDifficulty)) as keyof typeof difficulty;
-              difficulty[key] = { ...extra?.difficulty?.[key], ...diff,
+              difficulty[key] = { ...diff,
                 publishedAt: localize(String(diff.publishedAt ?? 0), undefined, merged.difficultyServers[`${row.musicId}:${diff.difficulty}`]!) };
             }
-            const videos: NonNullable<BestdoriSongInfo["musicVideos"]> = {};
+            const videos: OfficialSongInfo["musicVideos"] = {};
             for (const video of (official.master.masterMusicVideoListMap.entries[id]?.entries ?? [])) {
               if (!inPeriod(video.startAt, video.endAt, capturedAt)) continue;
               videos[video.assetBundleName] = { ...video, startAt: localize(String(video.startAt ?? 0), undefined, server), endAt: localize(String(video.endAt ?? 0), undefined, server) };
             }
-            songs[id] = { ...extra, bgmId: row.bgmId, bgmFile: row.bgmFile, bandId: row.bandId,
-              tag: row.tag, musicDataType: row.musicDataType, seq: row.seq, achievements: [],
+            songs[id] = { bgmId: row.bgmId, bgmFile: row.bgmFile, bandId: row.bandId,
+              tag: row.tag, musicDataType: row.musicDataType, seq: row.seq,
               jacketImage: (official.master.masterMusicJacketMap.entries[id]?.entries ?? [])
                 .filter(jacket => inPeriod(jacket.startAt, jacket.endAt, capturedAt)).sort((a, b) => a.seq - b.seq).map(jacket => jacket.jacketImage),
               musicTitle: text("musicTitle"), ruby: text("ruby"),
@@ -191,14 +287,15 @@ async function initialize(manager: ApplicationResourceManager, progress: (ratio:
               composer: text("composer"), arranger: text("arranger"),
               howToGet: text("howToGet"), publishedAt: localize(String(row.publishedAt), undefined, server),
               closedAt: localize(row.closedAt ? String(row.closedAt) : undefined, undefined, server),
-              difficulty, musicVideos: videos, musicVideo: undefined,
+              difficulty, musicVideos: videos,
               length: extra?.length ?? 0, notes: extra?.notes ?? {}, bpm: extra?.bpm ?? {} };
           }
           if (!Object.keys(songs).length) throw new Error("官方主表未返回可用于当前列表的歌曲");
           progress(0.2);
           const previewUrls = Object.fromEntries(Object.entries(sourceMedia.previews).map(([key, values]) => [key, values[0]!.url]));
           const jacketUrls = Object.fromEntries(Object.entries(sourceMedia.jackets).map(([key, values]) => [key, values[0]!.url]));
-          metadata = { version: 2, official, masters, songServers: merged.songServers, difficultyServers: merged.difficultyServers, index, songs, bands, previewUrls, jacketUrls, sourceMedia, capturedAt };
+          metadata = { version: 2, official, masters, indexEtag: indexSource.etag,
+            bandsSource: { etag: bandsSource.etag, value: bandsSource.value }, songServers: merged.songServers, difficultyServers: merged.difficultyServers, index, songs, bands, previewUrls, jacketUrls, sourceMedia, capturedAt };
           bytes = new TextEncoder().encode(JSON.stringify(metadata)); mediaType = "application/json";
         } else {
           const blob = await fetchBestdoriFileBlob(resource.source.assetBaseUrl,
@@ -236,11 +333,7 @@ async function initialize(manager: ApplicationResourceManager, progress: (ratio:
       const receipt = accepted(await manager.createSnapshotFromRefs({ catalog: cached.ref }));
       const lease = accepted(await manager.acquireSnapshot(receipt.snapshotId));
       try {
-        const value = JSON.parse(new TextDecoder().decode(await lease.readBytes("catalog", "payload"))) as LibraryMetadata;
-        if (value.version !== 2 || !value.official) throw new Error("官方缓存版本无效");
-        validateOfficialMaster(value.official.master);
-        for (const source of Object.values(value.masters ?? {})) validateOfficialMaster(source.master);
-        previous = value;
+        previous = parseLibraryMetadata(JSON.parse(new TextDecoder().decode(await lease.readBytes("catalog", "payload"))));
       }
       finally { await lease.release(); }
     } catch (error) { appLog("warn", "official.catalog-cache-invalid", { error }); }

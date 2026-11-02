@@ -1,6 +1,7 @@
 import { downloadActivity } from "../../services/downloadActivity";
 import { availableOfficialMedia } from "../../services/officialMusicSources";
-import { getOfficialMusicLibrary, type OfficialDifficulty } from "../../services/officialMusicLibrary";
+import { getOfficialMusicLibrary, officialSongIsFullLength, type OfficialDifficulty } from "../../services/officialMusicLibrary";
+
 import { detectUserMediaType } from "../../resources/userMediaFormat";
 import { projectGarupaChart } from "../../project/projectChartAdapter";
 import { userFacingErrorMessage } from "../../services/downloadError";
@@ -54,7 +55,7 @@ import {
 } from "../modeChartRegression";
 import { applyHabahiroSlideWidths } from "../habahiroSlideWidth";
 import {
-  fetchBestdoriCommunityPostDetails,
+  fetchBestdoriCommunityPostDetails, isBestdoriChartPost, communitySongMediaHostScope, fetchBestdoriFileBlob,
   fetchTestServerChart, fetchTestServerMedia,
   fetchBestdoriOfficialChartImportPayload,
   resolveBestdoriCommunitySongResourceUrls,
@@ -66,6 +67,9 @@ import {
   uploadSonolusLevelFlow,
 } from "../../services/bestdori/resourceFlows";
 import { isTauriRuntimeEnvironment } from "../../services/bestdori/transport";
+
+// An import that cannot tell whether its song is full-length says so; the song settings can change it.
+export const FULL_LENGTH_UNKNOWN = "（无法确定是否完整版，可在歌曲设定中修改）";
 
 type ParsedJsonNote = {
   note: ChartNote;
@@ -198,7 +202,6 @@ export function useEditorIoAndShortcuts(params: any) {
     sanitizeFileName,
     setIsAppSettingsOpen,
     setIsSkinSettingsOpen,
-    windowPresetId,
     WINDOW_SIZE_PRESETS,
     LogicalSize,
     getCurrentWindow,
@@ -1384,10 +1387,12 @@ export function useEditorIoAndShortcuts(params: any) {
       setAudioFileName(payload.audioFileName);
       setAudioDurationSec(0);
       pushImportProgress(92, "正在写入谱面元信息…");
+      // The master's musicDataType: from the library song, else looked up in this start's master.
+      const fullLength = payload.metadata.isFullLength ?? officialSongIsFullLength(chartId);
       setMetadata((current: ChartMetadata) => ({
         ...current,
         title: resolveTrimmedString(payload.metadata.title),
-        isFullLength: payload.metadata.isFullLength,
+        isFullLength: fullLength ?? false,
         artist: resolveTrimmedString(payload.metadata.artist),
         charter: resolveTrimmedString(payload.metadata.charter),
         difficulty: resolveCommunityPostDifficulty(payload.metadata.difficulty),
@@ -1397,7 +1402,7 @@ export function useEditorIoAndShortcuts(params: any) {
           : 0,
         mvOffsetMs: payload.metadata.mvOffsetMs,
       }));
-      const label = `已导入官方谱面 ${chartId}/${difficulty} 并同步歌曲信息`;
+      const label = `已导入官方谱面 ${chartId}/${difficulty} 并同步歌曲信息${fullLength === null ? FULL_LENGTH_UNKNOWN : ""}`;
       applyChartImportStatus(label, summary);
       completeDownloadProgress("官方谱面导入完成。");
       setImportJsonModalLevel("chart");
@@ -1465,16 +1470,15 @@ export function useEditorIoAndShortcuts(params: any) {
     try {
       pushImportProgress(12, "正在请求社区帖子详情…");
       const details = await fetchBestdoriCommunityPostDetails(postId);
+      if (!details.result) {
+        throw new Error(`社区帖子不存在或已删除（${details.code}）。`);
+      }
       const post = details.post;
-      if (!post || typeof post !== "object") {
-        throw new Error("社区帖子详情缺失 post。");
+      if (!isBestdoriChartPost(post)) {
+        throw new Error(`该帖子不是社区谱面（${post.categoryName}/${post.categoryId}）。`);
       }
-      if (post.categoryName !== "SELF_POST" || post.categoryId !== "chart") {
-        throw new Error("该帖子不是社区谱面（仅支持 SELF_POST/chart）。");
-      }
-      if (!Array.isArray(post.chart)) {
-        throw new Error("该帖子不包含可导入的谱面数据。");
-      }
+      // The details parser requires the chart; only the list omits it.
+      if (post.chart === undefined) throw new Error("社区帖子详情缺少谱面数据。");
 
       pushImportProgress(34, "正在转换谱面结构…");
       const converted = convertBestdoriV2ToGarupaChartJson(post.chart);
@@ -1488,33 +1492,26 @@ export function useEditorIoAndShortcuts(params: any) {
 
       const audioUrl = typeof songResources?.audioUrl === "string" ? songResources.audioUrl.trim() : "";
       const coverUrl = typeof songResources?.coverUrl === "string" ? songResources.coverUrl.trim() : "";
-      const audioServer = audioUrl.length === 0 ? null : bestdoriServerFromUrl(audioUrl);
-      const coverServer = coverUrl.length === 0 ? null : bestdoriServerFromUrl(coverUrl);
-      if (audioUrl.length > 0 && audioServer === null) {
-        throw new Error("社区歌曲音频不属于已注册Bestdori资源源，不能保留裸URL。");
-      }
-      if (coverUrl.length > 0 && coverServer === null) {
-        throw new Error("社区歌曲封面不属于已注册Bestdori资源源，不能保留裸URL。");
-      }
+      // Bestdori assets install as registered Bestdori resources; osu! and LLSIF media come from
+      // the community media hosts and install as workspace media, like test-server media.
+      const installCommunityMedia = async (url: string, purpose: "bgm" | "cover", fileName: string) => {
+        if (url.length === 0) return null;
+        const hostScope = communitySongMediaHostScope(url);
+        if (hostScope === null) throw new Error(`社区歌曲${purpose === "bgm" ? "音频" : "封面"}不属于已支持的资源源，不能保留裸URL。`);
+        if (hostScope === "bestdori") {
+          return materializeBestdoriMediaInWorkspace({ server: bestdoriServerFromUrl(url)!, purpose,
+            nativeId: `community-${postId}-${purpose}`, title: fileName, url });
+        }
+        const bytes = new Uint8Array(await (await fetchBestdoriFileBlob(url, "application/octet-stream", "社区歌曲媒体", hostScope)).arrayBuffer());
+        const mediaType = detectUserMediaType(bytes);
+        if (!mediaType) throw new Error(`社区歌曲${purpose === "bgm" ? "音频" : "封面"}返回了不支持的媒体格式`);
+        const installed = await resourceManager.importWorkspaceMedia({ purpose, bytes, fileName, mediaType });
+        if (installed.status === "rejected") throw new ResourceFailureError(installed.failure);
+        return installed.value.ref;
+      };
       pushImportProgress(66, "正在安装社区歌曲媒体…");
-      const bgmRef = audioServer === null
-        ? null
-        : await materializeBestdoriMediaInWorkspace({
-            server: audioServer,
-            purpose: "bgm",
-            nativeId: `community-${postId}-bgm`,
-            title: resolveFileNameFromUrl(audioUrl, `community-post-${postId}.mp3`),
-            url: audioUrl,
-          });
-      const coverRef = coverServer === null
-        ? null
-        : await materializeBestdoriMediaInWorkspace({
-            server: coverServer,
-            purpose: "cover",
-            nativeId: `community-${postId}-cover`,
-            title: `community-post-${postId}-cover`,
-            url: coverUrl,
-          });
+      const bgmRef = await installCommunityMedia(audioUrl, "bgm", resolveFileNameFromUrl(audioUrl, `community-post-${postId}.mp3`));
+      const coverRef = await installCommunityMedia(coverUrl, "cover", `community-post-${postId}-cover`);
       pushImportProgress(82, "正在应用谱面与工程媒体…");
       const summary = applyParsedGarupaChartJson(converted, preserveForPlay);
       setChartMediaResources((current: typeof chartMediaResources) => Object.freeze({
@@ -1528,10 +1525,14 @@ export function useEditorIoAndShortcuts(params: any) {
       setAudioDurationSec(0);
 
       pushImportProgress(92, "正在写入谱面元信息…");
+      // Bestdori has no full-length mark. Posts citing an official song take the master's
+      // musicDataType; custom, llsif and osu songs are not full-length.
+      const fullLength = post.song.type === "bandori" || post.song.type === "original"
+        ? officialSongIsFullLength(post.song.id) : false;
       setMetadata((current: ChartMetadata) => ({
         ...current,
         title: resolveTrimmedString(post.title),
-        isFullLength: songResources?.isFullLength === true,
+        isFullLength: fullLength ?? false,
         artist: resolveTrimmedString(post.artists),
         charter: resolveCommunityPostCharter(post.author),
         difficulty: resolveCommunityPostDifficulty(post.diff),
@@ -1542,9 +1543,9 @@ export function useEditorIoAndShortcuts(params: any) {
         mvOffsetMs: 0,
       }));
 
-      const label = audioUrl.length > 0
+      const label = (audioUrl.length > 0
         ? `已导入社区谱面 ${postId} 并同步歌曲信息`
-        : `已导入社区谱面 ${postId}`;
+        : `已导入社区谱面 ${postId}`) + (fullLength === null ? FULL_LENGTH_UNKNOWN : "");
       applyChartImportStatus(label, summary);
       completeDownloadProgress("社区谱面导入完成。");
       setImportJsonModalLevel("chart");
@@ -1958,6 +1959,32 @@ export function useEditorIoAndShortcuts(params: any) {
     setStatusMessage("自定义背景已移除。");
   };
 
+  // A preset saved while the window is minimized waits for the window to be restored.
+  const pendingWindowPresetRef = useRef<{ presetId: string; options?: { silent?: boolean } } | null>(null);
+  const applyWindowPresetRef = useRef<(presetId: string, options?: { silent?: boolean }) => Promise<void>>(async () => {});
+  useEffect(() => {
+    if (!isTauriRuntimeEnvironment()) return;
+    let appWindow: any;
+    try { appWindow = getCurrentWindow(); } catch { return; }
+    if (!appWindow) return;
+    let disposed = false;
+    const unlisteners: UnlistenFn[] = [];
+    // Restoring raises a resize on Windows and Linux; a focus change also covers platforms
+    // that restore without one. Neither listener shows or focuses the window.
+    const applyPending = async () => {
+      const pending = pendingWindowPresetRef.current;
+      if (!pending || await appWindow.isMinimized().catch(() => true)) return;
+      pendingWindowPresetRef.current = null;
+      await applyWindowPresetRef.current(pending.presetId, pending.options);
+    };
+    for (const subscribe of [appWindow.onResized, appWindow.onFocusChanged]) {
+      void subscribe.call(appWindow, () => void applyPending()).then((unlisten: UnlistenFn) => {
+        if (disposed) unlisten(); else unlisteners.push(unlisten);
+      }).catch(() => {});
+    }
+    return () => { disposed = true; unlisteners.forEach(unlisten => unlisten()); };
+  }, [getCurrentWindow]);
+
   const applyWindowPresetById = async (
     presetId: string,
     options?: { silent?: boolean },
@@ -1980,6 +2007,16 @@ export function useEditorIoAndShortcuts(params: any) {
         }
         return;
       }
+
+      // setSize on a minimized window leaves the size it restores to unchanged.
+      if (await appWindow.isMinimized().catch(() => false)) {
+        pendingWindowPresetRef.current = { presetId, options };
+        if (!options?.silent) {
+          setStatusMessage(`窗口分辨率将在窗口还原后设置为 ${preset.label}。`);
+        }
+        return;
+      }
+      pendingWindowPresetRef.current = null;
 
       // Best-effort: some environments/capability sets may reject this.
       try {
@@ -2074,10 +2111,7 @@ export function useEditorIoAndShortcuts(params: any) {
       }
     }
   };
-
-  const applyWindowPreset = async () => {
-    await applyWindowPresetById(windowPresetId);
-  };
+  applyWindowPresetRef.current = applyWindowPresetById;
 
   const applyBestdoriSkinSelection = async (
     selection: SkinSelection,
@@ -2257,7 +2291,6 @@ export function useEditorIoAndShortcuts(params: any) {
     handleMvUpload,
     handleIllustBackgroundUpload,
     removeIllustBackground,
-    applyWindowPreset,
     applyWindowPresetById,
     applyBestdoriSkinSelection,
     downloadProgress,
