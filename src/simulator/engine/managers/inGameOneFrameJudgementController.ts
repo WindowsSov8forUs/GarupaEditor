@@ -674,6 +674,10 @@ export class InGameOneFrameJudgementController {
 function originalJudgementButtons(request: AutoLiveJudgementRequest | ManualJudgementRequest, phase: string | undefined,
   ownership: ManualJudgementOwnership | null | undefined, autoPlay: boolean): readonly number[] | undefined {
   const note = request.noteInformation;
+  // Timeout Misses: NoteLong (execOverWaitState / execOverStopState) packs the root's own array
+  // for both LongMiss frames; a Multiple Directional member's onMiss packs its own array.
+  if (request.noteType === 1 && note.fireNoteType === FrontNoteType.Long) return noteButtonTypes(note);
+  if (request.noteType === 0 && note.fireNoteType === FrontNoteType.MultipleDirectionalFlick) return noteButtonTypes(note);
   if (request.noteType === 7 && phase === "tail" && note.fireNoteType === FrontNoteType.Long) return noteButtonTypes(note);
   if (request.noteType === 7 && phase === "tail" && ownership?.slidePhase === "tail" && ownership.slideButtonTypes !== null) {
     return ownership.slideButtonTypes;
