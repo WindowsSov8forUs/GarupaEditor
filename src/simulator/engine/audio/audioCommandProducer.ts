@@ -413,7 +413,8 @@ export class AudioCommandProducer {
       // judgeFrontNote / NoteLong.judgeAfterNote request the skill cue
       // themselves before this note's onJudgeNote: it never consults or
       // updates TapSEStatusData, and the normal cue below still follows it.
-      if (isSkillTapJudgement(entry, note)) commands.push(oneShot("SE_RHYTHM_TAP_SKILL", "one-shot-0"));
+      // Both skip the request in MoveTime (GameState 14).
+      if (isSkillTapJudgement(entry, note) && !onMoveTime) commands.push(oneShot("SE_RHYTHM_TAP_SKILL", "one-shot-0"));
       if (!shouldSilent(nextTap, entry) && !onMoveTime) {
         const cue = judgementCue(entry);
         if (cue.status !== "ok") return cue;
