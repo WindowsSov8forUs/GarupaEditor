@@ -219,7 +219,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     bestdoriSkinCatalogOptions,
     bestdoriCatalogStatus,
     formatTypeLabel,
-    applyWindowPreset,
+    applyWindowPresetById,
     applyAppOptionSettings,
     applyBestdoriSkinSelection,
     downloadProgress,
@@ -2013,7 +2013,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         onPlaybackMvModeChange={setPlaybackMvMode}
         onPlaybackMvAlphaPercentChange={setPlaybackMvAlphaPercent}
         onPlaybackAllPerfectStatusDisplayModeChange={setPlaybackAllPerfectStatusDisplayMode}
-        onApplyWindowPreset={() => void applyWindowPreset()}
+        onApplyWindowPreset={presetId => void applyWindowPresetById(presetId)}
         optionSettings={appOptionSettings}
         onApplyOptionSettings={applyAppOptionSettings}
       />

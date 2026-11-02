@@ -103,6 +103,8 @@ import {
   NOTE_SPECS,
   NOTE_TYPES,
   WINDOW_SIZE_PRESETS,
+  DEFAULT_WINDOW_PRESET_ID,
+  DEFAULT_PLAYBACK_WINDOW_PRESET_ID,
   approxEq,
   beatToSeconds,
   buildBpmTimeline,
@@ -1216,8 +1218,8 @@ function ChartEditorController() {
   const widthInputEditingRef = useRef(false);
   const slideVibrationInputEditingRef = useRef(false);
 
-  const [windowPresetId, setWindowPresetId] = useState(WINDOW_SIZE_PRESETS[1].id);
-  const [playbackWindowPresetId, setPlaybackWindowPresetId] = useState(WINDOW_SIZE_PRESETS[0].id);
+  const [windowPresetId, setWindowPresetId] = useState(DEFAULT_WINDOW_PRESET_ID);
+  const [playbackWindowPresetId, setPlaybackWindowPresetId] = useState(DEFAULT_PLAYBACK_WINDOW_PRESET_ID);
   const [playbackFps, setPlaybackFps] = useState(60);
   const [playbackMvMode, setPlaybackMvMode] = useState(false);
   const [playbackMvAlphaPercent, setPlaybackMvAlphaPercent] = useState(100);
@@ -3117,7 +3119,6 @@ function ChartEditorController() {
     handleMvUpload,
     handleIllustBackgroundUpload,
     removeIllustBackground,
-    applyWindowPreset,
     applyWindowPresetById,
     applyBestdoriSkinSelection,
     downloadProgress,
@@ -3179,7 +3180,6 @@ function ChartEditorController() {
     sanitizeFileName,
     setIsAppSettingsOpen,
     setIsSkinSettingsOpen,
-    windowPresetId,
     WINDOW_SIZE_PRESETS,
     LogicalSize,
     getCurrentWindow,
@@ -6357,7 +6357,7 @@ function ChartEditorController() {
         bestdoriCatalogStatus,
         formatTypeLabel,
         skinAssets,
-        applyWindowPreset,
+        applyWindowPresetById,
         applyAppOptionSettings,
         setMusicSelectionSource: (musicSelectionSource: EditorOptionSettings["musicSelectionSource"]) =>
           setAppOptionSettings(value => ({ ...value, musicSelectionSource })),

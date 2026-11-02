@@ -202,7 +202,6 @@ export function useEditorIoAndShortcuts(params: any) {
     sanitizeFileName,
     setIsAppSettingsOpen,
     setIsSkinSettingsOpen,
-    windowPresetId,
     WINDOW_SIZE_PRESETS,
     LogicalSize,
     getCurrentWindow,
@@ -2077,10 +2076,6 @@ export function useEditorIoAndShortcuts(params: any) {
     }
   };
 
-  const applyWindowPreset = async () => {
-    await applyWindowPresetById(windowPresetId);
-  };
-
   const applyBestdoriSkinSelection = async (
     selection: SkinSelection,
     persist: boolean,
@@ -2259,7 +2254,6 @@ export function useEditorIoAndShortcuts(params: any) {
     handleMvUpload,
     handleIllustBackgroundUpload,
     removeIllustBackground,
-    applyWindowPreset,
     applyWindowPresetById,
     applyBestdoriSkinSelection,
     downloadProgress,

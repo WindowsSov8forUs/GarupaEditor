@@ -236,6 +236,8 @@ export const WINDOW_SIZE_PRESETS: WindowPreset[] = [
   { id: "hdplus", label: "1600 x 900 (HD+)", width: 1600, height: 900 },
   { id: "fhd", label: "1920 x 1080 (Full HD)", width: 1920, height: 1080 },
 ];
+export const DEFAULT_WINDOW_PRESET_ID = WINDOW_SIZE_PRESETS[1]!.id;
+export const DEFAULT_PLAYBACK_WINDOW_PRESET_ID = WINDOW_SIZE_PRESETS[0]!.id;
 
 export const DEFAULT_METADATA: ChartMetadata = {
   isFullLength: false,
