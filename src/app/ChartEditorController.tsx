@@ -42,7 +42,7 @@ import { useCanvasPlayfieldBackend } from "./hooks/useCanvasPlayfieldBackend";
 import { useCanvasRenderResources } from "./hooks/useCanvasRenderResources";
 import { useIsStartingApplication, useStartupReadiness } from "./startupReadiness";
 import { useEditorGeometry } from "./hooks/useEditorGeometry";
-import { FULL_LENGTH_UNKNOWN, useEditorIoAndShortcuts } from "./hooks/useEditorIoAndShortcuts";
+import { IMPORT_NOTICE_MARKER, useEditorIoAndShortcuts } from "./hooks/useEditorIoAndShortcuts";
 import { BESTDORI_SESSION_EXPIRED_MESSAGE } from "../services/bestdori/api";
 import { useEditorSessionCache } from "./hooks/useEditorSessionCache";
 import { useEditorRenderModel } from "./hooks/useEditorRenderModel";
@@ -390,8 +390,10 @@ function routeStatusMessage(rawMessage: string): StatusMessageRoute {
   if (message === BESTDORI_SESSION_EXPIRED_MESSAGE) {
     return { channel: "dialog", tone: "info", message: "Bestdori 登录已失效，\n请重新登录。" };
   }
-  if (message.includes(FULL_LENGTH_UNKNOWN)) {
-    return { channel: "dialog", tone: "info", message: "无法确定是否为完整版，\n可在歌曲设定中修改。" };
+  // An import's notes appear together in one dialog; an import without notes shows none.
+  const importNotices = rawMessage.indexOf(IMPORT_NOTICE_MARKER);
+  if (importNotices >= 0) {
+    return { channel: "dialog", tone: "info", message: rawMessage.slice(importNotices + IMPORT_NOTICE_MARKER.length) };
   }
 
   if (message === "已停止播放。") {
