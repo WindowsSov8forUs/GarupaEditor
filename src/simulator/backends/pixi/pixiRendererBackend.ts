@@ -2269,7 +2269,7 @@ export class PixiRendererBackend implements SimulatorRendererBackend {
 
   private usesOriginalSuddenMask(object: PixiObjectRecord): boolean {
     return object.role === "tap-lane-effect" || noteSpatialRole(object.role) &&
-      object.poolFamily !== "long-long-flash" && object.poolFamily !== "long-habahiro-icon";
+      object.poolFamily !== "long-long-flash";
   }
 
   private ensureTapLaneEffectOutsideMask(object: PixiObjectRecord): void {
