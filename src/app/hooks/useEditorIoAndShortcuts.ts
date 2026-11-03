@@ -69,7 +69,8 @@ import {
 import { isTauriRuntimeEnvironment } from "../../services/bestdori/transport";
 
 // An import that cannot tell whether its song is full-length says so; the song settings can change it.
-export const FULL_LENGTH_UNKNOWN = "（无法确定是否完整版，可在歌曲设定中修改）";
+/** Separates an import status from the notes it produced; the editor shows those notes in one dialog. */
+export const IMPORT_NOTICE_MARKER = "\n导入说明：\n";
 
 type ParsedJsonNote = {
   note: ChartNote;
@@ -95,6 +96,8 @@ type AppliedGarupaChartJsonSummary = {
   regressedExGarupa: boolean;
   regressedSpRhythm: boolean;
   regressedHabahiro: boolean;
+  /** Holds whose tail width differed from the head and now follows it. */
+  normalizedHoldWidths: number;
 };
 
 type ImportJsonModalLevel = "chart" | "bestdori-v2";
@@ -1142,11 +1145,17 @@ export function useEditorIoAndShortcuts(params: any) {
     }
     const importedSlideChains = regressedChartState.slideChains;
     const importedSvEvents = regressedChartState.svEvents ?? nextSvEvents;
-    const importedNotes = sortNotes(
-      !preserveForPlay && chartHabahiro
-        ? applyHabahiroSlideWidths(regressedChartState.notes, importedSlideChains)
-        : regressedChartState.notes,
-    );
+    const widthAdjustedNotes = !preserveForPlay && chartHabahiro
+      ? applyHabahiroSlideWidths(regressedChartState.notes, importedSlideChains)
+      : regressedChartState.notes;
+    let normalizedHoldWidths = 0;
+    if (widthAdjustedNotes !== regressedChartState.notes) {
+      const widthBefore = new Map(regressedChartState.notes.map((note: ChartNote) => [note.id, note.width] as const));
+      const widthAfter = new Map(widthAdjustedNotes.map((note: ChartNote) => [note.id, note.width] as const));
+      normalizedHoldWidths = importedSlideChains.filter((chain: { noteIds: string[] }) =>
+        chain.noteIds.some((id) => widthBefore.get(id) !== widthAfter.get(id))).length;
+    }
+    const importedNotes = sortNotes(widthAdjustedNotes);
 
     onNewProject(preserveForPlay);
     setMetadata(nextMetadata);
@@ -1184,24 +1193,27 @@ export function useEditorIoAndShortcuts(params: any) {
       regressedExGarupa,
       regressedSpRhythm,
       regressedHabahiro,
+      normalizedHoldWidths,
     };
   };
 
-  const applyChartImportStatus = (label: string, summary: AppliedGarupaChartJsonSummary) => {
-    appLog("info", "editor.chart.imported", { source: label, summary });
-    const regressionNotices = [
-      summary.regressedSpRhythm ? "已按当前模式自动执行去SP节奏图示回退。" : "",
-      summary.regressedHabahiro ? "谱面无 #HABAHIRO 谱面头，已将非 Directional 宽音符回退为宽度 1。" : "",
+  const applyChartImportStatus = (
+    label: string,
+    summary: AppliedGarupaChartJsonSummary,
+    options: { fullLengthUnknown?: boolean } = {},
+  ) => {
+    appLog("info", "editor.chart.imported", { source: label, summary, ...options });
+    // Everything this import changed or could not determine, shown together once.
+    const notices = [
+      options.fullLengthUnknown ? "无法确定是否为完整版，可在歌曲设定中修改。" : "",
+      approxEq(summary.beatOffset, 0) ? "" : `最早的 BPM 位于第 ${summary.beatOffset} 拍，已将整份谱面平移为从第 0 拍开始。`,
+      summary.regressedExGarupa ? "当前未启用 ExGarupa，已移除变速与时间组，滑条的特殊节点改为普通节点。" : "",
+      summary.regressedSpRhythm ? "当前未启用 SP 节奏图示，方向滑键已改为普通滑键。" : "",
+      summary.regressedHabahiro ? "谱面没有 #HABAHIRO 谱面头，宽音符（方向滑键除外）已改为宽度 1。" : "",
+      summary.normalizedHoldWidths > 0 ? `${summary.normalizedHoldWidths} 条长押的终点宽度与起点不同，已按起点宽度处理。` : "",
     ].filter((message) => message.length > 0);
-    const regressionNotice = regressionNotices.length > 0 ? ` ${regressionNotices.join(" ")}` : "";
-    const needsOffsetNotice = !approxEq(summary.beatOffset, 0);
-    if (needsOffsetNotice) {
-      setStatusMessage(
-        `${label}：${summary.visibleNoteCount} 个可见音符，已按最小 BPM Beat=${summary.beatOffset} 执行整体偏移并强制 BPM@0。${regressionNotice}`,
-      );
-      return;
-    }
-    setStatusMessage(`${label}：${summary.visibleNoteCount} 个可见音符。${regressionNotice}`);
+    setStatusMessage(`${label}：${summary.visibleNoteCount} 个可见音符。`
+      + (notices.length > 0 ? IMPORT_NOTICE_MARKER + notices.map((notice) => `・${notice}`).join("\n") : ""));
   };
 
   const applyImportJsonText = () => {
@@ -1402,8 +1414,8 @@ export function useEditorIoAndShortcuts(params: any) {
           : 0,
         mvOffsetMs: payload.metadata.mvOffsetMs,
       }));
-      const label = `已导入官方谱面 ${chartId}/${difficulty} 并同步歌曲信息${fullLength === null ? FULL_LENGTH_UNKNOWN : ""}`;
-      applyChartImportStatus(label, summary);
+      applyChartImportStatus(`已导入官方谱面 ${chartId}/${difficulty} 并同步歌曲信息`, summary,
+        { fullLengthUnknown: fullLength === null });
       completeDownloadProgress("官方谱面导入完成。");
       setImportJsonModalLevel("chart");
       setIsImportJsonModalOpen(false);
@@ -1543,10 +1555,9 @@ export function useEditorIoAndShortcuts(params: any) {
         mvOffsetMs: 0,
       }));
 
-      const label = (audioUrl.length > 0
+      applyChartImportStatus(audioUrl.length > 0
         ? `已导入社区谱面 ${postId} 并同步歌曲信息`
-        : `已导入社区谱面 ${postId}`) + (fullLength === null ? FULL_LENGTH_UNKNOWN : "");
-      applyChartImportStatus(label, summary);
+        : `已导入社区谱面 ${postId}`, summary, { fullLengthUnknown: fullLength === null });
       completeDownloadProgress("社区谱面导入完成。");
       setImportJsonModalLevel("chart");
       setIsImportJsonModalOpen(false);
