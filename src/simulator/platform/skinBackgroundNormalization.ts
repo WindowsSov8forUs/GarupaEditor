@@ -16,12 +16,13 @@ export async function normalizeSkinBackgroundImage(
 ): Promise<SimulatorAssemblyResult<SkinBackgroundImage | null>> {
   if (image === null) return assemblyAccepted(null);
   try {
-    const bytes = await normalizeSourcePng(image.bytes, "skin background", null);
-    const stageEffect = [];
-    for (const widget of image.stageEffect) {
-      stageEffect.push(Object.freeze({ ...widget, bytes: await normalizeSourcePng(widget.bytes, "skin stage effect", null) }));
-    }
-    return assemblyAccepted(Object.freeze({ ...image, bytes, stageEffect: Object.freeze(stageEffect) }));
+    // Encoded concurrently: each PNG encode waits for idle time, about a second while busy.
+    const [bytes, ...widgetBytes] = await Promise.all([
+      normalizeSourcePng(image.bytes, "skin background", null),
+      ...image.stageEffect.map((widget) => normalizeSourcePng(widget.bytes, "skin stage effect", null)),
+    ]);
+    const stageEffect = image.stageEffect.map((widget, index) => Object.freeze({ ...widget, bytes: widgetBytes[index]! }));
+    return assemblyAccepted(Object.freeze({ ...image, bytes: bytes!, stageEffect: Object.freeze(stageEffect) }));
   } catch (error) {
     return rejected("resource-integrity", "simulator.presentation.skin-background-decode",
       `The selected background skin image could not be decoded on the host: ${error instanceof Error ? error.message : String(error)}`);
