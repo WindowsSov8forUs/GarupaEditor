@@ -102,7 +102,6 @@ type AppliedGarupaChartJsonSummary = {
   normalizedHoldWidths: number;
   /** Holds whose Directional tail the original cannot end on, now ending in a normal tail. */
   demotedOffCenterLongTails: number;
-  demotedWideLongTails: number;
 };
 
 type ImportJsonModalLevel = "chart" | "bestdori-v2";
@@ -1175,10 +1174,9 @@ export function useEditorIoAndShortcuts(params: any) {
       normalizedHoldWidths = importedSlideChains.filter((chain: { noteIds: string[] }) =>
         chain.noteIds.some((id) => widthBefore.get(id) !== widthAfter.get(id))).length;
     }
-    // A Long's Directional tail must start on the head's center lane, one lane wide on a wide
-    // head (invalidLongDirectionalTail); otherwise it becomes a normal tail of the head's span.
+    // A Long's Directional tail must start on the head's center lane (invalidLongDirectionalTail);
+    // otherwise it becomes a normal tail of the head's span.
     let demotedOffCenterLongTails = 0;
-    let demotedWideLongTails = 0;
     const adjustedById = new Map(widthAdjustedNotes.map((note: ChartNote) => [note.id, note] as const));
     const demotedTails = new Map<string, ChartNote>();
     const asConnection = (note: ChartNote) => ({ beat: note.beat, lane: note.lane, width: note.width ?? 1,
@@ -1190,8 +1188,7 @@ export function useEditorIoAndShortcuts(params: any) {
       if (head === undefined || tail === undefined) continue;
       const reason = invalidLongDirectionalTail({ connections: [asConnection(head), asConnection(tail)] as never });
       if (reason === null) continue;
-      if (reason === "wide-tail") demotedWideLongTails += 1;
-      else demotedOffCenterLongTails += 1;
+      demotedOffCenterLongTails += 1;
       demotedTails.set(tail.id, { ...tail, type: "single", lane: head.lane, width: head.width });
     }
     const importedNotes = sortNotes(demotedTails.size === 0 ? widthAdjustedNotes
@@ -1235,7 +1232,6 @@ export function useEditorIoAndShortcuts(params: any) {
       regressedHabahiro,
       normalizedHoldWidths,
       demotedOffCenterLongTails,
-      demotedWideLongTails,
     };
   };
 
@@ -1254,7 +1250,6 @@ export function useEditorIoAndShortcuts(params: any) {
       summary.regressedHabahiro ? "谱面没有 #HABAHIRO 谱面头，宽音符（方向滑键除外）已改为宽度 1。" : "",
       summary.normalizedHoldWidths > 0 ? `${summary.normalizedHoldWidths} 条长押的终点宽度与起点不同，已按起点宽度处理。` : "",
       summary.demotedOffCenterLongTails > 0 ? `${summary.demotedOffCenterLongTails} 条长押的方向尾不在长押中心轨，已改为普通尾。` : "",
-      summary.demotedWideLongTails > 0 ? `${summary.demotedWideLongTails} 条宽长押的方向尾多于 1 轨，已改为普通尾。` : "",
     ].filter((message) => message.length > 0);
     setStatusMessage(`${label}：${summary.visibleNoteCount} 个可见音符。`
       + (notices.length > 0 ? IMPORT_NOTICE_MARKER + notices.map((notice) => `・${notice}`).join("\n") : ""));

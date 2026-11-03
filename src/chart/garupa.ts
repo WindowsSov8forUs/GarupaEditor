@@ -89,18 +89,16 @@ export function garupaLongCenterLane(head: Pick<GarupaChartJsonSimpleNote, "lane
 
 /**
  * Why a Single/Skill-headed two-node Slide marked long cannot end in its Directional tail.
- * The original merges a wide Long into its center root, which keeps its own tail: a wide
- * Long's Directional tail is one lane on that center. A one-lane head starts its tail on its
- * lane, which may span several lanes toward its direction (long_end_dir_flick plus
- * add_long_dir_flick).
+ * The original merges a wide Long into its center root, which keeps its own tail, and its
+ * multiple directional Adds extend from that root toward the arrow: the tail's `lane` is the
+ * head's center lane, and the tail spans `width` lanes from there toward its direction.
  */
 export function invalidLongDirectionalTail(
   slide: Pick<GarupaChartJsonSlideItem, "connections">,
-): "off-center" | "wide-tail" | null {
+): "off-center" | null {
   if (slide.connections.length !== 2) return null;
   const head = slide.connections[0]!, tail = slide.connections[1]!;
   if ((head.type !== "Single" && head.type !== "Skill") || tail.type !== "Directional" || tail.beat <= head.beat) return null;
-  if (head.width > 1 && tail.width > 1) return "wide-tail";
   return tail.lane === garupaLongCenterLane(head) ? null : "off-center";
 }
 

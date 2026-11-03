@@ -270,7 +270,7 @@ export function parseGarupaChartJson(input: unknown): GarupaChartJson {
         throw new Error(`${label}.long must be true when present`);
       }
       if (rawItem.long === true && !isGarupaLongSlideShape({ connections })) {
-        throw new Error(`${label}.long requires two nodes on one lane span with a Single/Skill head and a later Single/Skill/Flick tail, or a Directional tail on the head's center lane (one lane when the head is wider than one)`);
+        throw new Error(`${label}.long requires two nodes on one lane span with a Single/Skill head and a later Single/Skill/Flick tail, or a Directional tail starting on the head's center lane`);
       }
       const timingGroup = parseTimingGroup(rawItem.timingGroup, `${label}.timingGroup`);
       items.push({
