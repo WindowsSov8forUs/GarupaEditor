@@ -39,6 +39,7 @@ import {
 } from "../../skin/resourceSkinDecoder";
 import {
   convertBestdoriV2ToGarupaChartJson,
+  convertBmsToGarupaChartJson,
   convertGarupaChartJsonToBestdoriV2,
   GARUPA_HEADER_HABAHIRO,
   GARUPA_SYSTEM_LANE_CHANGE,
@@ -1238,11 +1239,12 @@ export function useEditorIoAndShortcuts(params: any) {
   const applyChartImportStatus = (
     label: string,
     summary: AppliedGarupaChartJsonSummary,
-    options: { fullLengthUnknown?: boolean } = {},
+    options: { fullLengthUnknown?: boolean; conversionWarnings?: readonly string[] } = {},
   ) => {
     appLog("info", "editor.chart.imported", { source: label, summary, ...options });
     // Everything this import changed or could not determine, shown together once.
     const notices = [
+      ...(options.conversionWarnings ?? []).map((warning) => `BMS 转换：${warning}。`),
       options.fullLengthUnknown ? "无法确定是否为完整版，可在歌曲设定中修改。" : "",
       approxEq(summary.beatOffset, 0) ? "" : `最早的 BPM 位于第 ${summary.beatOffset} 拍，已将整份谱面平移为从第 0 拍开始。`,
       summary.regressedExGarupa ? "当前未启用 ExGarupa，已移除变速与时间组，滑条的特殊节点改为普通节点。" : "",
@@ -1378,7 +1380,7 @@ export function useEditorIoAndShortcuts(params: any) {
         song && snapshot?.metadata ? { songInfo: song.info, bands: snapshot.metadata.bands, server: song.server } : undefined);
       if (song) { payload.metadata.title = song.title; payload.metadata.artist = song.artist; }
       pushImportProgress(42, "正在转换谱面结构…");
-      const converted = convertBestdoriV2ToGarupaChartJson(payload.chart);
+      const { chart: converted, warnings: conversionWarnings } = convertBmsToGarupaChartJson(payload.bms);
       const hasVisibleNote = hasVisiblePlayableNote(converted);
       if (!hasVisibleNote) {
         throw new Error("官方谱面解析成功，但未解析到可见音符。");
@@ -1454,7 +1456,7 @@ export function useEditorIoAndShortcuts(params: any) {
         mvOffsetMs: payload.metadata.mvOffsetMs,
       }));
       applyChartImportStatus(`已导入官方谱面 ${chartId}/${difficulty} 并同步歌曲信息`, summary,
-        { fullLengthUnknown: fullLength === null });
+        { fullLengthUnknown: fullLength === null, conversionWarnings });
       completeDownloadProgress("官方谱面导入完成。");
       setImportJsonModalLevel("chart");
       setIsImportJsonModalOpen(false);
