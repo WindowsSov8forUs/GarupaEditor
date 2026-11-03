@@ -10,6 +10,7 @@
   - Hidden Slide endpoints (extension). When a Slide's head is `Hidden`, its first visible node takes the head's role: before it is judged it registers a finger as a head does (any touch over it, without checking whether that finger already owns a note, so one finger may register several such Slides), and it is judged as an intermediate node. When a Slide's tail is `Hidden`, its last visible node is judged as an intermediate node and then handled as the tail: the finger is released and only the remaining geometry continues. `Hidden` nodes before the first or after the last visible node take no judgement and do not affect timeout windows.
 - `bestdori-v2.ts`: canonical Bestdori V2 chart JSON schema used by import/export flows.
 - `conversion.ts`: parsing, optional BPM-zero normalization, and Garupa ↔ Bestdori V2 conversion. Canonical optional `timingGroup` fields are omitted when absent/Global rather than emitted as own `undefined` properties; BPM-zero normalization preserves Slide owner groups.
+- `originalIntroSort.ts`: the original's unstable `Array.Sort` (ArraySortHelper IntroSort), for orderings that must match it.
 - `index.ts`: the public module surface.
 
 This module must stay independent from React, Tauri, simulator runtime types, skin resources, and editor controller state. `src/chartCore.ts` retains the editor's internal `ChartNote` model and editor/display-oriented operations; serialized format types do not belong there.
