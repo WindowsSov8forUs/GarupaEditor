@@ -33,6 +33,8 @@ export {
   parseGarupaChartJson,
 } from "./conversion";
 export type { ChartFormatConversionOptions } from "./conversion";
+export { BmsConversionError, convertBmsToGarupaChartJson } from "./bms";
+export type { BmsConversionResult } from "./bms";
 export {
   axisAtMs,
   buildTimingGroupDefs,
