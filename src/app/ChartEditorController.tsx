@@ -162,6 +162,7 @@ import "../App.css";
 import { type OverlayDialogState } from "../components/OverlayDialogModal";
 import type { StaticRenderPayload } from "./staticRenderTypes";
 import { buildSimulatorLaunchDescriptor, createSimulatorLaunchRequestId } from "./simulator/buildSimulatorLaunchDescriptor";
+import { chartProjectionError } from "../project/projectChartAdapter";
 import { SIMULATOR_PRE_ADAPTATION_DEFAULTS, type SimulatorModeSelection } from "./simulator/preAdaptationContract";
 import {
   SIMULATOR_WINDOW_CLOSED_EVENT,
@@ -5864,6 +5865,12 @@ function ChartEditorController() {
       exited = true;
       onExit?.(value);
     };
+    const invalidChart = chartProjectionError(project);
+    if (invalidChart !== null) {
+      openOverlayDialog({ tone: "error", message: invalidChart });
+      exit("blocked");
+      return;
+    }
     let releasePreparation: (() => void) | undefined;
     let readyUnlisten: UnlistenFn | null = null;
     let closedUnlisten: UnlistenFn | null = null;
@@ -6035,6 +6042,7 @@ function ChartEditorController() {
     playbackWindowPresetId,
     resourceManager,
     setStatusMessage,
+    openOverlayDialog,
   ]);
 
   const canApplyLongLineSettings = hasLongLineSelection && showSlideSegmentSetting;

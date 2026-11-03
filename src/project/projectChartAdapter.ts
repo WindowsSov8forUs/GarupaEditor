@@ -1,7 +1,18 @@
 import { GLOBAL_TIMING_GROUP_ID, sortNotes, sortBpmEvents, sortSvEvents, type ChartNote } from "../chartCore";
-import { GARUPA_HEADER_HABAHIRO, GARUPA_SYSTEM_LANE_CHANGE, isGarupaLongSlideShape } from "../chart";
+import { GARUPA_HEADER_HABAHIRO, GARUPA_SYSTEM_LANE_CHANGE, invalidLongDirectionalTail, isGarupaLongSlideShape } from "../chart";
 import type { GarupaChartJson, GarupaChartJsonSlideConnection, GarupaChartJsonTopLevelNote } from "../chart";
 import type { ChartProjectDraft } from "./chartProject";
+
+/** A chart the editor holds but cannot play or export as it stands. */
+export class ChartProjectionError extends Error {}
+
+/** The reason the chart cannot be played or exported as it stands, or null. */
+export function chartProjectionError(project: Pick<ChartProjectDraft, "metadata" | "chart">): string | null {
+  try { projectGarupaChart(project); return null; } catch (error) {
+    if (error instanceof ChartProjectionError) return error.message;
+    throw error;
+  }
+}
 
 /** One projection for export and play. Persisted project data never round-trips through this view. */
 export function projectGarupaChart(project: Pick<ChartProjectDraft, "metadata" | "chart">): GarupaChartJson {
@@ -30,6 +41,10 @@ export function projectGarupaChart(project: Pick<ChartProjectDraft, "metadata" |
       if (!value) throw new Error(`Slide 节点类型不可播放：${n.type}`);
       connected.add(id); return [value];
     });
+    // A Long's Directional tail is not turned into another note: it must be fixed first.
+    if (chain.long === true && invalidLongDirectionalTail({ connections }) !== null) {
+      throw new ChartProjectionError(`第 ${connections[1]!.beat} 拍的长押方向尾不合法：\n方向尾须从长押中心轨开始，宽长押只能接单轨方向尾。\n请修改后再演出或导出。`);
+    }
     // An edit that leaves the Long shape (another node, a lane move) makes the chain a Slide again.
     const long = chain.long === true && isGarupaLongSlideShape({ connections });
     return { type: "Slide" as const, timingGroup: group(chain.timingGroup), connections, ...(long ? { long: true as const } : {}) };

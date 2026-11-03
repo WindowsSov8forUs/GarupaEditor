@@ -13,7 +13,7 @@ export type {
   GarupaChartJsonSystemItem,
   GarupaChartJsonTopLevelNote,
 } from "./garupa";
-export { GARUPA_HEADER_HABAHIRO, GARUPA_SYSTEM_LANE_CHANGE, isGarupaLongSlideShape } from "./garupa";
+export { GARUPA_HEADER_HABAHIRO, GARUPA_SYSTEM_LANE_CHANGE, garupaLongCenterLane, invalidLongDirectionalTail, isGarupaLongSlideShape } from "./garupa";
 
 export type {
   BestdoriV2ChartJson,
