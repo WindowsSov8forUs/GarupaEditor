@@ -3289,9 +3289,11 @@ function resolveHabahiroAfterSpriteBinding(
   const laneSuffix = geometry === undefined ? resolveLaneSuffix(information, true) : ok(geometry.suffix);
   if (laneSuffix.status !== "ok") return laneSuffix;
   if (afterTypeIsDirectional(information.afterNoteType)) {
-    return ok(resolveHabahiroDirectionalBodyBinding(
-      laneSuffix.value, afterTypeIsLeft(information.afterNoteType), resources,
-    ));
+    // A wide root's range body has no sprite in the original atlases. Approved extension:
+    // the representative center lane shows its one-lane body, so the group reads whole.
+    const lane = resolveLaneIndex(information.buttonType, false);
+    const suffix = laneSuffix.value.includes("_") && lane >= 0 ? String(lane) : laneSuffix.value;
+    return ok(resolveHabahiroDirectionalBodyBinding(suffix, afterTypeIsLeft(information.afterNoteType), resources));
   }
   const flick = information.afterNoteType === AfterNoteType.Flick ||
     information.afterNoteType === AfterNoteType.SlideFlickEnd;

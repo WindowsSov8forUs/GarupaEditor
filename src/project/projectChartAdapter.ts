@@ -43,7 +43,7 @@ export function projectGarupaChart(project: Pick<ChartProjectDraft, "metadata" |
     });
     // A Long's Directional tail is not turned into another note: it must be fixed first.
     if (chain.long === true && invalidLongDirectionalTail({ connections }) !== null) {
-      throw new ChartProjectionError(`第 ${connections[1]!.beat} 拍的长押方向尾不合法：\n方向尾须从长押中心轨开始，宽长押只能接单轨方向尾。\n请修改后再演出或导出。`);
+      throw new ChartProjectionError(`第 ${connections[1]!.beat} 拍的长押方向尾不合法：\n方向尾须从长押中心轨开始。\n请修改后再演出或导出。`);
     }
     // An edit that leaves the Long shape (another node, a lane move) makes the chain a Slide again.
     const long = chain.long === true && isGarupaLongSlideShape({ connections });
