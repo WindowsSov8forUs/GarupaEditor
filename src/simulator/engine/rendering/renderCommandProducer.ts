@@ -1866,11 +1866,9 @@ export class RenderCommandProducer {
               scene.noteDomainLayer, this.creationSequenceByObjectId.get(childAnimation.ownerObjectId)!);
           }
         }
+        // The front node's count alone selects the rate shared by both ends.
         const segmentWidthRate = completeHabahiro
-          ? getHabahiroMeshWidthRate(
-              Math.max(previousButtonCount, childButtonCount),
-              scene.habahiro!.highAspectRatio,
-            )
+          ? getHabahiroMeshWidthRate(previousButtonCount, scene.habahiro!.highAspectRatio)
           : createRenderFloat32(Math.fround(1));
         if (segmentWidthRate.status !== "ok") return segmentWidthRate;
         const afterScale = getOrdinaryNoteMeshAfterScale(created.value.lifecycle, previousMotionState.goalPosition.y, scene.screenToSafeAreaRatio!);
