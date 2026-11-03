@@ -7,6 +7,7 @@ import {
 type SlideChainLike = {
   id?: string;
   noteIds: string[];
+  long?: true;
 };
 
 function isRhythmWidthSlideNode(note: ChartNote | undefined): note is ChartNote {
@@ -102,6 +103,11 @@ export function inferPreferredHabahiroSlideWidths(
   return preferredByChainId;
 }
 
+/**
+ * A Hold always keeps one width (the original's Long has only its root's buttons). A Slide
+ * may change width per node as in the original; it is set to one width only when a width
+ * edit on one of its nodes names that width (preferredByChainId).
+ */
 export function applyHabahiroSlideWidths(
   notes: ChartNote[],
   slideChains: readonly SlideChainLike[],
@@ -110,11 +116,9 @@ export function applyHabahiroSlideWidths(
   let next = notes;
   slideChains.forEach((chain, index) => {
     const chainId = chain.id ?? `__chain_${index}`;
-    next = applyHabahiroSlideWidthToNoteIds(
-      next,
-      chain.noteIds,
-      preferredByChainId.get(chainId),
-    );
+    const preferred = preferredByChainId.get(chainId);
+    if (chain.long !== true && preferred === undefined) return;
+    next = applyHabahiroSlideWidthToNoteIds(next, chain.noteIds, preferred);
   });
   return next;
 }
