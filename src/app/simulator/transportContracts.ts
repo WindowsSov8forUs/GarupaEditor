@@ -70,7 +70,8 @@ export interface SimulatorWindowPayloadEnvelope {
 
 /** Where the opener goes when the live ends: leave the preparation, return to it for
  * もう1回ライブ, or stay on it after a launch that never ran. */
-export type SimulatorWindowExit = "leave" | "play-again" | "failed";
+/** "blocked": the chart cannot be played as it stands; no window opened and the opener explained why. */
+export type SimulatorWindowExit = "leave" | "play-again" | "failed" | "blocked";
 
 export interface SimulatorWindowClosedPayload {
   readonly requestId: string;

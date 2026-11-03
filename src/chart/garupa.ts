@@ -81,14 +81,36 @@ export type GarupaChartJsonItem =
 
 export type GarupaChartJson = readonly GarupaChartJsonItem[];
 
-/** The original Long shape: exactly two nodes on one lane span, a Single/Skill head
- * and a later Single/Skill/Flick/Directional tail. A Directional tail starts from the
- * head's lane (its `lane`) and may span several lanes toward its direction: the
- * original Long multiple directional end (long_end_dir_flick plus add_long_dir_flick). */
+/** combineNotes keeps the root at ⌊(first + last) / 2⌋ of a merged range: the left middle
+ * lane of an even width. */
+export function garupaLongCenterLane(head: Pick<GarupaChartJsonSimpleNote, "lane" | "width">): number {
+  return head.lane + Math.floor((head.width - 1) / 2);
+}
+
+/**
+ * Why a Single/Skill-headed two-node Slide marked long cannot end in its Directional tail.
+ * The original merges a wide Long into its center root, which keeps its own tail: a wide
+ * Long's Directional tail is one lane on that center. A one-lane head starts its tail on its
+ * lane, which may span several lanes toward its direction (long_end_dir_flick plus
+ * add_long_dir_flick).
+ */
+export function invalidLongDirectionalTail(
+  slide: Pick<GarupaChartJsonSlideItem, "connections">,
+): "off-center" | "wide-tail" | null {
+  if (slide.connections.length !== 2) return null;
+  const head = slide.connections[0]!, tail = slide.connections[1]!;
+  if ((head.type !== "Single" && head.type !== "Skill") || tail.type !== "Directional" || tail.beat <= head.beat) return null;
+  if (head.width > 1 && tail.width > 1) return "wide-tail";
+  return tail.lane === garupaLongCenterLane(head) ? null : "off-center";
+}
+
+/** The original Long shape: exactly two nodes, a Single/Skill head and a later
+ * Single/Skill/Flick tail on its lane span, or a Directional tail as invalidLongDirectionalTail allows. */
 export function isGarupaLongSlideShape(slide: Pick<GarupaChartJsonSlideItem, "connections">): boolean {
   if (slide.connections.length !== 2) return false;
   const head = slide.connections[0]!, tail = slide.connections[1]!;
-  if ((head.type !== "Single" && head.type !== "Skill") || head.lane !== tail.lane || tail.beat <= head.beat) return false;
-  if (tail.type === "Directional") return head.width === 1;
-  return (tail.type === "Single" || tail.type === "Skill" || tail.type === "Flick") && head.width === tail.width;
+  if ((head.type !== "Single" && head.type !== "Skill") || tail.beat <= head.beat) return false;
+  if (tail.type === "Directional") return invalidLongDirectionalTail(slide) === null;
+  return head.lane === tail.lane &&
+    (tail.type === "Single" || tail.type === "Skill" || tail.type === "Flick") && head.width === tail.width;
 }
