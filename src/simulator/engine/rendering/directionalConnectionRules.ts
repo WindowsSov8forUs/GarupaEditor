@@ -29,7 +29,9 @@ export function isDirectionalVisual(note: ConnectionNote): boolean {
 }
 export function connectionDirection(note: ConnectionNote, after: ConnectionEndpoint): "left" | "right" {
   const source = connectionSource(note, after);
-  const gameType = source?.slideHeadGestureGameType ?? source?.gameNoteType;
+  // A Long root's tail endpoint is the root itself; its direction lives in afterNoteType.
+  const gameType = after === true && note.noteInformation!.fireNoteType === FrontNoteType.Long ? undefined
+    : source?.slideHeadGestureGameType ?? source?.gameNoteType;
   const left = gameType === undefined
     ? note.noteInformation!.afterNoteType === AfterNoteType.MultipleDirectionalFlickLeft ||
       note.noteInformation!.afterNoteType === AfterNoteType.SlideMultipleDirectionalFlickLeft
