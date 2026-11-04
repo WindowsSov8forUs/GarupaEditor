@@ -1,4 +1,4 @@
-import { authoredEndpointPosition } from "../chart/noteGraph";
+import { authoredEndpointPosition, directionalGroupPosition } from "../chart/noteGraph";
 import { findBatchBpmCommand, isBpmCommand } from "../chart/noteGraph";
 import { connectDirectionalMemberBatch, connectionDirection, directionalConnectionEndpoints, directionalConnectionPresentation, reconnectDirectionalSyncConnections, slideDirectionalAnchorEndpoint } from "../rendering/directionalConnectionRules";
 import { noteMotionY, noteSpatialY, noteUnclippedSyncTarget } from "../rendering/ordinaryNoteGeometry";
@@ -1187,7 +1187,7 @@ export class NoteManager {
         ...allInformation.filter((candidate) =>
           candidate !== root &&
           candidate.fireNoteType === FrontNoteType.LongMultipleDirectionalFlickAdd &&
-          authoredEndpointPosition(candidate, true) === authoredEndpointPosition(root, true) &&
+          directionalGroupPosition(candidate) === directionalGroupPosition(root) &&
           isSameDirectionalGroup(root, candidate)),
       ];
       if (members.length < 2) {
@@ -1225,7 +1225,7 @@ export class NoteManager {
         ...allInformation.filter((candidate) =>
           candidate !== root &&
           candidate.fireNoteType === visualType &&
-          authoredEndpointPosition(candidate, true) === authoredEndpointPosition(root, true) &&
+          directionalGroupPosition(candidate) === directionalGroupPosition(root) &&
           isSameDirectionalGroup(root, candidate)),
       ];
       if (members.length < 2) {
