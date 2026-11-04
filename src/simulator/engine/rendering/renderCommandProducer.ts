@@ -2483,6 +2483,29 @@ export class RenderCommandProducer {
       : this.preflight(commands, publishAnimations);
   }
 
+  /** SetSpriteEnabled(false) on each member's body and arrow; DeactivateBackLine on its lines. */
+  preflightFlickSpritesDisabled(
+    poolObjectIds: readonly string[],
+    multipleDirectionalLinePoolIndices: readonly number[],
+  ): SimulatorResult<RenderOwnerTransaction> {
+    const validation = this.validate();
+    if (validation.status !== "ok") return validation;
+    const base = this.commandBase(this.substep);
+    const commands: RenderCommand[] = [];
+    for (const poolObjectId of poolObjectIds) {
+      const renderObjectId = rootRenderObjectId(poolObjectId);
+      for (const objectId of [renderObjectId, ordinaryNoteIconRenderObjectId(renderObjectId)]) {
+        if (this.creationSequenceByObjectId.has(objectId)) commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: objectId });
+      }
+    }
+    for (const poolIndex of multipleDirectionalLinePoolIndices) {
+      const renderObjectId = multipleDirectionalLineRenderObjectId(poolIndex);
+      commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId });
+      commands.push({ ...base(commands.length), kind: "deactivate-object", renderObjectId });
+    }
+    return commands.length === 0 ? ok(new RenderOwnerTransaction(this.renderer, null)) : this.preflight(commands);
+  }
+
   preflightNoteDeactivation(
     poolObjectId: string,
     syncLinePoolIndices: readonly number[] = [],
