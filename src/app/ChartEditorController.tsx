@@ -4832,7 +4832,9 @@ function ChartEditorController() {
   ]);
 
   useEffect(() => {
-    if (syncingHabahiroSkinRef.current) {
+    // Session restore applies the saved skin first; syncing before it lands would apply a
+    // second skin built on the default selection.
+    if (!settingsResourcesReady || syncingHabahiroSkinRef.current) {
       return;
     }
     const skinIsHabahiro = isHabahiroRhythmRipName(skinSelection.rhythmRipName);
@@ -4862,6 +4864,7 @@ function ChartEditorController() {
       }
     }
   }, [
+    settingsResourcesReady,
     isHabahiroEnabled,
     buildHabahiroSkinSelection,
     buildStandardRhythmSkinSelection,
