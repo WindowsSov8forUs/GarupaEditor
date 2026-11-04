@@ -2426,6 +2426,8 @@ export class NoteSlide extends NoteFrontBase {
 }
 
 export abstract class NoteFlickBase extends NoteSingleBase {
+  /** NoteFlickBase.ExecTouchBegan (0x3AA7458) calls SetSpriteEnabled(false) on a non-None result. */
+  onSpriteDisabled: ((note: NoteFlickBase) => void) | null = null;
   private frameCounterValue = Math.fround(0);
   private cachedJudgementValue: ManualNoteJudgement | null = null;
 
@@ -2475,6 +2477,7 @@ export abstract class NoteFlickBase extends NoteSingleBase {
     }
     this.frameCounterValue = Math.fround(0);
     this.cachedJudgementValue = judgement;
+    this.onSpriteDisabled?.(this);
     const changed = this.changeState(NoteState.Wait);
     if (changed.status !== "ok") {
       throw new Error("Flick Began commit could not enter Wait state");
