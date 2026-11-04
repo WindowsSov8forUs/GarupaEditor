@@ -779,7 +779,6 @@ export class InGameManager {
         if (committed.status !== "ok") return this.latchFault(committed);
         const changed = previousElapsed < this.renderScene.habahiro.changeLaneSeconds.value &&
           nextElapsed >= this.renderScene.habahiro.changeLaneSeconds.value;
-        if (changed) this.noteManager.commitHabahiroLaneChangeGeometry();
         this.habahiroFlashElapsed = nextElapsed;
         this.habahiroLanePhase = nextElapsed >= this.renderScene.habahiro.animationCompleteSeconds.value
           ? "complete"
