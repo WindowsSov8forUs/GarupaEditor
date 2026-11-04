@@ -1,7 +1,6 @@
 import { groupMultipleDirectionalInformationList, isNonPlayableCommand } from "../chart/noteGraph";
 import {
   FrontNoteType,
-  GameNoteAdditionalType,
   GameNoteType,
   type ChartConstructionResult,
   type NoteInformation,
@@ -161,7 +160,6 @@ export function createConstructedChartScoringPlan(
 
 function isScoringRoot(source: NoteInformation): boolean {
   return !isNonPlayableCommand(source) && source.gameNoteType !== GameNoteType.None &&
-    source.gameNoteAdditionalType !== GameNoteAdditionalType.LaneChange &&
     !(source.fireNoteType >= FrontNoteType.LongMultipleDirectionalFlickAdd &&
       source.fireNoteType <= FrontNoteType.SlideBMultipleDirectionalFlickAdd);
 }
