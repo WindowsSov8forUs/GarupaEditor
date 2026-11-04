@@ -170,6 +170,11 @@ export class ParticleFrameCoordinator {
       : owner;
   }
 
+  preflightEmptyTaps(buttonTypes: readonly number[]): SimulatorResult<ParticleOuterFrameTransaction> {
+    const owner = this.producer.preflightEmptyTaps(buttonTypes);
+    return owner.status === "ok" ? this.preflight(0, false, owner.value) : owner;
+  }
+
   preflightGameClearStart(
     clearStatus: 1 | 2 | 3,
   ): SimulatorResult<ParticleOuterFrameTransaction> {

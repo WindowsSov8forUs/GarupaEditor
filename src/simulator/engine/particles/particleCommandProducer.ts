@@ -394,6 +394,24 @@ export class ParticleCommandProducer {
     return synchronized.status === "ok" ? this.stage(commands, projected) : synchronized;
   }
 
+  /** PlayAnimation with result None and rangeLength 1 plays the receiving button's effect_tap. */
+  preflightEmptyTaps(buttonTypes: readonly number[]): SimulatorResult<ParticleCommandOwnerTransaction> {
+    const available = this.validateAvailable();
+    if (available.status !== "ok") return available;
+    if (!buttonTypes.every(isButtonType)) {
+      return rejected("particle.producer.invalid-empty-tap-owner", "An empty tap requires the receiving GamePlayButton identity.");
+    }
+    const projected = cloneState(this.state);
+    if (projected.suppressedUntilReplay) return this.stage([], projected);
+    const commands: ParticleCommand[] = [];
+    const root = "ordinary:effect_tap" as const;
+    for (const buttonType of buttonTypes) {
+      commands.push(playRoot(buttonParticleOwnerKey(buttonType, root, 1),
+        buttonInstance(buttonType, 1, this.particleScene!), root));
+    }
+    return this.stage(commands, projected);
+  }
+
   preflightButtonTapKeepStart(
     buttonType: number,
     rangeLength: number,

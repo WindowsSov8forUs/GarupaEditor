@@ -408,6 +408,21 @@ export class InGameManager {
     if (productUpdate.status !== "ok") return this.latchFault(productUpdate);
     const noteAnimations = this.noteManager.advanceNoteAnimations(deltaTimeSeconds);
     if (noteAnimations.status !== "ok") return this.latchFault(noteAnimations);
+    const emptyTaps = this.noteManager.takeEmptyTaps();
+    if (emptyTaps.length > 0) {
+      if (this.audioProducer !== null) {
+        const soundPlan = this.audioProducer.preflightEmptyTaps(emptyTaps);
+        if (soundPlan.status !== "ok") return this.latchFault(soundPlan);
+        const committed = soundPlan.value.commit();
+        if (committed.status !== "ok") return this.latchFault(committed);
+      }
+      const particlePlan = this.particleCoordinator?.preflightEmptyTaps(emptyTaps.map((tap) => tap.buttonType)) ?? null;
+      if (particlePlan !== null) {
+        if (particlePlan.status !== "ok") return this.latchFault(particlePlan);
+        const committed = this.commitParticleTransaction(particlePlan.value);
+        if (committed.status !== "ok") return this.latchFault(committed);
+      }
+    }
     const holdSounds = this.noteManager.takeHoldSounds();
     if (holdSounds.length > 0 && this.audioProducer !== null) {
       const soundPlan = this.audioProducer.preflightHoldSounds(holdSounds);

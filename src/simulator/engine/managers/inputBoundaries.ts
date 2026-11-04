@@ -239,6 +239,8 @@ interface GamePlayButtonTouchPlan {
   readonly notePlan: ManualNoteBeganPlan | ManualNoteContinuationPlan | null;
   readonly judgementTransaction: ManualJudgementTransaction | null;
   readonly bindNote: boolean;
+  /** GamePlayButton.ExecTouchBegan's empty-tap tail: no candidate, or a None result. */
+  readonly emptyTap?: true;
 }
 
 /** A finger registered by a Hidden-head Slide, in addition to its button owner. */
@@ -446,6 +448,11 @@ export class GamePlayInputDispatcher implements ManualInputDispatcher {
         const button = operation.inputButton ??
           this.buttonWithFingerId[operation.fingerId];
         button?.commitTouch(operation.buttonPlan);
+        // ExecTouchBegan returns first under Auto/Demo (IsAutoPlay).
+        if (operation.buttonPlan.emptyTap === true && button?.buttonType != null &&
+          !this.noteManager.inGameCalculatedData.isAutoPlay) {
+          this.noteManager.enqueueEmptyTap({ buttonType: button.buttonType, fingerId: operation.fingerId });
+        }
         if (operation.buttonPlan.touchPhase === ManualTouchPhase.Ended) this.buttonWithFingerId[operation.fingerId] = null;
       }
       this.commitHiddenHeads(operation);
@@ -572,7 +579,7 @@ export class GamePlayButton {
     const candidate = selected.value;
     if (candidate === null) {
       projection.touchNotes[touch.fingerId] = null;
-      return ok(noNotePlan("began", touch, deltaTimeSeconds));
+      return ok(Object.freeze({ ...noNotePlan("began", touch, deltaTimeSeconds), emptyTap: true as const }));
     }
     const beganInput = manualNoteInput(
       touch,
@@ -588,7 +595,9 @@ export class GamePlayButton {
     const projectedFinger = projectedFingerOwners.get(candidate) ?? candidate.fingerId;
     if (judgement.value.outcome === "none" || projectedFinger >= 0) {
       projection.touchNotes[touch.fingerId] = null;
-      return ok(noNotePlan("began", touch, deltaTimeSeconds));
+      // An owned candidate only clears the binding (0x38A62EC); a None result plays the empty tap.
+      const plan = noNotePlan("began", touch, deltaTimeSeconds);
+      return ok(judgement.value.outcome === "none" ? Object.freeze({ ...plan, emptyTap: true as const }) : plan);
     }
     const commitPreflight = candidate.preflightManualTouchBeganCommit(
       beganInput,
