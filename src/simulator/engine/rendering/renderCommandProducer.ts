@@ -1553,13 +1553,16 @@ export class RenderCommandProducer {
         "Ordinary activation requires its committed engine-authored pool root identity.",
       );
     }
-    const start = noteStartPosition(scene.noteStartPositions[lane.value]!, information);
+    const endpoints = habahiro ? habahiroEndpointPositions(scene, information, lane.value) : ok({
+      start: scene.noteStartPositions[lane.value]!, goal: scene.goalPositions[lane.value]! });
+    if (endpoints.status !== "ok") return endpoints;
+    const start = noteStartPosition(endpoints.value.start, information);
     const placedStart = Object.freeze({
       x: float32State(start.x.value),
       y: float32State(start.y.value),
       z: float32State(start.z.value),
     });
-    const goal = scene.goalPositions[lane.value]!;
+    const goal = endpoints.value.goal;
     const zero = createRenderFloat32(Math.fround(0));
     const one = createRenderFloat32(Math.fround(1));
     if (zero.status !== "ok") return zero;
@@ -1778,8 +1781,11 @@ export class RenderCommandProducer {
           ? resolveHabahiroMotionLaneIndex(source)
           : resolveOrdinaryMotionLaneIndex(source, true);
         if (childLane.status !== "ok") return childLane;
-        const childStart = noteStartPosition(scene.noteStartPositions[childLane.value]!, source);
-        const childGoal = scene.goalPositions[childLane.value]!;
+        const childEndpoints = completeHabahiro ? habahiroEndpointPositions(scene, source, childLane.value) : ok({
+          start: scene.noteStartPositions[childLane.value]!, goal: scene.goalPositions[childLane.value]! });
+        if (childEndpoints.status !== "ok") return childEndpoints;
+        const childStart = noteStartPosition(childEndpoints.value.start, source);
+        const childGoal = childEndpoints.value.goal;
         const childButtonCount = source.buttonTypesArray.length ||
           source.buttonTypes.length || 1;
         const childMotionState: OrdinaryNoteMotionState = Object.freeze({
@@ -3386,6 +3392,44 @@ function resolveHabahiroAtlasLogicalIds(
     throw new Error("complete HABAHIRO atlas bindings were not preflighted");
   }
   return atlases;
+}
+
+/**
+ * NoteBase.getStartPos → NotesLauncher.GetStartPosition (0x320FD5C): an odd width starts at
+ * its center lane's launcher, an even width at the half launcher ⌊Σlanes / n⌋, which
+ * setupLauncherPosition (0x38AD120..0x38AD124) builds as (left + right) × 0.5. SetTargetButton
+ * (0x3AA5464) keeps the left-middle button as its reference but caches the mean X of every
+ * target button, and Move (0x3AA4A7C) heads for that mean.
+ */
+function habahiroEndpointPositions(
+  scene: OrdinaryFixedNoteSceneInput,
+  information: NoteInformation,
+  centerLane: number,
+): SimulatorResult<{ readonly start: RenderVector3; readonly goal: RenderVector3 }> {
+  const lanes = information.buttonTypesArray.map((button) => resolveLaneIndex(button, true));
+  if (lanes.length === 0 || lanes.some((lane) => lane < 0 || lane > 6)) {
+    return integrityFailure(
+      "render.note.habahiro-invalid-target-buttons",
+      "HABAHIRO note positions require every target button on a playable lane.",
+    );
+  }
+  let start = scene.noteStartPositions[centerLane]!;
+  if (lanes.length % 2 === 0) {
+    const half = Math.trunc(lanes.reduce((sum, lane) => sum + lane, 0) / lanes.length);
+    const left = scene.noteStartPositions[half]!, right = scene.noteStartPositions[half + 1];
+    if (right === undefined) {
+      return integrityFailure(
+        "render.note.habahiro-invalid-half-launcher",
+        "An even-width HABAHIRO note requires a half launcher between two playable lanes.",
+      );
+    }
+    start = Object.freeze({ ...left, x: float32State(Math.fround(Math.fround(left.x.value + right.x.value) * Math.fround(0.5))) });
+  }
+  let sum = Math.fround(0);
+  for (const lane of lanes) sum = Math.fround(sum + scene.goalPositions[lane]!.x.value);
+  const first = scene.goalPositions[lanes[0]!]!;
+  const goal = Object.freeze({ ...first, x: float32State(Math.fround(sum / Math.fround(lanes.length))) });
+  return ok(Object.freeze({ start, goal }));
 }
 
 function resolveHabahiroMotionLaneIndex(
