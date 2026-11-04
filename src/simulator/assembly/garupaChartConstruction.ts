@@ -597,7 +597,6 @@ function createLong(slide: GarupaChartJsonSlideItem, firstIndex: number, project
           after: left ? AfterNoteType.MultipleDirectionalFlickLeft : AfterNoteType.MultipleDirectionalFlickRight,
         }),
         additional: GameNoteAdditionalType.None,
-        afterNoteAbsolutePos: end.value.absolutePos,
       }));
     }
   }
@@ -714,7 +713,6 @@ function createSlide(
             ? AfterNoteType.SlideMultipleDirectionalFlickLeft : AfterNoteType.SlideMultipleDirectionalFlickRight,
         }),
         additional: GameNoteAdditionalType.None,
-        afterNoteAbsolutePos: terminal.absolutePos,
       }));
     }
   }
@@ -736,7 +734,6 @@ function createSlide(
           front: familyA ? FrontNoteType.SlideAMultipleDirectionalFlickAdd : FrontNoteType.SlideBMultipleDirectionalFlickAdd,
           after: node.direction === "Left" ? AfterNoteType.SlideMultipleDirectionalFlickLeft : AfterNoteType.SlideMultipleDirectionalFlickRight },
         additional: GameNoteAdditionalType.None,
-        afterNoteAbsolutePos: positions[connectionIndex]!.absolutePos,
       }));
     }
   }
