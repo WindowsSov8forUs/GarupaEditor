@@ -110,9 +110,8 @@ export class ParticleCommandOwnerTransaction {
 }
 
 export class ParticleCommandProducer {
+  /** Chart construction assigns every note and node its own index; a OneFrame entry names its note by it. */
   private readonly notesByIndex = new Map<number, NoteInformation>();
-  private readonly ambiguousNoteIndices = new Set<number>();
-  private readonly notesByJudgementKey = new Map<string, NoteInformation[]>();
   private readonly slideRootByNode = new WeakMap<NoteInformation, NoteInformation>();
   private readonly registeredNotes = new WeakSet<NoteInformation>();
   private readonly productScoringNodes = new Map<string, GarupaProductNode>();
@@ -233,7 +232,7 @@ export class ParticleCommandProducer {
     if (!this.chartIdentityValid) {
       return rejected(
         "particle.producer.invalid-chart-identity",
-        "Particle ownership requires complete chart-semantic judgement keys; source note indices are not treated as globally unique identities.",
+        "Particle ownership requires every chart note and node to carry its own index; a repeated index is a chart integrity failure.",
       );
     }
     return validOwnerScene(this.particleScene)
@@ -438,7 +437,7 @@ export class ParticleCommandProducer {
   ): SimulatorResult<ParticleCommandOwnerTransaction> {
     const available = this.validateAvailable();
     if (available.status !== "ok") return available;
-    const note = this.ambiguousNoteIndices.has(noteIndex) ? undefined : this.notesByIndex.get(noteIndex);
+    const note = this.notesByIndex.get(noteIndex);
     if (note === undefined ||
       (note.fireNoteType !== FrontNoteType.SlideA && note.fireNoteType !== FrontNoteType.SlideB) ||
       !isButtonType(buttonType) || !isRangeLength(rangeLength)) {
@@ -731,34 +730,14 @@ export class ParticleCommandProducer {
   private resolveJudgementNote(
     entry: OneFrameJudgementEntry,
   ): SimulatorResult<NoteInformation> {
-    const unique = this.ambiguousNoteIndices.has(entry.noteIndex) ? undefined : this.notesByIndex.get(entry.noteIndex);
-    if (unique !== undefined && (unique.absolutePos === entry.absolutePosition ||
-      entry.phase === "tail" && unique.afterNoteAbsolutePos === entry.absolutePosition)) return ok(unique);
-    const candidates = this.notesByJudgementKey.get(judgementKey(
-      entry.absolutePosition,
-      entry.spanButtonTypes,
-    )) ?? [];
-    const indexed = candidates.filter((note) => note.index === entry.noteIndex);
-    const tailOwners = entry.phase === "tail"
-      ? indexed.filter((note) => note.afterNoteAbsolutePos === entry.absolutePosition)
-      : [];
-    const matching = tailOwners.length > 0
-      ? tailOwners
-      : indexed.filter((note) => note.absolutePos === entry.absolutePosition);
-    if (matching.length === 0) {
-      return rejected(
-        "particle.producer.missing-note-owner",
-        "Judgement particle routing requires the exact chart absolute-position/button-span owner authored into OneFrame.",
-      );
-    }
-    const first = matching[0]!;
-    if (matching.some((note) => !particleEquivalentNote(first, note))) {
-      return rejected(
-        "particle.producer.ambiguous-note-owner",
-        "Semantically different chart notes cannot share one judgement owner key.",
-      );
-    }
-    return ok(first);
+    // A tail entry carries its Long root's index with the tail position.
+    const note = this.notesByIndex.get(entry.noteIndex);
+    if (note !== undefined && (note.absolutePos === entry.absolutePosition ||
+      entry.phase === "tail" && note.afterNoteAbsolutePos === entry.absolutePosition)) return ok(note);
+    return rejected(
+      "particle.producer.missing-note-owner",
+      "Judgement particle routing requires the chart note named by the OneFrame index at its authored position.",
+    );
   }
 
   private registerNote(
@@ -775,28 +754,13 @@ export class ParticleCommandProducer {
     this.registeredNotes.add(note);
     const existing = this.notesByIndex.get(note.index);
     if (existing === undefined) this.notesByIndex.set(note.index, note);
-    else if (existing !== note) this.ambiguousNoteIndices.add(note.index);
-    this.registerJudgementKey(note.absolutePos, note.buttonTypesArray, note);
-    if (Number.isFinite(note.afterNoteAbsolutePos) && note.afterNoteAbsolutePos >= 0) {
-      this.registerJudgementKey(note.afterNoteAbsolutePos, note.buttonTypesArray, note);
-    }
+    else if (existing !== note) this.chartIdentityValid = false;
     const ownedSlideRoot = slideRoot ?? (note.fireNoteType === FrontNoteType.SlideA ||
       note.fireNoteType === FrontNoteType.SlideB
       ? note
       : null);
     if (ownedSlideRoot !== null) this.slideRootByNode.set(note, ownedSlideRoot);
     for (const child of note.slideNoteList) this.registerNote(child, ownedSlideRoot);
-  }
-
-  private registerJudgementKey(
-    absolutePosition: number,
-    buttonTypes: readonly number[],
-    note: NoteInformation,
-  ): void {
-    const key = judgementKey(absolutePosition, buttonTypes);
-    const candidates = this.notesByJudgementKey.get(key) ?? [];
-    if (!candidates.includes(note)) candidates.push(note);
-    this.notesByJudgementKey.set(key, candidates);
   }
 }
 
@@ -1154,12 +1118,6 @@ function isSkillEntry(note: NoteInformation, entry: OneFrameJudgementEntry): boo
     : note.gameNoteAdditionalType === GameNoteAdditionalType.Skill;
 }
 
-function judgementKey(
-  absolutePosition: number,
-  buttonTypes: readonly number[],
-): string {
-  return `${absolutePosition}|${buttonTypes.join(",")}`;
-}
 
 function isDirectionalJudgeNoteType(noteType: number): boolean {
   return noteType === 6 || noteType === 7 || noteType === 9 || noteType === 10;
@@ -1191,22 +1149,6 @@ function productScoringKey(
   return `${noteIndex}|${absolutePosition}`;
 }
 
-function particleEquivalentNote(
-  left: NoteInformation,
-  right: NoteInformation,
-): boolean {
-  return left.index === right.index &&
-    left.absolutePos === right.absolutePos &&
-    left.fireNoteType === right.fireNoteType &&
-    left.afterNoteType === right.afterNoteType &&
-    left.gameNoteType === right.gameNoteType &&
-    left.gameNoteAdditionalType === right.gameNoteAdditionalType &&
-    left.gameNoteAdditionalTypeLongNoteEnd === right.gameNoteAdditionalTypeLongNoteEnd &&
-    left.buttonType === right.buttonType &&
-    left.halfButtonIndex === right.halfButtonIndex &&
-    left.buttonTypesArray.length === right.buttonTypesArray.length &&
-    left.buttonTypesArray.every((button, index) => button === right.buttonTypesArray[index]);
-}
 
 function isButtonType(value: number): boolean {
   return Number.isInteger(value) &&
