@@ -5,7 +5,7 @@ import { noteMotionY, noteSpatialY, noteUnclippedSyncTarget } from "../rendering
 import type { TapLaneEffectInputEvent } from "./tapLaneEffectOwner";
 import { SyncLineConnectionRules } from "../rendering/syncLineConnectionRules";
 import { virtualLaneUnit } from "../chart/virtualLane";
-import type { HoldSoundEvent } from "../audio/audioCommandProducer";
+import type { EmptyTapEvent, HoldSoundEvent } from "../audio/audioCommandProducer";
 import type { ManualInputPosition } from "../data/manualInput";
 
 import {
@@ -209,6 +209,14 @@ export class NoteManager {
     if (event.kind !== "on" || !this.isMoveTime()) this.pendingTapLaneEffects.push(event);
   }
   takeTapLaneEffects(): readonly TapLaneEffectInputEvent[] { return this.pendingTapLaneEffects.splice(0); }
+
+  private readonly pendingEmptyTaps: EmptyTapEvent[] = [];
+
+  /** State 14 (MoveTime) does not dispatch lane Begin, so no empty tap is played there. */
+  enqueueEmptyTap(event: EmptyTapEvent): void {
+    if (!this.isMoveTime()) this.pendingEmptyTaps.push(event);
+  }
+  takeEmptyTaps(): readonly EmptyTapEvent[] { return this.pendingEmptyTaps.splice(0); }
 
   private readonly pendingHoldSounds: HoldSoundEvent[] = [];
 
