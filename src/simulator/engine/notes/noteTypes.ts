@@ -692,6 +692,12 @@ export class NoteLong extends NoteFrontBase {
     return submitted;
   }
 
+  /** NoteLong.WaitState (0x30FD9E0) calls NoteBase.Move every update (0x30FDA2C): an
+   * untouched head keeps extrapolating past the judge line until its timeout. */
+  protected override get movesWhileWaiting(): boolean {
+    return true;
+  }
+
   protected override waitState(_deltaTimeSeconds: number): SimulatorResult<void> {
     const information = this.noteInformation;
     const autoRuntime = this.autoLiveRuntime;
