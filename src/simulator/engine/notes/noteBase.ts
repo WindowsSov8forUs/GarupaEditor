@@ -250,12 +250,18 @@ export class NoteBase {
     this.onResetForDispose();
   }
 
+  /** Whether WaitState keeps calling NoteBase.Move, as NoteLong.WaitState does. */
+  protected get movesWhileWaiting(): boolean {
+    return false;
+  }
+
   executeUpdate(deltaTimeSeconds: number): SimulatorResult<void> {
     if ((this.stateValue as NoteState) === NoteState.Deactive) {
       return ok(undefined);
     }
 
-    if (this.stateValue === NoteState.Move && this.advanceRenderMotion !== null) {
+    if ((this.stateValue === NoteState.Move || this.stateValue === NoteState.Wait && this.movesWhileWaiting) &&
+      this.advanceRenderMotion !== null) {
       const renderMotion = this.advanceRenderMotion(deltaTimeSeconds);
       if (renderMotion.status !== "ok") {
         return renderMotion;
