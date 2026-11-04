@@ -50,6 +50,16 @@ export function authoredEndpointPosition(note: DirectionalGraphSource, after: bo
   return child === undefined ? note.authoredAfterAbsolutePos ?? note.afterNoteAbsolutePos : child.storedAbsolutePos ?? child.absolutePos;
 }
 
+/**
+ * The original directional group builder reads an end only for a candidate root, a non-Add note with an after
+ * type (Long: its after position; Slide: its last node); every other note is compared at its own position.
+ */
+export function directionalGroupPosition(note: DirectionalGraphSource): number {
+  const add = note.gameNoteType >= GameNoteType.LongDirectionalFlickLeftAdd &&
+    note.gameNoteType <= GameNoteType.SlideBDirectionalFlickRightAdd;
+  return authoredEndpointPosition(note, !add && note.afterNoteType !== AfterNoteType.None);
+}
+
 export function directionalEndpointButton<B extends number>(note: DirectionalGraphSource<B>): B {
   if (
     (note.fireNoteType === FrontNoteType.SlideA || note.fireNoteType === FrontNoteType.SlideB)
@@ -173,7 +183,7 @@ export function isSameDirectionalGroup(
       a.connectionIndex === b.connectionIndex && Math.abs(a.memberOffset - b.memberOffset) === 1;
   }
   if ((source.authoredAfterAbsolutePos !== undefined || target.authoredAfterAbsolutePos !== undefined) &&
-    authoredEndpointPosition(source, true) !== authoredEndpointPosition(target, true)) return false;
+    directionalGroupPosition(source) !== directionalGroupPosition(target)) return false;
   const kind = directionalGroupKind(source);
   if (kind === null || !matchesDirectionalKind(target, kind)) {
     return false;
