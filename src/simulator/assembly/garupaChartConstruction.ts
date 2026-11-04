@@ -659,7 +659,8 @@ function createSlide(
       kinds: terminalKinds,
       additional: connection.type === "Skill" ? GameNoteAdditionalType.Skill : GameNoteAdditionalType.None,
       invisible: connection.type === "Hidden",
-      ...(!isTerminal ? slideExitFields(connection) : {}),
+      // The original links each Slide record to the next; the terminal has no write.
+      ...(!isTerminal ? { ...slideExitFields(connection), afterNoteAbsolutePos: positions[index + 1]!.absolutePos } : {}),
     });
     children.push(child);
   }
@@ -686,6 +687,7 @@ function createSlide(
     invisible: head.type === "Hidden",
     ...(head.type === "Hidden" || tail.type === "Hidden" ? { hiddenSlideEndpoints: true as const } : {}),
     slideNoteList: children,
+    afterNoteAbsolutePos: positions[1]!.absolutePos,
     terminalAdditional,
   });
   const additionalRoots: NoteInformation[] = [];
