@@ -244,7 +244,8 @@ function constructGarupaNoteGraphs(
 
   if (tempo.folded) {
     const visited = new Set<NoteInformation>();
-    const project = (note: NoteInformation): void => {
+    // Only a written after position is a chart position: a Long root's tail, or a Slide record's next record.
+    const project = (note: NoteInformation, linked: boolean): void => {
       if (visited.has(note)) return;
       visited.add(note);
       const authored = note.absolutePos, authoredAfter = note.afterNoteAbsolutePos;
@@ -252,11 +253,11 @@ function constructGarupaNoteGraphs(
       Object.assign(note, positionFieldsFromAbsolute(position), {
         storedAbsolutePos: authored, authoredAfterAbsolutePos: authoredAfter,
         shortRhythmUnder8beat: note.shortRhythmUnder8beat,
-        afterNoteAbsolutePos: authoredAfter < 0 ? -1 : tempo.runtimePosition(authoredAfter),
+        afterNoteAbsolutePos: linked ? tempo.runtimePosition(authoredAfter) : authoredAfter,
       });
-      for (const child of note.slideNoteList) project(child);
+      note.slideNoteList.forEach((child, index) => project(child, index < note.slideNoteList.length - 1));
     };
-    for (const record of records) project(record.note);
+    for (const record of records) project(record.note, record.note.fireNoteType === FrontNoteType.Long || record.note.slideNoteList.length > 0);
     records = records.map(record => ({ ...record, absolutePos: record.note.absolutePos }));
     if (records.some(record => !Number.isFinite(record.absolutePos)))
       return invalidBpm("Folded runtime coordinates must remain finite.");
@@ -800,7 +801,8 @@ function createBaseNote(input: {
     numerator: input.position.numerator,
     denominator: input.position.denominator,
     absolutePos: input.position.absolutePos,
-    afterNoteAbsolutePos: input.afterNoteAbsolutePos ?? -1,
+    // The original writes no after position for other notes; a new managed object holds 0.
+    afterNoteAbsolutePos: input.afterNoteAbsolutePos ?? 0,
     shortRhythmUnder8beat: input.position.shortRhythmUnder8beat,
     afterNoteShortRhythmUnder8beat: input.afterNoteShortRhythmUnder8beat ?? false,
     bpm: input.bpm ?? 0,
