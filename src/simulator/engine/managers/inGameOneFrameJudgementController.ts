@@ -680,7 +680,9 @@ function originalJudgementButtons(request: AutoLiveJudgementRequest | ManualJudg
   if (request.noteType === 0 && note.fireNoteType === FrontNoteType.MultipleDirectionalFlick) return noteButtonTypes(note);
   if (request.noteType === 7 && phase === "tail" && note.fireNoteType === FrontNoteType.Long) return noteButtonTypes(note);
   if (request.noteType === 7 && phase === "tail" && ownership?.slidePhase === "tail" && ownership.slideButtonTypes !== null) {
-    return ownership.slideButtonTypes;
+    // A projected member off lanes 0..6 has no GamePlayButton and adds no ButtonType, as in noteButtonTypes.
+    return ownership.slideButtonTypes.filter(button =>
+      button >= ButtonType.Button_00_BMS_1P_SC && button <= ButtonType.Button_06_BMS_1P_06);
   }
   if (request.noteType !== 10 || (phase ?? "head") !== "head" || note.fireNoteType !== FrontNoteType.MultipleDirectionalFlick) {
     return undefined;
