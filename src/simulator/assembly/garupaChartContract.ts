@@ -105,7 +105,7 @@ function copyItem(
       timingCount += connection.value.hasTimingGroup ? 1 : 0;
     }
     if (input.long !== undefined && (input.long !== true || !isGarupaLongSlideShape({ connections }))) {
-      return invalid(`${label} Slide long is only true on two nodes of one lane span with a Single/Skill head and a later Single/Skill/Flick tail, or a Directional tail starting from the head's lane.`);
+      return invalid(`${label} Slide long is only true on two nodes of one lane span with a Single/Skill head and a later Single/Skill/Flick tail, or a Directional tail starting on the head's center lane.`);
     }
     return copied(Object.freeze({
       type: "Slide",

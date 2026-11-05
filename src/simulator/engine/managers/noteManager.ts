@@ -1,4 +1,4 @@
-import { authoredEndpointPosition } from "../chart/noteGraph";
+import { authoredEndpointPosition, directionalGroupPosition } from "../chart/noteGraph";
 import { findBatchBpmCommand, isBpmCommand } from "../chart/noteGraph";
 import { connectDirectionalMemberBatch, connectionDirection, directionalConnectionEndpoints, directionalConnectionPresentation, reconnectDirectionalSyncConnections, slideDirectionalAnchorEndpoint } from "../rendering/directionalConnectionRules";
 import { noteMotionY, noteSpatialY, noteUnclippedSyncTarget } from "../rendering/ordinaryNoteGeometry";
@@ -272,7 +272,9 @@ export class NoteManager {
     pendingTails: this.pendingSyncTailNotes,
     pendingDirectionalTails: this.pendingDirectionalSyncTailNotes,
     position: () => this.musicScoreController.musicPosition,
-    hasTail: note => this.syncTailState(note) !== undefined &&
+    // Only a Long or Slide has a tail; a projected note also has an after connection state.
+    hasTail: note => (note.noteInformation?.fireNoteType === FrontNoteType.Long || (note.noteInformation?.slideNoteList.length ?? 0) > 0) &&
+      this.syncTailState(note) !== undefined &&
       note.noteInformation?.slideNoteList[note.noteInformation.slideNoteList.length - 1]?.isInvisible !== true,
     lineFor: (note, after) => this.syncLineForEndpoint(note, after),
     connect: (a, afterA, b, afterB, existing) => this.connectSyncEndpoints(a, afterA, b, afterB, existing),
@@ -1187,7 +1189,7 @@ export class NoteManager {
         ...allInformation.filter((candidate) =>
           candidate !== root &&
           candidate.fireNoteType === FrontNoteType.LongMultipleDirectionalFlickAdd &&
-          authoredEndpointPosition(candidate, true) === authoredEndpointPosition(root, true) &&
+          directionalGroupPosition(candidate) === directionalGroupPosition(root) &&
           isSameDirectionalGroup(root, candidate)),
       ];
       if (members.length < 2) {
@@ -1225,7 +1227,7 @@ export class NoteManager {
         ...allInformation.filter((candidate) =>
           candidate !== root &&
           candidate.fireNoteType === visualType &&
-          authoredEndpointPosition(candidate, true) === authoredEndpointPosition(root, true) &&
+          directionalGroupPosition(candidate) === directionalGroupPosition(root) &&
           isSameDirectionalGroup(root, candidate)),
       ];
       if (members.length < 2) {

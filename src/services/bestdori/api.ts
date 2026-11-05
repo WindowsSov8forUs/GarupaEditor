@@ -81,7 +81,8 @@ export interface BestdoriSongResourceUrls {
 export interface BestdoriOfficialChartImportPayload {
   chartId: number;
   difficulty: BestdoriOfficialChartDifficulty;
-  chart: unknown;
+  /** The original BMS text. */
+  bms: string;
   songInfo: SongResourceInfo;
   bands: BestdoriBandsAll1;
   resources: BestdoriSongResourceUrls;
@@ -1071,17 +1072,25 @@ function describeNotGarupaUploadFailure(status: number, body: { error: string } 
   }
 }
 
-export async function fetchBestdoriOfficialChart(
+/**
+ * An official chart's original BMS on Bestdori's asset mirror:
+ * musicscore{⌈id / 10⌉ · 10}_rip/{bgmFile}_{difficulty}.txt. Bestdori answers a missing asset
+ * with its HTML page, so a body that is not BMS text counts as missing.
+ */
+export async function fetchBestdoriOfficialBms(
   chartId: number,
   difficulty: BestdoriOfficialChartDifficulty,
-): Promise<unknown> {
-  const normalizedChartId = Math.trunc(Number(chartId));
-  if (!Number.isFinite(normalizedChartId) || normalizedChartId < 1) {
-    throw new Error("official chart id must be a positive integer");
-  }
+  songInfo: SongResourceInfo,
+  server: BestdoriSongServerName,
+): Promise<string> {
+  const normalizedChartId = normalizeBestdoriSongId(chartId);
   const normalizedDifficulty = normalizeBestdoriOfficialChartDifficulty(difficulty);
-  const endpoint = `https://bestdori.com/api/charts/${normalizedChartId}/${normalizedDifficulty}.json`;
-  return requestBestdoriJson<unknown>(endpoint, "bestdori official chart");
+  const bgmFile = normalizeBestdoriAssetSegment(songInfo.bgmFile, "song bgmFile", true);
+  const bucket = Math.ceil(normalizedChartId / 10) * 10;
+  const endpoint = `${BESTDORI_ASSETS_ROOT}/${server}/musicscore/musicscore${bucket}_rip/${encodeURIComponent(bgmFile)}_${normalizedDifficulty}.txt`;
+  const text = new TextDecoder().decode(decodeBase64ToArrayBuffer(await requestBestdoriBinaryBase64(endpoint, "bestdori official bms")));
+  if (text.trimStart().startsWith("<")) throw new Error(`Bestdori ${server} 服没有这一难度的 BMS 谱面`);
+  return text;
 }
 
 export async function fetchBestdoriSongInfo(songId: number): Promise<BestdoriSongInfo> {
@@ -1354,20 +1363,21 @@ export async function fetchBestdoriOfficialChartImportPayload(
 ): Promise<BestdoriOfficialChartImportPayload> {
   const normalizedChartId = normalizeBestdoriSongId(chartId);
   const normalizedDifficulty = normalizeBestdoriOfficialChartDifficulty(difficulty);
-  let chart: unknown;
-  try {
-    chart = await fetchBestdoriOfficialChart(normalizedChartId, normalizedDifficulty);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`官方谱面获取失败：${message}`);
-  }
-
   let songInfo: SongResourceInfo;
   try {
     songInfo = snapshot?.songInfo ?? await fetchBestdoriSongInfo(normalizedChartId);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`歌曲信息获取失败：${message}`);
+  }
+
+  const server = snapshot?.server ?? resolveBestdoriSongServerName(songInfo);
+  let bms: string;
+  try {
+    bms = await fetchBestdoriOfficialBms(normalizedChartId, normalizedDifficulty, songInfo, server);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`官方谱面获取失败：${message}`);
   }
 
   let bands: BestdoriBandsAll1;
@@ -1378,12 +1388,12 @@ export async function fetchBestdoriOfficialChartImportPayload(
     throw new Error(`乐队信息获取失败：${message}`);
   }
 
-  const resources = await fetchBestdoriSongResourceUrls(normalizedChartId, { songInfo, server: snapshot?.server });
+  const resources = await fetchBestdoriSongResourceUrls(normalizedChartId, { songInfo, server });
   const metadataDifficulty = BESTDORI_CHART_DIFFICULTY_TO_METADATA[normalizedDifficulty];
   return {
     chartId: normalizedChartId,
     difficulty: normalizedDifficulty,
-    chart,
+    bms,
     songInfo,
     bands,
     resources,

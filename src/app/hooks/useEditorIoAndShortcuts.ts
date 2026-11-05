@@ -3,7 +3,7 @@ import { availableOfficialMedia } from "../../services/officialMusicSources";
 import { getOfficialMusicLibrary, officialSongIsFullLength, type OfficialDifficulty } from "../../services/officialMusicLibrary";
 
 import { detectUserMediaType } from "../../resources/userMediaFormat";
-import { projectGarupaChart } from "../../project/projectChartAdapter";
+import { ChartProjectionError, projectGarupaChart } from "../../project/projectChartAdapter";
 import { userFacingErrorMessage } from "../../services/downloadError";
 import { ResourceFailureError } from "../../resources/contracts";
 import { appLog, startOperation } from "../../logging/applicationLogger";
@@ -39,9 +39,12 @@ import {
 } from "../../skin/resourceSkinDecoder";
 import {
   convertBestdoriV2ToGarupaChartJson,
+  convertBmsToGarupaChartJson,
   convertGarupaChartJsonToBestdoriV2,
   GARUPA_HEADER_HABAHIRO,
   GARUPA_SYSTEM_LANE_CHANGE,
+  invalidLongDirectionalTail,
+  type GarupaChartJson,
   type GarupaChartJsonDirection,
 } from "../../chart";
 import {
@@ -69,7 +72,8 @@ import {
 import { isTauriRuntimeEnvironment } from "../../services/bestdori/transport";
 
 // An import that cannot tell whether its song is full-length says so; the song settings can change it.
-export const FULL_LENGTH_UNKNOWN = "（无法确定是否完整版，可在歌曲设定中修改）";
+/** Separates an import status from the notes it produced; the editor shows those notes in one dialog. */
+export const IMPORT_NOTICE_MARKER = "\n导入说明：\n";
 
 type ParsedJsonNote = {
   note: ChartNote;
@@ -95,6 +99,10 @@ type AppliedGarupaChartJsonSummary = {
   regressedExGarupa: boolean;
   regressedSpRhythm: boolean;
   regressedHabahiro: boolean;
+  /** Holds whose tail width differed from the head and now follows it. */
+  normalizedHoldWidths: number;
+  /** Holds whose Directional tail the original cannot end on, now ending in a normal tail. */
+  demotedOffCenterLongTails: number;
 };
 
 type ImportJsonModalLevel = "chart" | "bestdori-v2";
@@ -376,8 +384,21 @@ export function useEditorIoAndShortcuts(params: any) {
     };
   };
 
-  const garupaChartJson = useMemo(() => projectGarupaChart(project), [project.chart, project.metadata]);
-  const garupaChartJsonText = useMemo(() => JSON.stringify(garupaChartJson), [garupaChartJson]);
+  // A chart that cannot be projected stays editable; export and upload explain why and stop.
+  const projection = useMemo((): { json: GarupaChartJson; error: string | null } => {
+    try { return { json: projectGarupaChart(project), error: null }; } catch (error) {
+      if (error instanceof ChartProjectionError) return { json: [], error: error.message };
+      throw error;
+    }
+  }, [project.chart, project.metadata]);
+  const garupaChartJson = projection.json;
+  const garupaChartJsonText = useMemo(() => projection.error === null ? JSON.stringify(projection.json) : "", [projection]);
+  const rejectUnprojectableChart = (): boolean => {
+    if (projection.error === null) return false;
+    if (typeof openOverlayDialog === "function") openOverlayDialog({ tone: "error", message: projection.error });
+    else setStatusMessage(projection.error);
+    return true;
+  };
   const [isImportJsonModalOpen, setIsImportJsonModalOpen] = useState(false);
   const [importJsonModalLevel, setImportJsonModalLevel] = useState<ImportJsonModalLevel>("chart");
   const [importJsonText, setImportJsonText] = useState("");
@@ -768,6 +789,7 @@ export function useEditorIoAndShortcuts(params: any) {
   };
 
   const downloadJson = () => {
+    if (rejectUnprojectableChart()) return;
     setIsExportJsonModalOpen(true);
   };
 
@@ -780,7 +802,7 @@ export function useEditorIoAndShortcuts(params: any) {
 
   const saveExportJsonToSelectedPath = async () => {
     appLog("info", "editor.action", { action: "saveExportJsonToSelectedPath" });
-    if (isExportJsonSaving) {
+    if (isExportJsonSaving || rejectUnprojectableChart()) {
       return;
     }
 
@@ -824,6 +846,7 @@ export function useEditorIoAndShortcuts(params: any) {
 
   const exportBestdoriV2ToClipboard = async () => {
     appLog("info", "editor.action", { action: "exportBestdoriV2ToClipboard" });
+    if (rejectUnprojectableChart()) return;
     try {
       const bestdori = convertGarupaChartJsonToBestdoriV2(garupaChartJson);
       const bestdoriJsonText = JSON.stringify(bestdori);
@@ -1142,11 +1165,35 @@ export function useEditorIoAndShortcuts(params: any) {
     }
     const importedSlideChains = regressedChartState.slideChains;
     const importedSvEvents = regressedChartState.svEvents ?? nextSvEvents;
-    const importedNotes = sortNotes(
-      !preserveForPlay && chartHabahiro
-        ? applyHabahiroSlideWidths(regressedChartState.notes, importedSlideChains)
-        : regressedChartState.notes,
-    );
+    const widthAdjustedNotes = !preserveForPlay && chartHabahiro
+      ? applyHabahiroSlideWidths(regressedChartState.notes, importedSlideChains)
+      : regressedChartState.notes;
+    let normalizedHoldWidths = 0;
+    if (widthAdjustedNotes !== regressedChartState.notes) {
+      const widthBefore = new Map(regressedChartState.notes.map((note: ChartNote) => [note.id, note.width] as const));
+      const widthAfter = new Map(widthAdjustedNotes.map((note: ChartNote) => [note.id, note.width] as const));
+      normalizedHoldWidths = importedSlideChains.filter((chain: { noteIds: string[] }) =>
+        chain.noteIds.some((id) => widthBefore.get(id) !== widthAfter.get(id))).length;
+    }
+    // A Long's Directional tail must start on the head's center lane (invalidLongDirectionalTail);
+    // otherwise it becomes a normal tail of the head's span.
+    let demotedOffCenterLongTails = 0;
+    const adjustedById = new Map(widthAdjustedNotes.map((note: ChartNote) => [note.id, note] as const));
+    const demotedTails = new Map<string, ChartNote>();
+    const asConnection = (note: ChartNote) => ({ beat: note.beat, lane: note.lane, width: note.width ?? 1,
+      type: note.type.startsWith("directional_flick") ? "Directional" : note.type === "skill" ? "Skill"
+        : note.type === "single" ? "Single" : note.type });
+    for (const chain of importedSlideChains as Array<{ noteIds: string[]; long?: true }>) {
+      if (chain.long !== true || chain.noteIds.length !== 2) continue;
+      const head = adjustedById.get(chain.noteIds[0]!), tail = adjustedById.get(chain.noteIds[1]!);
+      if (head === undefined || tail === undefined) continue;
+      const reason = invalidLongDirectionalTail({ connections: [asConnection(head), asConnection(tail)] as never });
+      if (reason === null) continue;
+      demotedOffCenterLongTails += 1;
+      demotedTails.set(tail.id, { ...tail, type: "single", lane: head.lane, width: head.width });
+    }
+    const importedNotes = sortNotes(demotedTails.size === 0 ? widthAdjustedNotes
+      : widthAdjustedNotes.map((note: ChartNote) => demotedTails.get(note.id) ?? note));
 
     onNewProject(preserveForPlay);
     setMetadata(nextMetadata);
@@ -1184,24 +1231,30 @@ export function useEditorIoAndShortcuts(params: any) {
       regressedExGarupa,
       regressedSpRhythm,
       regressedHabahiro,
+      normalizedHoldWidths,
+      demotedOffCenterLongTails,
     };
   };
 
-  const applyChartImportStatus = (label: string, summary: AppliedGarupaChartJsonSummary) => {
-    appLog("info", "editor.chart.imported", { source: label, summary });
-    const regressionNotices = [
-      summary.regressedSpRhythm ? "已按当前模式自动执行去SP节奏图示回退。" : "",
-      summary.regressedHabahiro ? "谱面无 #HABAHIRO 谱面头，已将非 Directional 宽音符回退为宽度 1。" : "",
+  const applyChartImportStatus = (
+    label: string,
+    summary: AppliedGarupaChartJsonSummary,
+    options: { fullLengthUnknown?: boolean; conversionWarnings?: readonly string[] } = {},
+  ) => {
+    appLog("info", "editor.chart.imported", { source: label, summary, ...options });
+    // Everything this import changed or could not determine, shown together once.
+    const notices = [
+      ...(options.conversionWarnings ?? []).map((warning) => `BMS 转换：${warning}。`),
+      options.fullLengthUnknown ? "无法确定是否为完整版，可在歌曲设定中修改。" : "",
+      approxEq(summary.beatOffset, 0) ? "" : `最早的 BPM 位于第 ${summary.beatOffset} 拍，已将整份谱面平移为从第 0 拍开始。`,
+      summary.regressedExGarupa ? "当前未启用 ExGarupa，已移除变速与时间组，滑条的特殊节点改为普通节点。" : "",
+      summary.regressedSpRhythm ? "当前未启用 SP 节奏图示，方向滑键已改为普通滑键。" : "",
+      summary.regressedHabahiro ? "谱面没有 #HABAHIRO 谱面头，宽音符（方向滑键除外）已改为宽度 1。" : "",
+      summary.normalizedHoldWidths > 0 ? `${summary.normalizedHoldWidths} 条长押的终点宽度与起点不同，已按起点宽度处理。` : "",
+      summary.demotedOffCenterLongTails > 0 ? `${summary.demotedOffCenterLongTails} 条长押的方向尾不在长押中心轨，已改为普通尾。` : "",
     ].filter((message) => message.length > 0);
-    const regressionNotice = regressionNotices.length > 0 ? ` ${regressionNotices.join(" ")}` : "";
-    const needsOffsetNotice = !approxEq(summary.beatOffset, 0);
-    if (needsOffsetNotice) {
-      setStatusMessage(
-        `${label}：${summary.visibleNoteCount} 个可见音符，已按最小 BPM Beat=${summary.beatOffset} 执行整体偏移并强制 BPM@0。${regressionNotice}`,
-      );
-      return;
-    }
-    setStatusMessage(`${label}：${summary.visibleNoteCount} 个可见音符。${regressionNotice}`);
+    setStatusMessage(`${label}：${summary.visibleNoteCount} 个可见音符。`
+      + (notices.length > 0 ? IMPORT_NOTICE_MARKER + notices.map((notice) => `・${notice}`).join("\n") : ""));
   };
 
   const applyImportJsonText = () => {
@@ -1327,7 +1380,7 @@ export function useEditorIoAndShortcuts(params: any) {
         song && snapshot?.metadata ? { songInfo: song.info, bands: snapshot.metadata.bands, server: song.server } : undefined);
       if (song) { payload.metadata.title = song.title; payload.metadata.artist = song.artist; }
       pushImportProgress(42, "正在转换谱面结构…");
-      const converted = convertBestdoriV2ToGarupaChartJson(payload.chart);
+      const { chart: converted, warnings: conversionWarnings } = convertBmsToGarupaChartJson(payload.bms);
       const hasVisibleNote = hasVisiblePlayableNote(converted);
       if (!hasVisibleNote) {
         throw new Error("官方谱面解析成功，但未解析到可见音符。");
@@ -1402,8 +1455,8 @@ export function useEditorIoAndShortcuts(params: any) {
           : 0,
         mvOffsetMs: payload.metadata.mvOffsetMs,
       }));
-      const label = `已导入官方谱面 ${chartId}/${difficulty} 并同步歌曲信息${fullLength === null ? FULL_LENGTH_UNKNOWN : ""}`;
-      applyChartImportStatus(label, summary);
+      applyChartImportStatus(`已导入官方谱面 ${chartId}/${difficulty} 并同步歌曲信息`, summary,
+        { fullLengthUnknown: fullLength === null, conversionWarnings });
       completeDownloadProgress("官方谱面导入完成。");
       setImportJsonModalLevel("chart");
       setIsImportJsonModalOpen(false);
@@ -1543,10 +1596,9 @@ export function useEditorIoAndShortcuts(params: any) {
         mvOffsetMs: 0,
       }));
 
-      const label = (audioUrl.length > 0
+      applyChartImportStatus(audioUrl.length > 0
         ? `已导入社区谱面 ${postId} 并同步歌曲信息`
-        : `已导入社区谱面 ${postId}`) + (fullLength === null ? FULL_LENGTH_UNKNOWN : "");
-      applyChartImportStatus(label, summary);
+        : `已导入社区谱面 ${postId}`, summary, { fullLengthUnknown: fullLength === null });
       completeDownloadProgress("社区谱面导入完成。");
       setImportJsonModalLevel("chart");
       setIsImportJsonModalOpen(false);
@@ -1615,6 +1667,7 @@ export function useEditorIoAndShortcuts(params: any) {
   };
 
   const applyUploadCommunityChart = async () => {
+    if (rejectUnprojectableChart()) return;
     appLog("info", "editor.action", { action: "applyUploadCommunityChart" });
     const uploadOperationId = `upload-community-chart-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
     const pushUploadProgress = (percent: number, message: string) =>
@@ -1691,6 +1744,7 @@ export function useEditorIoAndShortcuts(params: any) {
   };
 
   const applyUploadNotGarupaServerChart = async () => {
+    if (rejectUnprojectableChart()) return;
     appLog("info", "editor.action", { action: "applyUploadNotGarupaServerChart" });
     const uploadOperationId = `upload-notgarupa-server-chart-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
     const pushUploadProgress = (percent: number, message: string) =>
@@ -1770,6 +1824,7 @@ export function useEditorIoAndShortcuts(params: any) {
   };
 
   const applyUploadTestServerChart = async () => {
+    if (rejectUnprojectableChart()) return;
     appLog("info", "editor.action", { action: "applyUploadTestServerChart" });
     const uploadOperationId = `upload-test-server-chart-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
     const pushUploadProgress = (percent: number, message: string) =>

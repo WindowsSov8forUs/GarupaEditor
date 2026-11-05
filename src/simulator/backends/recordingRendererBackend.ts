@@ -493,10 +493,7 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
       case "stop-animation":
         if (
           typeof command.restart !== "boolean" ||
-          !(isCurrentExternalHabahiroNoteAnimation(this.profile!, command.animationRole,
-              objects.get(command.renderObjectId)?.role,
-              objects.get(command.renderObjectId)?.spriteExactKey ?? null) ||
-            animationRoleMatchesObject(command.animationRole, objects.get(command.renderObjectId)?.role) &&
+          !(animationRoleMatchesObject(command.animationRole, objects.get(command.renderObjectId)?.role) &&
             this.hasAnimationRole(command.animationRole) && animationBindingMatchesProfile(
               command.animationRole,
               objects.get(command.renderObjectId)?.spriteExactKey ?? null,
@@ -513,10 +510,7 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
         if (
           !validateRenderFloat32(command.elapsedSeconds) ||
           command.elapsedSeconds.value < 0 ||
-          !(isCurrentExternalHabahiroNoteAnimation(this.profile!, command.animationRole,
-              objects.get(command.renderObjectId)?.role,
-              objects.get(command.renderObjectId)?.spriteExactKey ?? null) ||
-            animationRoleMatchesObject(command.animationRole, objects.get(command.renderObjectId)?.role) &&
+          !(animationRoleMatchesObject(command.animationRole, objects.get(command.renderObjectId)?.role) &&
             this.hasAnimationRole(command.animationRole) && animationBindingMatchesProfile(
               command.animationRole,
               objects.get(command.renderObjectId)?.spriteExactKey ?? null,
@@ -586,19 +580,6 @@ export class RecordingSimulatorRendererBackend implements SimulatorRendererBacke
       boundary,
     );
   }
-}
-
-function isCurrentExternalHabahiroNoteAnimation(
-  profile: RenderResourceProfile,
-  role: RenderAnimationRole,
-  objectRole: string | undefined,
-  exactKey: string | null,
-): boolean {
-  if (profile.fidelity.mode !== "habahiro" ||
-    profile.fidelity.fidelity !== "current-external-complete" || objectRole !== "note-icon" || exactKey === null) return false;
-  if (role === "note-flick") return /^note_flick_top(?:_[23])?$/.test(exactKey);
-  if (role === "note-directional-flick") return /^note_flick_[lr]_[0-6]$/.test(exactKey);
-  return role === "note-long-flash" && exactKey.startsWith("note_long_flash_");
 }
 
 function validateResourceProvenance(

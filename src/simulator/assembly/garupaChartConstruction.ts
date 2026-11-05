@@ -7,6 +7,7 @@ import type {
   GarupaChartJsonSlideConnection,
   GarupaChartJsonSlideItem,
 } from "../../chart";
+import { originalIntroSort } from "../../chart/originalIntroSort";
 import { freezeChartConstructionResult } from "../engine/chart/immutability";
 import { registerMultiRangeSourceIdentity } from "../engine/chart/multiRangeSources";
 import {
@@ -244,7 +245,8 @@ function constructGarupaNoteGraphs(
 
   if (tempo.folded) {
     const visited = new Set<NoteInformation>();
-    const project = (note: NoteInformation): void => {
+    // Only a written after position is a chart position: a Long root's tail, or a Slide record's next record.
+    const project = (note: NoteInformation, linked: boolean): void => {
       if (visited.has(note)) return;
       visited.add(note);
       const authored = note.absolutePos, authoredAfter = note.afterNoteAbsolutePos;
@@ -252,11 +254,11 @@ function constructGarupaNoteGraphs(
       Object.assign(note, positionFieldsFromAbsolute(position), {
         storedAbsolutePos: authored, authoredAfterAbsolutePos: authoredAfter,
         shortRhythmUnder8beat: note.shortRhythmUnder8beat,
-        afterNoteAbsolutePos: authoredAfter < 0 ? -1 : tempo.runtimePosition(authoredAfter),
+        afterNoteAbsolutePos: linked ? tempo.runtimePosition(authoredAfter) : authoredAfter,
       });
-      for (const child of note.slideNoteList) project(child);
+      note.slideNoteList.forEach((child, index) => project(child, index < note.slideNoteList.length - 1));
     };
-    for (const record of records) project(record.note);
+    for (const record of records) project(record.note, record.note.fireNoteType === FrontNoteType.Long || record.note.slideNoteList.length > 0);
     records = records.map(record => ({ ...record, absolutePos: record.note.absolutePos }));
     if (records.some(record => !Number.isFinite(record.absolutePos)))
       return invalidBpm("Folded runtime coordinates must remain finite.");
@@ -596,7 +598,6 @@ function createLong(slide: GarupaChartJsonSlideItem, firstIndex: number, project
           after: left ? AfterNoteType.MultipleDirectionalFlickLeft : AfterNoteType.MultipleDirectionalFlickRight,
         }),
         additional: GameNoteAdditionalType.None,
-        afterNoteAbsolutePos: end.value.absolutePos,
       }));
     }
   }
@@ -658,7 +659,8 @@ function createSlide(
       kinds: terminalKinds,
       additional: connection.type === "Skill" ? GameNoteAdditionalType.Skill : GameNoteAdditionalType.None,
       invisible: connection.type === "Hidden",
-      ...(!isTerminal ? slideExitFields(connection) : {}),
+      // The original links each Slide record to the next; the terminal has no write.
+      ...(!isTerminal ? { ...slideExitFields(connection), afterNoteAbsolutePos: positions[index + 1]!.absolutePos } : {}),
     });
     children.push(child);
   }
@@ -685,6 +687,7 @@ function createSlide(
     invisible: head.type === "Hidden",
     ...(head.type === "Hidden" || tail.type === "Hidden" ? { hiddenSlideEndpoints: true as const } : {}),
     slideNoteList: children,
+    afterNoteAbsolutePos: positions[1]!.absolutePos,
     terminalAdditional,
   });
   const additionalRoots: NoteInformation[] = [];
@@ -711,7 +714,6 @@ function createSlide(
             ? AfterNoteType.SlideMultipleDirectionalFlickLeft : AfterNoteType.SlideMultipleDirectionalFlickRight,
         }),
         additional: GameNoteAdditionalType.None,
-        afterNoteAbsolutePos: terminal.absolutePos,
       }));
     }
   }
@@ -733,7 +735,6 @@ function createSlide(
           front: familyA ? FrontNoteType.SlideAMultipleDirectionalFlickAdd : FrontNoteType.SlideBMultipleDirectionalFlickAdd,
           after: node.direction === "Left" ? AfterNoteType.SlideMultipleDirectionalFlickLeft : AfterNoteType.SlideMultipleDirectionalFlickRight },
         additional: GameNoteAdditionalType.None,
-        afterNoteAbsolutePos: positions[connectionIndex]!.absolutePos,
       }));
     }
   }
@@ -803,7 +804,8 @@ function createBaseNote(input: {
     numerator: input.position.numerator,
     denominator: input.position.denominator,
     absolutePos: input.position.absolutePos,
-    afterNoteAbsolutePos: input.afterNoteAbsolutePos ?? -1,
+    // The original writes no after position for other notes; a new managed object holds 0.
+    afterNoteAbsolutePos: input.afterNoteAbsolutePos ?? 0,
     shortRhythmUnder8beat: input.position.shortRhythmUnder8beat,
     afterNoteShortRhythmUnder8beat: input.afterNoteShortRhythmUnder8beat ?? false,
     bpm: input.bpm ?? 0,
@@ -818,76 +820,6 @@ function createBaseNote(input: {
   };
   registerMultiRangeSourceIdentity(note, { ccNums: input.span.ccNums, afterCcNums: [] });
   return note;
-}
-
-/** ArraySortHelper IntroSort as shipped: length 2/3 swaps, insertion sort up to 16,
- * median-of-three partitioning, then heapsort once 2*FloorLog2PlusOne(length) is spent. */
-function originalIntroSort<T>(items: T[], lo: number, hi: number, compare: (left: T, right: T) => number): void {
-  const swap = (a: number, b: number) => { const value = items[a]!; items[a] = items[b]!; items[b] = value; };
-  const swapIfGreater = (a: number, b: number) => { if (a !== b && compare(items[a]!, items[b]!) > 0) swap(a, b); };
-  const insertionSort = (from: number, to: number) => {
-    for (let i = from; i < to; i++) {
-      let j = i;
-      const value = items[i + 1]!;
-      while (j >= from && compare(value, items[j]!) < 0) { items[j + 1] = items[j]!; j--; }
-      items[j + 1] = value;
-    }
-  };
-  const downHeap = (start: number, n: number, from: number) => {
-    let i = start;
-    const value = items[from + i - 1]!;
-    while (i <= n >> 1) {
-      let child = 2 * i;
-      if (child < n && compare(items[from + child - 1]!, items[from + child]!) < 0) child++;
-      if (!(compare(value, items[from + child - 1]!) < 0)) break;
-      items[from + i - 1] = items[from + child - 1]!;
-      i = child;
-    }
-    items[from + i - 1] = value;
-  };
-  const heapsort = (from: number, to: number) => {
-    const n = to - from + 1;
-    for (let i = n >> 1; i >= 1; i--) downHeap(i, n, from);
-    for (let i = n; i > 1; i--) { swap(from, from + i - 1); downHeap(1, i - 1, from); }
-  };
-  const partition = (from: number, to: number) => {
-    const middle = from + ((to - from) >> 1);
-    swapIfGreater(from, middle);
-    swapIfGreater(from, to);
-    swapIfGreater(middle, to);
-    const pivot = items[middle]!;
-    swap(middle, to - 1);
-    let left = from, right = to - 1;
-    while (left < right) {
-      while (compare(items[++left]!, pivot) < 0) { /* advance */ }
-      while (compare(pivot, items[--right]!) < 0) { /* retreat */ }
-      if (left >= right) break;
-      swap(left, right);
-    }
-    swap(left, to - 1);
-    return left;
-  };
-  const sort = (from: number, to: number, depth: number) => {
-    while (to > from) {
-      const size = to - from + 1;
-      if (size <= 16) {
-        if (size === 2) swapIfGreater(from, to);
-        else if (size === 3) { swapIfGreater(from, to - 1); swapIfGreater(from, to); swapIfGreater(to - 1, to); }
-        else insertionSort(from, to);
-        return;
-      }
-      if (depth === 0) { heapsort(from, to); return; }
-      depth--;
-      const pivot = partition(from, to);
-      sort(pivot + 1, to, depth);
-      to = pivot - 1;
-    }
-  };
-  const length = hi - lo + 1;
-  if (length < 2) return;
-  let floorLog2PlusOne = 0;
-  for (let n = length; n >= 1; n = Math.floor(n / 2)) floorLog2PlusOne++;
-  sort(lo, hi, 2 * floorLog2PlusOne);
 }
 
 /** buttonType is the original member key; a projected span extends it with its lane centre. */

@@ -1193,40 +1193,31 @@ export class RenderCommandProducer {
         kind: "hide-object",
         renderObjectId,
       });
-      if (!this.isCompleteHabahiro()) {
-        // A Slide root icon serves a gesture head (extension); other roots never start it.
-        if (pool.family === "flick" || pool.family === "directional-flick" || pool.family === "slide" ||
-          pool.family === "multiple-directional-flick" || pool.family === "multiple-directional-visual") {
-          appendHiddenChild(
-            commands,
-            created,
-            base,
-            ordinaryNoteIconRenderObjectId(renderObjectId),
-            `${pool.family}-icon`,
-            "note-icon",
-            renderObjectId,
-          );
-        }
-        if (pool.family === "long" || pool.family === "slide") {
-          appendHiddenChild(
-            commands,
-            created,
-            base,
-            ordinaryLongFlashRenderObjectId(renderObjectId),
-            `${pool.family}-long-flash`,
-            "note-intermediate",
-            renderObjectId,
-          );
-        }
+      // NoteFlick/NoteLong/NoteSlide keep their icon and TouchingFlash children in both modes;
+      // HABAHIRO changes only the selected sprites, never the animated owner.
+      // A Slide root icon serves a gesture head (extension); other roots never start it.
+      if (pool.family === "flick" || pool.family === "directional-flick" || pool.family === "slide" ||
+        pool.family === "multiple-directional-flick" || pool.family === "multiple-directional-visual") {
+        appendHiddenChild(
+          commands,
+          created,
+          base,
+          ordinaryNoteIconRenderObjectId(renderObjectId),
+          `${pool.family}-icon`,
+          "note-icon",
+          renderObjectId,
+        );
       }
-      if (this.isCompleteHabahiro()) {
-        const iconObjectId = habahiroIconRenderObjectId(pool.poolObjectId);
-        created.push(iconObjectId);
-        commands.push({
-          ...base(commands.length), kind: "create-object", renderObjectId: iconObjectId,
-          poolFamily: `${pool.family}-habahiro-icon`, role: "note-icon", parentObjectId: renderObjectId,
-        });
-        commands.push({ ...base(commands.length), kind: "hide-object", renderObjectId: iconObjectId });
+      if (pool.family === "long" || pool.family === "slide") {
+        appendHiddenChild(
+          commands,
+          created,
+          base,
+          ordinaryLongFlashRenderObjectId(renderObjectId),
+          `${pool.family}-long-flash`,
+          "note-intermediate",
+          renderObjectId,
+        );
       }
       if (pool.family === "long") {
         const afterObjectId = longAfterRenderObjectId(pool.poolObjectId);
@@ -1624,11 +1615,9 @@ export class RenderCommandProducer {
       renderObjectId,
     }];
     appendNoteSpriteBinding(commands, base, renderObjectId, binding.value);
-    const ordinaryFrontAnimation = habahiro
-      ? null
-      : resolveNoteAnimationBinding(information, renderObjectId, this.resources);
-    const gestureHeadFlash = !habahiro && headGesture !== undefined
-      ? resolveLongFlashAnimationBinding(information, renderObjectId, this.resources) : null;
+    const ordinaryFrontAnimation = resolveNoteAnimationBinding(information, renderObjectId, this.resources, true, habahiro);
+    const gestureHeadFlash = headGesture !== undefined
+      ? resolveLongFlashAnimationBinding(information, renderObjectId, this.resources, habahiro) : null;
     for (const animation of [ordinaryFrontAnimation, gestureHeadFlash]) {
       if (animation === null) continue;
       const ownerValidation = validateOrdinaryAnimationOwner(
@@ -1638,22 +1627,6 @@ export class RenderCommandProducer {
       if (ownerValidation.status !== "ok") return ownerValidation;
       appendOrdinaryAnimationStart(commands, base, animation,
         scene.noteDomainLayer, this.creationSequenceByObjectId.get(animation.ownerObjectId)!);
-    }
-    const habahiroIcon = completeHabahiro
-      ? resolveHabahiroIconBinding(information, this.resources)
-      : null;
-    if (habahiroIcon !== null) {
-      const iconObjectId = habahiroIconRenderObjectId(poolObjectId);
-      const iconCreationSequence = this.creationSequenceByObjectId.get(iconObjectId);
-      if (iconCreationSequence === undefined) {
-        return integrityFailure(
-          "render.habahiro.icon-owner-missing",
-          "Every current-external-complete HABAHIRO Flick/Long/Slide visual requires its fixed icon owner.",
-        );
-      }
-      appendOrdinaryAnimationStart(commands, base, {
-        ...habahiroIcon, ownerObjectId: iconObjectId,
-      }, scene.noteDomainLayer, iconCreationSequence);
     }
     const motion = adjustment.value.lastMotion;
     if (motion !== null) {
@@ -1907,11 +1880,6 @@ export class RenderCommandProducer {
           playbackRevision: animation.animationRole === "note-long-flash" ? null : undefined,
         }));
       }
-      if (habahiroIcon !== null) this.noteAnimationElapsedSeconds.set(
-        habahiroIconRenderObjectId(poolObjectId),
-        Object.freeze({ role: habahiroIcon.animationRole, elapsed: 0,
-          playbackRevision: habahiroIcon.animationRole === "note-long-flash" ? null : undefined }),
-      );
 
       if (longTail) {
         const afterAnimation = resolveAfterAnimationBinding(
@@ -2353,8 +2321,7 @@ export class RenderCommandProducer {
             sourceZ: motion.position.z, creationSequence }, maskObjectId: null,
         });
       }
-      const iconObjectId = this.isCompleteHabahiro() && plan.childIndex === null
-        ? habahiroIconRenderObjectId(plan.poolObjectId) : ordinaryNoteIconRenderObjectId(renderObjectId);
+      const iconObjectId = ordinaryNoteIconRenderObjectId(renderObjectId);
       if (this.creationSequenceByObjectId.has(iconObjectId))
         appendNoteIconVisibility(commands, base, iconObjectId, plan.iconVisible);
     }
@@ -2450,7 +2417,6 @@ export class RenderCommandProducer {
     const revisions = new Map<string, number | null>();
     for (const flash of flashes) {
       revisions.set(ordinaryLongFlashRenderObjectId(rootRenderObjectId(flash.poolObjectId)), flash.revision);
-      revisions.set(habahiroIconRenderObjectId(flash.poolObjectId), flash.revision);
     }
     const base = this.commandBase(this.substep);
     const commands: RenderCommand[] = [];
@@ -2498,7 +2464,6 @@ export class RenderCommandProducer {
       for (const childObjectId of [
         ordinaryNoteIconRenderObjectId(renderObjectId),
         ordinaryLongFlashRenderObjectId(renderObjectId),
-        habahiroIconRenderObjectId(poolObjectId),
       ]) appendAnimationChildTeardown(
         commands,
         base,
@@ -2590,7 +2555,6 @@ export class RenderCommandProducer {
         renderObjectId,
         ordinaryNoteIconRenderObjectId(renderObjectId),
         ordinaryLongFlashRenderObjectId(renderObjectId),
-        habahiroIconRenderObjectId(poolObjectId),
         longAfterRenderObjectId(poolObjectId),
         ordinaryNoteIconRenderObjectId(longAfterRenderObjectId(poolObjectId)),
       ]) this.noteAnimationElapsedSeconds.delete(objectId);
@@ -3199,10 +3163,6 @@ export function ordinaryLongFlashRenderObjectId(parentObjectId: string): string 
   return `${parentObjectId}:ordinary-long-flash`;
 }
 
-export function habahiroIconRenderObjectId(poolObjectId: string): string {
-  return `render:${poolObjectId}:habahiro-icon`;
-}
-
 export function longAfterRenderObjectId(poolObjectId: string): string {
   return `render:${poolObjectId}:after`;
 }
@@ -3321,52 +3281,6 @@ function resolveHabahiroFrontSpriteBinding(
     (geometry?.width ?? (information.buttonTypesArray.length || information.buttonTypes.length || 1)), true));
 }
 
-function resolveHabahiroIconBinding(
-  information: NoteInformation,
-  resources: RenderEngineResourceBindings,
-): {
-  readonly logicalAssetId: string;
-  readonly exactKey: string;
-  readonly animationRole: NoteVisualAnimationRole;
-} | null {
-  const role = information.fireNoteType === FrontNoteType.Flick
-    ? "note-flick"
-    : information.fireNoteType === FrontNoteType.DirectionalFlick ||
-        information.fireNoteType === FrontNoteType.MultipleDirectionalFlick ||
-        information.fireNoteType === FrontNoteType.LongMultipleDirectionalFlickAdd ||
-        information.fireNoteType === FrontNoteType.SlideAMultipleDirectionalFlickAdd ||
-        information.fireNoteType === FrontNoteType.SlideBMultipleDirectionalFlickAdd
-    ? "note-directional-flick"
-    : null;
-  if (role !== null) {
-    const direction = gameTypeIsDirectional(information.gameNoteType)
-      ? gameTypeIsLeft(information.gameNoteType) ? "left" : "right"
-      : afterTypeIsDirectional(information.afterNoteType)
-      ? afterTypeIsLeft(information.afterNoteType) ? "left" : "right"
-      : "up";
-    return Object.freeze({
-      ...resolveFlickIconSpriteBinding(information, resources, direction, true),
-      animationRole: role,
-    });
-  }
-  if (
-    information.fireNoteType === FrontNoteType.Long ||
-    information.fireNoteType === FrontNoteType.SlideA ||
-    information.fireNoteType === FrontNoteType.SlideB
-  ) {
-    const suffix = resolveLaneSuffix(information, true);
-    if (suffix.status !== "ok") return null;
-    return Object.freeze({
-      ...(information.fireNoteType === FrontNoteType.Long
-        ? noteLongFlashBinding(resources, suffix.value, true)
-        : noteSlideFlashBinding(resources, information.buttonTypesArray.length || information.buttonTypes.length || 1,
-          resolveLaneIndex(information.buttonType, false), true)),
-      animationRole: "note-long-flash",
-    });
-  }
-  return null;
-}
-
 function resolveHabahiroAfterSpriteBinding(
   information: NoteInformation,
   resources: RenderEngineResourceBindings,
@@ -3375,9 +3289,11 @@ function resolveHabahiroAfterSpriteBinding(
   const laneSuffix = geometry === undefined ? resolveLaneSuffix(information, true) : ok(geometry.suffix);
   if (laneSuffix.status !== "ok") return laneSuffix;
   if (afterTypeIsDirectional(information.afterNoteType)) {
-    return ok(resolveHabahiroDirectionalBodyBinding(
-      laneSuffix.value, afterTypeIsLeft(information.afterNoteType), resources,
-    ));
+    // A wide root's range body has no sprite in the original atlases. Approved extension:
+    // the representative center lane shows its one-lane body, so the group reads whole.
+    const lane = resolveLaneIndex(information.buttonType, false);
+    const suffix = laneSuffix.value.includes("_") && lane >= 0 ? String(lane) : laneSuffix.value;
+    return ok(resolveHabahiroDirectionalBodyBinding(suffix, afterTypeIsLeft(information.afterNoteType), resources));
   }
   const flick = information.afterNoteType === AfterNoteType.Flick ||
     information.afterNoteType === AfterNoteType.SlideFlickEnd;
@@ -3777,7 +3693,7 @@ function resolveNoteAnimationBinding(
       animationRole: role,
     });
   }
-  return allowLongFlash ? resolveLongFlashAnimationBinding(information, parentObjectId, resources) : null;
+  return allowLongFlash ? resolveLongFlashAnimationBinding(information, parentObjectId, resources, habahiro) : null;
 }
 
 /** Long/Slide hold flash; a gesture head carries it beside its flick icon. */
@@ -3785,6 +3701,7 @@ function resolveLongFlashAnimationBinding(
   information: NoteInformation,
   parentObjectId: string,
   resources: RenderEngineResourceBindings,
+  habahiro = false,
 ): OrdinaryAnimationBinding | null {
   if ((
     information.fireNoteType !== FrontNoteType.Long &&
@@ -3798,11 +3715,15 @@ function resolveLongFlashAnimationBinding(
   )) return null;
   const lane = resolveOrdinarySlideCenterLane(information);
   if (lane.status !== "ok") return null;
+  // NoteLong.Activate binds note_long_flash from the root's lanes; NoteSlide.Activate from
+  // the head width's centered lane table, once.
+  const longSuffix = habahiro ? resolveLaneSuffix(information, true) : ok(String(lane.value));
+  if (longSuffix.status !== "ok") return null;
   return Object.freeze({
     ownerObjectId: ordinaryLongFlashRenderObjectId(parentObjectId),
     ...(information.fireNoteType === FrontNoteType.SlideA || information.fireNoteType === FrontNoteType.SlideB
-      ? noteSlideFlashBinding(resources, information.buttonTypesArray.length || information.buttonTypes.length || 1, lane.value, false)
-      : noteLongFlashBinding(resources, String(lane.value), false)),
+      ? noteSlideFlashBinding(resources, information.buttonTypesArray.length || information.buttonTypes.length || 1, lane.value, habahiro)
+      : noteLongFlashBinding(resources, longSuffix.value, habahiro)),
     animationRole: "note-long-flash",
   });
 }
