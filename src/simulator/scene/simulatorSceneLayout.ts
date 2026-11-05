@@ -26,7 +26,7 @@ import type {
   RenderVector3,
 } from "../backends/renderingContracts";
 import { createRenderFloat32 } from "../backends/renderingValidation";
-import { ButtonType, type ButtonTypeValue } from "../engine/chart/types";
+import type { ButtonTypeValue } from "../engine/chart/types";
 import { encodeVirtualLanePosition, virtualLaneNoteX, virtualLaneUnit } from "../engine/chart/virtualLane";
 import type { ManualInputPosition } from "../engine/data/manualInput";
 import { integrityFailure, ok, type SimulatorResult } from "../engine/result";
@@ -190,7 +190,6 @@ export function createSimulatorSceneLayout(
   const geometry = new CurrentSimulatorManualGeometry(
     values.value,
     config.judgementAdjustValueB,
-    renderingKind,
     originalLayout.value,
   );
   const particleScene = createParticleScene(values.value.goalPositions, originalLayout.value);
@@ -414,7 +413,6 @@ function createGarupaProductScene(
 }
 
 class CurrentSimulatorManualGeometry implements SimulatorManualInputGeometryBackend {
-  private habahiroLaneChanged = false;
   private readonly judgePositions: readonly number[];
   private readonly virtualPerfectLine: number;
   private readonly collisionSquared: number;
@@ -422,7 +420,6 @@ class CurrentSimulatorManualGeometry implements SimulatorManualInputGeometryBack
   constructor(
     private readonly scene: SceneValues,
     judgementAdjustValueB: number,
-    private readonly renderingKind: "ordinary" | "habahiro",
     private readonly surfaceLayout: OriginalSurfaceLayout,
   ) {
     this.collisionSquared = calculateTargetCollisionSquared(scene);
@@ -435,10 +432,6 @@ class CurrentSimulatorManualGeometry implements SimulatorManualInputGeometryBack
       throw new Error("scene.slide-judge-profile-out-of-range");
     }
     this.virtualPerfectLine = generated[selected]!;
-  }
-
-  setHabahiroLaneChanged(): void {
-    if (this.renderingKind === "habahiro") this.habahiroLaneChanged = true;
   }
 
   resolveButton(position: ManualInputPosition): SimulatorResult<ButtonTypeValue | null> {
@@ -456,9 +449,8 @@ class CurrentSimulatorManualGeometry implements SimulatorManualInputGeometryBack
         nearestLane = lane;
       }
     }
-    return ok(this.renderingKind === "habahiro" && this.habahiroLaneChanged
-      ? (nearestLane + ButtonType.Button_08_BMS_2P_01) as ButtonTypeValue
-      : nearestLane as ButtonTypeValue);
+    // The lane change swaps two textures and two sprites only; input keeps lanes 0..6.
+    return ok(nearestLane as ButtonTypeValue);
   }
 
   screenToWorld(position: ManualInputPosition): SimulatorResult<ManualInputWorldPosition> {

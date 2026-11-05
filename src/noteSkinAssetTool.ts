@@ -547,7 +547,10 @@ export async function extractNamedSprites(
     return promise;
   };
 
-  const output: Record<string, string> = {};
+  // Crops are encoded concurrently: canvas.toBlob waits for idle time, about a second
+  // per call while the loading indicator animates, so one-by-one encoding of a large
+  // atlas (HABAHIRO: 179 sprites) took minutes.
+  const crops: Array<readonly [string, Promise<string>]> = [];
   for (const entry of sprites) {
     const name = entry.Base.m_Name;
     if (name.length === 0) {
@@ -561,10 +564,15 @@ export async function extractNamedSprites(
       throw new Error(`cannot resolve atlas file for sprite: ${name}`);
     }
 
-    const image = await getImageForFile(atlasFile);
-    output[name] = await cropSprite(image, rect, createImageUrl);
+    crops.push([name, getImageForFile(atlasFile).then((image) => cropSprite(image, rect, createImageUrl))]);
   }
+  return collectCrops(crops);
+}
 
+async function collectCrops(crops: ReadonlyArray<readonly [string, Promise<string>]>): Promise<Record<string, string>> {
+  const urls = await Promise.all(crops.map(([, url]) => url));
+  const output: Record<string, string> = {};
+  crops.forEach(([name], index) => { output[name] = urls[index]!; });
   return output;
 }
 
@@ -618,7 +626,7 @@ export async function extractNamedSpritesFromAsset(
   }
   const image = await loadImageFromMappedPath(atlasPath);
 
-  const output: Record<string, string> = {};
+  const crops: Array<readonly [string, Promise<string>]> = [];
   for (const sprite of asset.Base.mSprites) {
     if (sprite.name.length <= 0) {
       continue;
@@ -634,8 +642,7 @@ export async function extractNamedSpritesFromAsset(
       },
       `${sprite.name}.rect`,
     );
-    output[sprite.name] = await cropSpriteTopLeft(image, normalizedRect, createImageUrl);
+    crops.push([sprite.name, cropSpriteTopLeft(image, normalizedRect, createImageUrl)]);
   }
-
-  return output;
+  return collectCrops(crops);
 }

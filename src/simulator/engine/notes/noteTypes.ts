@@ -692,6 +692,12 @@ export class NoteLong extends NoteFrontBase {
     return submitted;
   }
 
+  /** NoteLong.WaitState (0x30FD9E0) calls NoteBase.Move every update (0x30FDA2C): an
+   * untouched head keeps extrapolating past the judge line until its timeout. */
+  protected override get movesWhileWaiting(): boolean {
+    return true;
+  }
+
   protected override waitState(_deltaTimeSeconds: number): SimulatorResult<void> {
     const information = this.noteInformation;
     const autoRuntime = this.autoLiveRuntime;
@@ -2420,6 +2426,8 @@ export class NoteSlide extends NoteFrontBase {
 }
 
 export abstract class NoteFlickBase extends NoteSingleBase {
+  /** NoteFlickBase.ExecTouchBegan (0x3AA7458) calls SetSpriteEnabled(false) on a non-None result. */
+  onSpriteDisabled: ((note: NoteFlickBase) => void) | null = null;
   private frameCounterValue = Math.fround(0);
   private cachedJudgementValue: ManualNoteJudgement | null = null;
 
@@ -2469,6 +2477,7 @@ export abstract class NoteFlickBase extends NoteSingleBase {
     }
     this.frameCounterValue = Math.fround(0);
     this.cachedJudgementValue = judgement;
+    this.onSpriteDisabled?.(this);
     const changed = this.changeState(NoteState.Wait);
     if (changed.status !== "ok") {
       throw new Error("Flick Began commit could not enter Wait state");

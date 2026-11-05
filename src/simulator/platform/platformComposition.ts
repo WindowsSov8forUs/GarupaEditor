@@ -101,6 +101,7 @@ import { withDefaultJudgeAtlas } from "../engine/skin/originalSkinResolver";
 import type { ChartConstructionResult } from "../engine/chart/types";
 import type { SimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
 import { createPixiStartupDirectionScene, type PixiStartupDirectionScene } from "../backends/pixi/pixiStartupDirectionScene";
+import { normalizeSkinBackgroundImage } from "./skinBackgroundNormalization";
 import type { SimulatorResourceCapability, SimulatorResourceLease } from "./resourceContracts";
 import {
   copyAndValidateInitialSimulatorSurface,
@@ -370,10 +371,12 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
               if (surfaceBound.status !== "ok") return fromIntegrity(surfaceBound);
               // BgManager.initLightMode puts the card in bgImage instead of the
               // background skin; the special background's widgets are not loaded.
+              const decodedBackground = lightMode ? accepted(null) : await normalizeSkinBackgroundImage(backgroundImage);
+              if (decodedBackground.status === "rejected") return decodedBackground;
               const effectivePresentation = lightMode
                 ? accepted(Object.freeze({ ...presentation.value, stageBackdrop: presentation.value.illustBackground!,
                   stageEffect: Object.freeze([]) }))
-                : replacePreparedSessionStageBackdrop(presentation.value, backgroundImage);
+                : replacePreparedSessionStageBackdrop(presentation.value, decodedBackground.value);
               if (effectivePresentation.status === "rejected") return effectivePresentation;
               const common = renderer.getStartupDirectionCommonResources();
               if (common.status !== "ok") return fromIntegrity(common);

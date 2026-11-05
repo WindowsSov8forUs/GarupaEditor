@@ -30,6 +30,12 @@ export interface HoldSoundEvent {
   readonly action: "start" | "fade";
 }
 
+/** A lane touch that found no judgeable note (GamePlayButton.ExecTouchBegan empty-tap tail). */
+export interface EmptyTapEvent {
+  readonly buttonType: number;
+  readonly fingerId: number;
+}
+
 const GAME_OVER_PAUSE_DELAY_BITS = ["0x3D4CCCCD", "0x3DCCCCCD"] as const;
 export const GAME_OVER_AUDIO_RELEASE_DELAY_SECONDS = GAME_OVER_PAUSE_DELAY_BITS
   .reduce((total, bits) => total + audioFloat32FromBits(bits)!, 0);
@@ -362,6 +368,12 @@ export class AudioCommandProducer {
       }
     }
     return this.preflightCommands(commands);
+  }
+
+  /** 0x38A6320..0x38A6350: fingerId <= 3 plays game_button through PlaySEOneShot. */
+  preflightEmptyTaps(events: readonly EmptyTapEvent[]): SimulatorResult<AudioOwnerTransaction> {
+    return this.preflightCommands(events.filter((event) => event.fingerId <= 3)
+      .map(() => oneShot("game_button", "one-shot-0")));
   }
 
   preflightResultBgm(): SimulatorResult<AudioOwnerTransaction> {

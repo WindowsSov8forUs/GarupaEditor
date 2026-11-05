@@ -67,7 +67,6 @@ export interface SimulatorManualInputGeometryBackend {
   getGameplayButtonLocalY?(
     buttonType: ButtonTypeValue,
   ): SimulatorResult<number>;
-  setHabahiroLaneChanged?(): void;
   getSlideJudgeGeometry?(
     source: import("../engine/chart/types").NoteInformation,
   ): SimulatorResult<{

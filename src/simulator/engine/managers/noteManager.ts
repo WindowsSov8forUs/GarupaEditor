@@ -5,7 +5,7 @@ import { noteMotionY, noteSpatialY, noteUnclippedSyncTarget } from "../rendering
 import type { TapLaneEffectInputEvent } from "./tapLaneEffectOwner";
 import { SyncLineConnectionRules } from "../rendering/syncLineConnectionRules";
 import { virtualLaneUnit } from "../chart/virtualLane";
-import type { HoldSoundEvent } from "../audio/audioCommandProducer";
+import type { EmptyTapEvent, HoldSoundEvent } from "../audio/audioCommandProducer";
 import type { ManualInputPosition } from "../data/manualInput";
 
 import {
@@ -46,6 +46,7 @@ import { NoteBpmChange } from "../notes/noteBpmChange";
 import {
   NoteDirectionalFlick,
   NoteFlick,
+  NoteFlickBase,
   NoteLong,
   NoteMultipleDirectionalFlick,
   NoteMultipleDirectionalVisual,
@@ -210,6 +211,14 @@ export class NoteManager {
   }
   takeTapLaneEffects(): readonly TapLaneEffectInputEvent[] { return this.pendingTapLaneEffects.splice(0); }
 
+  private readonly pendingEmptyTaps: EmptyTapEvent[] = [];
+
+  /** State 14 (MoveTime) does not dispatch lane Begin, so no empty tap is played there. */
+  enqueueEmptyTap(event: EmptyTapEvent): void {
+    if (!this.isMoveTime()) this.pendingEmptyTaps.push(event);
+  }
+  takeEmptyTaps(): readonly EmptyTapEvent[] { return this.pendingEmptyTaps.splice(0); }
+
   private readonly pendingHoldSounds: HoldSoundEvent[] = [];
 
   takeHoldSounds(): readonly HoldSoundEvent[] { return this.pendingHoldSounds.splice(0); }
@@ -366,10 +375,6 @@ export class NoteManager {
     return ok(undefined);
   }
 
-  commitHabahiroLaneChangeGeometry(): void {
-    this.manualInputGeometry.setHabahiroLaneChanged?.();
-  }
-
   execAwakeEnd(): SimulatorResult<void> {
     const setupValidation = this.validateSetup();
     if (setupValidation.status !== "ok") {
@@ -514,6 +519,7 @@ export class NoteManager {
         const note = this.createPoolObject(family, `${family}:${index}`);
         if (source.laneSpan !== undefined) this.projectedNotes.add(note);
         note.onTapLaneEffect = event => this.enqueueTapLaneEffect(event);
+        if (note instanceof NoteFlickBase) note.onSpriteDisabled = (touched) => this.disableFlickSprites(touched);
         if (note instanceof NoteSlide) note.onManualOwnershipReleased = (released) => this.manualNoteDeactivatedOwner?.(released);
         if (note instanceof NoteSlide || note instanceof NoteLong) note.onTouchKeepSound = (index, action) => {
           if (action === "start" && this.isMoveTime()) return;
@@ -1654,6 +1660,34 @@ export class NoteManager {
         this.activeOrdinarySyncLines[index] = null;
       }
     }
+  }
+
+  /** NoteFlickBase.ExecTouchBegan hides the touched member's body and arrow; the
+   * NoteMultipleDirectionalFlick wrapper (0x30FF514) then walks its right and left chains,
+   * hiding every member and deactivating each back line. Nothing shows them again before
+   * the members are recycled. */
+  private disableFlickSprites(touched: NoteFlickBase): void {
+    if (this.renderProducer === null) return;
+    const members: NoteBase[] = [touched];
+    const lines = new Set<number>();
+    if (touched instanceof NoteMultipleDirectionalFlick) {
+      for (let index = 0; index < members.length; index += 1) {
+        const member = members[index]!;
+        for (const line of this.activeMultipleDirectionalLines) {
+          if (line === null || line.afterA !== false || line.afterB !== false) continue;
+          const other = line.targetA === member ? line.targetB : line.targetB === member ? line.targetA : null;
+          if (other === null || !(other instanceof NoteMultipleDirectionalFlick)) continue;
+          lines.add(line.poolIndex);
+          if (!members.includes(other)) members.push(other);
+        }
+      }
+    }
+    for (const poolIndex of lines) this.activeMultipleDirectionalLines[poolIndex] = null;
+    const prepared = this.renderProducer.preflightFlickSpritesDisabled(
+      members.map((member) => member.poolObjectId), [...lines]);
+    if (prepared.status !== "ok") throw new Error(`Flick sprite disable failed: ${prepared.capability}`);
+    const committed = prepared.value.commit();
+    if (committed.status !== "ok") throw new Error(`Flick sprite disable failed: ${committed.capability}`);
   }
 
   private multipleDirectionalLinePoolIndicesForNote(note: NoteBase): readonly number[] {
