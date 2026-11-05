@@ -357,10 +357,9 @@ export function advanceOrdinarySlideChildren(
   for (const state of nextStates) {
     const widthRate = habahiroHighAspectRatio === undefined
       ? createRenderFloat32(Math.fround(1))
-      : getHabahiroMeshWidthRate(
-          Math.max(previousButtonCount, state.buttonCount),
-          habahiroHighAspectRatio,
-        );
+      // NoteMeshAdvanced.OnUpdate takes the rate from the front node's count only and
+      // applies it to both ends; each end keeps its own count.
+      : getHabahiroMeshWidthRate(previousButtonCount, habahiroHighAspectRatio);
     if (widthRate.status !== "ok") return widthRate;
     const afterScale = getOrdinaryNoteMeshAfterScale(state.lifecycle, previousMotionState.goalPosition.y, screenToSafeAreaRatio);
     if (afterScale.status !== "ok") return afterScale;
