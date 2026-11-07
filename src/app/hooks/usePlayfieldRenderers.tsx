@@ -1,10 +1,9 @@
-﻿import { editorGridWindow } from "../editorGridWindow";
+import { editorGridWindow } from "../editorGridWindow";
 import { useMemo, type ReactNode } from "react";
 import { projectPlayfieldLineRuntimeAssets } from "../../skinLoader";
 
 export function usePlayfieldRenderers(params: any) {
   const {
-    laneValues,
     LANE_WIDTH,
     totalSteps,
     yToBeat,
@@ -79,22 +78,8 @@ export function usePlayfieldRenderers(params: any) {
     return lineY * scale - scrollTop;
   };
 
-  const renderLaneGuides = () => {
-    const guides: ReactNode[] = [];
-
-    for (let column = 1; column < laneValues.length; column += 1) {
-      guides.push(
-        <div
-          key={`lane-guide-${column}`}
-          className="lane-guide"
-          style={{ left: column * LANE_WIDTH }}
-          aria-hidden="true"
-        />,
-      );
-    }
-
-    return guides;
-  };
+  // Vertical lane separators are removed for now.
+  const renderLaneGuides = (): ReactNode[] => [];
 
   const renderGridLines = (top: number, bottom: number) => {
     if (isCanvasBackend) {

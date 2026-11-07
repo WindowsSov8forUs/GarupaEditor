@@ -1276,7 +1276,6 @@ function ChartEditorController() {
   const playfieldBoardRef = useRef<HTMLDivElement | null>(null);
   const playfieldTrackCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const playfieldNoteCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const playfieldPlaybackCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const playbackAudioRef = useRef<HTMLAudioElement | null>(null);
   const playbackTickRafRef = useRef<number | null>(null);
   const playbackTickLastNowMsRef = useRef<number | null>(null);
@@ -1491,7 +1490,6 @@ function ChartEditorController() {
   const playbackSpeedLabel = `${Number(currentPlaybackSpeed.toFixed(2))}x`;
   const playbackVolumeLabel = `${Math.round(playbackVolumePercent)}`;
   const playbackPositionLabel = `${Math.round(playbackLinePositionPercent)}%`;
-  const getPlaybackNowTimeSec = useCallback(() => playbackNowSecRef.current, []);
   const getPlaybackNowLabel = useCallback(
     () => formatDuration(playbackNowSecRef.current),
     [formatDuration],
@@ -3939,15 +3937,20 @@ function ChartEditorController() {
     playbackViewportSyncStampRef.current = nowMs;
     const viewportHeight = Math.max(1, playfield.clientHeight);
     const maxScrollTop = Math.max(0, scrollContentHeight - viewportHeight);
-    const ratioFromBottom = clamp(viewportPlaybackPositionPercent / 100, 0, 1);
-    const anchorLocalY = viewportHeight * (1 - ratioFromBottom);
+    const ratioFromBottom = clamp(playbackLinePositionPercent / 100, 0, 1);
+    const playfieldTopClient = playfield.getBoundingClientRect().top;
+  const viewportRegionEl = document.querySelector<HTMLElement>(".editor-viewport-region");
+  const viewportRegionRect = viewportRegionEl ? viewportRegionEl.getBoundingClientRect() : null;
+  const regionTopLocal = viewportRegionRect ? viewportRegionRect.top - playfieldTopClient : 0;
+  const regionBottomLocal = viewportRegionRect ? viewportRegionRect.bottom - playfieldTopClient : viewportHeight;
+  const anchorLocalY = regionBottomLocal + (regionTopLocal - regionBottomLocal) * ratioFromBottom;
     const worldY = timeToY(timeSec);
     const nextScrollTop = clamp(worldY - anchorLocalY, 0, maxScrollTop);
     if (Math.abs(playfield.scrollTop - nextScrollTop) > 0.5) {
       playfield.scrollTop = nextScrollTop;
     }
     viewBottomTimeSecRef.current = displayAxis.viewportTimeAtY(playfield.scrollTop + playfield.clientHeight);
-  }, [clamp, displayAxis, viewportPlaybackPositionPercent, scrollContentHeight, timeToY, viewBottomTimeSecRef]);
+  }, [clamp, displayAxis, playbackLinePositionPercent, scrollContentHeight, timeToY, viewBottomTimeSecRef]);
 
   const ensurePlaybackSeAudioContext = useCallback((): AudioContext | null => {
     const existingContext = playbackSeAudioContextRef.current;
@@ -4454,8 +4457,8 @@ function ChartEditorController() {
       setSvPreviewTimeSec(nextTimeSec);
     }
     processPlaybackSoundFrame(prevTimeSec, nextTimeSec);
-    syncPlaybackViewport(nextTimeSec);
-    updatePlaybackRuntimeLine(nextTimeSec);
+        syncPlaybackViewport(nextTimeSec);
+      updatePlaybackRuntimeLine(nextTimeSec);
     if (nextTimeSec >= safeDuration - 1e-3) {
       stopPlayback("播放结束。");
       return;
@@ -5178,19 +5181,19 @@ function ChartEditorController() {
     noteTimingGroupById,
     svPreviewTimingGroups,
   ]);
-  const getTrackDisplayY = useCallback((beat: number): number => {
-    const hitSec = beatToSeconds(beat, bpmTimeline);
+  const trackTimeToY = useCallback((timeSec: number): number => {
     const group = isSvPreviewEnabled
       ? (svPreviewTimingGroups.get(GLOBAL_TIMING_GROUP_ID) ?? null)
       : null;
-    return displayAxis.timeToGroupY(hitSec, group);
+    return displayAxis.timeToGroupY(timeSec, group);
   }, [
-    beatToSeconds,
-    bpmTimeline,
     displayAxis,
     isSvPreviewEnabled,
     svPreviewTimingGroups,
   ]);
+  const getTrackDisplayY = useCallback((beat: number): number => (
+    trackTimeToY(beatToSeconds(beat, bpmTimeline))
+  ), [beatToSeconds, bpmTimeline, trackTimeToY]);
   const isSlideChainOutsideActiveTimingGroup = useCallback((chain: SlideChain): boolean => {
     if (!isTimingGroupModeActive) {
       return false;
@@ -5573,7 +5576,6 @@ function ChartEditorController() {
     enabled: isCanvasRenderBackend && isSkinReady && isCanvasResourceReady,
     trackCanvasRef: playfieldTrackCanvasRef,
     noteCanvasRef: playfieldNoteCanvasRef,
-    playbackCanvasRef: playfieldPlaybackCanvasRef,
     playfieldRef,
     playfieldBoardRef,
     boardWidth,
@@ -5587,7 +5589,7 @@ function ChartEditorController() {
     beatToY: getTrackDisplayY,
     yToBeat,
     yToTime,
-    timeToY,
+    timeToY: trackTimeToY,
     totalDurationSec,
     bpmVisualLines: canvasBpmVisualLines,
     svVisualLines: canvasSvVisualLines,
@@ -5600,11 +5602,6 @@ function ChartEditorController() {
     slideBuildCommittedGuideLines,
     slideBuildGuideLine,
     selectionDrag,
-    playbackLineVisible: isPlaybackPlaying,
-    playbackCanvasLineEnabled: false,
-    playbackLineMode,
-    playbackLinePositionPercent: viewportPlaybackPositionPercent,
-    getPlaybackNowTimeSec,
     useFullGridScan: isSvPreviewEnabled,
     resourcesVersion: canvasResourceVersion,
   });
@@ -6274,6 +6271,7 @@ function ChartEditorController() {
         attachViewport,
         setBeatDivision: (value: number) => setSettings(previous => ({ ...previous, timeSignatureDenominator: value })),
         setPlaybackBottomInsetRatio,
+        playbackLinePositionPercent,
         playfieldRef,
         handlePlayfieldScroll,
         selectionDrag,
@@ -6291,11 +6289,10 @@ function ChartEditorController() {
         cursorPreviewRef: canvasCursorPreviewRef,
         resolveDirectionalWidenPreviewAt,
         resolveNoteReplacePreviewAt,
-        beatToY,
+        beatToY: getTrackDisplayY,
         getNoteDisplayY,
         playfieldTrackCanvasRef,
         playfieldNoteCanvasRef,
-        playfieldPlaybackCanvasRef,
         playfieldBoardRef,
         boardWidth,
         handleBoardClick,

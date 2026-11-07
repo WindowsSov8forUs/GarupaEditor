@@ -1680,6 +1680,15 @@ button.apply-icon-button:not(.original-button):not(.note-token):not(.bpm-label-b
   right: -9px;
 }
 
+.playback-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(79, 213, 255, 0.98);
+  pointer-events: none;
+}
+
 .editor-track-viewport {
   position: absolute;
   left: 0;
@@ -1693,24 +1702,25 @@ button.apply-icon-button:not(.original-button):not(.note-token):not(.bpm-label-b
   height: 100%;
   margin: 0 auto;
   box-sizing: content-box;
-  border-left: 9px solid rgb(0, 166, 166);
-  border-right: 9px solid rgb(0, 166, 166);
+  border: none;
+}
+
+/* Static flat preview lane (NotGarupa k(h) unprojection), centred over the track; notes and lines scroll over it. */
+.editor-track-lane-tile {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  pointer-events: none;
 }
 
 .playfield-board.viewport-track-owned { outline: none; }
 .playfield-board.viewport-track-owned::before,
 .playfield-board.viewport-track-owned::after { display: none; }
 
-.judge-line {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 1px;
-  background: rgba(185, 192, 207, 0.72);
-  pointer-events: none;
-  z-index: 4;
-}
 
 .grid-layer {
   position: absolute;
@@ -1759,10 +1769,6 @@ button.apply-icon-button:not(.original-button):not(.note-token):not(.bpm-label-b
 
 .playfield-canvas-note-layer {
   z-index: 2;
-}
-
-.playfield-canvas-playback-layer {
-  z-index: 5;
 }
 
 .lane-guide {

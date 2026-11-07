@@ -9,7 +9,7 @@ export function editorGridWindow(o: GridWindow): Array<{ step: number; y: number
   const lines: Array<{ step: number; y: number }> = [];
   const add = (step: number, y: number) => {
     if (step < 0 && Math.abs(step / o.beatDivision - Math.round(step / o.beatDivision)) > 1e-6) return;
-    if (Number.isFinite(y) && y >= o.top - 2 && y <= o.bottom + 2) lines.push({ step, y });
+    if (Number.isFinite(y) && y >= o.top - 24 && y <= o.bottom + 24) lines.push({ step, y });
   };
   const first = o.fullScan ? 0 : Math.max(0, Math.floor(Math.min(o.yToBeat(o.top), o.yToBeat(o.bottom)) * o.beatDivision) - o.beatDivision);
   const last = o.fullScan ? o.totalSteps : Math.min(o.totalSteps, Math.ceil(Math.max(o.yToBeat(o.top), o.yToBeat(o.bottom)) * o.beatDivision) + o.beatDivision);
@@ -17,7 +17,7 @@ export function editorGridWindow(o: GridWindow): Array<{ step: number; y: number
   const extend = (anchor: number, delta: number, direction: -1 | 1) => {
     const y = o.beatToY(anchor / o.beatDivision);
     if (!Number.isFinite(delta) || Math.abs(delta) < 1e-6) return;
-    const a = (o.top - 2 - y) / delta, b = (o.bottom + 2 - y) / delta;
+    const a = (o.top - 24 - y) / delta, b = (o.bottom + 24 - y) / delta;
     const start = Math.max(1, Math.ceil(Math.min(a, b)));
     const end = Math.floor(Math.max(a, b));
     for (let n = start; n <= end; n++) add(anchor + direction * n, y + delta * n);

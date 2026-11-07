@@ -9,18 +9,16 @@ import {
 import { useEditorMainLoop, type EditorMainLoopFrame } from "./useEditorMainLoop";
 import type { RenderConnectionSegment, RenderSimultaneousSegment } from "./useEditorRenderModel";
 
-const GRID_COLOR = "rgb(26, 51, 59)";
-const GRID_BEAT_COLOR = "rgb(0, 166, 166)";
-const GRID_MEASURE_COLOR = "rgb(0, 166, 166)";
+const GRID_COLOR = "rgb(125, 125, 125)";
+const GRID_BEAT_COLOR = "rgb(190, 190, 190)";
+const GRID_MEASURE_COLOR = "rgb(255, 255, 255)";
+const GRID_SPAN_LANES = 7;
+const SV_LINE_COLOR = "rgb(255, 59, 114)";
+const SV_LINE_SELECTED_COLOR = "rgb(255, 127, 165)";
 const BOARD_OVERSCAN_PX = 280;
 const BOARD_HORIZONTAL_OVERSCAN_PX = 160;
-const PLAYBACK_BOARD_OVERSCAN_PX = 160;
-const PLAYBACK_BOARD_HORIZONTAL_OVERSCAN_PX = 96;
 const RENDER_WINDOW_SNAP_PX = 96;
-const PLAYBACK_RENDER_DPR_CAP = 1;
 const MAX_RENDER_DPR = 2;
-const PLAYBACK_LINE_CLEAR_HALF_BAND_PX = 4;
-const PLAYBACK_VIEWPORT_EDGE_TOLERANCE_PX = 8;
 const CONNECTION_SEGMENT_X_CONTINUITY_TOLERANCE_PX = 1;
 const DIRECTIONAL_HEAD_INSET_RATIO = 0.55;
 const DIRECTIONAL_HEAD_SCALE = 1.25;
@@ -269,7 +267,6 @@ export function useCanvasPlayfieldBackend(params: {
   enabled: boolean;
   trackCanvasRef: RefObject<HTMLCanvasElement | null>;
   noteCanvasRef: RefObject<HTMLCanvasElement | null>;
-  playbackCanvasRef: RefObject<HTMLCanvasElement | null>;
   playfieldRef: RefObject<HTMLDivElement | null>;
   playfieldBoardRef: RefObject<HTMLDivElement | null>;
   boardWidth: number;
@@ -296,11 +293,6 @@ export function useCanvasPlayfieldBackend(params: {
   slideBuildCommittedGuideLines: Array<{ x1: number; y1: number; x2: number; y2: number; key: string }>;
   slideBuildGuideLine: { x1: number; y1: number; x2: number; y2: number } | null;
   selectionDrag: { isDragging: boolean; startX: number; startY: number; currentX: number; currentY: number } | null;
-  playbackLineVisible: boolean;
-  playbackCanvasLineEnabled: boolean;
-  playbackLineMode: "follow" | "free";
-  playbackLinePositionPercent: number;
-  getPlaybackNowTimeSec: () => number;
   useFullGridScan: boolean;
   resourcesVersion: number;
 }) {
@@ -308,7 +300,6 @@ export function useCanvasPlayfieldBackend(params: {
     enabled,
     trackCanvasRef,
     noteCanvasRef,
-    playbackCanvasRef,
     playfieldRef,
     playfieldBoardRef,
     boardWidth,
@@ -335,14 +326,9 @@ export function useCanvasPlayfieldBackend(params: {
     slideBuildCommittedGuideLines,
     slideBuildGuideLine,
     selectionDrag,
-    playbackLineVisible,
-    playbackCanvasLineEnabled,
-    playbackLineMode,
-    playbackLinePositionPercent,
-    getPlaybackNowTimeSec,
     useFullGridScan,
     resourcesVersion,
-  } = params;
+} = params;
   const runtimeSkin = useMemo<CanvasRenderResourceRuntimeAssets | null>(
     () => (skinAssets ? projectCanvasRenderResourceRuntimeAssets(skinAssets) : null),
     [skinAssets],
@@ -373,11 +359,6 @@ export function useCanvasPlayfieldBackend(params: {
     slideBuildCommittedGuideLines: Array<{ x1: number; y1: number; x2: number; y2: number; key: string }>;
     slideBuildGuideLine: { x1: number; y1: number; x2: number; y2: number } | null;
     selectionDrag: { isDragging: boolean; startX: number; startY: number; currentX: number; currentY: number } | null;
-    playbackLineVisible: boolean;
-    playbackCanvasLineEnabled: boolean;
-    playbackLineMode: "follow" | "free";
-    playbackLinePositionPercent: number;
-    getPlaybackNowTimeSec: () => number;
     useFullGridScan: boolean;
     resourcesVersion: number;
   } | null>(null);
@@ -401,6 +382,8 @@ export function useCanvasPlayfieldBackend(params: {
     beatToYRef: (beat: number) => number;
     useFullGridScan: boolean;
     yToBeatRef: (y: number) => number;
+    bpmVisualLinesRef: CanvasBpmVisual[];
+    svVisualLinesRef: CanvasSvVisual[];
   } | null>(null);
   const noteRenderMemoRef = useRef<{
     viewportTop: number;
@@ -417,8 +400,6 @@ export function useCanvasPlayfieldBackend(params: {
     resourcesVersion: number;
     laneWidth: number;
     noteVisualScale: number;
-    bpmVisualLinesRef: CanvasBpmVisual[];
-    svVisualLinesRef: CanvasSvVisual[];
     selectedLongLineSegmentId: string | null;
     simultaneousSegmentsRef: RenderSimultaneousSegment[];
     connectionSegmentsRef: RenderConnectionSegment[];
@@ -428,26 +409,7 @@ export function useCanvasPlayfieldBackend(params: {
     slideBuildGuideLineRef: { x1: number; y1: number; x2: number; y2: number } | null;
     selectionDragRef: { isDragging: boolean; startX: number; startY: number; currentX: number; currentY: number } | null;
   } | null>(null);
-  const playbackRenderMemoRef = useRef<{
-    viewportTop: number;
-    viewportHeight: number;
-    viewportWidth: number;
-    windowTop: number;
-    windowBottom: number;
-    windowHeight: number;
-    width: number;
-    boardXOffset: number;
-    logicalBoardWidth: number;
-    boardHeight: number;
-    renderDpr: number;
-    playbackRenderDpr: number;
-    playbackLineVisible: boolean;
-    playbackLineMode: "follow" | "free";
-    playbackLinePositionPercent: number;
-    playbackLineTimeSec: number;
-  } | null>(null);
-  const playbackLastLineYRef = useRef<number | null>(null);
-  const sortedConnectionSegmentsRef = useRef<{
+    const sortedConnectionSegmentsRef = useRef<{
     source: RenderConnectionSegment[] | null;
     sorted: RenderConnectionSegment[];
   }>({
@@ -480,11 +442,6 @@ export function useCanvasPlayfieldBackend(params: {
     slideBuildCommittedGuideLines,
     slideBuildGuideLine,
     selectionDrag,
-    playbackLineVisible,
-    playbackCanvasLineEnabled,
-    playbackLineMode,
-    playbackLinePositionPercent,
-    getPlaybackNowTimeSec,
     useFullGridScan,
     resourcesVersion,
   };
@@ -494,31 +451,24 @@ export function useCanvasPlayfieldBackend(params: {
       const snapshot = snapshotRef.current;
       const trackCanvas = trackCanvasRef.current;
       const noteCanvas = noteCanvasRef.current;
-      const playbackCanvas = playbackCanvasRef.current;
-      if (!enabled || !snapshot || !trackCanvas || !noteCanvas || !playbackCanvas) {
+      if (!enabled || !snapshot || !trackCanvas || !noteCanvas) {
         return;
       }
 
       const logicalBoardWidth = Math.max(1, Math.round(snapshot.boardWidth));
       const height = Math.max(1, Math.round(snapshot.boardHeight));
-      const renderDprCap = snapshot.playbackLineVisible ? PLAYBACK_RENDER_DPR_CAP : MAX_RENDER_DPR;
+      const renderDprCap = MAX_RENDER_DPR;
       const renderDpr = Math.min(
         renderDprCap,
         Math.max(1, typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1),
       );
-      const playbackRenderDpr = Math.min(
-        MAX_RENDER_DPR,
-        Math.max(1, typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1),
-      );
-      const playfield = playfieldRef.current;
+            const playfield = playfieldRef.current;
       const viewportTop = playfield ? playfield.scrollTop : 0;
       const viewportHeight = playfield ? playfield.clientHeight : height;
       const viewportBottom = viewportTop + viewportHeight;
       const viewportWidth = playfield ? playfield.clientWidth : logicalBoardWidth;
-      const verticalOverscan = snapshot.playbackLineVisible ? PLAYBACK_BOARD_OVERSCAN_PX : BOARD_OVERSCAN_PX;
-      const horizontalOverscan = snapshot.playbackLineVisible
-        ? PLAYBACK_BOARD_HORIZONTAL_OVERSCAN_PX
-        : BOARD_HORIZONTAL_OVERSCAN_PX;
+      const verticalOverscan = BOARD_OVERSCAN_PX;
+      const horizontalOverscan = BOARD_HORIZONTAL_OVERSCAN_PX;
       const sidePad = Math.max(
         horizontalOverscan,
         Math.ceil((viewportWidth - logicalBoardWidth) / 2) + horizontalOverscan,
@@ -538,8 +488,6 @@ export function useCanvasPlayfieldBackend(params: {
       const windowHeight = Math.max(1, windowBottom - windowTop);
       const pixelWidth = Math.max(1, Math.round(width * renderDpr));
       const pixelHeight = Math.max(1, Math.round(windowHeight * renderDpr));
-      const playbackPixelWidth = Math.max(1, Math.round(width * playbackRenderDpr));
-      const playbackPixelHeight = Math.max(1, Math.round(viewportHeight * playbackRenderDpr));
       const trackMemo = {
         viewportTop,
         viewportHeight,
@@ -560,6 +508,8 @@ export function useCanvasPlayfieldBackend(params: {
         beatToYRef: snapshot.beatToY,
         useFullGridScan: snapshot.useFullGridScan,
         yToBeatRef: snapshot.yToBeat,
+        bpmVisualLinesRef: snapshot.bpmVisualLines,
+        svVisualLinesRef: snapshot.svVisualLines,
       };
       const previousTrackMemo = trackRenderMemoRef.current;
       const shouldDrawTrack =
@@ -580,7 +530,9 @@ export function useCanvasPlayfieldBackend(params: {
         || previousTrackMemo.beatsPerMeasure !== trackMemo.beatsPerMeasure
         || previousTrackMemo.beatToYRef !== trackMemo.beatToYRef
         || previousTrackMemo.useFullGridScan !== trackMemo.useFullGridScan
-        || previousTrackMemo.yToBeatRef !== trackMemo.yToBeatRef;
+        || previousTrackMemo.yToBeatRef !== trackMemo.yToBeatRef
+        || previousTrackMemo.bpmVisualLinesRef !== trackMemo.bpmVisualLinesRef
+        || previousTrackMemo.svVisualLinesRef !== trackMemo.svVisualLinesRef;
 
       const noteMemo = {
         viewportTop,
@@ -597,8 +549,6 @@ export function useCanvasPlayfieldBackend(params: {
         resourcesVersion: snapshot.resourcesVersion,
         laneWidth: snapshot.laneWidth,
         noteVisualScale: snapshot.noteVisualScale,
-        bpmVisualLinesRef: snapshot.bpmVisualLines,
-        svVisualLinesRef: snapshot.svVisualLines,
         selectedLongLineSegmentId: snapshot.selectedLongLineSegmentId,
         simultaneousSegmentsRef: snapshot.simultaneousSegments,
         connectionSegmentsRef: snapshot.connectionSegments,
@@ -608,27 +558,7 @@ export function useCanvasPlayfieldBackend(params: {
         slideBuildGuideLineRef: snapshot.slideBuildGuideLine,
         selectionDragRef: snapshot.selectionDrag,
       };
-      const canvasPlaybackLineVisible = snapshot.playbackLineVisible && snapshot.playbackCanvasLineEnabled;
-      const playbackMemo = {
-        viewportTop,
-        viewportHeight,
-        viewportWidth,
-        windowTop,
-        windowBottom,
-        windowHeight,
-        width,
-        boardXOffset,
-        logicalBoardWidth,
-        boardHeight: height,
-        renderDpr,
-        playbackRenderDpr,
-        playbackLineVisible: canvasPlaybackLineVisible,
-        playbackLineMode: snapshot.playbackLineMode,
-        playbackLinePositionPercent: snapshot.playbackLinePositionPercent,
-        playbackLineTimeSec: snapshot.getPlaybackNowTimeSec(),
-      };
       const previousNoteMemo = noteRenderMemoRef.current;
-      const previousPlaybackMemo = playbackRenderMemoRef.current;
       const shouldDrawNote =
         !previousNoteMemo
         || previousNoteMemo.viewportWidth !== noteMemo.viewportWidth
@@ -643,8 +573,6 @@ export function useCanvasPlayfieldBackend(params: {
         || previousNoteMemo.resourcesVersion !== noteMemo.resourcesVersion
         || previousNoteMemo.laneWidth !== noteMemo.laneWidth
         || previousNoteMemo.noteVisualScale !== noteMemo.noteVisualScale
-        || previousNoteMemo.bpmVisualLinesRef !== noteMemo.bpmVisualLinesRef
-        || previousNoteMemo.svVisualLinesRef !== noteMemo.svVisualLinesRef
         || previousNoteMemo.selectedLongLineSegmentId !== noteMemo.selectedLongLineSegmentId
         || previousNoteMemo.simultaneousSegmentsRef !== noteMemo.simultaneousSegmentsRef
         || previousNoteMemo.connectionSegmentsRef !== noteMemo.connectionSegmentsRef
@@ -653,33 +581,6 @@ export function useCanvasPlayfieldBackend(params: {
         || previousNoteMemo.slideBuildCommittedGuideLinesRef !== noteMemo.slideBuildCommittedGuideLinesRef
         || previousNoteMemo.slideBuildGuideLineRef !== noteMemo.slideBuildGuideLineRef
         || previousNoteMemo.selectionDragRef !== noteMemo.selectionDragRef;
-      const shouldDrawPlayback =
-        !previousPlaybackMemo
-        || previousPlaybackMemo.viewportHeight !== playbackMemo.viewportHeight
-        || previousPlaybackMemo.viewportWidth !== playbackMemo.viewportWidth
-        || previousPlaybackMemo.width !== playbackMemo.width
-        || previousPlaybackMemo.boardXOffset !== playbackMemo.boardXOffset
-        || previousPlaybackMemo.logicalBoardWidth !== playbackMemo.logicalBoardWidth
-        || previousPlaybackMemo.boardHeight !== playbackMemo.boardHeight
-        || previousPlaybackMemo.renderDpr !== playbackMemo.renderDpr
-        || previousPlaybackMemo.playbackRenderDpr !== playbackMemo.playbackRenderDpr
-        || previousPlaybackMemo.playbackLineVisible !== playbackMemo.playbackLineVisible
-        || previousPlaybackMemo.playbackLineMode !== playbackMemo.playbackLineMode
-        || previousPlaybackMemo.playbackLinePositionPercent !== playbackMemo.playbackLinePositionPercent
-        || (playbackMemo.playbackLineVisible
-          && previousPlaybackMemo.playbackLineTimeSec !== playbackMemo.playbackLineTimeSec);
-      const playbackGeometryChanged =
-        !previousPlaybackMemo
-        || previousPlaybackMemo.viewportHeight !== playbackMemo.viewportHeight
-        || previousPlaybackMemo.viewportWidth !== playbackMemo.viewportWidth
-        || previousPlaybackMemo.width !== playbackMemo.width
-        || previousPlaybackMemo.boardXOffset !== playbackMemo.boardXOffset
-        || previousPlaybackMemo.logicalBoardWidth !== playbackMemo.logicalBoardWidth
-        || previousPlaybackMemo.boardHeight !== playbackMemo.boardHeight
-        || previousPlaybackMemo.playbackRenderDpr !== playbackMemo.playbackRenderDpr
-        || previousPlaybackMemo.playbackLineVisible !== playbackMemo.playbackLineVisible
-        || previousPlaybackMemo.playbackLineMode !== playbackMemo.playbackLineMode
-        || previousPlaybackMemo.playbackLinePositionPercent !== playbackMemo.playbackLinePositionPercent;
 
       const prepareCanvas = (canvas: HTMLCanvasElement): CanvasRenderingContext2D | null => {
         if (canvas.width !== pixelWidth) {
@@ -724,55 +625,11 @@ export function useCanvasPlayfieldBackend(params: {
         context.imageSmoothingQuality = "high";
         return context;
       };
-      const preparePlaybackCanvas = (fullClear: boolean): CanvasRenderingContext2D | null => {
-        const styleLeft = `${-sidePad}px`;
-        const styleTop = `${viewportTop}px`;
-        const styleWidth = `${width}px`;
-        const styleHeight = `${viewportHeight}px`;
-        const sizeChanged =
-          playbackCanvas.width !== playbackPixelWidth
-          || playbackCanvas.height !== playbackPixelHeight;
-        if (sizeChanged) {
-          playbackCanvas.width = playbackPixelWidth;
-          playbackCanvas.height = playbackPixelHeight;
-        }
-        if (playbackCanvas.style.left !== styleLeft) {
-          playbackCanvas.style.left = styleLeft;
-        }
-        if (playbackCanvas.style.top !== styleTop) {
-          playbackCanvas.style.top = styleTop;
-        }
-        if (playbackCanvas.style.right !== "auto") {
-          playbackCanvas.style.right = "auto";
-        }
-        if (playbackCanvas.style.bottom !== "auto") {
-          playbackCanvas.style.bottom = "auto";
-        }
-        if (playbackCanvas.style.width !== styleWidth) {
-          playbackCanvas.style.width = styleWidth;
-        }
-        if (playbackCanvas.style.height !== styleHeight) {
-          playbackCanvas.style.height = styleHeight;
-        }
-        const context = playbackCanvas.getContext("2d");
-        if (!context) {
-          return null;
-        }
-        context.save();
-        context.setTransform(1, 0, 0, 1, 0, 0);
-        if (fullClear || sizeChanged) {
-          context.clearRect(0, 0, playbackPixelWidth, playbackPixelHeight);
-        }
-        context.restore();
-        context.save();
-        context.setTransform(playbackRenderDpr, 0, 0, playbackRenderDpr, 0, 0);
-        context.imageSmoothingEnabled = true;
-        context.imageSmoothingQuality = "high";
-        return context;
-      };
 
       if (shouldDrawTrack) {
         const context = prepareCanvas(trackCanvas);
+        const gridLeft = boardXOffset + (logicalBoardWidth - GRID_SPAN_LANES * snapshot.laneWidth) / 2;
+        const gridRight = gridLeft + GRID_SPAN_LANES * snapshot.laneWidth;
         if (!context) {
           return;
         }
@@ -791,13 +648,67 @@ export function useCanvasPlayfieldBackend(params: {
             : isWholeBeat
               ? GRID_BEAT_COLOR
               : GRID_COLOR;
-          context.lineWidth = 1;
+          context.lineWidth = 2;
           context.beginPath();
-          context.moveTo(boardXOffset, y);
-          context.lineTo(boardXOffset + logicalBoardWidth, y);
+          context.moveTo(gridLeft, y);
+          context.lineTo(gridRight, y);
           context.stroke();
         }
 
+        context.save();
+        context.strokeStyle = "rgb(217, 13, 35)";
+        context.fillStyle = "rgb(217, 13, 35)";
+        context.lineWidth = 2;
+        context.font = "12px 'ChartUI', 'TTShinGoM', sans-serif";
+        context.textAlign = "left";
+        context.textBaseline = "alphabetic";
+        const boardElement = playfieldBoardRef.current;
+        let timelineLabelX = 8;
+        if (playfield && boardElement) {
+          const playfieldRect = playfield.getBoundingClientRect();
+          const boardRect = boardElement.getBoundingClientRect();
+          const boardScale = boardRect.width > 0 ? logicalBoardWidth / boardRect.width : 1;
+          const viewportLeftInBoard = (playfieldRect.left - boardRect.left) * boardScale;
+          timelineLabelX = 8 + Math.min(0, viewportLeftInBoard);
+        }
+        const bpmLabelX = boardXOffset + timelineLabelX;
+        for (const line of snapshot.bpmVisualLines) {
+          const yWorld = Number.isFinite(line.y) ? Number(line.y) : snapshot.beatToY(line.beat);
+          if (yWorld < windowTop - 24 || yWorld > windowBottom + 24) {
+            continue;
+          }
+          const y = yWorld - windowTop;
+          context.beginPath();
+          context.moveTo(0, y);
+          context.lineTo(width, y);
+          context.stroke();
+          context.fillText(`BPM ${line.bpm.toFixed(2)}`, bpmLabelX, y - 6);
+        }
+        context.restore();
+
+        context.save();
+        context.strokeStyle = "rgb(42, 188, 116)";
+        context.fillStyle = "rgb(42, 188, 116)";
+        context.lineWidth = 2;
+        context.font = "12px 'ChartUI', 'TTShinGoM', sans-serif";
+        context.textAlign = "left";
+        context.textBaseline = "alphabetic";
+        for (const line of snapshot.svVisualLines) {
+          const yWorld = Number.isFinite(line.y) ? Number(line.y) : snapshot.beatToY(line.beat);
+          if (yWorld < windowTop - 24 || yWorld > windowBottom + 24) {
+            continue;
+          }
+          const y = yWorld - windowTop;
+          const eventColor = line.selected ? SV_LINE_SELECTED_COLOR : SV_LINE_COLOR;
+          context.strokeStyle = eventColor;
+          context.fillStyle = eventColor;
+          context.beginPath();
+          context.moveTo(0, y);
+          context.lineTo(width, y);
+          context.stroke();
+          context.fillText(`×${line.value.toFixed(2)}`, bpmLabelX, y + 13);
+        }
+        context.restore();
         context.restore();
       }
 
@@ -984,66 +895,6 @@ export function useCanvasPlayfieldBackend(params: {
         );
       }
 
-      context.save();
-      context.strokeStyle = "rgb(217, 13, 35)";
-      context.fillStyle = "rgb(217, 13, 35)";
-      context.lineWidth = 1;
-      context.font = "12px 'ChartUI', 'TTShinGoM', sans-serif";
-      context.textAlign = "left";
-      context.textBaseline = "alphabetic";
-      const boardElement = playfieldBoardRef.current;
-      let timelineLabelX = 8;
-      if (playfield && boardElement) {
-        const playfieldRect = playfield.getBoundingClientRect();
-        const boardRect = boardElement.getBoundingClientRect();
-        const boardScale = boardRect.width > 0 ? logicalBoardWidth / boardRect.width : 1;
-        const viewportLeftInBoard = (playfieldRect.left - boardRect.left) * boardScale;
-        timelineLabelX = 8 + Math.min(0, viewportLeftInBoard);
-      }
-      const bpmLabelX = boardXOffset + timelineLabelX;
-      for (const line of snapshot.bpmVisualLines) {
-        const yWorld = Number.isFinite(line.y) ? Number(line.y) : snapshot.beatToY(line.beat);
-        if (yWorld < windowTop - 24 || yWorld > windowBottom + 24) {
-          continue;
-        }
-        const y = yWorld - windowTop;
-        context.beginPath();
-        context.moveTo(0, y);
-        context.lineTo(width, y);
-        context.stroke();
-        context.fillText(`BPM ${line.bpm.toFixed(2)}`, bpmLabelX, y - 6);
-      }
-      context.restore();
-
-      context.save();
-      context.strokeStyle = "rgb(42, 188, 116)";
-      context.fillStyle = "rgb(42, 188, 116)";
-      context.lineWidth = 1;
-      context.font = "12px 'ChartUI', 'TTShinGoM', sans-serif";
-      context.textAlign = "left";
-      context.textBaseline = "alphabetic";
-      for (const line of snapshot.svVisualLines) {
-        const yWorld = Number.isFinite(line.y) ? Number(line.y) : snapshot.beatToY(line.beat);
-        if (yWorld < windowTop - 24 || yWorld > windowBottom + 24) {
-          continue;
-        }
-        const y = yWorld - windowTop;
-        const isNonGlobal = line.timingGroup !== "#Global";
-        if (line.selected) {
-          context.strokeStyle = isNonGlobal ? "rgb(123, 180, 255)" : "rgb(45, 225, 145)";
-          context.fillStyle = isNonGlobal ? "rgb(123, 180, 255)" : "rgb(45, 225, 145)";
-        } else {
-          context.strokeStyle = isNonGlobal ? "rgb(87, 150, 255)" : "rgb(42, 188, 116)";
-          context.fillStyle = isNonGlobal ? "rgb(87, 150, 255)" : "rgb(42, 188, 116)";
-        }
-        context.beginPath();
-        context.moveTo(0, y);
-        context.lineTo(width, y);
-        context.stroke();
-        context.fillText(`×${line.value.toFixed(2)}`, bpmLabelX, y + 13);
-      }
-      context.restore();
-
       if (snapshot.selectionDrag?.isDragging) {
         const left = Math.min(snapshot.selectionDrag.startX, snapshot.selectionDrag.currentX) + boardXOffset;
         const top = Math.min(snapshot.selectionDrag.startY, snapshot.selectionDrag.currentY) - windowTop;
@@ -1077,74 +928,8 @@ export function useCanvasPlayfieldBackend(params: {
         context.restore();
       }
 
-      if (!shouldDrawPlayback) {
-        return;
-      }
-      const playbackContext = preparePlaybackCanvas(playbackGeometryChanged);
-      if (!playbackContext) {
-        return;
-      }
-      playbackRenderMemoRef.current = playbackMemo;
-      const clearPlaybackBand = (y: number) => {
-        const bandTop = y - PLAYBACK_LINE_CLEAR_HALF_BAND_PX;
-        const bandHeight = PLAYBACK_LINE_CLEAR_HALF_BAND_PX * 2 + 1;
-        playbackContext.clearRect(0, bandTop, width, bandHeight);
-      };
-      if (!playbackMemo.playbackLineVisible) {
-        playbackLastLineYRef.current = null;
-        playbackContext.restore();
-        return;
-      }
-      const playbackNowTimeSec = playbackMemo.playbackLineTimeSec;
-      const playbackWorldY = snapshot.timeToY(playbackNowTimeSec);
-      let localY = 0;
-      if (snapshot.playbackLineMode === "follow") {
-        const ratioFromBottom = Math.max(0, Math.min(1, snapshot.playbackLinePositionPercent / 100));
-        const anchorInViewport = viewportHeight * (1 - ratioFromBottom);
-        const yInViewport = playbackWorldY - viewportTop;
-        const maxScrollTop = Math.max(0, height - viewportHeight);
-        const isViewportPinnedAtTop = viewportTop <= PLAYBACK_VIEWPORT_EDGE_TOLERANCE_PX;
-        const isViewportPinnedAtBottom =
-          viewportTop >= maxScrollTop - PLAYBACK_VIEWPORT_EDGE_TOLERANCE_PX;
-        // Keep edge transition (from bottom toward anchor) when viewport is clamped at edges.
-        const effectiveYInViewport = (isViewportPinnedAtTop || isViewportPinnedAtBottom)
-          ? Math.max(anchorInViewport, yInViewport)
-          : anchorInViewport;
-        localY = effectiveYInViewport;
-      } else {
-        localY = playbackWorldY - viewportTop;
-      }
-      localY = snapToDevicePixel(localY, playbackRenderDpr);
-      if (!playbackGeometryChanged) {
-        const previousLineY = playbackLastLineYRef.current;
-        if (previousLineY !== null) {
-          clearPlaybackBand(previousLineY);
-        }
-      } else {
-        playbackLastLineYRef.current = null;
-      }
-      if (localY >= -4 && localY <= viewportHeight + 4) {
-        playbackContext.save();
-        playbackContext.strokeStyle = "rgba(79, 213, 255, 0.32)";
-        playbackContext.lineWidth = 3;
-        playbackContext.beginPath();
-        playbackContext.moveTo(0, localY);
-        playbackContext.lineTo(width, localY);
-        playbackContext.stroke();
-        playbackContext.strokeStyle = "rgba(79, 213, 255, 0.98)";
-        playbackContext.lineWidth = 1;
-        playbackContext.beginPath();
-        playbackContext.moveTo(0, localY);
-        playbackContext.lineTo(width, localY);
-        playbackContext.stroke();
-        playbackContext.restore();
-        playbackLastLineYRef.current = localY;
-      } else {
-        playbackLastLineYRef.current = null;
-      }
-      playbackContext.restore();
     };
-  }, [enabled, noteCanvasRef, playbackCanvasRef, playfieldRef, trackCanvasRef]);
+  }, [enabled, noteCanvasRef, playfieldRef, trackCanvasRef]);
 
   useEditorMainLoop({
     enabled,

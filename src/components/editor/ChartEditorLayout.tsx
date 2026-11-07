@@ -39,6 +39,9 @@ import { isMobileRuntime } from "../../app/mobileRuntime";
 import { SidebarPanel } from "./SidebarPanel";
 import { useUiViewport } from "../useUiViewport";
 import type { useEditorIoAndShortcuts } from "../../app/hooks/useEditorIoAndShortcuts";
+import { useOriginalSkinPreviewResources } from "../useOriginalSkinPreviewResources";
+import { FIELD_WIDTH_LANES, loadPreviewLaneImage, unprojectFieldRows } from "./previewLaneStrip";
+import { resolveOriginalPreviewSkin } from "../../simulator/public/settings";
 
 type ChartEditorLayoutProps = {
   vm: Record<string, any> & Pick<ReturnType<typeof useEditorIoAndShortcuts>, "loadOfficialChart">;
@@ -151,7 +154,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     beatToY,
     playfieldTrackCanvasRef,
     playfieldNoteCanvasRef,
-    playfieldPlaybackCanvasRef,
     playfieldBoardRef,
     boardWidth,
     handleBoardClick,
@@ -231,7 +233,21 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   } = vm;
   const mobileRuntime = isMobileRuntime();
   const [viewportTop, setViewportTop] = useState(0);
-  const [viewportRight, setViewportRight] = useState(0);
+  const editorTrackRecipe = useMemo(() => resolveOriginalPreviewSkin(appOptionSettings.simulatorSettings.skin),
+    [appOptionSettings.simulatorSettings.skin]);
+  const editorTrackPreview = useOriginalSkinPreviewResources(editorTrackRecipe,
+    message => vm.setStatusMessage(`轨道贴图失败：${message}`));
+  const [flatTrackLane, setFlatTrackLane] = useState<string | null>(null);
+  useEffect(() => {
+    const url = editorTrackPreview.lane;
+    setFlatTrackLane(null);
+    if (!url) return;
+    let cancelled = false;
+    loadPreviewLaneImage(url)
+      .then(image => { if (!cancelled) setFlatTrackLane(unprojectFieldRows(image).toDataURL("image/png")); })
+      .catch(cause => console.error("Flat track lane failed", cause));
+    return () => { cancelled = true; };
+  }, [editorTrackPreview.lane]);  const [viewportRight, setViewportRight] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(window.innerHeight);
   const [playfieldScrollTop, setPlayfieldScrollTop] = useState(0);
   const [timelineLabelX, setTimelineLabelX] = useState(8);
@@ -1338,9 +1354,11 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
           {isSkinReady && <div className="editor-track-viewport" aria-hidden="true"
             style={{ top: -viewportTop, height: viewportHeight }}>
             <div className="editor-track-guides" style={{ width: boardWidth }}>
+              {flatTrackLane && <div className="editor-track-lane-tile" style={{ backgroundImage: `url("${flatTrackLane}")`, width: FIELD_WIDTH_LANES * LANE_WIDTH }} />}
               {renderLaneGuides()}
             </div>
           </div>}
+          {isPlaybackPlaying && <div className="playback-line" style={{ bottom: `${vm.playbackLinePositionPercent}%` }} />}
           {isSkinReady ? (
             <div
               className={`playfield-scroll ${selectionDrag?.isDragging ? "is-marquee-selecting" : ""} ${isToolArmed ? "is-tool-armed" : ""}`}
@@ -1510,17 +1528,9 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                         height={1}
                         aria-hidden="true"
                       />
-                      <canvas
-                        ref={playfieldPlaybackCanvasRef}
-                        className="playfield-canvas-layer playfield-canvas-playback-layer"
-                        width={1}
-                        height={1}
-                        aria-hidden="true"
-                      />
-                    </>
+                                          </>
                   )}
-                  <div className="judge-line" style={{ top: beatToY(0), bottom: "auto" }} />
-
+                  
                   <div className="grid-layer">
                     {renderGridLines(playfieldScrollTop, playfieldScrollTop + viewportHeight)}
                   </div>
