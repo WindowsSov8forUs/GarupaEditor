@@ -1348,7 +1348,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         <SidebarPanel isSkinReady={isSkinReady} isToolArmed={isToolArmed} tool={tool}
           onPlay={() => { setIsAppSettingsOpen(false); setPageStack(stack => openDetailPage(stack, "live")); }}
           onPreview={() => { void openStaticRenderWindow(); }}
-          applyToolFromPalette={applyToolFromPalette} getSpriteLayers={getPaletteSpriteLayers}
+          applyToolFromPalette={applyToolFromPalette} bpm={vm.activeBpmValue} onApplyBpm={vm.updateActiveBpm}
+          onArmBpmTool={vm.applyBpmToolFromPalette} getSpriteLayers={getPaletteSpriteLayers}
           getSpriteAspectRatio={getPaletteSpriteAspectRatio} renderSpriteStack={renderPaletteSpriteStack} />
         <section className="editor-viewport-region">
           {isSkinReady && <div className="editor-track-viewport" aria-hidden="true"

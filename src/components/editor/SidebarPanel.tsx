@@ -1,4 +1,5 @@
 import { memo, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { NOTE_SPECS, type EditorTool, type NoteType } from "../../chartCore";
 import type { SkinNoteType } from "../../skinLoader";
 import profile from "../../data/originalSongDetailProfile.json";
@@ -10,11 +11,14 @@ import { OriginalPrefabModel, originalAtlasFor, type OriginalPrefab } from "../o
 import { OriginalSprite } from "../OriginalUi";
 import { OriginalSquareRadioButton, ORIGINAL_SQUARE_RADIO_BOUNDS } from "../OriginalSquareRadioButton";
 import { OriginalPageViewport } from "../OriginalPageViewport";
+import { OriginalFormButton, OriginalFormStepper } from "../OriginalFormParts";
+import { OriginalTransferDialog } from "../OriginalTransferDialog";
 
 type SpriteLayers = { base?: string; overlay?: string; overlayMode: "none" | "flick" | "directional" };
 type SidebarPanelProps = {
   isSkinReady: boolean; isToolArmed: boolean; tool: EditorTool;
   applyToolFromPalette(type: NoteType): void;
+  bpm: number; onApplyBpm(value: number): void; onArmBpmTool(): void;
   onPlay(): void;
   onPreview(): void;
   getSpriteLayers(type: NoteType, options?: { includeDirectionalOverlay?: boolean; includeFlickOverlay?: boolean; baseImageType?: SkinNoteType }): SpriteLayers;
@@ -22,6 +26,12 @@ type SidebarPanelProps = {
   renderSpriteStack(layers: SpriteLayers, label: string, className?: string, aspectRatio?: number): ReactNode;
 };
 const tools = ["single", "skill", "flick", "slide", "directional_flick_left", "directional_flick_right"] as const;
+const noteRows = Math.ceil((tools.length + 1) / 2);
+
+function positiveNumber(text: string, fallback: number) {
+  const value = Number(text);
+  return Number.isFinite(value) && value > 0 ? value : fallback;
+}
 const frameModel = new OriginalPrefabModel(profile.prefabs.profileInformation as unknown as OriginalPrefab);
 const frame = frameModel.components.get(859)!;
 const frameTransform = frameModel.transform(frame.node);
@@ -62,9 +72,11 @@ const playModel = createActionModel(false);
 const previewModel = createActionModel(true);
 const playBounds = playModel.rect(playModel.components.get(328)!);
 
-export const SidebarPanel = memo(function SidebarPanel({ isSkinReady, isToolArmed, tool, applyToolFromPalette, onPlay, onPreview,
+export const SidebarPanel = memo(function SidebarPanel({ isSkinReady, isToolArmed, tool, applyToolFromPalette, bpm, onApplyBpm, onArmBpmTool, onPlay, onPreview,
   getSpriteLayers, getSpriteAspectRatio, renderSpriteStack }: SidebarPanelProps) {
   const [preview, setPreview] = useState(false);
+  const [bpmOpen, setBpmOpen] = useState(false);
+  const [bpmDraft, setBpmDraft] = useState("");
   const host = useRef<HTMLElement>(null);
   const [height, setHeight] = useState(frameBounds.height);
   const scrollState = useRef({ value: 0 });
@@ -106,7 +118,7 @@ export const SidebarPanel = memo(function SidebarPanel({ isSkinReady, isToolArme
         scroll: "UserCharacterRankPage/Main/ScrollWindow/scrollViewRoot/ScrollView",
         content: "UserCharacterRankPage/Main/ScrollWindow/scrollViewRoot/ScrollView/Grid",
         bar: "UserCharacterRankPage/Main/ScrollWindow/ScrollBar",
-        contentHeight: 3 * ORIGINAL_SQUARE_RADIO_BOUNDS.height + 2 * gridGap + 2 * objectPanel.mClipSoftness.y,
+        contentHeight: noteRows * ORIGINAL_SQUARE_RADIO_BOUNDS.height + (noteRows - 1) * gridGap + 2 * objectPanel.mClipSoftness.y,
       }}>
     <div className="editor-note-grid" role="radiogroup" aria-label="音符选择"
       style={{ position: "absolute", left: scrollLeft, top: scrollTop + objectPanel.mClipSoftness.y }}>
@@ -124,6 +136,29 @@ export const SidebarPanel = memo(function SidebarPanel({ isSkinReady, isToolArme
           </div>
         </div>;
       })}
+      <div className="editor-note-button-slot">
+        <div className="original-prefab-origin" style={{ left: -ORIGINAL_SQUARE_RADIO_BOUNDS.x, top: -ORIGINAL_SQUARE_RADIO_BOUNDS.y }}>
+          {/* First press arms the BPM placement tool; pressing it again while armed opens the BPM setting. */}
+          <OriginalSquareRadioButton label="BPM" selected={isToolArmed && tool === "bpm"}
+            onClick={() => {
+              if (isToolArmed && tool === "bpm") { setBpmDraft(String(Number(bpm.toFixed(3)))); setBpmOpen(true); }
+              else onArmBpmTool();
+            }} />
+        </div>
+        {createPortal(<OriginalTransferDialog open={bpmOpen} title="BPM" fitContent onClose={() => setBpmOpen(false)}>
+          <div className="transfer-body">
+            <div className="transfer-page">
+              <OriginalFormStepper title="BPM" value={positiveNumber(bpmDraft, bpm)} minimum={1} maximum={Number.MAX_SAFE_INTEGER}
+                onChange={next => setBpmDraft(String(next))}
+                editable={{ value: bpmDraft, onChange: next => { if (/^\d*\.?\d*$/.test(next)) setBpmDraft(next); } }} />
+            </div>
+            <div className="transfer-actions">
+              <OriginalFormButton onClick={() => setBpmOpen(false)}>取消</OriginalFormButton>
+              <OriginalFormButton tone="pink" onClick={() => { onApplyBpm(positiveNumber(bpmDraft, bpm)); setBpmOpen(false); }}>保存</OriginalFormButton>
+            </div>
+          </div>
+        </OriginalTransferDialog>, document.body)}
+      </div>
     </div>
       </OriginalPageViewport>
     </div>

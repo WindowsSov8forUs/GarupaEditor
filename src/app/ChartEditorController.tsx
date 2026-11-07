@@ -541,6 +541,9 @@ function resolvePlaybackSeSources(runtimeSe: SeSkinAssets): ResolvedPlaybackSeSo
   };
 }
 
+// Tool BPM for placing BPM events. Lives for the whole app run (120 at launch) and is not part of any chart project.
+let runtimeToolBpm = 120;
+
 function ChartEditorController() {
   const resourceManager = useApplicationResourceManager();
   const defaultCoverImage = useApplicationResourceUrl("ui.default-cover");
@@ -575,7 +578,11 @@ function ChartEditorController() {
   const [toolRhythmWidth, setToolRhythmWidth] = useState(1);
   const [toolLane, setToolLane] = useState(0);
   const [useToolLaneOverride, setUseToolLaneOverride] = useState(false);
-  const [toolBpmValue, setToolBpmValue] = useState(DEFAULT_METADATA.bpm);
+  const [toolBpmValue, setToolBpmValueState] = useState(runtimeToolBpm);
+  const setToolBpmValue = useCallback((value: number) => {
+    runtimeToolBpm = value;
+    setToolBpmValueState(value);
+  }, []);
   const [toolSvValue, setToolSvValue] = useState(1);
   const [selectedNoteIds, setSelectedNoteIds] = useState<string[]>([]);
   const [selectedBpmEventIds, setSelectedBpmEventIds] = useState<string[]>([]);
@@ -2655,13 +2662,6 @@ function ChartEditorController() {
 
     isApplyingEditorCacheRef.current = true;
     try {
-      if (cached.type === "bpm" && !isEditingPlacedBpm) {
-        const normalizedCachedBpm = normalizeEditorBpm(cached.bpmValue, toolBpmValue);
-        if (!approxEq(normalizedCachedBpm, toolBpmValue)) {
-          setToolBpmValue(normalizedCachedBpm);
-        }
-      }
-
       if (cached.type === "directional" && !hasBeatEditableSelection && !hasLongLineSelection && !isEditingPlacedBpm) {
         const nextWidth = normalizeDirectionalWidth(cached.width);
         if (nextWidth !== normalizeDirectionalWidth(toolDirectionalWidth)) {
@@ -2722,7 +2722,6 @@ function ChartEditorController() {
     setSlideSettings,
     setSlideShape,
     setTool,
-    setToolBpmValue,
     setToolDirectionalWidth,
     setToolRhythmWidth,
     slideCurveType,
@@ -3068,7 +3067,7 @@ function ChartEditorController() {
     setNotesState(next.chart.notes); setSlideChainsState(next.chart.slideChains);
     setBpmEventsState(next.chart.bpmEvents); setTimingGroupsState(next.chart.timingGroups);
     setChartMediaResources(next.mediaRefs); setAudioFileName(next.audioFileName); setAudioDurationSec(next.audioDurationSec);
-    setToolBpmValue(next.metadata.bpm); clearAllSelections();
+    clearAllSelections();
     undoStackRef.current = []; redoStackRef.current = []; setUndoVersion(v => v + 1);
   }, [resourceManager, clearAllSelections]);
 
@@ -3161,7 +3160,6 @@ function ChartEditorController() {
     setBpmEvents,
     setTimingGroups,
     setSvEvents,
-    setToolBpmValue,
     setSingleSelectedNote,
     clearSelectedBpmEvents,
     setSelectedBpmEventId,
@@ -3275,7 +3273,6 @@ function ChartEditorController() {
     setBpmEvents: setBpmEventsState,
     setTimingGroups: setTimingGroupsState,
     setSvEvents,
-    setToolBpmValue,
     setAudioFileName,
     setAudioDurationSec,
     setUploadCommunityPostContent,
