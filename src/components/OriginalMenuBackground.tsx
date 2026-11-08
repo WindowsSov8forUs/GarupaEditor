@@ -111,19 +111,29 @@ export function OriginalMenuBackground({ type, onError }: {
           const startY = layer.tiled ? layer.height - layer.textureHeight : 0;
           const travelX = durationX > 0 ? (layer.rightX ? -1 : 1) * layer.textureWidth * duration / durationX : 0;
           const travelY = durationY > 0 ? (layer.rightY ? 1 : -1) * layer.textureHeight * duration / durationY : 0;
+          // The scroll is a transform on a tile wider/taller than the clip box by its travel, so it runs on the compositor
+          // instead of repainting the layer per frame. The tile's origin is shifted so the texture phase matches the old
+          // background-position scroll exactly: texel = x - travel(t) for every t.
+          // The tile starts behind the clip box by the positive travel, so it still covers the box at every point of the scroll.
+          const tileX = layer.tiled ? -Math.max(0, travelX) : 0, tileY = layer.tiled ? -Math.max(0, travelY) : 0;
+          const tileWidth = layer.width + (layer.tiled ? Math.abs(travelX) : 0);
+          const tileHeight = layer.height + (layer.tiled ? Math.abs(travelY) : 0);
           return <div key={`${view.revision}:${layer.role}`} className="original-menu-background-layer" data-layer={layer.role} style={{
             left: layer.x - layer.width / 2, top: -layer.y - layer.height / 2,
             width: layer.width, height: layer.height, zIndex: layer.depth, opacity: layer.alpha,
             transform: `rotate(${-layer.rotationDegrees}deg)`,
-            backgroundImage: `url(${JSON.stringify(resources[layer.slot])})`,
-            backgroundSize: layer.tiled ? `${layer.textureWidth}px ${layer.textureHeight}px` : "100% 100%",
-            backgroundRepeat: layer.tiled ? "repeat" : "no-repeat",
-            backgroundPosition: `0px ${startY}px`,
-            animationName: duration > 0 ? "original-menu-background-scroll" : "none",
-            animationDuration: `${duration}s`,
-            "--background-start-y": `${startY}px`, "--background-end-x": `${travelX}px`,
-            "--background-end-y": `${startY + travelY}px`,
-          } as CSSProperties} />;
+          }}>
+            <div className="original-menu-background-tile" style={{
+              left: tileX, top: tileY, width: tileWidth, height: tileHeight,
+              backgroundImage: `url(${JSON.stringify(resources[layer.slot])})`,
+              backgroundSize: layer.tiled ? `${layer.textureWidth}px ${layer.textureHeight}px` : "100% 100%",
+              backgroundRepeat: layer.tiled ? "repeat" : "no-repeat",
+              backgroundPosition: layer.tiled ? `${-tileX}px ${startY - tileY}px` : "0px 0px",
+              animationName: duration > 0 ? "original-menu-background-scroll" : "none",
+              animationDuration: `${duration}s`,
+              "--background-travel-x": `${travelX}px`, "--background-travel-y": `${travelY}px`,
+            } as CSSProperties} />
+          </div>;
         })}
       </UiScaleOrigin>
     </div>)}
