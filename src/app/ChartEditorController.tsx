@@ -46,6 +46,7 @@ import { IMPORT_NOTICE_MARKER, useEditorIoAndShortcuts } from "./hooks/useEditor
 import { BESTDORI_SESSION_EXPIRED_MESSAGE } from "../services/bestdori/api";
 import { useEditorSessionCache } from "./hooks/useEditorSessionCache";
 import { useEditorRenderModel } from "./hooks/useEditorRenderModel";
+import { useStableEvents } from "./hooks/useStableEvents";
 import {
   useLongLineEditorSettings,
   type LongLineCurveType,
@@ -6065,9 +6066,7 @@ function ChartEditorController() {
     }
   };
 
-  return (
-    <ChartEditorLayout
-      vm={{
+  const layoutVm = useStableEvents({
         settingsResourcesReady,
         workspaceReady: settingsResourcesReady && !isSkinApplying && isSkinReady && (!isCanvasRenderBackend || isCanvasResourceReady) && startupMediaReady,
         jsonImportRef,
@@ -6384,8 +6383,9 @@ function ChartEditorController() {
         playbackGuideLabelRef,
         noteVisualScale,
         copiedChartPayload,
-      }}
-    />
+  });
+  return (
+    <ChartEditorLayout vm={layoutVm} />
   );
 }
 

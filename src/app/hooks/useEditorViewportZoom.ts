@@ -2,9 +2,11 @@ import { useCallback, useLayoutEffect, useRef, useState, type RefObject } from "
 import { MODIFIER_WHEEL_SURFACE_ATTRIBUTE } from "../modifierWheel";
 
 export type EditorZoom = { width: number; vertical: number };
+/** Largest horizontal zoom: the track may fill this share of the editor width. */
+export const MAX_HORIZONTAL_ZOOM_WIDTH = 0.85;
 export function scaleEditorZoom(value: EditorZoom, factor: number, axis: "x" | "y" | "both"): EditorZoom {
   const low = Math.max(axis === "y" ? 0 : 0.25 / value.width, axis === "x" ? 0 : 0.5 / value.vertical);
-  const high = Math.min(axis === "y" ? Infinity : 0.8 / value.width, axis === "x" ? Infinity : 5 / value.vertical);
+  const high = Math.min(axis === "y" ? Infinity : MAX_HORIZONTAL_ZOOM_WIDTH / value.width, axis === "x" ? Infinity : 5 / value.vertical);
   const applied = Math.max(low, Math.min(high, factor));
   return { width: axis === "y" ? value.width : value.width * applied,
     vertical: axis === "x" ? value.vertical : value.vertical * applied };
@@ -23,10 +25,19 @@ export function useEditorViewportZoom(viewport: RefObject<HTMLDivElement | null>
     if (!element) return;
     const measure = () => { setWidth(element.clientWidth); element.scrollLeft = 0; };
     const observer = new ResizeObserver(measure); observer.observe(element); measure();
+    // Every wheel event compounds into `pending` at once; React sees at most one zoom update per frame.
+    let frame = 0;
+    let pending: EditorZoom | null = null;
     const apply = (factor: number, axis: "x" | "y" | "both") => {
-      const previous = current.current, next = scaleEditorZoom(previous, factor, axis);
+      const previous = pending ?? current.current, next = scaleEditorZoom(previous, factor, axis);
       if (next.width === previous.width && next.vertical === previous.vertical) return;
-      current.current = next; setZoom(next);
+      pending = next;
+      if (!frame) frame = requestAnimationFrame(() => {
+        frame = 0;
+        const latest = pending;
+        pending = null;
+        if (latest) { current.current = latest; setZoom(latest); }
+      });
     };
     // Ctrl + wheel zooms both axes, Shift + wheel the vertical axis, Alt + wheel the horizontal one.
     const wheel = (event: WheelEvent) => {
@@ -74,7 +85,7 @@ export function useEditorViewportZoom(viewport: RefObject<HTMLDivElement | null>
     element.addEventListener("touchmove", move, { passive: false });
     element.addEventListener("touchend", end, { passive: false });
     element.addEventListener("touchcancel", end, { passive: false });
-    return () => { observer.disconnect(); element.removeEventListener("wheel", wheel); element.removeAttribute(MODIFIER_WHEEL_SURFACE_ATTRIBUTE);
+    return () => { if (frame) cancelAnimationFrame(frame); observer.disconnect(); element.removeEventListener("wheel", wheel); element.removeAttribute(MODIFIER_WHEEL_SURFACE_ATTRIBUTE);
       element.removeEventListener("touchstart", start); element.removeEventListener("touchmove", move);
       element.removeEventListener("touchend", end); element.removeEventListener("touchcancel", end); };
   }, [element, ready]);
