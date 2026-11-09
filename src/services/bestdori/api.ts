@@ -1122,6 +1122,28 @@ async function revalidateBestdoriJson<T>(url: string, label: string, stored: Sto
   return { etag: response.headers.get("ETag"), value: parse(await response.json()), notModified: false };
 }
 
+/**
+ * A Bestdori JSON file revalidated by an ETag alone: on 304 the caller keeps what it derived from the earlier
+ * copy, so the body itself need not be stored.
+ */
+export async function fetchBestdoriJsonIfChanged(endpoint: string, etag: string | undefined, label: string)
+  : Promise<{ notModified: true; etag: string } | { notModified: false; etag: string | null; value: unknown }> {
+  const url = endpoint.startsWith("/") ? `${BESTDORI_ROOT}${endpoint}` : endpoint;
+  if (isTauriRuntimeEnvironment()) {
+    const result = await invokeTauriCommand<{ status: "not-modified" } | { status: "fetched"; etag: string | null; body: unknown }>(
+      "bestdori_fetch_json_conditional", { url, hostScope: "bestdori", etag: etag ?? null });
+    if (result.status === "not-modified") {
+      if (!etag) throw new Error(`${label} 未请求条件下载却得到 304`);
+      return { notModified: true, etag };
+    }
+    return { notModified: false, etag: result.etag, value: result.body };
+  }
+  const response = await fetch(url, { cache: "no-store", headers: etag ? { "If-None-Match": etag } : {} });
+  if (response.status === 304 && etag) return { notModified: true, etag };
+  if (!response.ok) throw new Error(`${label} http status ${response.status}`);
+  return { notModified: false, etag: response.headers.get("ETag"), value: await response.json() };
+}
+
 export async function fetchBestdoriSongIndex(stored?: StoredBestdoriJson<BestdoriSongIndex>) {
   return revalidateBestdoriJson(`${BESTDORI_ROOT}/api/songs/all.8.json`, "bestdori songs all.8", stored, value => parseBestdoriSongIndex(value));
 }

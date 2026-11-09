@@ -1568,10 +1568,12 @@ async fn bestdori_fetch_json(
     auth_state: tauri::State<'_, BestdoriAuthState>,
     url: String,
     host_scope: Option<String>,
+    background: Option<bool>,
 ) -> Result<serde_json::Value, download::CommandError> {
     let (normalized_url, client, cookie_header) =
         build_scoped_request_context(&auth_state, &url, "url", host_scope.as_deref())?;
-    let bytes = download::get(&client, &normalized_url, cookie_header.as_deref(), || Ok(Vec::new()), |_, _| {}).await?;
+    let bytes = download::get_in(&client, &normalized_url, cookie_header.as_deref(), || Ok(Vec::new()), |_, _| {},
+        background.unwrap_or(false)).await?;
     parse_json_value_for_url(&bytes, &normalized_url).map_err(Into::into)
 }
 
@@ -1587,11 +1589,13 @@ async fn bestdori_fetch_json_conditional(
     url: String,
     host_scope: Option<String>,
     etag: Option<String>,
+    background: Option<bool>,
 ) -> Result<ConditionalJson, download::CommandError> {
     let (normalized_url, client, cookie_header) =
         build_scoped_request_context(&auth_state, &url, "url", host_scope.as_deref())?;
     let mut conditional = download::Conditional { if_none_match: etag.as_deref(), etag: None, not_modified: false };
-    let bytes = download::get_conditional(&client, &normalized_url, cookie_header.as_deref(), &mut conditional, || Ok(Vec::new())).await?;
+    let bytes = download::get_conditional_in(&client, &normalized_url, cookie_header.as_deref(), &mut conditional, || Ok(Vec::new()),
+        background.unwrap_or(false)).await?;
     if conditional.not_modified { return Ok(ConditionalJson::NotModified); }
     let body = parse_json_value_for_url(&bytes, &normalized_url)?;
     Ok(ConditionalJson::Fetched { etag: conditional.etag, body })
@@ -1671,10 +1675,12 @@ async fn bestdori_fetch_binary(
     auth_state: tauri::State<'_, BestdoriAuthState>,
     url: String,
     host_scope: Option<String>,
+    background: Option<bool>,
 ) -> Result<String, download::CommandError> {
     let (normalized_url, client, cookie_header) =
         build_scoped_request_context(&auth_state, &url, "url", host_scope.as_deref())?;
-    let bytes = download::get(&client, &normalized_url, cookie_header.as_deref(), || Ok(Vec::new()), |_, _| {}).await?;
+    let bytes = download::get_in(&client, &normalized_url, cookie_header.as_deref(), || Ok(Vec::new()), |_, _| {},
+        background.unwrap_or(false)).await?;
     Ok(encode_base64(bytes))
 }
 

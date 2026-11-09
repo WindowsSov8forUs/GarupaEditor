@@ -14,7 +14,8 @@ import type { ApplicationResourceManager } from "../resources/applicationResourc
 import type { ResourceCatalogProvider } from "../resources/backend";
 import { createResourceRef, resourceAccepted, resourceRejected, type NetworkResourceDescriptor,
   type ResourceConsumerLease, type ResourceResult } from "../resources/contracts";
-import { appLog } from "../logging/applicationLogger";
+import { appLog, startOperation } from "../logging/applicationLogger";
+import { inBackgroundNetwork } from "./bestdori/transport";
 import { detectUserMediaType } from "../resources/userMediaFormat";
 
 export const OFFICIAL_DIFFICULTIES = ["EASY", "NORMAL", "HARD", "EXPERT", "SPECIAL"] as const;
@@ -123,7 +124,7 @@ export function parseLibraryMetadata(value: unknown): LibraryMetadata {
       const media = record(v, p);
       return { jackets: locations(media.jackets, `${p}.jackets`), previews: locations(media.previews, `${p}.previews`),
         audio: locations(media.audio, `${p}.audio`), failures: optional(media.failures, `${p}.failures`, (f, fp) => arrayOf(f, fp, string)),
-        folders: optional(media.folders, `${p}.folders`, urls) };
+        folders: optional(media.folders, `${p}.folders`, urls), infoEtags: optional(media.infoEtags, `${p}.infoEtags`, urls) };
     }),
   };
 }
@@ -197,17 +198,21 @@ export function getOfficialMusicLibrary(): OfficialLibrary {
   return library;
 }
 export function bootstrapOfficialMusic(manager: ApplicationResourceManager, progress: (ratio: number) => void = () => {}) {
-  return pending ??= initialize(manager, progress).catch(error => {
+  return pending ??= initialize(manager, progress).catch((error): Initialized => {
     appLog("error", "official.startup-failed", { error });
-    return { songs: [], metadata: null, lease: null, error: String(error), mediaFailures: [] };
-  }).then(async result => {
+    return { library: { songs: [], metadata: null, lease: null, error: String(error), mediaFailures: [] } };
+  }).then(async ({ library: result, revalidate }) => {
     if (library?.lease && library.lease !== result.lease) await library.lease.release();
     library = result;
     if (result.error || result.mediaFailures.length) pending = undefined;
+    // A library opened from the cache revalidates after startup has been released.
+    if (revalidate) void revalidate();
     return result;
   });
 }
-async function initialize(manager: ApplicationResourceManager, progress: (ratio: number) => void): Promise<OfficialLibrary> {
+/** The startup library, and for a cached one the background revalidation that may replace it. */
+interface Initialized { library: OfficialLibrary; revalidate?: () => Promise<void> }
+async function initialize(manager: ApplicationResourceManager, progress: (ratio: number) => void): Promise<Initialized> {
   let previous: LibraryMetadata | undefined;
   const metadataDescriptor = descriptor("catalog-v3", "https://api.garupa.jp/api/application", "json");
   let metadata: LibraryMetadata | undefined;
@@ -348,9 +353,42 @@ async function initialize(manager: ApplicationResourceManager, progress: (ratio:
       finally { await lease.release(); }
     } catch (error) { appLog("warn", "official.catalog-cache-invalid", { error }); }
   }
-  let error = "";
-  try { accepted(await manager.ensureAvailable(metadataDescriptor.ref, { refresh: true })); error = refreshFailure; }
-  catch (failure) { error = String(failure); metadata = previous; appLog("warn", "official.catalog-offline", { error }); }
+  /** One network revalidation through the provider; offline falls back to the cache it started from. */
+  const refresh = async (): Promise<{ metadata: LibraryMetadata | undefined; error: string }> => {
+    metadata = undefined; refreshFailure = "";
+    try {
+      accepted(await manager.ensureAvailable(metadataDescriptor.ref, { refresh: true }));
+      return { metadata, error: refreshFailure };
+    } catch (failure) {
+      const error = String(failure);
+      appLog("warn", "official.catalog-offline", { error });
+      return { metadata: previous, error };
+    }
+  };
+  if (previous) {
+    // The cached library opens at once. Revalidation runs as background transfers (no download screen) and
+    // replaces the library when it finishes; pages opened after that read the new one.
+    const cachedPrevious = previous;
+    const opened = await buildLibrary(manager, cachedPrevious, "", progress);
+    return { library: opened, revalidate: () => inBackgroundNetwork(async () => {
+      const finish = startOperation("official.background-refresh");
+      try {
+        const refreshed = await refresh();
+        if (!refreshed.metadata || refreshed.metadata === cachedPrevious) { finish(undefined, { changed: false, error: refreshed.error }); return; }
+        const next = await buildLibrary(manager, refreshed.metadata, refreshed.error, () => {});
+        // The opened library's lease stays held: a page may still show media from it this session.
+        library = next;
+        finish(undefined, { changed: true, songs: next.songs.length, error: refreshed.error });
+      } catch (error) { finish(error); }
+    }) };
+  }
+  const refreshed = await refresh();
+  return { library: await buildLibrary(manager, refreshed.metadata, refreshed.error, progress) };
+}
+
+/** Songs, media bindings and the limited skin list built from one library metadata. */
+async function buildLibrary(manager: ApplicationResourceManager, metadata: LibraryMetadata | undefined, error: string,
+  progress: (ratio: number) => void): Promise<OfficialLibrary> {
   // The limited skin list is read from the same masters the library carries, online or from the cache.
   setOfficialLimitedSkins(limitedSkinsFromMasters(metadata?.masters ?? {}));
   if (!metadata) return { songs: [], metadata: null, lease: null, error, mediaFailures: [] };

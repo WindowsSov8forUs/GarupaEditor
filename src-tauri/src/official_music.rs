@@ -16,7 +16,7 @@ fn regional_schema(server: &str) -> Result<&'static str, String> {
 
 // Only public application/master endpoints are exposed; no account session is read.
 #[tauri::command]
-pub async fn official_music_request(client_version: String, data_version: Option<String>, master_version: Option<String>, server: Option<String>) -> Result<Value, String> {
+pub async fn official_music_request(client_version: String, data_version: Option<String>, master_version: Option<String>, server: Option<String>, background: Option<bool>) -> Result<Value, String> {
     fn version(value: &str) -> bool { !value.is_empty() && value.len() <= 64 && value.bytes().all(|b| b.is_ascii_digit() || b == b'.') }
     if !version(&client_version) || data_version.as_deref().is_some_and(|v| !version(v))
         || master_version.as_deref().is_some_and(|v| !version(v)) { return Err("官方主表版本格式无效".into()); }
@@ -47,7 +47,7 @@ pub async fn official_music_request(client_version: String, data_version: Option
     let client = reqwest::Client::builder().default_headers(headers)
         .connect_timeout(Duration::from_secs(15)).timeout(Duration::from_secs(60))
         .build().map_err(|e| e.to_string())?;
-    let bytes = super::download::get(&client, url.as_str(), None, || Ok(Vec::new()), |_, _| {})
+    let bytes = super::download::get_in(&client, url.as_str(), None, || Ok(Vec::new()), |_, _| {}, background.unwrap_or(false))
         .await.map_err(|e| e.message)?;
     let server = server.to_owned();
     tauri::async_runtime::spawn_blocking(move || decode_response(bytes, master, &protocol, &server)).await.map_err(|e| e.to_string())?
