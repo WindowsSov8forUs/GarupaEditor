@@ -18,8 +18,11 @@ export interface CurrentNormalSkinMaster {
   readonly bundleName: string;
 }
 
+/** The server whose resource packages a special skin row is read from. */
+export type SkinResourceServer = "jp" | "cn" | "tw" | "en";
+
 export interface CurrentSpecialSkinMaster {
-  readonly resourceServer: "jp" | "cn";
+  readonly resourceServer: SkinResourceServer;
   readonly kind: "collabo" | "limited";
   readonly selectionId: number;
   readonly selectable: boolean;
@@ -84,7 +87,8 @@ export const CURRENT_NORMAL_DIRECTIONAL_SKINS: readonly CurrentNormalSkinMaster[
   { setting: 4, masterId: 5, bundleName: "skin04" },
 ]);
 
-const SPECIAL_ROW_DATA: readonly (readonly ["collabo" | "limited", number, boolean,
+// Collaboration rows only. Limited skins come from the official masters (see setOfficialLimitedSkins).
+const COLLABO_ROW_DATA: readonly (readonly ["collabo", number, boolean,
   string | null, string | null, string | null, string | null, string | null,
   string | null, string | null, number, ("jp" | "cn")?])[] = [
   ["collabo",17,true,"skin_persona","skin_persona","skin_persona","skin_persona","skin_persona",null,null,0],
@@ -118,17 +122,10 @@ const SPECIAL_ROW_DATA: readonly (readonly ["collabo" | "limited", number, boole
   ["collabo",291,true,"skin_stage","skin_stage","skin_stage","skin_stage","skin_stage",null,null,0],
   ["collabo",293,true,"skin_collabo25_autumn_s",null,"skin_collabo25_autumn_s","skin_collabo25_autumn_s",null,null,null,0],
   ["collabo",100001,true,"skin10001",null,"skin10001","skin10001","skin10001",null,"skin10001",0,"cn"],
-  ["limited",1,true,null,null,null,"skin_april2018","skin_april2018",null,null,0],
-  ["limited",2,true,"skin_april2019","skin_april2019","skin_april2019","skin_april2019","skin_april2019","skin_april2019",null,0],
-  ["limited",3,true,"skin_april2021",null,"skin_april2021","skin_april2021","skinapril2021","skinapril2021",null,0],
-  ["limited",4,true,"skin_april_2024",null,"skin_april_2024","skin_april_2024",null,null,null,0],
-  // CN MasterLimitedSkin 10001/10002; original margin is binary32 zero.
-  ["limited",10001,true,"skin_bilicat","skin_bilicat","skin_bilicat","skin_bilicat",null,"skin_bilicat","skin_bilicat",0,"cn"],
-  ["limited",10002,true,"skin_bilicat01","skin_bilicat01","skin_bilicat01","skin_bilicat01",null,"skin_bilicat01","skin_bilicat01",0,"cn"],
 ] as const;
 
-export const CURRENT_SPECIAL_SKINS: readonly CurrentSpecialSkinMaster[] = Object.freeze(
-  SPECIAL_ROW_DATA.map((row) => Object.freeze({
+export const CURRENT_COLLABO_SKINS: readonly CurrentSpecialSkinMaster[] = Object.freeze(
+  COLLABO_ROW_DATA.map((row) => Object.freeze({
     kind: row[0],
     resourceServer: row[11] ?? "jp",
     selectionId: row[1],
@@ -144,11 +141,53 @@ export const CURRENT_SPECIAL_SKINS: readonly CurrentSpecialSkinMaster[] = Object
   })),
 );
 
+/** A limited skin decoded from the official masters, with the name the selection shows. */
+export interface OfficialLimitedSkin extends CurrentSpecialSkinMaster {
+  readonly kind: "limited";
+  readonly name: string;
+  readonly seq: number;
+  /** Thumbnail file in the limited skin thumbnail package, on this row's server. */
+  readonly thumbnailFileName: string;
+}
+
+let officialLimitedSkins: readonly OfficialLimitedSkin[] = Object.freeze([]);
+let officialLimitedVersion = 0;
+const officialLimitedListeners = new Set<() => void>();
+
+/** Replaces the limited skins with the rows the official masters carry; called whenever the masters change. */
+export function setOfficialLimitedSkins(rows: readonly OfficialLimitedSkin[]): void {
+  officialLimitedSkins = Object.freeze(rows.map((row) => Object.freeze({ ...row })));
+  officialLimitedVersion++;
+  for (const listener of officialLimitedListeners) listener();
+}
+
+export function subscribeOfficialLimitedSkins(listener: () => void): () => void {
+  officialLimitedListeners.add(listener);
+  return () => { officialLimitedListeners.delete(listener); };
+}
+
+/** Changes whenever the limited skins are replaced, so caches derived from them can rebuild. */
+export function officialLimitedSkinVersion(): number {
+  return officialLimitedVersion;
+}
+
+export function currentOfficialLimitedSkins(): readonly OfficialLimitedSkin[] {
+  return officialLimitedSkins;
+}
+
+export function isOfficialLimitedSkin(row: CurrentSpecialSkinMaster): row is OfficialLimitedSkin {
+  return row.kind === "limited" && "name" in row;
+}
+
+export function currentSpecialSkins(): readonly CurrentSpecialSkinMaster[] {
+  return [...CURRENT_COLLABO_SKINS, ...officialLimitedSkins];
+}
+
 export function findCurrentSpecialSkin(
   kind: "collabo" | "limited",
   selectionId: number,
 ): CurrentSpecialSkinMaster | null {
-  return CURRENT_SPECIAL_SKINS.find((row) =>
+  return currentSpecialSkins().find((row) =>
     row.kind === kind && row.selectionId === selectionId) ?? null;
 }
 

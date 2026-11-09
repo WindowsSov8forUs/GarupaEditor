@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useApplicationResourceManager } from "../resources/applicationResourceContext";
-import { CURRENT_SPECIAL_SKINS } from "../simulator/public/settings";
+import { CURRENT_COLLABO_SKINS } from "../simulator/public/settings";
 import { loadCollaborationSkinThumbnail } from "../skin/thumbnails/collaborationSkinThumbnailResource";
 
 export function useCollaborationSkinThumbnails(enabled: boolean, onError?: (message: string) => void) {
@@ -18,7 +18,7 @@ export function useCollaborationSkinThumbnails(enabled: boolean, onError?: (mess
       const catalog = await manager.prepareCatalog("bestdori");
       if (catalog.status === "rejected") throw new Error(catalog.failure.boundary);
       const rendered = new Map<string, string | null>(), failures: string[] = [];
-      for (const master of CURRENT_SPECIAL_SKINS.filter(row => row.kind === "collabo" && row.selectable)) {
+      for (const master of CURRENT_COLLABO_SKINS.filter(row => row.selectable)) {
         if (!active) return;
         const key = `${master.notesBundleName ?? "skin00"}|${master.laneBundleName ?? "skin00"}`;
         if (!rendered.has(key)) {

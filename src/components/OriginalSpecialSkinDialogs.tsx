@@ -7,7 +7,7 @@ import { OriginalPrefabView, type OriginalRadioBinding } from "./OriginalPrefabV
 import { OriginalPrefabModel, originalAtlasFor, originalRef, type OriginalPrefab, type OriginalOverrides } from "./originalPrefabModel";
 import { specialComponentFields, specialSkinKey, specialSkinMaster, specialSkinName, selectSpecialSkin,
   selectableSpecialSkins, specialSkinWording, type SelectedSpecialSkin } from "./originalSpecialSkinSelection";
-import type { CurrentSpecialSkinMaster, OriginalSkinSpecialSelection } from "../simulator/public/settings";
+import { currentOfficialLimitedSkins, isOfficialLimitedSkin, type CurrentSpecialSkinMaster, type OriginalSkinSpecialSelection } from "../simulator/public/settings";
 import { useApplicationResourceManager } from "../resources/applicationResourceContext";
 import { createResourceRef, type ResourceRef, type ResourceConsumerLease } from "../resources/contracts";
 import { limitedSkinThumbnailDescriptor } from "../resources/providers/bestdoriCatalogProvider";
@@ -23,6 +23,15 @@ const detailLayout = { scroll: "Settings/ScrollView", content: "Settings/ScrollV
 const omitScrolled = (model: OriginalPrefabModel, layout: { scroll: string; bar: string }) => new Set(
   [...model.components.values()].filter(component => model.isWithin(component.node, model.nodeAt(layout.scroll).id) ||
     model.isWithin(component.node, model.nodeAt(layout.bar).id)).map(component => component.id));
+
+/** Limited skins whose thumbnails are published in the JP and CN thumbnail packages. */
+const thumbnailRows = () => currentOfficialLimitedSkins().filter(skin => skin.thumbnailFileName && (skin.resourceServer === "jp" || skin.resourceServer === "cn"));
+/** Names of the thumbnails the skins need that the leased package does not contain. */
+function missingThumbnailFiles(lease: ResourceConsumerLease): string[] {
+  return thumbnailRows().filter(row => lease.listFiles(row.resourceServer as "jp" | "cn").filter(file =>
+    file.logicalPath.replace(/\\/g, "/").split("/").pop()?.toLowerCase() === `${row.thumbnailFileName}.png`).length !== 1)
+    .map(row => row.thumbnailFileName);
+}
 
 function useThumbnails(enabled: boolean, onError?: (message: string) => void) {
   const manager = useApplicationResourceManager(), report = useRef(onError); report.current = onError;
@@ -43,18 +52,36 @@ function useThumbnails(enabled: boolean, onError?: (message: string) => void) {
         if (ref.status === "rejected") throw new Error(ref.failure.boundary);
         refs[server] = ref.value;
       }
-      const snapshot = await manager.createSnapshotFromRefs(refs);
-      if (snapshot.status === "rejected") throw new Error(snapshot.failure.boundary);
-      if (!active) return;
-      const acquired = await manager.acquireSnapshot(snapshot.value.snapshotId);
-      if (acquired.status === "rejected") throw new Error(acquired.failure.boundary);
-      lease = acquired.value;
+      const acquire = async () => {
+        const snapshot = await manager.createSnapshotFromRefs(refs);
+        if (snapshot.status === "rejected") throw new Error(snapshot.failure.boundary);
+        if (!active) return undefined;
+        const acquired = await manager.acquireSnapshot(snapshot.value.snapshotId);
+        if (acquired.status === "rejected") throw new Error(acquired.failure.boundary);
+        return acquired.value;
+      };
+      let current = await acquire();
+      if (!current) return;
+      // A package cached before a skin was published lacks its thumbnail; fetch the current package once.
+      if (missingThumbnailFiles(current).length) {
+        for (const server of ["jp", "cn"] as const) {
+          const refreshed = await manager.ensureAvailable(refs[server], { refresh: true });
+          if (refreshed.status === "rejected") throw new Error(refreshed.failure.boundary);
+        }
+        await current.release();
+        current = await acquire();
+        if (!current) return;
+      }
+      const missing = missingThumbnailFiles(current);
+      if (missing.length) throw new Error(`Missing original skin thumbnail: ${missing.join(", ")}`);
+      lease = current;
       const next: Record<string, string> = {};
-      for (const row of profile.limited) {
+      // The thumbnail package is published for JP and CN; limited skins of other servers have none.
+      for (const row of thumbnailRows()) {
         if (!active) return;
-        const files = lease.listFiles(row.server).filter(file => file.logicalPath.replace(/\\/g, "/").split("/").pop()?.toLowerCase() === `${row.thumbnailFileName}.png`);
-        if (files.length !== 1) throw new Error(`Missing original skin thumbnail: ${row.thumbnailFileName}`);
-        next[`${row.server}/${row.thumbnailFileName}`] = await lease.openObjectUrl(row.server, files[0]!.logicalPath);
+        const server = row.resourceServer as "jp" | "cn";
+        const files = lease.listFiles(server).filter(file => file.logicalPath.replace(/\\/g, "/").split("/").pop()?.toLowerCase() === `${row.thumbnailFileName}.png`);
+        next[`${server}/${row.thumbnailFileName}`] = await lease.openObjectUrl(server, files[0]!.logicalPath);
       }
       if (active) setUrls(next);
     })().catch(cause => { if (active) report.current?.(String(cause)); release(); })
@@ -107,9 +134,9 @@ export function OriginalSpecialSkinSelectDialog({ kind, initial, equipped, open,
   initial: OriginalSkinSpecialSelection; equipped: OriginalSkinSpecialSelection; busy: boolean;
   onApply: (value: SelectedSpecialSkin) => void; onClose: () => void; onError?: (message: string) => void;
 }) {
-  const choices = useMemo(() => selectableSpecialSkins.filter(row => row.kind === kind), [kind]);
+  const choices = useMemo(() => selectableSpecialSkins().filter(row => row.kind === kind), [kind]);
   const [choice, setChoice] = useState(() => initial.kind === "none"
-    ? `${choices[0]!.kind}:${choices[0]!.selectionId}` : specialSkinKey(initial));
+    ? (choices[0] ? `${choices[0].kind}:${choices[0].selectionId}` : "") : specialSkinKey(initial));
   const thumbnails = useThumbnails(kind === "limited", onError);
   const collaborations = useCollaborationSkinThumbnails(kind === "collabo", onError);
   const model = useMemo(() => new OriginalPrefabModel(list.prefab, {
@@ -133,7 +160,7 @@ export function OriginalSpecialSkinSelectDialog({ kind, initial, equipped, open,
       contentHeight: Math.ceil(choices.length / columns) * height }}>
       <div role="radiogroup">{choices.map((master, index) => {
         const key = `${master.kind}:${master.selectionId}`;
-        const thumb = master.kind === "limited" ? profile.limited.find(row => row.limitedSkinId === master.selectionId)! : null;
+        const thumb = isOfficialLimitedSkin(master) ? { server: master.resourceServer, thumbnailFileName: master.thumbnailFileName } : null;
         return <div key={key} className="original-prefab-origin" style={{ left: origin.x - panel.z / 2 + (index % columns) * width,
           top: -origin.y - panel.w / 2 + Math.floor(index / columns) * height }}>
           <SkinCell master={master} index={index} selected={choice === key} equipped={specialSkinKey(equipped) === key}

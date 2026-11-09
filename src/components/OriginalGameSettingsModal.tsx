@@ -126,10 +126,14 @@ export function OriginalGameSettingsModal(props: Props) {
   const enabledSpecial = draft.options.simulatorSettings.skin.special;
   const closeSpecial = () => { if (!preparingRef.current) setSpecialDialogClosing(true); };
   const specialClosed = () => { setSpecialDetail(null); setSpecialDialog(null); setSpecialDialogClosing(false); };
+  const selectable = selectableSpecialSkins();
+  const firstCollabo = selectable.find(row => row.kind === "collabo");
+  const firstLimited = selectable.find(row => row.kind === "limited");
+  // The limited list comes from the official masters; with none loaded there is nothing to remember.
   const rememberedCollabo = enabledSpecial.kind === "collabo" ? enabledSpecial : draft.options.simulatorSettings.rememberedCollaboSkin
-    ?? selectSpecialSkin(selectableSpecialSkins.find(row => row.kind === "collabo")!);
+    ?? (firstCollabo ? selectSpecialSkin(firstCollabo) : undefined);
   const rememberedLimited = enabledSpecial.kind === "limited" ? enabledSpecial : draft.options.simulatorSettings.rememberedLimitedSkin
-    ?? selectSpecialSkin(selectableSpecialSkins.find(row => row.kind === "limited")!);
+    ?? (firstLimited ? selectSpecialSkin(firstLimited) : undefined);
   const setSpecialKind = (kind: "collabo" | "limited" | "none") => {
     if (kind === enabledSpecial.kind || preparingRef.current) return;
     if (kind === "none") setDraft(old => ({ ...old, options: { ...old.options, simulatorSettings: { ...old.options.simulatorSettings,
@@ -202,7 +206,7 @@ export function OriginalGameSettingsModal(props: Props) {
     </div>}
   </OriginalAuthoredDialog>
     {props.open && (specialDialog === "limited" || specialDialog === "collabo") && <OriginalSpecialSkinSelectDialog kind={specialDialog}
-      initial={specialDialog === "limited" ? rememberedLimited : rememberedCollabo ?? { kind: "none" }}
+      initial={specialDialog === "limited" ? rememberedLimited ?? { kind: "none" } : rememberedCollabo ?? { kind: "none" }}
       open={!specialDialogClosing} onClosed={specialClosed}
       equipped={enabledSpecial} busy={preparingSkin} onApply={value => void applySpecial(value)}
       onClose={closeSpecial} onError={props.onSettingsError} />}

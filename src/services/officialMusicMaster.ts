@@ -51,6 +51,20 @@ export interface MasterCollaboOriginalMusicPage {
   publishedAt?: number; closedAt?: number; description?: string; shortDescription?: string; label?: string; labelColor?: string;
   backgroundName?: string; animationName?: string; isDisplaySpecialDifficulty?: boolean;
 }
+export interface MasterLimitedSkin {
+  limitedSkinId: number; seq?: number; limitedSkinName?: string; description?: string;
+  backgroundSkinAssetBundleName?: string; effectSkinAssetBundleName?: string; laneSkinAssetBundleName?: string;
+  notesSkinAssetBundleName?: string; soundEffectSkinAssetBundleName?: string; judgeSkinAssetBundleName?: string;
+  directionalFlickAssetBundleName?: string; noteSyncEdgeMargin?: number;
+  changeBackgroundSkinFlg?: boolean; changeEffectSkinFlg?: boolean; changeLaneSkinFlg?: boolean; changeNotesSkinFlg?: boolean;
+  changeSoundEffectSkinFlg?: boolean; changeJudgeSkinFlg?: boolean; changeDirectionalFlickFlg?: boolean; thumbnailFileName?: string;
+}
+export interface MasterCollaborationSkin {
+  collaborationSkinId: number; seasonSpecialId?: number; description?: string;
+  backgroundSkinAssetBundleName?: string; effectSkinAssetBundleName?: string; laneSkinAssetBundleName?: string;
+  notesSkinAssetBundleName?: string; soundEffectSkinAssetBundleName?: string; cutInSkinAssetBundleName?: string;
+  judgeSkinAssetBundleName?: string; directionalFlickAssetBundleName?: string; noteSyncEdgeMargin?: number;
+}
 export interface OfficialMaster {
   masterMusicList: { entries: MasterSong[] };
   masterMusicDifficultyList: { entries: MasterDifficulty[] };
@@ -65,6 +79,8 @@ export interface OfficialMaster {
   masterMusicVideo3dMap: { entries: Record<string, MasterMusicVideo3d> };
   masterMusicVideo3dIdListMap: { entries: Record<string, { entries: number[] }> };
   masterCollaboOriginalMusicPageList?: { entries?: MasterCollaboOriginalMusicPage[] };
+  masterLimitedSkinMap?: { entries?: Record<string, MasterLimitedSkin> };
+  masterCollaborationSkinMap?: { entries?: Record<string, MasterCollaborationSkin> };
 }
 export interface OfficialMasterSnapshot {
   clientVersion: string; dataVersion: string; masterDataVersion: string; master: OfficialMaster;
@@ -94,6 +110,8 @@ export function validateOfficialMasterRelations(master: OfficialMaster): void {
   if (!sets || !infos || !large || !medium || !master.masterMusicCategoryInfoTargets?.musicCategoryIdList) fail();
   if (!master.masterMusicJacketMap?.entries || !master.masterBandMap?.entries || !master.masterMusicVideoListMap?.entries
     || !master.masterMusicVideo3dMap?.entries || !master.masterMusicVideo3dIdListMap?.entries) fail();
+  // The limited skin map is keyed by the id each of its rows carries (checked on the CN and JP masters).
+  for (const [key, row] of Object.entries(master.masterLimitedSkinMap?.entries ?? {})) if (row.limitedSkinId !== Number(key)) fail();
   for (const song of master.masterMusicList.entries) {
     if (!Number.isSafeInteger(song.musicId) || song.musicId <= 0 || ids.has(song.musicId)
       || !song.musicTitle || !song.bgmFile || !song.bgmId || !song.jacketImage || !Number.isFinite(song.publishedAt)

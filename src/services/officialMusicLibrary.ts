@@ -7,6 +7,8 @@ import { refreshOfficialMaster, validateOfficialMaster, validateOfficialMasterRe
   type MasterDifficulty, type MasterVideo } from "./officialMusicMaster";
 import { parseBestdoriBandsAll1, parseBestdoriSongCommon, parseBestdoriSongIndex, parsePerServer } from "./bestdori/songParsing";
 import { checkOfficialMasterRow } from "./officialMasterShape";
+import { limitedSkinsFromMasters } from "./officialLimitedSkins";
+import { setOfficialLimitedSkins } from "../simulator/public/settings";
 import { ResponseShapeError, arrayOf, finite, idKey, integer, nullable, oneOf, optional, record, recordOf, string, type Reader } from "./responseShape";
 import type { ApplicationResourceManager } from "../resources/applicationResourceManager";
 import type { ResourceCatalogProvider } from "../resources/backend";
@@ -349,6 +351,8 @@ async function initialize(manager: ApplicationResourceManager, progress: (ratio:
   let error = "";
   try { accepted(await manager.ensureAvailable(metadataDescriptor.ref, { refresh: true })); error = refreshFailure; }
   catch (failure) { error = String(failure); metadata = previous; appLog("warn", "official.catalog-offline", { error }); }
+  // The limited skin list is read from the same masters the library carries, online or from the cache.
+  setOfficialLimitedSkins(limitedSkinsFromMasters(metadata?.masters ?? {}));
   if (!metadata) return { songs: [], metadata: null, lease: null, error, mediaFailures: [] };
   for (const failure of metadata.sourceMedia?.failures ?? []) {
     appLog("warn", "official.media-catalog-incomplete", { failure });
