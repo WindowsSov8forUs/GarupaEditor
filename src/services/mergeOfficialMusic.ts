@@ -1,4 +1,4 @@
-import { validateOfficialMaster, type OfficialMaster, type OfficialMasterSnapshot } from "./officialMusicMaster";
+import { validateOfficialMaster, validateOfficialMasterRelations, type OfficialMaster, type OfficialMasterSnapshot } from "./officialMusicMaster";
 import { OFFICIAL_SERVER_ORDER, type OfficialServer } from "./officialMusicSources";
 
 export type MasterServer = OfficialServer;
@@ -24,7 +24,7 @@ export function mergeOfficialMusic(sources: OfficialMasterSources, now: number) 
   const largeKeys = new Map<string, number>(), mediumKeys = new Map<string, number>(), infoKeys = new Map<string, number>();
   const targets = new Set<number>();
   for (const { server, master: source } of ordered) {
-    validateOfficialMaster(source);
+    validateOfficialMaster(source, server);
     const largeIds = new Map<number, number>(), mediumIds = new Map<number, number>(), infoIds = new Map<number, number>();
     for (const [input, output, keys, ids] of [
       [source.masterMusicLargeCategoryDataMap, master.masterMusicLargeCategoryDataMap, largeKeys, largeIds],
@@ -81,6 +81,6 @@ export function mergeOfficialMusic(sources: OfficialMasterSources, now: number) 
     }
   }
   master.masterMusicCategoryInfoTargets.musicCategoryIdList = [...targets];
-  validateOfficialMaster(master);
+  validateOfficialMasterRelations(master);
   return { master, songServers, difficultyServers };
 }

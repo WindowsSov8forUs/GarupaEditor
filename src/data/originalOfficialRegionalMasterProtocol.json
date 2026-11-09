@@ -30,11 +30,6 @@
       "key": "RXzFAC87WR28eNcP",
       "iv": "hrk0k7knXlit3S_y"
     },
-    "omitSchemaFields": {
-      "MasterCollaboOriginalMusicPage": [
-        "14"
-      ]
-    },
     "evidence": "9a31c9d064d241e60a5ee2ec439f99fb49adc568"
   }
 }

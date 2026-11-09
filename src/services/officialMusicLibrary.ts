@@ -3,7 +3,7 @@ import { fetchOfficialSourceMedia, OFFICIAL_SERVER_ORDER, isOfficialServer, avai
 import { fetchBestdoriSongIndex, revalidateBestdoriBandsAll1, fetchBestdoriFileBlob, buildBestdoriSongJacketUrl, type StoredBestdoriJson,
   type BestdoriBandsAll1, type BestdoriPerServerValue, type BestdoriSongCommon, type BestdoriSongDifficultyIndex,
   type BestdoriSongIndex, type BestdoriSongServerName } from "./bestdori/api";
-import { refreshOfficialMaster, validateOfficialMaster, type OfficialMasterSnapshot, type MasterSong,
+import { refreshOfficialMaster, validateOfficialMaster, validateOfficialMasterRelations, type OfficialMasterSnapshot, type MasterSong,
   type MasterDifficulty, type MasterVideo } from "./officialMusicMaster";
 import { parseBestdoriBandsAll1, parseBestdoriSongCommon, parseBestdoriSongIndex, parsePerServer } from "./bestdori/songParsing";
 import { checkOfficialMasterRow } from "./officialMasterShape";
@@ -53,10 +53,12 @@ export function parseLibraryMetadata(value: unknown): LibraryMetadata {
   const stored = record(value, "catalog");
   if (stored.version !== 2) throw new ResponseShapeError("catalog.version", "2");
   const servers = (v: unknown, p: string) => recordOf(v, p, (item, itemPath) => oneOf(item, itemPath, OFFICIAL_SERVER_ORDER));
-  const snapshot: Reader<OfficialMasterSnapshot> = (v, p) => {
+  // A server's own snapshot is checked against that server's schema; the merged official one is not
+  // a single server's master, so only its relations are checked (its rows were checked per server).
+  const snapshot = (validate: (master: OfficialMasterSnapshot["master"]) => void): Reader<OfficialMasterSnapshot> => (v, p) => {
     const item = record(v, p);
     const master = item.master as OfficialMasterSnapshot["master"];
-    validateOfficialMaster(master);
+    validate(master);
     return { clientVersion: string(item.clientVersion, `${p}.clientVersion`), dataVersion: string(item.dataVersion, `${p}.dataVersion`),
       masterDataVersion: string(item.masterDataVersion, `${p}.masterDataVersion`), master,
       schema: optional(item.schema, `${p}.schema`, string) };
@@ -77,14 +79,14 @@ export function parseLibraryMetadata(value: unknown): LibraryMetadata {
       musicDataType: string(item.musicDataType, `${p}.musicDataType`), howToGet: text(item.howToGet, `${p}.howToGet`),
       difficulty: recordOf(item.difficulty, `${p}.difficulty`, (row, rowPath) => {
         const { publishedAt, ...master } = record(row, rowPath);
-        checkOfficialMasterRow(master, "MasterMusicDifficultyGetResponse", rowPath);
+        checkOfficialMasterRow(master, "jp", "MasterMusicDifficultyGetResponse", rowPath);
         return { ...master as Omit<MasterDifficulty, "publishedAt">, musicId: integer(master.musicId, `${rowPath}.musicId`),
           difficulty: string(master.difficulty, `${rowPath}.difficulty`), playLevel: integer(master.playLevel, `${rowPath}.playLevel`),
           publishedAt: text(publishedAt, `${rowPath}.publishedAt`) };
       }, (key, keyPath) => oneOf(key, keyPath, ["0", "1", "2", "3", "4"])),
       musicVideos: recordOf(item.musicVideos, `${p}.musicVideos`, (row, rowPath) => {
         const { startAt, endAt, ...master } = record(row, rowPath);
-        checkOfficialMasterRow(master, "MasterMusicVideo", rowPath);
+        checkOfficialMasterRow(master, "jp", "MasterMusicVideo", rowPath);
         return { ...master as Omit<MasterVideo, "startAt" | "endAt">, musicId: integer(master.musicId, `${rowPath}.musicId`),
           assetBundleName: string(master.assetBundleName, `${rowPath}.assetBundleName`),
           startAt: text(startAt, `${rowPath}.startAt`), endAt: text(endAt, `${rowPath}.endAt`) };
@@ -95,12 +97,15 @@ export function parseLibraryMetadata(value: unknown): LibraryMetadata {
     version: 2,
     masters: optional(stored.masters, "catalog.masters", (v, p) => {
       const result: OfficialMasterSources = {};
-      for (const [server, item] of Object.entries(record(v, p))) result[oneOf(server, `${p} 的键`, OFFICIAL_SERVER_ORDER)] = snapshot(item, `${p}.${server}`);
+      for (const [server, item] of Object.entries(record(v, p))) {
+        const key = oneOf(server, `${p} 的键`, OFFICIAL_SERVER_ORDER);
+        result[key] = snapshot(master => validateOfficialMaster(master, key))(item, `${p}.${server}`);
+      }
       return result;
     }),
     songServers: optional(stored.songServers, "catalog.songServers", servers),
     difficultyServers: optional(stored.difficultyServers, "catalog.difficultyServers", servers),
-    official: snapshot(stored.official, "catalog.official"),
+    official: snapshot(validateOfficialMasterRelations)(stored.official, "catalog.official"),
     index: parseBestdoriSongIndex(stored.index, "catalog.index"),
     songs: recordOf(stored.songs, "catalog.songs", song, idKey),
     bands: parseBestdoriBandsAll1(stored.bands, "catalog.bands"),

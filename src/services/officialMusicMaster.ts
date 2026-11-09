@@ -1,15 +1,13 @@
 import { invokeTauriCommand } from "./bestdori/transport";
 import { appLog } from "../logging/applicationLogger";
-import { checkOfficialMasterShape } from "./officialMasterShape";
-import protocols from "../data/originalOfficialRegionalMasterProtocol.json";
+import { checkOfficialMasterShape, schemaFingerprint } from "./officialMasterShape";
 import clientVersions from "../data/officialClientVersions.json";
-import masterProtocol from "../data/originalOfficialMasterProtocol.json";
 import type { OfficialServer } from "./officialMusicSources";
 
 /*
- * Rows of the original master, every ProtoMember the schema lists (originalOfficialMasterProtocol).
- * protobuf omits default values, so a field absent from a row is 0, "", false or empty; required
- * marks below are the fields validateOfficialMaster demands.
+ * Rows of the original master as typed here. The decoder and the shape check (officialMasterShape) cover
+ * every ProtoMember of the server's complete schema; the interfaces name the fields the editor reads.
+ * protobuf omits default values, so a field absent from a row is 0, "", false or empty.
  */
 export interface MasterMultiLiveScore {
   musicId?: number; musicDifficulty?: string; multiLiveDifficultyId?: number; multiLiveDifficultyType?: string;
@@ -73,16 +71,6 @@ export interface OfficialMasterSnapshot {
   /** Fingerprint of the schema the master was decoded with; absent in stores from before it was kept. */
   schema?: string;
 }
-/**
- * The decoding schema for a server (shared schema less its regional omissions). A stored master
- * decoded with another schema lacks or misreads fields, so it counts as changed.
- */
-async function schemaFingerprint(server: OfficialServer): Promise<string> {
-  const omissions = (protocols[server] as { omitSchemaFields?: unknown }).omitSchemaFields ?? null;
-  const text = JSON.stringify({ schema: masterProtocol.schema, omissions });
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
-  return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
-}
 /** AppGetResponse; the fields past the version and status ones are not read here. */
 interface AppVersion {
   clientVersion: string; dataVersion: string; masterDataVersion: string; appStatus: string; clientStatus: string;
@@ -91,8 +79,13 @@ interface AppVersion {
 }
 const versionPattern = /^\d+(?:\.\d+){1,5}$/;
 const masterVersionPattern = /^\d+(?:\.\d+){0,5}$/;
-export function validateOfficialMaster(master: OfficialMaster): void {
-  checkOfficialMasterShape(master, "SuiteMasterGetResponse");
+/** Shape against the server's complete schema, then the relations between the decoded tables. */
+export function validateOfficialMaster(master: OfficialMaster, server: OfficialServer): void {
+  checkOfficialMasterShape(master, server, "SuiteMasterGetResponse");
+  validateOfficialMasterRelations(master);
+}
+/** Relations between decoded tables; used alone for a merged master, whose rows were shape-checked per server. */
+export function validateOfficialMasterRelations(master: OfficialMaster): void {
   const fail = (): never => { throw new Error("官方主表结构或关联不完整，保留旧缓存"); };
   if (!master?.masterMusicList?.entries?.length || !Array.isArray(master.masterMusicDifficultyList?.entries)) fail();
   const ids = new Set<number>();
@@ -142,7 +135,7 @@ export async function refreshOfficialMaster(previous?: OfficialMasterSnapshot, s
   };
   const requestVersion = async () => {
     const version = await request<AppVersion>({ clientVersion, server }, "主表版本检查");
-    checkOfficialMasterShape(version, "AppGetResponse", "application");
+    checkOfficialMasterShape(version, server, "AppGetResponse", "application");
     return version;
   };
   let version = await requestVersion();
@@ -168,14 +161,14 @@ export async function refreshOfficialMaster(previous?: OfficialMasterSnapshot, s
   const schema = await schemaFingerprint(server);
   if (previous && previous.masterDataVersion === version.masterDataVersion && previous.dataVersion === version.dataVersion
     && previous.clientVersion === clientVersion && previous.schema === schema) {
-    validateOfficialMaster(previous.master);
+    validateOfficialMaster(previous.master, server);
     return { ...previous, clientVersion, dataVersion: version.dataVersion };
   }
   if (previous && previous.schema !== schema) appLog("info", "official.master-schema-changed", { server, masterDataVersion: version.masterDataVersion });
   const master = await request<OfficialMaster>({
     clientVersion, dataVersion: version.dataVersion, masterVersion: version.masterDataVersion, server,
   }, "主表下载");
-  validateOfficialMaster(master);
+  validateOfficialMaster(master, server);
   appLog("info", "official.master-update-validated", { server, masterDataVersion: version.masterDataVersion, songs: master.masterMusicList.entries.length });
   return { clientVersion, dataVersion: version.dataVersion, masterDataVersion: version.masterDataVersion, master, schema };
 }
