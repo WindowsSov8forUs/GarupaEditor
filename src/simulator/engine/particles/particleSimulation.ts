@@ -954,10 +954,10 @@ export class DeterministicParticleSimulation {
       minMax(initial.startRotationY, birthPhase, slots[7]!),
       minMax(initial.startRotation, birthPhase, slots[8]!),
     ];
-    if (analytic !== undefined) {
-      const sign = particleSeedRatio((random.particleSeed + 0xFF2BB1A4) >>> 0) > initial.randomizeRotationDirection ? 1 : -1;
-      for (let axis = 0; axis < 3; axis += 1) rotation[axis] = multiply(rotation[axis]!, sign);
-    }
+    // 0x10602C8: every birth signs its start rotation from the particle seed salted with 0xFF2BB1A4; the ratio
+    // comes from that salted stream, not a shared-state draw, so it never moves the draw schedule.
+    const sign = particleSeedRatio((random.particleSeed + 0xFF2BB1A4) >>> 0) > initial.randomizeRotationDirection ? 1 : -1;
+    for (let axis = 0; axis < 3; axis += 1) rotation[axis] = multiply(rotation[axis]!, sign);
     const shape = getModule(record.bundle, profile, "ShapeModule");
     const birth = sampleShape(shape, random.shapeValues, batchIndex, batchCount);
     const position: Vector3 = birth.position;
