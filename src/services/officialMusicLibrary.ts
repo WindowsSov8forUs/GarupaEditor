@@ -232,15 +232,18 @@ async function initialize(manager: ApplicationResourceManager, progress: (ratio:
             if (result.status === "rejected") throw result.reason;
             return result.value;
           };
-          const masters = Object.fromEntries(unwrap(results[0]).map(unwrap)) as Record<MasterServer, OfficialMasterSnapshot>;
+          const masters = Object.fromEntries(unwrap(results[0]).map(unwrap).flatMap(([server, snapshot]) =>
+            snapshot ? [[server, snapshot]] : [])) as Partial<Record<MasterServer, OfficialMasterSnapshot>>;
           const indexSource = unwrap(results[1]), bandsSource = unwrap(results[2]), sourceMedia = unwrap(results[3]);
           appLog("info", "official.bestdori-revalidated", { indexNotModified: indexSource.notModified, bandsNotModified: bandsSource.notModified });
           const index = indexSource.value, bands = structuredClone(bandsSource.value);
-          const { jp, cn } = masters;
+          const { cn } = masters;
+          const base = OFFICIAL_SERVER_ORDER.map(server => masters[server]).find(snapshot => snapshot !== undefined);
+          if (!base) throw new Error("没有任何服务器的官方主数据可用（版本过旧已跳过且无缓存）");
           const capturedAt = Date.now();
           const merged = mergeOfficialMusic(masters, capturedAt);
-          const official = { ...jp, master: merged.master };
-          const cnSongs = new Map(cn.master.masterMusicList.entries.map(song => [song.musicId, song]));
+          const official = { ...base, master: merged.master };
+          const cnSongs = new Map((cn?.master.masterMusicList.entries ?? []).map(song => [song.musicId, song]));
           if (!index || !bands) throw new Error("官方曲库响应格式无效");
           const songs: Record<string, OfficialSongInfo> = {};
           const localize = (value: string | undefined, values?: BestdoriPerServerValue<string>, server: MasterServer = "jp"): BestdoriPerServerValue<string> => {
@@ -250,7 +253,7 @@ async function initialize(manager: ApplicationResourceManager, progress: (ratio:
           };
           for (const band of Object.values(official.master.masterBandMap.entries)) {
             let names = bands[String(band.bandId)]?.bandName;
-            for (const server of OFFICIAL_SERVER_ORDER) names = localize(masters[server].master.masterBandMap.entries[String(band.bandId)]?.bandName, names, server);
+            for (const server of OFFICIAL_SERVER_ORDER) names = localize(masters[server]?.master.masterBandMap.entries[String(band.bandId)]?.bandName, names, server);
             bands[String(band.bandId)] = { ...bands[String(band.bandId)], bandName: names! };
           }
           const difficulties = new Map<number, typeof official.master.masterMusicDifficultyList.entries>();

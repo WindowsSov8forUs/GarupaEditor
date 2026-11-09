@@ -2,6 +2,7 @@ import { invokeTauriCommand } from "./bestdori/transport";
 import { appLog } from "../logging/applicationLogger";
 import { checkOfficialMasterShape } from "./officialMasterShape";
 import protocols from "../data/originalOfficialRegionalMasterProtocol.json";
+import clientVersions from "../data/officialClientVersions.json";
 import masterProtocol from "../data/originalOfficialMasterProtocol.json";
 import type { OfficialServer } from "./officialMusicSources";
 
@@ -129,8 +130,12 @@ export function validateOfficialMaster(master: OfficialMaster): void {
 }
 
 /** Startup caller owns persistence. Never publish a partially decoded update. */
-export async function refreshOfficialMaster(previous?: OfficialMasterSnapshot, server: OfficialServer = "jp"): Promise<OfficialMasterSnapshot> {
-  let clientVersion = previous?.clientVersion ?? protocols[server].clientVersion;
+/**
+ * Returns the server's master, or the cached one when this server's check is skipped because the client
+ * version is obsolete for it. Each server is decided on its own.
+ */
+export async function refreshOfficialMaster(previous?: OfficialMasterSnapshot, server: OfficialServer = "jp"): Promise<OfficialMasterSnapshot | undefined> {
+  let clientVersion = clientVersions[server];
   const request = async <T>(args: Record<string, string>, stage: string): Promise<T> => {
     try { return await invokeTauriCommand<T>("official_music_request", args); }
     catch (error) { throw new Error(`${server} ${stage}失败：${String(error)}`); }
@@ -145,6 +150,11 @@ export async function refreshOfficialMaster(previous?: OfficialMasterSnapshot, s
     if (!versionPattern.test(version.clientVersion)) throw new Error("原作返回无效客户端版本");
     clientVersion = version.clientVersion;
     version = await requestVersion();
+  }
+  if (version.clientStatus === "obsolete") {
+    appLog("warn", "official.client-version-obsolete", { server, clientVersion, serverClientVersion: version.clientVersion,
+      appStatus: version.appStatus, clientStatus: version.clientStatus });
+    return previous;
   }
   // CN exposes the public master even when the game advertises maintenance.
   // This accepts master reads only, and does not treat maintenance as playable.
