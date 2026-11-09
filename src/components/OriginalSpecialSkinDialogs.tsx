@@ -75,15 +75,15 @@ function useThumbnails(enabled: boolean, onError?: (message: string) => void) {
       const missing = missingThumbnailFiles(current);
       if (missing.length) throw new Error(`Missing original skin thumbnail: ${missing.join(", ")}`);
       lease = current;
-      const next: Record<string, string> = {};
       // The thumbnail package is published for JP and CN; limited skins of other servers have none.
       for (const row of thumbnailRows()) {
         if (!active) return;
         const server = row.resourceServer as "jp" | "cn";
         const files = lease.listFiles(server).filter(file => file.logicalPath.replace(/\\/g, "/").split("/").pop()?.toLowerCase() === `${row.thumbnailFileName}.png`);
-        next[`${server}/${row.thumbnailFileName}`] = await lease.openObjectUrl(server, files[0]!.logicalPath);
+        const url = await lease.openObjectUrl(server, files[0]!.logicalPath);
+        // Each thumbnail is shown as soon as it is open, not after the whole package.
+        if (active) setUrls(previous => ({ ...previous, [`${server}/${row.thumbnailFileName}`]: url }));
       }
-      if (active) setUrls(next);
     })().catch(cause => { if (active) report.current?.(String(cause)); release(); })
       .finally(() => { finished = true; if (!active) release(); });
     return () => { active = false; if (finished) release(); };

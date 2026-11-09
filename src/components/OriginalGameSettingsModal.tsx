@@ -111,6 +111,8 @@ export function OriginalGameSettingsModal(props: Props) {
     }
     const request = ++skinRequest.current;
     preparingRef.current = true; setPreparingSkin(true);
+    // The original loading screen shows the single-transfer download progress while the packages are fetched.
+    const loading = originalLoading.hold("network", {}, { downloadProgress: true, blockInput: true });
     let lease: Awaited<ReturnType<typeof prepareSkin>> | undefined;
     try {
       lease = await prepareSkin({ ...draft.options.simulatorSettings.skin, special });
@@ -119,6 +121,7 @@ export function OriginalGameSettingsModal(props: Props) {
     } catch (cause) {
       if (skinRequest.current === request) props.onSettingsError?.(cause instanceof Error ? cause.message : String(cause));
     } finally {
+      loading.release();
       if (lease) void lease.release().catch(console.error);
       if (skinRequest.current === request) { preparingRef.current = false; setPreparingSkin(false); }
     }
