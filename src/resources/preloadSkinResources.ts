@@ -1,7 +1,7 @@
 import type { ApplicationResourceManager } from "./applicationResourceManager";
 import { originalSkinResourceRef } from "./originalSkinResourceRef";
 import { CURRENT_NORMAL_NOTE_SKINS, CURRENT_NORMAL_LANE_SKINS, CURRENT_NORMAL_EFFECT_SKINS,
-  CURRENT_NORMAL_SOUND_SKINS, CURRENT_NORMAL_DIRECTIONAL_SKINS, CURRENT_SPECIAL_SKINS,
+  CURRENT_NORMAL_SOUND_SKINS, CURRENT_NORMAL_DIRECTIONAL_SKINS, currentSpecialSkins, CURRENT_COLLABO_SKINS,
   resolveOriginalPreviewSkin } from "../simulator/public/settings";
 import type { SimulatorOriginalSkinSettings } from "../simulator/public/contracts";
 import { createResourceRef } from "./contracts";
@@ -38,7 +38,7 @@ export function skinResourceInventory(): readonly string[] {
   }
   const components = { laneAndLine: "on", tapEffect: "on", background: "on", rhythmIcon: "on",
     directionalFlickIcon: "on", soundEffect: "on", judge: "on" } as const;
-  for (const row of CURRENT_SPECIAL_SKINS.filter(row => row.selectable)) {
+  for (const row of currentSpecialSkins().filter(row => row.selectable)) {
     for (const variant of [0, 1] as const) add({ ...normal, directionalFlickEffect: variant,
       special: row.kind === "limited" ? { kind: "limited", limitedSkinId: row.selectionId, components }
         : { kind: "collabo", seasonSpecialId: row.selectionId, components } });
@@ -74,7 +74,7 @@ async function preload(manager: ApplicationResourceManager,
   }
   const failures: string[] = [], unpublished: string[] = [];
   const ready = new Set<string>(), attempted = new Set<string>();
-  const thumbnails = CURRENT_SPECIAL_SKINS.filter(row => row.kind === "collabo" && row.selectable)
+  const thumbnails = CURRENT_COLLABO_SKINS.filter(row => row.selectable)
     .map(skin => ({ skin, refs: collaborationThumbnailSources(skin).refs }));
   // Keep package I/O bounded; thumbnail preparation must not serialize the
   // remaining package checks behind image decoding and snapshot acquisition.

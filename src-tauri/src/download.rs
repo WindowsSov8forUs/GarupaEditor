@@ -103,16 +103,30 @@ pub async fn get<W: Write>(
     receive(client, url, cookie, destination, progress, false, true, false, None).await
 }
 
+/// `get`, reported as a background transfer when `background`: progress only, never the download screen.
+pub async fn get_in<W: Write>(
+    client: &reqwest::Client,
+    url: &str,
+    cookie: Option<&str>,
+    destination: impl FnMut() -> std::io::Result<W>,
+    progress: impl FnMut(u64, Option<u64>),
+    background: bool,
+) -> Result<W, DownloadError> {
+    receive(client, url, cookie, destination, progress, false, true, background, None).await
+}
+
 /// A conditional GET: with the ETag of a stored copy, the server answers 304 when it still holds.
 pub struct Conditional<'a> { pub if_none_match: Option<&'a str>, pub etag: Option<String>, pub not_modified: bool }
-pub async fn get_conditional<W: Write>(
+/// Reported as a background transfer when `background`: progress only, never the download screen.
+pub async fn get_conditional_in<W: Write>(
     client: &reqwest::Client,
     url: &str,
     cookie: Option<&str>,
     conditional: &mut Conditional<'_>,
     destination: impl FnMut() -> std::io::Result<W>,
+    background: bool,
 ) -> Result<W, DownloadError> {
-    receive(client, url, cookie, destination, |_, _| {}, false, true, false, Some(conditional)).await
+    receive(client, url, cookie, destination, |_, _| {}, false, true, background, Some(conditional)).await
 }
 
 /// A background transfer: it reports progress but does not open the application's download screen.

@@ -1,14 +1,13 @@
 import { invokeTauriCommand } from "./bestdori/transport";
 import { appLog } from "../logging/applicationLogger";
-import { checkOfficialMasterShape } from "./officialMasterShape";
-import protocols from "../data/originalOfficialRegionalMasterProtocol.json";
-import masterProtocol from "../data/originalOfficialMasterProtocol.json";
+import { checkOfficialMasterShape, schemaFingerprint } from "./officialMasterShape";
+import clientVersions from "../data/officialClientVersions.json";
 import type { OfficialServer } from "./officialMusicSources";
 
 /*
- * Rows of the original master, every ProtoMember the schema lists (originalOfficialMasterProtocol).
- * protobuf omits default values, so a field absent from a row is 0, "", false or empty; required
- * marks below are the fields validateOfficialMaster demands.
+ * Rows of the original master as typed here. The decoder and the shape check (officialMasterShape) cover
+ * every ProtoMember of the server's complete schema; the interfaces name the fields the editor reads.
+ * protobuf omits default values, so a field absent from a row is 0, "", false or empty.
  */
 export interface MasterMultiLiveScore {
   musicId?: number; musicDifficulty?: string; multiLiveDifficultyId?: number; multiLiveDifficultyType?: string;
@@ -52,6 +51,20 @@ export interface MasterCollaboOriginalMusicPage {
   publishedAt?: number; closedAt?: number; description?: string; shortDescription?: string; label?: string; labelColor?: string;
   backgroundName?: string; animationName?: string; isDisplaySpecialDifficulty?: boolean;
 }
+export interface MasterLimitedSkin {
+  limitedSkinId: number; seq?: number; limitedSkinName?: string; description?: string;
+  backgroundSkinAssetBundleName?: string; effectSkinAssetBundleName?: string; laneSkinAssetBundleName?: string;
+  notesSkinAssetBundleName?: string; soundEffectSkinAssetBundleName?: string; judgeSkinAssetBundleName?: string;
+  directionalFlickAssetBundleName?: string; noteSyncEdgeMargin?: number;
+  changeBackgroundSkinFlg?: boolean; changeEffectSkinFlg?: boolean; changeLaneSkinFlg?: boolean; changeNotesSkinFlg?: boolean;
+  changeSoundEffectSkinFlg?: boolean; changeJudgeSkinFlg?: boolean; changeDirectionalFlickFlg?: boolean; thumbnailFileName?: string;
+}
+export interface MasterCollaborationSkin {
+  collaborationSkinId: number; seasonSpecialId?: number; description?: string;
+  backgroundSkinAssetBundleName?: string; effectSkinAssetBundleName?: string; laneSkinAssetBundleName?: string;
+  notesSkinAssetBundleName?: string; soundEffectSkinAssetBundleName?: string; cutInSkinAssetBundleName?: string;
+  judgeSkinAssetBundleName?: string; directionalFlickAssetBundleName?: string; noteSyncEdgeMargin?: number;
+}
 export interface OfficialMaster {
   masterMusicList: { entries: MasterSong[] };
   masterMusicDifficultyList: { entries: MasterDifficulty[] };
@@ -66,21 +79,13 @@ export interface OfficialMaster {
   masterMusicVideo3dMap: { entries: Record<string, MasterMusicVideo3d> };
   masterMusicVideo3dIdListMap: { entries: Record<string, { entries: number[] }> };
   masterCollaboOriginalMusicPageList?: { entries?: MasterCollaboOriginalMusicPage[] };
+  masterLimitedSkinMap?: { entries?: Record<string, MasterLimitedSkin> };
+  masterCollaborationSkinMap?: { entries?: Record<string, MasterCollaborationSkin> };
 }
 export interface OfficialMasterSnapshot {
   clientVersion: string; dataVersion: string; masterDataVersion: string; master: OfficialMaster;
   /** Fingerprint of the schema the master was decoded with; absent in stores from before it was kept. */
   schema?: string;
-}
-/**
- * The decoding schema for a server (shared schema less its regional omissions). A stored master
- * decoded with another schema lacks or misreads fields, so it counts as changed.
- */
-async function schemaFingerprint(server: OfficialServer): Promise<string> {
-  const omissions = (protocols[server] as { omitSchemaFields?: unknown }).omitSchemaFields ?? null;
-  const text = JSON.stringify({ schema: masterProtocol.schema, omissions });
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
-  return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
 }
 /** AppGetResponse; the fields past the version and status ones are not read here. */
 interface AppVersion {
@@ -90,8 +95,13 @@ interface AppVersion {
 }
 const versionPattern = /^\d+(?:\.\d+){1,5}$/;
 const masterVersionPattern = /^\d+(?:\.\d+){0,5}$/;
-export function validateOfficialMaster(master: OfficialMaster): void {
-  checkOfficialMasterShape(master, "SuiteMasterGetResponse");
+/** Shape against the server's complete schema, then the relations between the decoded tables. */
+export function validateOfficialMaster(master: OfficialMaster, server: OfficialServer): void {
+  checkOfficialMasterShape(master, server, "SuiteMasterGetResponse");
+  validateOfficialMasterRelations(master);
+}
+/** Relations between decoded tables; used alone for a merged master, whose rows were shape-checked per server. */
+export function validateOfficialMasterRelations(master: OfficialMaster): void {
   const fail = (): never => { throw new Error("官方主表结构或关联不完整，保留旧缓存"); };
   if (!master?.masterMusicList?.entries?.length || !Array.isArray(master.masterMusicDifficultyList?.entries)) fail();
   const ids = new Set<number>();
@@ -100,6 +110,8 @@ export function validateOfficialMaster(master: OfficialMaster): void {
   if (!sets || !infos || !large || !medium || !master.masterMusicCategoryInfoTargets?.musicCategoryIdList) fail();
   if (!master.masterMusicJacketMap?.entries || !master.masterBandMap?.entries || !master.masterMusicVideoListMap?.entries
     || !master.masterMusicVideo3dMap?.entries || !master.masterMusicVideo3dIdListMap?.entries) fail();
+  // The limited skin map is keyed by the id each of its rows carries (checked on the CN and JP masters).
+  for (const [key, row] of Object.entries(master.masterLimitedSkinMap?.entries ?? {})) if (row.limitedSkinId !== Number(key)) fail();
   for (const song of master.masterMusicList.entries) {
     if (!Number.isSafeInteger(song.musicId) || song.musicId <= 0 || ids.has(song.musicId)
       || !song.musicTitle || !song.bgmFile || !song.bgmId || !song.jacketImage || !Number.isFinite(song.publishedAt)
@@ -129,15 +141,19 @@ export function validateOfficialMaster(master: OfficialMaster): void {
 }
 
 /** Startup caller owns persistence. Never publish a partially decoded update. */
-export async function refreshOfficialMaster(previous?: OfficialMasterSnapshot, server: OfficialServer = "jp"): Promise<OfficialMasterSnapshot> {
-  let clientVersion = previous?.clientVersion ?? protocols[server].clientVersion;
+/**
+ * Returns the server's master, or the cached one when this server's check is skipped because the client
+ * version is obsolete for it. Each server is decided on its own.
+ */
+export async function refreshOfficialMaster(previous?: OfficialMasterSnapshot, server: OfficialServer = "jp"): Promise<OfficialMasterSnapshot | undefined> {
+  let clientVersion = clientVersions[server];
   const request = async <T>(args: Record<string, string>, stage: string): Promise<T> => {
     try { return await invokeTauriCommand<T>("official_music_request", args); }
     catch (error) { throw new Error(`${server} ${stage}失败：${String(error)}`); }
   };
   const requestVersion = async () => {
     const version = await request<AppVersion>({ clientVersion, server }, "主表版本检查");
-    checkOfficialMasterShape(version, "AppGetResponse", "application");
+    checkOfficialMasterShape(version, server, "AppGetResponse", "application");
     return version;
   };
   let version = await requestVersion();
@@ -145,6 +161,11 @@ export async function refreshOfficialMaster(previous?: OfficialMasterSnapshot, s
     if (!versionPattern.test(version.clientVersion)) throw new Error("原作返回无效客户端版本");
     clientVersion = version.clientVersion;
     version = await requestVersion();
+  }
+  if (version.clientStatus === "obsolete") {
+    appLog("warn", "official.client-version-obsolete", { server, clientVersion, serverClientVersion: version.clientVersion,
+      appStatus: version.appStatus, clientStatus: version.clientStatus });
+    return previous;
   }
   // CN exposes the public master even when the game advertises maintenance.
   // This accepts master reads only, and does not treat maintenance as playable.
@@ -158,14 +179,14 @@ export async function refreshOfficialMaster(previous?: OfficialMasterSnapshot, s
   const schema = await schemaFingerprint(server);
   if (previous && previous.masterDataVersion === version.masterDataVersion && previous.dataVersion === version.dataVersion
     && previous.clientVersion === clientVersion && previous.schema === schema) {
-    validateOfficialMaster(previous.master);
+    validateOfficialMaster(previous.master, server);
     return { ...previous, clientVersion, dataVersion: version.dataVersion };
   }
   if (previous && previous.schema !== schema) appLog("info", "official.master-schema-changed", { server, masterDataVersion: version.masterDataVersion });
   const master = await request<OfficialMaster>({
     clientVersion, dataVersion: version.dataVersion, masterVersion: version.masterDataVersion, server,
   }, "主表下载");
-  validateOfficialMaster(master);
+  validateOfficialMaster(master, server);
   appLog("info", "official.master-update-validated", { server, masterDataVersion: version.masterDataVersion, songs: master.masterMusicList.entries.length });
   return { clientVersion, dataVersion: version.dataVersion, masterDataVersion: version.masterDataVersion, master, schema };
 }

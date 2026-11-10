@@ -23,7 +23,8 @@ function publish() {
 export const downloadActivity = {
   /** A transport opens the screen; the enclosing preparation closes it, including retry gaps. */
   prepare() {
-    const preparation = { downloading: transfers.size > 0 };
+    // Background transfers (revalidation) only report progress; they never make a preparation a download.
+    const preparation = { downloading: [...transfers.values()].some(value => !value.background) };
     preparations.add(preparation); publish();
     return () => { if (preparations.delete(preparation)) publish(); };
   },

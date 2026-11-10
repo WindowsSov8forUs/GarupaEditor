@@ -18,9 +18,23 @@ export function isTauriRuntimeEnvironment(): boolean {
   return false;
 }
 
+/** Network commands that can report their transfer as background (progress only, never the download screen). */
+const BACKGROUND_CAPABLE = new Set(["bestdori_fetch_json", "bestdori_fetch_json_conditional", "bestdori_fetch_binary", "official_music_request"]);
+let backgroundDepth = 0;
+/**
+ * Runs work whose transfers are background revalidation: while it runs, the network commands above are sent as
+ * background transfers. A user-initiated download that overlaps the window is reported the same way.
+ */
+export async function inBackgroundNetwork<T>(action: () => Promise<T>): Promise<T> {
+  backgroundDepth += 1;
+  try { return await action(); }
+  finally { backgroundDepth -= 1; }
+}
+
 export async function invokeTauriCommand<T>(command: string, args?: Record<string, unknown>): Promise<T> {
+  const effective = backgroundDepth > 0 && BACKGROUND_CAPABLE.has(command) ? { ...args, background: true } : args;
   try {
-    return await invoke<T>(command, args);
+    return await invoke<T>(command, effective);
   } catch (error) {
     if ((command === "bestdori_fetch_json" || command === "bestdori_fetch_binary" || command === "bestdori_fetch_binary_background")
       && error !== null && typeof error === "object" && "message" in error && typeof error.message === "string") {

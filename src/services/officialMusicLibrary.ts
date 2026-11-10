@@ -3,16 +3,19 @@ import { fetchOfficialSourceMedia, OFFICIAL_SERVER_ORDER, isOfficialServer, avai
 import { fetchBestdoriSongIndex, revalidateBestdoriBandsAll1, fetchBestdoriFileBlob, buildBestdoriSongJacketUrl, type StoredBestdoriJson,
   type BestdoriBandsAll1, type BestdoriPerServerValue, type BestdoriSongCommon, type BestdoriSongDifficultyIndex,
   type BestdoriSongIndex, type BestdoriSongServerName } from "./bestdori/api";
-import { refreshOfficialMaster, validateOfficialMaster, type OfficialMasterSnapshot, type MasterSong,
+import { refreshOfficialMaster, validateOfficialMaster, validateOfficialMasterRelations, type OfficialMasterSnapshot, type MasterSong,
   type MasterDifficulty, type MasterVideo } from "./officialMusicMaster";
 import { parseBestdoriBandsAll1, parseBestdoriSongCommon, parseBestdoriSongIndex, parsePerServer } from "./bestdori/songParsing";
 import { checkOfficialMasterRow } from "./officialMasterShape";
+import { limitedSkinsFromMasters } from "./officialLimitedSkins";
+import { setOfficialLimitedSkins } from "../simulator/public/settings";
 import { ResponseShapeError, arrayOf, finite, idKey, integer, nullable, oneOf, optional, record, recordOf, string, type Reader } from "./responseShape";
 import type { ApplicationResourceManager } from "../resources/applicationResourceManager";
 import type { ResourceCatalogProvider } from "../resources/backend";
 import { createResourceRef, resourceAccepted, resourceRejected, type NetworkResourceDescriptor,
   type ResourceConsumerLease, type ResourceResult } from "../resources/contracts";
-import { appLog } from "../logging/applicationLogger";
+import { appLog, startOperation } from "../logging/applicationLogger";
+import { inBackgroundNetwork } from "./bestdori/transport";
 import { detectUserMediaType } from "../resources/userMediaFormat";
 
 export const OFFICIAL_DIFFICULTIES = ["EASY", "NORMAL", "HARD", "EXPERT", "SPECIAL"] as const;
@@ -53,10 +56,12 @@ export function parseLibraryMetadata(value: unknown): LibraryMetadata {
   const stored = record(value, "catalog");
   if (stored.version !== 2) throw new ResponseShapeError("catalog.version", "2");
   const servers = (v: unknown, p: string) => recordOf(v, p, (item, itemPath) => oneOf(item, itemPath, OFFICIAL_SERVER_ORDER));
-  const snapshot: Reader<OfficialMasterSnapshot> = (v, p) => {
+  // A server's own snapshot is checked against that server's schema; the merged official one is not
+  // a single server's master, so only its relations are checked (its rows were checked per server).
+  const snapshot = (validate: (master: OfficialMasterSnapshot["master"]) => void): Reader<OfficialMasterSnapshot> => (v, p) => {
     const item = record(v, p);
     const master = item.master as OfficialMasterSnapshot["master"];
-    validateOfficialMaster(master);
+    validate(master);
     return { clientVersion: string(item.clientVersion, `${p}.clientVersion`), dataVersion: string(item.dataVersion, `${p}.dataVersion`),
       masterDataVersion: string(item.masterDataVersion, `${p}.masterDataVersion`), master,
       schema: optional(item.schema, `${p}.schema`, string) };
@@ -77,14 +82,14 @@ export function parseLibraryMetadata(value: unknown): LibraryMetadata {
       musicDataType: string(item.musicDataType, `${p}.musicDataType`), howToGet: text(item.howToGet, `${p}.howToGet`),
       difficulty: recordOf(item.difficulty, `${p}.difficulty`, (row, rowPath) => {
         const { publishedAt, ...master } = record(row, rowPath);
-        checkOfficialMasterRow(master, "MasterMusicDifficultyGetResponse", rowPath);
+        checkOfficialMasterRow(master, "jp", "MasterMusicDifficultyGetResponse", rowPath);
         return { ...master as Omit<MasterDifficulty, "publishedAt">, musicId: integer(master.musicId, `${rowPath}.musicId`),
           difficulty: string(master.difficulty, `${rowPath}.difficulty`), playLevel: integer(master.playLevel, `${rowPath}.playLevel`),
           publishedAt: text(publishedAt, `${rowPath}.publishedAt`) };
       }, (key, keyPath) => oneOf(key, keyPath, ["0", "1", "2", "3", "4"])),
       musicVideos: recordOf(item.musicVideos, `${p}.musicVideos`, (row, rowPath) => {
         const { startAt, endAt, ...master } = record(row, rowPath);
-        checkOfficialMasterRow(master, "MasterMusicVideo", rowPath);
+        checkOfficialMasterRow(master, "jp", "MasterMusicVideo", rowPath);
         return { ...master as Omit<MasterVideo, "startAt" | "endAt">, musicId: integer(master.musicId, `${rowPath}.musicId`),
           assetBundleName: string(master.assetBundleName, `${rowPath}.assetBundleName`),
           startAt: text(startAt, `${rowPath}.startAt`), endAt: text(endAt, `${rowPath}.endAt`) };
@@ -95,12 +100,15 @@ export function parseLibraryMetadata(value: unknown): LibraryMetadata {
     version: 2,
     masters: optional(stored.masters, "catalog.masters", (v, p) => {
       const result: OfficialMasterSources = {};
-      for (const [server, item] of Object.entries(record(v, p))) result[oneOf(server, `${p} 的键`, OFFICIAL_SERVER_ORDER)] = snapshot(item, `${p}.${server}`);
+      for (const [server, item] of Object.entries(record(v, p))) {
+        const key = oneOf(server, `${p} 的键`, OFFICIAL_SERVER_ORDER);
+        result[key] = snapshot(master => validateOfficialMaster(master, key))(item, `${p}.${server}`);
+      }
       return result;
     }),
     songServers: optional(stored.songServers, "catalog.songServers", servers),
     difficultyServers: optional(stored.difficultyServers, "catalog.difficultyServers", servers),
-    official: snapshot(stored.official, "catalog.official"),
+    official: snapshot(validateOfficialMasterRelations)(stored.official, "catalog.official"),
     index: parseBestdoriSongIndex(stored.index, "catalog.index"),
     songs: recordOf(stored.songs, "catalog.songs", song, idKey),
     bands: parseBestdoriBandsAll1(stored.bands, "catalog.bands"),
@@ -116,7 +124,7 @@ export function parseLibraryMetadata(value: unknown): LibraryMetadata {
       const media = record(v, p);
       return { jackets: locations(media.jackets, `${p}.jackets`), previews: locations(media.previews, `${p}.previews`),
         audio: locations(media.audio, `${p}.audio`), failures: optional(media.failures, `${p}.failures`, (f, fp) => arrayOf(f, fp, string)),
-        folders: optional(media.folders, `${p}.folders`, urls) };
+        folders: optional(media.folders, `${p}.folders`, urls), infoEtags: optional(media.infoEtags, `${p}.infoEtags`, urls) };
     }),
   };
 }
@@ -190,17 +198,21 @@ export function getOfficialMusicLibrary(): OfficialLibrary {
   return library;
 }
 export function bootstrapOfficialMusic(manager: ApplicationResourceManager, progress: (ratio: number) => void = () => {}) {
-  return pending ??= initialize(manager, progress).catch(error => {
+  return pending ??= initialize(manager, progress).catch((error): Initialized => {
     appLog("error", "official.startup-failed", { error });
-    return { songs: [], metadata: null, lease: null, error: String(error), mediaFailures: [] };
-  }).then(async result => {
+    return { library: { songs: [], metadata: null, lease: null, error: String(error), mediaFailures: [] } };
+  }).then(async ({ library: result, revalidate }) => {
     if (library?.lease && library.lease !== result.lease) await library.lease.release();
     library = result;
     if (result.error || result.mediaFailures.length) pending = undefined;
+    // A library opened from the cache revalidates after startup has been released.
+    if (revalidate) void revalidate();
     return result;
   });
 }
-async function initialize(manager: ApplicationResourceManager, progress: (ratio: number) => void): Promise<OfficialLibrary> {
+/** The startup library, and for a cached one the background revalidation that may replace it. */
+interface Initialized { library: OfficialLibrary; revalidate?: () => Promise<void> }
+async function initialize(manager: ApplicationResourceManager, progress: (ratio: number) => void): Promise<Initialized> {
   let previous: LibraryMetadata | undefined;
   const metadataDescriptor = descriptor("catalog-v3", "https://api.garupa.jp/api/application", "json");
   let metadata: LibraryMetadata | undefined;
@@ -232,15 +244,18 @@ async function initialize(manager: ApplicationResourceManager, progress: (ratio:
             if (result.status === "rejected") throw result.reason;
             return result.value;
           };
-          const masters = Object.fromEntries(unwrap(results[0]).map(unwrap)) as Record<MasterServer, OfficialMasterSnapshot>;
+          const masters = Object.fromEntries(unwrap(results[0]).map(unwrap).flatMap(([server, snapshot]) =>
+            snapshot ? [[server, snapshot]] : [])) as Partial<Record<MasterServer, OfficialMasterSnapshot>>;
           const indexSource = unwrap(results[1]), bandsSource = unwrap(results[2]), sourceMedia = unwrap(results[3]);
           appLog("info", "official.bestdori-revalidated", { indexNotModified: indexSource.notModified, bandsNotModified: bandsSource.notModified });
           const index = indexSource.value, bands = structuredClone(bandsSource.value);
-          const { jp, cn } = masters;
+          const { cn } = masters;
+          const base = OFFICIAL_SERVER_ORDER.map(server => masters[server]).find(snapshot => snapshot !== undefined);
+          if (!base) throw new Error("没有任何服务器的官方主数据可用（版本过旧已跳过且无缓存）");
           const capturedAt = Date.now();
           const merged = mergeOfficialMusic(masters, capturedAt);
-          const official = { ...jp, master: merged.master };
-          const cnSongs = new Map(cn.master.masterMusicList.entries.map(song => [song.musicId, song]));
+          const official = { ...base, master: merged.master };
+          const cnSongs = new Map((cn?.master.masterMusicList.entries ?? []).map(song => [song.musicId, song]));
           if (!index || !bands) throw new Error("官方曲库响应格式无效");
           const songs: Record<string, OfficialSongInfo> = {};
           const localize = (value: string | undefined, values?: BestdoriPerServerValue<string>, server: MasterServer = "jp"): BestdoriPerServerValue<string> => {
@@ -250,7 +265,7 @@ async function initialize(manager: ApplicationResourceManager, progress: (ratio:
           };
           for (const band of Object.values(official.master.masterBandMap.entries)) {
             let names = bands[String(band.bandId)]?.bandName;
-            for (const server of OFFICIAL_SERVER_ORDER) names = localize(masters[server].master.masterBandMap.entries[String(band.bandId)]?.bandName, names, server);
+            for (const server of OFFICIAL_SERVER_ORDER) names = localize(masters[server]?.master.masterBandMap.entries[String(band.bandId)]?.bandName, names, server);
             bands[String(band.bandId)] = { ...bands[String(band.bandId)], bandName: names! };
           }
           const difficulties = new Map<number, typeof official.master.masterMusicDifficultyList.entries>();
@@ -338,9 +353,44 @@ async function initialize(manager: ApplicationResourceManager, progress: (ratio:
       finally { await lease.release(); }
     } catch (error) { appLog("warn", "official.catalog-cache-invalid", { error }); }
   }
-  let error = "";
-  try { accepted(await manager.ensureAvailable(metadataDescriptor.ref, { refresh: true })); error = refreshFailure; }
-  catch (failure) { error = String(failure); metadata = previous; appLog("warn", "official.catalog-offline", { error }); }
+  /** One network revalidation through the provider; offline falls back to the cache it started from. */
+  const refresh = async (): Promise<{ metadata: LibraryMetadata | undefined; error: string }> => {
+    metadata = undefined; refreshFailure = "";
+    try {
+      accepted(await manager.ensureAvailable(metadataDescriptor.ref, { refresh: true }));
+      return { metadata, error: refreshFailure };
+    } catch (failure) {
+      const error = String(failure);
+      appLog("warn", "official.catalog-offline", { error });
+      return { metadata: previous, error };
+    }
+  };
+  if (previous) {
+    // The cached library opens at once. Revalidation runs as background transfers (no download screen) and
+    // replaces the library when it finishes; pages opened after that read the new one.
+    const cachedPrevious = previous;
+    const opened = await buildLibrary(manager, cachedPrevious, "", progress);
+    return { library: opened, revalidate: () => inBackgroundNetwork(async () => {
+      const finish = startOperation("official.background-refresh");
+      try {
+        const refreshed = await refresh();
+        if (!refreshed.metadata || refreshed.metadata === cachedPrevious) { finish(undefined, { changed: false, error: refreshed.error }); return; }
+        const next = await buildLibrary(manager, refreshed.metadata, refreshed.error, () => {});
+        // The opened library's lease stays held: a page may still show media from it this session.
+        library = next;
+        finish(undefined, { changed: true, songs: next.songs.length, error: refreshed.error });
+      } catch (error) { finish(error); }
+    }) };
+  }
+  const refreshed = await refresh();
+  return { library: await buildLibrary(manager, refreshed.metadata, refreshed.error, progress) };
+}
+
+/** Songs, media bindings and the limited skin list built from one library metadata. */
+async function buildLibrary(manager: ApplicationResourceManager, metadata: LibraryMetadata | undefined, error: string,
+  progress: (ratio: number) => void): Promise<OfficialLibrary> {
+  // The limited skin list is read from the same masters the library carries, online or from the cache.
+  setOfficialLimitedSkins(limitedSkinsFromMasters(metadata?.masters ?? {}));
   if (!metadata) return { songs: [], metadata: null, lease: null, error, mediaFailures: [] };
   for (const failure of metadata.sourceMedia?.failures ?? []) {
     appLog("warn", "official.media-catalog-incomplete", { failure });

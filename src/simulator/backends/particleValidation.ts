@@ -620,7 +620,8 @@ function isCurrentModuleProfile(name: string, value: unknown): boolean {
         "startRotation", "startRotationX", "startRotationY", "gravityModifier"]
         .every((key) => isMinMaxCurve(value[key])) && isConstantCurve(value.gravityModifier) &&
         isMinMaxGradient(value.startColor) && isPositiveInteger(value.maxNumParticles) && typeof value.size3D === "boolean" &&
-        typeof value.rotation3D === "boolean" && value.randomizeRotationDirection === 0 &&
+        typeof value.rotation3D === "boolean" && isFloat32(value.randomizeRotationDirection) &&
+        value.randomizeRotationDirection >= 0 && value.randomizeRotationDirection <= 1 &&
         value.gravitySource === 0 && isZeroVector3(value.customEmitterVelocity);
     case "EmissionModule":
       return isCurrentRateCurve(value.rateOverTime) && isZeroCurve(value.rateOverDistance) &&

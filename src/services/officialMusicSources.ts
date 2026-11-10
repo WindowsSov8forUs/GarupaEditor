@@ -1,4 +1,4 @@
-import { fetchBestdoriJson, type BestdoriSongServerName } from "./bestdori/api";
+import { fetchBestdoriJson, fetchBestdoriJsonIfChanged, type BestdoriSongServerName } from "./bestdori/api";
 import { explorerFolder, parseBestdoriExplorerInfo, parseBestdoriFileList } from "./bestdori/explorerParsing";
 
 export const OFFICIAL_SERVER_ORDER = ["jp", "cn", "tw", "en"] as const;
@@ -24,12 +24,14 @@ export interface OfficialSourceMedia {
   audio: Record<string, OfficialMediaLocation[]>;
   failures?: string[];
   folders?: Record<string, string>;
+  /** ETag of each region's asset tree (_info.json); an unchanged tree reuses that region's earlier result. */
+  infoEtags?: Record<string, string>;
 }
 
 /** Resolve provider filenames independently in each region; never derive jacket
  * bundles from song IDs or let a later region overwrite a higher-priority one. */
 export async function fetchOfficialSourceMedia(previous?: OfficialSourceMedia): Promise<OfficialSourceMedia> {
-  const result: OfficialSourceMedia = { jackets: {}, previews: {}, audio: {}, failures: [], folders: { ...previous?.folders } };
+  const result: OfficialSourceMedia = { jackets: {}, previews: {}, audio: {}, failures: [], folders: { ...previous?.folders }, infoEtags: {} };
   const retain = (server: OfficialServer, prefix = "") => {
     for (const family of ["jackets", "previews", "audio"] as const) {
       for (const [name, locations] of Object.entries(previous?.[family] ?? {})) {
@@ -46,7 +48,16 @@ export async function fetchOfficialSourceMedia(previous?: OfficialSourceMedia): 
     if (family === undefined) {
       const endpoint = `/api/explorer/${server}/assets/_info.json`;
       try {
-        const assets = parseBestdoriExplorerInfo(await fetchBestdoriJson<unknown>(endpoint));
+        // Only a region whose earlier scan completed may reuse it on 304; one with failures scans again.
+        const reusable = previous?.infoEtags?.[server] !== undefined && !(previous.failures ?? []).some(value => value.includes(`/api/explorer/${server}/`));
+        const info = await fetchBestdoriJsonIfChanged(endpoint, reusable ? previous!.infoEtags![server] : undefined, `bestdori ${server} assets info`);
+        if (info.notModified) {
+          retain(server);
+          result.infoEtags![server] = info.etag;
+          return;
+        }
+        if (info.etag) result.infoEtags![server] = info.etag;
+        const assets = parseBestdoriExplorerInfo(info.value);
         const folders = { musicjacket: explorerFolder(assets, "musicjacket"), musicscore: explorerFolder(assets, "musicscore") };
         const sound = explorerFolder(assets, "sound");
         if (!folders.musicjacket || !folders.musicscore || !sound) throw new Error("官方资源目录缺少 musicjacket、musicscore 或 sound");

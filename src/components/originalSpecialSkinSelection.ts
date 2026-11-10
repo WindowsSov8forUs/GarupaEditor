@@ -1,6 +1,6 @@
 import profile from "../data/originalSpecialSkinProfile.json";
 import { ORIGINAL_WORDING } from "./originalPrefabModel";
-import { CURRENT_SPECIAL_SKINS, findCurrentSpecialSkin, type CurrentSpecialSkinMaster,
+import { CURRENT_COLLABO_SKINS, currentOfficialLimitedSkins, findCurrentSpecialSkin, isOfficialLimitedSkin, type CurrentSpecialSkinMaster,
   type OriginalSkinSpecialSelection, type OriginalSkinSpecialComponentStates } from "../simulator/public/settings";
 
 export type SelectedSpecialSkin = Exclude<OriginalSkinSpecialSelection, { kind: "none" }>;
@@ -20,18 +20,16 @@ export function selectSpecialSkin(master: CurrentSpecialSkinMaster): SelectedSpe
     : { kind: "collabo", seasonSpecialId: master.selectionId, components };
 }
 export function specialSkinName(master: CurrentSpecialSkinMaster): string {
-  if (master.kind === "limited") {
-    const row = profile.limited.find(value => value.limitedSkinId === master.selectionId)!;
-    return row.limitedSkinNameCn ?? row.limitedSkinName;
-  }
+  if (isOfficialLimitedSkin(master)) return master.name;
   // Keep identities in selection state, not in the displayed source name.
   const season = profile.collaboration.find(row => row.seasonSpecialId === master.selectionId)!;
   return season.description;
 }
-export const selectableSpecialSkins = [
-  ...profile.limited.slice().sort((a, b) => a.seq - b.seq).map(row => findCurrentSpecialSkin("limited", row.limitedSkinId)!),
-  ...CURRENT_SPECIAL_SKINS.filter(row => row.kind === "collabo" && row.selectable),
-].filter(row => row.selectable);
+/** Limited skins from the official masters in their sequence, then the collaborations. */
+export function selectableSpecialSkins(): readonly CurrentSpecialSkinMaster[] {
+  const limited = currentOfficialLimitedSkins().slice().sort((a, b) => a.seq - b.seq);
+  return [...limited, ...CURRENT_COLLABO_SKINS].filter(row => row.selectable);
+}
 
 export const specialSkinWording = (key: string): string =>
   (profile.wording as Record<string, string>)[key] ?? ORIGINAL_WORDING[key] ?? key;
