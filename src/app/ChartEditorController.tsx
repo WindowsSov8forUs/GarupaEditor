@@ -297,6 +297,41 @@ type CopiedChartPayload = {
 
 const UNDO_STACK_LIMIT = 200;
 
+/** Field values equal; edit rows are flat apart from a chain's noteIds, compared element by element. */
+function sameField(left: unknown, right: unknown): boolean {
+  if (Object.is(left, right)) return true;
+  return Array.isArray(left) && Array.isArray(right) && left.length === right.length
+    && left.every((value, index) => Object.is(value, right[index]));
+}
+/** Rows equal field by field; a field that is absent and one that is undefined are the same. */
+function sameRow(left: Record<string, unknown>, right: Record<string, unknown>): boolean {
+  if (left === right) return true;
+  for (const key of new Set([...Object.keys(left), ...Object.keys(right)])) {
+    if (!sameField(left[key], right[key])) return false;
+  }
+  return true;
+}
+/**
+ * The same rows, whatever their order: rows with ids are matched by id (the chart does not depend on the
+ * order of its note, chain or event lists), other rows by position.
+ */
+function sameRows(a: readonly object[], b: readonly object[]): boolean {
+  if (a === b) return true;
+  if (a.length !== b.length) return false;
+  const rows = (list: readonly object[]) => list as readonly Record<string, unknown>[];
+  if (rows(a).every((row) => typeof row.id === "string" || typeof row.id === "number")) {
+    const byId = new Map(rows(b).map((row) => [row.id, row]));
+    if (byId.size !== b.length) return false;
+    return rows(a).every((row) => { const other = byId.get(row.id); return other !== undefined && sameRow(row, other); });
+  }
+  return rows(a).every((row, index) => sameRow(row, rows(b)[index]!));
+}
+/** Whether two edit states hold the same chart content, whatever their array identities. */
+function sameUndoContent(a: EditorUndoSnapshot, b: EditorUndoSnapshot): boolean {
+  return sameRows(a.notes, b.notes) && sameRows(a.slideChains, b.slideChains) && sameRows(a.bpmEvents, b.bpmEvents)
+    && (a.timingGroups === b.timingGroups || JSON.stringify(a.timingGroups) === JSON.stringify(b.timingGroups));
+}
+
 type StatusMessageRoute =
   | { channel: "ignore" }
   | { channel: "status"; message: string }
@@ -755,17 +790,9 @@ function ChartEditorController() {
   const undoStackRef = useRef<EditorUndoSnapshot[]>([]);
   const redoStackRef = useRef<EditorUndoSnapshot[]>([]);
   const isUndoRestoringRef = useRef(false);
-  const undoCaptureLockedRef = useRef(false);
-  const undoCaptureUnlockScheduledRef = useRef(false);
+  /** The committed edit state when the current operation's first edit was requested; one undo step per commit. */
+  const pendingUndoSourcesRef = useRef<EditorUndoSnapshot | null>(null);
   const [undoVersion, setUndoVersion] = useState(0);
-
-  useEffect(() => {
-    notesRef.current = notes;
-    slideChainsRef.current = slideChains;
-    bpmEventsRef.current = bpmEvents;
-    timingGroupsRef.current = timingGroups;
-    svEventsRef.current = svEvents;
-  }, [bpmEvents, notes, slideChains, svEvents, timingGroups]);
 
   const cloneUndoSnapshot = useCallback((snapshot: EditorUndoSnapshot): EditorUndoSnapshot => ({
     notes: snapshot.notes.map((note) => ({ ...note })),
@@ -783,34 +810,53 @@ function ChartEditorController() {
     })
   ), [cloneUndoSnapshot]);
 
-  const unlockUndoCaptureInMicrotask = useCallback(() => {
-    if (undoCaptureUnlockScheduledRef.current) {
+  /**
+   * Called by an edit setter when it is called (never inside a state updater, which React may run late or more
+   * than once): remembers the committed state the operation starts from. The step is recorded at the commit.
+   */
+  const requestUndoCapture = useCallback(() => {
+    if (isUndoRestoringRef.current || pendingUndoSourcesRef.current) {
       return;
     }
-    undoCaptureUnlockScheduledRef.current = true;
-    queueMicrotask(() => {
-      undoCaptureUnlockScheduledRef.current = false;
-      undoCaptureLockedRef.current = false;
-    });
+    pendingUndoSourcesRef.current = {
+      notes: notesRef.current,
+      slideChains: slideChainsRef.current,
+      bpmEvents: bpmEventsRef.current,
+      timingGroups: timingGroupsRef.current,
+    };
   }, []);
 
-  const pushUndoSnapshotIfNeeded = useCallback(() => {
-    if (isUndoRestoringRef.current || undoCaptureLockedRef.current) {
+  useEffect(() => {
+    notesRef.current = notes;
+    slideChainsRef.current = slideChains;
+    bpmEventsRef.current = bpmEvents;
+    timingGroupsRef.current = timingGroups;
+    svEventsRef.current = svEvents;
+    // Every edit requested since the last commit is one step; edits that changed nothing record none.
+    const sources = pendingUndoSourcesRef.current;
+    if (!sources) {
       return;
     }
-    const nextSnapshot = buildCurrentUndoSnapshot();
+    // Derived updates (normalisations after an edit) may replace arrays without changing their content; such a
+    // commit is not an edit, so the pending start state stays for the next real change.
+    if (sameUndoContent(sources, { notes, slideChains, bpmEvents, timingGroups })) {
+      return;
+    }
+    pendingUndoSourcesRef.current = null;
     const stack = undoStackRef.current;
-    stack.push(nextSnapshot);
+    // A start state equal to the last recorded one would make an undo that changes nothing.
+    const top = stack[stack.length - 1];
+    if (top && sameUndoContent(top, sources)) {
+      appLog("info", "editor.undo-duplicate-step-skipped", {});
+      return;
+    }
+    stack.push(cloneUndoSnapshot(sources));
     if (stack.length > UNDO_STACK_LIMIT) {
       stack.splice(0, stack.length - UNDO_STACK_LIMIT);
     }
-    if (redoStackRef.current.length > 0) {
-      redoStackRef.current = [];
-    }
-    undoCaptureLockedRef.current = true;
-    unlockUndoCaptureInMicrotask();
+    redoStackRef.current = [];
     setUndoVersion((previous) => previous + 1);
-  }, [buildCurrentUndoSnapshot, unlockUndoCaptureInMicrotask]);
+  }, [bpmEvents, cloneUndoSnapshot, notes, slideChains, svEvents, timingGroups]);
 
   const resolveStateAction = useCallback(<T,>(
     action: SetStateAction<T>,
@@ -837,6 +883,7 @@ function ChartEditorController() {
   }, [resolveStateAction]);
 
   const setNotes = useCallback((nextAction: SetStateAction<ChartNote[]>) => {
+    requestUndoCapture();
     setNotesState((previous) => {
       const rawNext = resolveStateAction(nextAction, previous);
       const next = isHabahiroEnabled
@@ -846,22 +893,17 @@ function ChartEditorController() {
           inferPreferredHabahiroSlideWidths(previous, rawNext, slideChainsRef.current),
         )
         : rawNext;
-      if (!Object.is(previous, next)) {
-        pushUndoSnapshotIfNeeded();
-      }
       return next;
     });
-  }, [isHabahiroEnabled, pushUndoSnapshotIfNeeded, resolveStateAction]);
+  }, [isHabahiroEnabled, requestUndoCapture, resolveStateAction]);
 
   const setSlideChains = useCallback((nextAction: SetStateAction<SlideChain[]>) => {
+    requestUndoCapture();
     setSlideChainsState((previous) => {
       const next = resolveStateAction(nextAction, previous);
-      if (!Object.is(previous, next)) {
-        pushUndoSnapshotIfNeeded();
-      }
       return next;
     });
-  }, [pushUndoSnapshotIfNeeded, resolveStateAction]);
+  }, [requestUndoCapture, resolveStateAction]);
 
   useEffect(() => {
     if (skipProjectWidthAdjustmentRef.current) { skipProjectWidthAdjustmentRef.current = false; return; }
@@ -872,35 +914,29 @@ function ChartEditorController() {
   }, [isHabahiroEnabled, slideChains]);
 
   const setBpmEvents = useCallback((nextAction: SetStateAction<ChartBpmEvent[]>) => {
+    requestUndoCapture();
     setBpmEventsState((previous) => {
       const next = resolveStateAction(nextAction, previous);
-      if (!Object.is(previous, next)) {
-        pushUndoSnapshotIfNeeded();
-      }
       return next;
     });
-  }, [pushUndoSnapshotIfNeeded, resolveStateAction]);
+  }, [requestUndoCapture, resolveStateAction]);
 
   const setTimingGroups = useCallback((nextAction: SetStateAction<ChartTimingGroupMap>) => {
+    requestUndoCapture();
     setTimingGroupsState((previous) => {
       const next = ensureTimingGroups(resolveStateAction(nextAction, previous));
-      if (!Object.is(previous, next)) {
-        pushUndoSnapshotIfNeeded();
-      }
       return next;
     });
-  }, [pushUndoSnapshotIfNeeded, resolveStateAction]);
+  }, [requestUndoCapture, resolveStateAction]);
 
   const setSvEvents = useCallback((nextAction: SetStateAction<ChartSvEvent[]>) => {
+    requestUndoCapture();
     setTimingGroupsState((previousGroups) => {
       const previous = flattenTimingGroups(previousGroups);
       const next = resolveStateAction(nextAction, previous);
-      if (!Object.is(previous, next)) {
-        pushUndoSnapshotIfNeeded();
-      }
       return buildTimingGroupsFromSvEvents(next);
     });
-  }, [pushUndoSnapshotIfNeeded, resolveStateAction]);
+  }, [requestUndoCapture, resolveStateAction]);
 
   const timingGroupIds = useMemo(() => {
     const ids = Object.keys(ensureTimingGroups(timingGroups));
@@ -1130,14 +1166,23 @@ function ChartEditorController() {
 
   const undoLastOperation = useCallback((): boolean => {
     const stack = undoStackRef.current;
-    const snapshot = stack.pop();
+    // A recorded state equal to the current one would change nothing; it is dropped rather than spending a click.
+    const current = buildCurrentUndoSnapshot();
+    let snapshot = stack.pop();
+    let skipped = 0;
+    while (snapshot && sameUndoContent(snapshot, current)) {
+      skipped += 1;
+      snapshot = stack.pop();
+    }
+    if (skipped > 0) appLog("info", "editor.undo-noop-steps-skipped", { skipped });
     if (!snapshot) {
+      setUndoVersion((previous) => previous + 1);
       setStatusMessage("暂无可撤回操作。");
       return false;
     }
 
     isUndoRestoringRef.current = true;
-    undoCaptureLockedRef.current = true;
+    pendingUndoSourcesRef.current = null;
     const currentSnapshot = buildCurrentUndoSnapshot();
     redoStackRef.current.push(currentSnapshot);
     if (redoStackRef.current.length > UNDO_STACK_LIMIT) {
@@ -1158,21 +1203,29 @@ function ChartEditorController() {
 
     queueMicrotask(() => {
       isUndoRestoringRef.current = false;
-      undoCaptureLockedRef.current = false;
     });
     return true;
   }, [buildCurrentUndoSnapshot, setStatusMessage]);
 
   const redoLastOperation = useCallback((): boolean => {
     const stack = redoStackRef.current;
-    const snapshot = stack.pop();
+    // A recorded state equal to the current one would change nothing; it is dropped rather than spending a click.
+    const current = buildCurrentUndoSnapshot();
+    let snapshot = stack.pop();
+    let skipped = 0;
+    while (snapshot && sameUndoContent(snapshot, current)) {
+      skipped += 1;
+      snapshot = stack.pop();
+    }
+    if (skipped > 0) appLog("info", "editor.redo-noop-steps-skipped", { skipped });
     if (!snapshot) {
+      setUndoVersion((previous) => previous + 1);
       setStatusMessage("暂无可重做操作。");
       return false;
     }
 
     isUndoRestoringRef.current = true;
-    undoCaptureLockedRef.current = true;
+    pendingUndoSourcesRef.current = null;
     const currentSnapshot = buildCurrentUndoSnapshot();
     undoStackRef.current.push(currentSnapshot);
     if (undoStackRef.current.length > UNDO_STACK_LIMIT) {
@@ -1193,7 +1246,6 @@ function ChartEditorController() {
 
     queueMicrotask(() => {
       isUndoRestoringRef.current = false;
-      undoCaptureLockedRef.current = false;
     });
     return true;
   }, [buildCurrentUndoSnapshot, setStatusMessage]);
@@ -2889,6 +2941,8 @@ function ChartEditorController() {
     setSelectedSvEventId,
     setSelectedLongLineSegmentId,
     setSlideChains,
+    normalizeSlideChains: setSlideChainsState,
+    normalizeNotes: setNotesState,
     setNotes,
     slideRoleByNoteId,
     noteById,
@@ -3072,7 +3126,7 @@ function ChartEditorController() {
     setBpmEventsState(next.chart.bpmEvents); setTimingGroupsState(next.chart.timingGroups);
     setChartMediaResources(next.mediaRefs); setAudioFileName(next.audioFileName); setAudioDurationSec(next.audioDurationSec);
     setToolBpmValue(next.metadata.bpm); clearAllSelections();
-    undoStackRef.current = []; redoStackRef.current = []; setUndoVersion(v => v + 1);
+    undoStackRef.current = []; redoStackRef.current = []; pendingUndoSourcesRef.current = null; setUndoVersion(v => v + 1);
   }, [resourceManager, clearAllSelections]);
 
   const {
