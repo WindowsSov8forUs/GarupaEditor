@@ -20,6 +20,8 @@ export function useSelectionAndEditorSync(params: any) {
     setSelectedSvEventId,
     setSelectedLongLineSegmentId,
     setSlideChains,
+    normalizeSlideChains,
+    normalizeNotes,
     setNotes,
     slideRoleByNoteId,
     noteById,
@@ -529,7 +531,8 @@ export function useSelectionAndEditorSync(params: any) {
 
   useEffect(() => {
     const existing = new Set(allNotes.map((note: ChartNote) => note.id));
-    setSlideChains((previous: any[]) => {
+    // Derived cleanup after notes change: it belongs to the edit that changed the notes, not a step of its own.
+    normalizeSlideChains((previous: any[]) => {
       if (previous.length === 0) {
         return previous;
       }
@@ -573,11 +576,13 @@ export function useSelectionAndEditorSync(params: any) {
       }
       return next;
     });
-  }, [allNotes, setSlideBuildState, setSlideChains, slideBuildRef]);
+  }, [allNotes, normalizeSlideChains, setSlideBuildState, slideBuildRef]);
 
   useEffect(() => {
     const slideNoteIdSet = new Set(slideChains.flatMap((chain: any) => chain.noteIds));
-    setNotes((previous: ChartNote[]) => {
+    // Derived cleanup after chains change: removing orphaned hidden points belongs to the edit that orphaned
+    // them, not a step of its own (undoing such a step would restore points this cleanup removes at once).
+    normalizeNotes((previous: ChartNote[]) => {
       let changed = false;
       const next = previous.filter((note) => {
         if (note.type === "hidden" && !slideNoteIdSet.has(note.id)) {
@@ -588,7 +593,7 @@ export function useSelectionAndEditorSync(params: any) {
       });
       return changed ? next : previous;
     });
-  }, [setNotes, slideChains]);
+  }, [normalizeNotes, slideChains]);
 
   useEffect(() => {
     if (!selectedBpmEventId || selectedBpmEventId === BASE_BPM_LINE_ID) {
