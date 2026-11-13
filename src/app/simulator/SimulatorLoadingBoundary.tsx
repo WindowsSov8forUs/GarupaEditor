@@ -3,7 +3,7 @@ import type { SimulatorResultPreparation } from "../../simulator/host/resultPres
 import { originalLoading } from "../../components/originalLoadingState";
 import { downloadActivity } from "../../services/downloadActivity";
 import { usePresentRoute } from "../RoutePresentation";
-const preparationStages = ["module", "media", "platform", "availability", "lease", "rendering", "presentation"] as const;
+const preparationStages = ["module", "media", "platform", "lease", "rendering", "presentation"] as const;
 type PreparationStage = typeof preparationStages[number];
 interface LoadingOwner { report(stage: PreparationStage, progress?: number): void; finish(): void; beginResult(): SimulatorResultPreparation }
 const LoadingContext = createContext<LoadingOwner | null>(null);

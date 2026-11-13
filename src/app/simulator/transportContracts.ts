@@ -29,9 +29,13 @@ export type SimulatorLaunchTransportConfig = Omit<SimulatorLaunchConfig, "visual
 };
 
 export interface SimulatorLaunchTransportDescriptor {
-  readonly schemaVersion: 6;
+  readonly schemaVersion: 7;
   readonly requestId: string;
-  readonly mediaSnapshotId: ResourceSnapshotId;
+  /**
+   * The launch snapshot: the media slots plus one `simulator.resource:<logical resource>` slot for every resource
+   * the resolved Skin needs. The main program resolves, downloads and binds all of them before launch.
+   */
+  readonly snapshotId: ResourceSnapshotId;
   readonly chartJson: string;
   readonly isFullLength: boolean;
   readonly presentation: {

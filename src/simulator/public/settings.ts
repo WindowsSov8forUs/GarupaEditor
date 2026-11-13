@@ -12,8 +12,11 @@ export { CURRENT_NORMAL_NOTE_SKINS, CURRENT_NORMAL_LANE_SKINS, CURRENT_NORMAL_EF
   type CurrentSpecialSkinMaster, type OfficialLimitedSkin, type SkinResourceServer } from "../engine/skin/currentMasterCatalog";
 export type { OriginalSkinSpecialSelection, OriginalSkinSpecialComponentStates, ResolvedOriginalSkinRecipe } from "../engine/skin/contracts";
 import type { OriginalSkinSettings } from "../engine/skin/contracts";
-import { resolveOriginalSkinRecipe } from "../engine/skin/originalSkinResolver";
+import { resolveOriginalSkinRecipe, withDefaultJudgeAtlas } from "../engine/skin/originalSkinResolver";
 import { createSimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
+export { resolveOriginalSkinRecipe, withDefaultJudgeAtlas, createSimulatorModeIdentity };
+export { simulatorResourceRequirementsForSkin } from "../assembly/resourceRequirements";
+export type { SimulatorResourceRequirement } from "../platform/resourceContracts";
 
 /** The original settings preview uses Live/manual skin eligibility. */
 export function resolveOriginalPreviewSkin(settings: OriginalSkinSettings, chartMode: "ordinary" | "habahiro" = "ordinary") {

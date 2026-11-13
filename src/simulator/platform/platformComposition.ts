@@ -97,7 +97,6 @@ import {
 } from "../assembly/sessionPresentationDerivation";
 import { deriveSessionSkinRecipe } from "../assembly/sessionSkinDerivation";
 import type { ResolvedOriginalSkinRecipe } from "../engine/skin/contracts";
-import { withDefaultJudgeAtlas } from "../engine/skin/originalSkinResolver";
 import type { ChartConstructionResult } from "../engine/chart/types";
 import type { SimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
 import { createPixiStartupDirectionScene, type PixiStartupDirectionScene } from "../backends/pixi/pixiStartupDirectionScene";
@@ -305,25 +304,14 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     // removes SD characters and stage effects (neither is present in practice here) and keeps the
     // practice room from BgManager.initPracticeMode instead of the card.
     const lightMode = presentation.value.illustBackground !== null && score.value.mode.sessionMode === "live" &&
-      mvResource.value === null && (chart.value.isMultiRangeNotes || recipe.request.config.skin.special.kind !== "collabo");
+      mvResource.value === null && (chart.value.isMultiRangeNotes || recipe.request.config.skin.selectedSpecial.kind !== "collabo");
     const skin = await this.deriveSkin(recipe, score.value.mode, chart.value);
     if (skin.status === "rejected") {
       return rejectedWithCleanup(skin, releasePendingMovie());
     }
-    let selection = selectSimulatorResourceRequirements(chart.value, skin.value);
-    let resourceLease = await this.platform.resources.acquire(selection.requirements);
-    if (resourceLease.status === "rejected" && skin.value.judge.route !== "default") {
-      const judgeRequirement = selection.requirements.find((entry) => entry.semanticRole === "skin.judge");
-      const judgeOnly = judgeRequirement === undefined
-        ? null
-        : await this.platform.resources.acquire([judgeRequirement]);
-      if (judgeOnly?.status === "accepted") {
-        await judgeOnly.value.release();
-      } else if (judgeOnly !== null && judgeOnly.failure.code !== "resource-platform-unavailable") {
-        selection = selectSimulatorResourceRequirements(chart.value, withDefaultJudgeAtlas(skin.value));
-        resourceLease = await this.platform.resources.acquire(selection.requirements);
-      }
-    }
+    // The main program already applied the default Judge atlas fallback when the selected atlas was unavailable.
+    const selection = selectSimulatorResourceRequirements(chart.value, skin.value);
+    const resourceLease = await this.platform.resources.acquire(selection.requirements);
     if (resourceLease.status === "rejected") {
       return rejectedWithCleanup(
         rejected(

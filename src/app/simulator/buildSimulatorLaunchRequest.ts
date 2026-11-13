@@ -12,7 +12,7 @@ export async function buildSimulatorLaunchRequest(
   descriptor: SimulatorLaunchTransportDescriptor,
   mediaLease: ResourceConsumerLease,
 ): Promise<SimulatorModuleLaunchRequest> {
-  if (mediaLease.snapshotId !== descriptor.mediaSnapshotId) {
+  if (mediaLease.snapshotId !== descriptor.snapshotId) {
     throw new Error("Simulator media lease does not match the frozen transport snapshot.");
   }
   const chart = parseGarupaChartJson(JSON.parse(descriptor.chartJson));

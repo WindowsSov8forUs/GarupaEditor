@@ -37,7 +37,7 @@ import { integrityFailure, ok, type SimulatorResult } from "../engine/result";
 import type { SimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
 import { copyAndFreezeGarupaChartJson } from "./garupaChartContract";
 import { copyAndFreezeSimulatorPresentation } from "./startupPresentationContract";
-import { validateAndFreezeOriginalSkinSettings } from "../engine/skin/originalSkinValidation";
+import { validateAndFreezeResolvedSkinRecipe } from "../engine/skin/originalSkinValidation";
 import { createOriginalLiveSettings } from "../engine/data/originalLiveSettings";
 import { GAME_OVER_AUDIO_RELEASE_DELAY_SECONDS } from "../engine/audio/audioCommandProducer";
 
@@ -424,7 +424,7 @@ function copyLaunchRequest(
     : null;
   const skin = configRecord === null
     ? null
-    : validateAndFreezeOriginalSkinSettings(configRecord.skin);
+    : validateAndFreezeResolvedSkinRecipe(configRecord.skin);
   const originalLiveSettings = configRecord === null
     ? null
     : createOriginalLiveSettings({

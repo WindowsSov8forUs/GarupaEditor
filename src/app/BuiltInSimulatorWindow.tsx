@@ -16,7 +16,7 @@ import {
   type BrowserSimulatorLaunchPlatformOwner,
   type BrowserSimulatorLaunchState,
 } from "./simulator/browserSimulatorLaunchOwner";
-import { createSimulatorResourceCapability } from "./simulator/createSimulatorResourceCapability";
+import { SnapshotSimulatorResourceCapability } from "./simulator/snapshotSimulatorResourceCapability";
 import { useSimulatorLoading } from "./simulator/SimulatorLoadingBoundary";
 import {
   SIMULATOR_WINDOW_CLOSED_EVENT,
@@ -126,32 +126,25 @@ function BuiltInSimulatorWindow() {
             );
           }
         },
-        async prepareCatalog() {
-          const refreshed = await manager.prepareCatalog("bestdori");
-          if (refreshed.status === "rejected") throw dependencyFailure(
-            refreshed.failure.capability,
-            refreshed.failure.boundary,
+        async openSnapshot(snapshotId) {
+          const snapshot = await manager.acquireSnapshot(snapshotId);
+          if (snapshot.status === "rejected") throw dependencyFailure(
+            snapshot.failure.capability,
+            snapshot.failure.boundary,
           );
-        },
-        async acquireMedia(snapshotId) {
-          const media = await manager.acquireSnapshot(snapshotId);
-          if (media.status === "rejected") throw dependencyFailure(
-            media.failure.capability,
-            media.failure.boundary,
-          );
-          return media.value;
+          return snapshot.value;
         },
         buildRequest: buildSimulatorLaunchRequest,
         createAudio: createBrowserAudioContextCapability,
-        async createPlatform(audioContext): Promise<BrowserSimulatorLaunchPlatformOwner> {
+        async createPlatform(audioContext, snapshot): Promise<BrowserSimulatorLaunchPlatformOwner> {
           loading.report("media");
+          const resources = new SnapshotSimulatorResourceCapability(snapshot);
           const platform = await createBrowserSimulatorPlatform({
             host,
             audioContext,
             resources: {
               async acquire(requirements) {
-                const result = await createSimulatorResourceCapability(manager, "jp", (completed, total) =>
-                  loading.report("availability", completed / total)).acquire(requirements);
+                const result = await resources.acquire(requirements);
                 if (result.status === "accepted") loading.report("lease");
                 return result;
               },
