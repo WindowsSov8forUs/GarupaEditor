@@ -1,5 +1,10 @@
 import { integrityFailure, ok, type SimulatorResult } from "../result";
 import type {
+  OriginalSkinComponentRoute,
+  ResolvedDirectionalSkinComponent,
+  ResolvedNoteSkinComponent,
+  ResolvedOriginalSkinRecipe,
+  ResolvedSkinComponent,
   OriginalSkinSettings,
   OriginalSkinSpecialComponentStates,
   OriginalSkinSpecialSelection,
@@ -73,6 +78,99 @@ function validateComponents(value: unknown): OriginalSkinSpecialComponentStates 
     judge: value.judge as "on" | "off",
     directionalFlickIcon: value.directionalFlickIcon as "on" | "off",
   });
+}
+
+const RECIPE_KEYS =
+  "backgroundMode,background,chartMode,directional,field,identity,judge,note,selectedSpecial,tapEffect,tapSE";
+const COMPONENT_ROUTES: readonly OriginalSkinComponentRoute[] = [
+  "normal", "default", "special", "habahiro", "presentation-background", "practice-background", "mv-video",
+];
+
+/**
+ * Shape check for a Skin recipe the main program already resolved. The Simulator does no catalog lookup: it only
+ * requires every component, route and logical resource to be well formed, and copies the recipe frozen.
+ */
+export function validateAndFreezeResolvedSkinRecipe(
+  value: unknown,
+): SimulatorResult<ResolvedOriginalSkinRecipe> {
+  if (!record(value) || !hasRequiredKeys(value, RECIPE_KEYS) || typeof value.identity !== "string" ||
+    value.identity.length === 0 ||
+    (value.chartMode !== "ordinary" && value.chartMode !== "habahiro") ||
+    (value.backgroundMode !== "standard" && value.backgroundMode !== "mv")) {
+    return invalidRecipe();
+  }
+  const selected = value.selectedSpecial;
+  const selectedSpecial = !record(selected) ? null
+    : selected.kind === "none" ? Object.freeze({ kind: "none" as const })
+      : (selected.kind === "collabo" || selected.kind === "limited") && Number.isSafeInteger(selected.selectionId)
+        ? Object.freeze({ kind: selected.kind, selectionId: selected.selectionId as number })
+        : null;
+  const note = resolvedComponent(value.note);
+  const field = resolvedComponent(value.field);
+  const tapEffect = resolvedComponent(value.tapEffect);
+  const background = resolvedComponent(value.background);
+  const tapSE = resolvedComponent(value.tapSE);
+  const judge = resolvedComponent(value.judge);
+  const directional = resolvedComponent(value.directional);
+  if (selectedSpecial === null || note === null || field === null || tapEffect === null || background === null ||
+    tapSE === null || judge === null || directional === null) {
+    return invalidRecipe();
+  }
+  const rawNote = value.note as Record<string, unknown>;
+  const rawDirectional = value.directional as Record<string, unknown>;
+  if (typeof rawNote.noteSyncEdgeMargin !== "number" || !Number.isFinite(rawNote.noteSyncEdgeMargin) ||
+    (rawDirectional.effectSetting !== 0 && rawDirectional.effectSetting !== 1) ||
+    (rawDirectional.effectVariant !== "normal" && rawDirectional.effectVariant !== "light") ||
+    !logicalResource(rawDirectional.noteLogicalResource) || !logicalResource(rawDirectional.effectLogicalResource) ||
+    rawDirectional.seLogicalResource !== "sound/tapseskin/directionalflickskin00") {
+    return invalidRecipe();
+  }
+  return ok(Object.freeze({
+    identity: value.identity,
+    chartMode: value.chartMode,
+    backgroundMode: value.backgroundMode,
+    selectedSpecial,
+    note: Object.freeze({ ...note, noteSyncEdgeMargin: Math.fround(rawNote.noteSyncEdgeMargin) }) as ResolvedNoteSkinComponent,
+    field,
+    tapEffect,
+    background,
+    tapSE,
+    directional: Object.freeze({
+      ...directional,
+      effectSetting: rawDirectional.effectSetting,
+      effectVariant: rawDirectional.effectVariant,
+      noteLogicalResource: rawDirectional.noteLogicalResource as string,
+      effectLogicalResource: rawDirectional.effectLogicalResource as string,
+      seLogicalResource: rawDirectional.seLogicalResource,
+    }) as ResolvedDirectionalSkinComponent,
+    judge,
+  }));
+}
+
+function resolvedComponent(value: unknown): ResolvedSkinComponent | null {
+  if (!record(value) || !hasRequiredKeys(value, "bundleName,logicalResource,route") ||
+    !COMPONENT_ROUTES.includes(value.route as OriginalSkinComponentRoute) ||
+    (value.bundleName !== null && (typeof value.bundleName !== "string" || value.bundleName.length === 0)) ||
+    (value.logicalResource !== null && !logicalResource(value.logicalResource))) {
+    return null;
+  }
+  return Object.freeze({
+    route: value.route as OriginalSkinComponentRoute,
+    bundleName: value.bundleName as string | null,
+    logicalResource: value.logicalResource as string | null,
+  });
+}
+
+function logicalResource(value: unknown): value is string {
+  // Bundle names of master-derived limited skins are not restricted further than path-safe characters.
+  return typeof value === "string" && /^(ingameskin|sound)\/[a-z0-9_]+\/[A-Za-z0-9_.-]+$/.test(value);
+}
+
+function invalidRecipe(): ReturnType<typeof integrityFailure> {
+  return integrityFailure(
+    "skin.invalid-resolved-recipe",
+    "The resolved Skin recipe requires one identity, exact chart/background routes, a selected-special record and every component with a known route and well-formed logical resource.",
+  );
 }
 
 function record(value: unknown): value is Record<string, unknown> {

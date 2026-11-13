@@ -1,4 +1,4 @@
-import { createOriginalLiveSettings, validateAndFreezeOriginalSkinSettings } from "../../simulator/public/settings";
+import { createOriginalLiveSettings, createSimulatorModeIdentity, resolveOriginalSkinRecipe } from "../../simulator/public/settings";
 import type { SimulatorLaunchConfig, SimulatorOriginalSkinSettings } from "../../simulator/public/contracts";
 
 export const SIMULATOR_ALL_PERFECT_DISPLAY_DEFAULT_PRODUCT_SEMANTICS_ID =
@@ -55,13 +55,22 @@ export interface SimulatorPreAdaptationInput extends SimulatorModeSelection {
   readonly seGainPercent: number;
 }
 
+/** What the Skin recipe depends on besides the settings and the mode: the chart's route and the background route. */
+export interface SimulatorSkinRoute {
+  readonly chartMode: "ordinary" | "habahiro";
+  readonly backgroundMode: "standard" | "mv";
+}
+
 export function buildSimulatorPreAdaptedConfig(
   input: SimulatorPreAdaptationInput,
+  route: SimulatorSkinRoute,
 ): SimulatorLaunchConfig {
   const live = createOriginalLiveSettings({ ...input, highFrequencyMode: input.fps === 120 });
   if (live.status !== "ok") throw new Error("Simulator Live settings are outside the original domains.");
-  const skin = validateAndFreezeOriginalSkinSettings(input.skin);
-  if (skin.status !== "ok") throw new Error("Simulator Skin settings are outside the original domains.");
+  // The resolver validates the settings against the original domains before resolving them.
+  const skin = resolveOriginalSkinRecipe(input.skin, createSimulatorModeIdentity(input.sessionMode, input.inputMode),
+    route.chartMode, route.backgroundMode);
+  if (skin.status !== "ok") throw new Error(`${skin.capability}: ${skin.boundary}`);
   const masterGain = exactUnitPercent(input.masterGainPercent, "Master gain");
   const noteSize = exactFloat32(input.noteSize, "note size");
   const specificSpeed = exactFloat32(input.noteSpeed, "note speed");

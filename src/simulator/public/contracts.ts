@@ -1,5 +1,6 @@
 import type { GarupaChartJson } from "../../chart";
 import type { StageCommandNote } from "../engine/data/stageCommand";
+import type { ResolvedOriginalSkinRecipe } from "../engine/skin/contracts";
 export type { StageCommandNote } from "../engine/data/stageCommand";
 
 export type SimulatorPublicSessionMode = "live" | "rehearsal";
@@ -107,7 +108,8 @@ export interface SimulatorLaunchConfig extends SimulatorOriginalLiveSettings {
   readonly sessionMode: SimulatorPublicSessionMode;
   readonly inputMode: SimulatorPublicInputMode;
   readonly highFrequencyMode: boolean;
-  readonly skin: SimulatorOriginalSkinSettings;
+  /** Resolved by the main program from the player's Skin settings, the mode, the chart and the MV route. */
+  readonly skin: ResolvedOriginalSkinRecipe;
   readonly visual: {
     readonly specificSpeed: number;
     readonly noteSize: number;

@@ -82,24 +82,37 @@ export function selectSimulatorResourceRequirements(
   skinRecipe: ResolvedOriginalSkinRecipe,
 ): SimulatorResourceSelection {
   const skin = selectResolvedSkinResourceInventory(skinRecipe);
+  return Object.freeze({
+    schemaVersion: 1 as const,
+    renderingKind: chart.isMultiRangeNotes ? "habahiro" as const : "ordinary" as const,
+    skin,
+    requirements: requirementsForInventory(skin),
+  });
+}
+
+/**
+ * Every resource a session with this resolved Skin leases, decided by the recipe alone. The main program binds and
+ * prepares exactly these before launch; the Simulator selects the same list from the same recipe.
+ */
+export function simulatorResourceRequirementsForSkin(
+  skinRecipe: ResolvedOriginalSkinRecipe,
+): readonly SimulatorResourceRequirement[] {
+  return requirementsForInventory(selectResolvedSkinResourceInventory(skinRecipe));
+}
+
+function requirementsForInventory(skin: SelectedSkinResourceInventory): readonly SimulatorResourceRequirement[] {
   const leasedSkinResources = usesBuiltInExactDefaultParticles(skin.resolved)
     ? skin.resources.filter((resource) =>
         resource.role !== "tap-effect" && resource.role !== "directional-effect")
     : skin.resources;
-  const requirements = [
+  return Object.freeze([
     ...COMMON_REQUIREMENTS,
     ...leasedSkinResources.map((resource) => requirement(
       `skin.${resource.role}`,
       resource.logicalResource,
       null,
     )),
-  ];
-  return Object.freeze({
-    schemaVersion: 1 as const,
-    renderingKind: chart.isMultiRangeNotes ? "habahiro" as const : "ordinary" as const,
-    skin,
-    requirements: Object.freeze(requirements),
-  });
+  ]);
 }
 
 export function selectResolvedSkinResourceInventory(

@@ -1,4 +1,7 @@
 import { projectDraft, type ChartProject } from "../../project/chartProject";
+import { simulatorResourceRequirementsForSkin, withDefaultJudgeAtlas } from "../../simulator/public/settings";
+import type { SimulatorLaunchConfig } from "../../simulator/public/contracts";
+import { simulatorResourceRef, simulatorResourceSlot } from "./simulatorResourceBinding";
 import { projectGarupaChart } from "../../project/projectChartAdapter";
 import type { SimulatorOriginalSkinSettings } from "../../simulator/public/contracts";
 import type { ApplicationResourceManager } from "../../resources/applicationResourceManager";
@@ -67,7 +70,7 @@ export async function buildSimulatorLaunchDescriptor(
   const width = strictPositiveInteger(input.requestedWindowWidth, "window width");
   const height = strictPositiveInteger(input.requestedWindowHeight, "window height");
   const chart = buildSimulatorGarupaChart(JSON.stringify(projectGarupaChart(input.project)), input.mirror);
-  const config = buildSimulatorPreAdaptedConfig({
+  let config: SimulatorLaunchConfig = buildSimulatorPreAdaptedConfig({
     sessionMode: input.sessionMode, inputMode: input.inputMode,
     judgementAdjustValue: input.judgementAdjustValue,
     judgementAdjustValueB: input.judgementAdjustValueB,
@@ -91,6 +94,10 @@ export async function buildSimulatorLaunchDescriptor(
     allPerfectStatusDisplayMode: input.allPerfectStatusDisplayMode,
     bgmGainPercent: input.bgmGainPercent,
     seGainPercent: input.seGainPercent,
+  }, {
+    // The Simulator treats a chart with the #HABAHIRO Header as a multi-range (HAB) chart.
+    chartMode: chart.some((item) => item.type === "Header") ? "habahiro" : "ordinary",
+    backgroundMode: input.mvEnabled ? "mv" : "standard",
   });
   const cover = media.cover ?? requireRef("builtin/ui/default-cover");
   const refreshed = await input.manager.prepareCatalog("bestdori");
@@ -104,15 +111,33 @@ export async function buildSimulatorLaunchDescriptor(
     throw new Error("Simulator MV mode requires one explicit video resource.");
   }
   const mvResourceLeadIn = input.mvEnabled ? await bestdoriMovieLeadInMilliseconds(input.manager, media.mv!, mvDelay) : 0;
-  const bindings: Record<string, ResourceRef> = {
+  const mediaBindings: Record<string, ResourceRef> = {
     [SIMULATOR_MEDIA_SLOTS.bgm]: media.bgm,
     [SIMULATOR_MEDIA_SLOTS.jacket]: cover,
     [SIMULATOR_MEDIA_SLOTS.stage]: stage,
     ...(input.mvEnabled ? { [SIMULATOR_MEDIA_SLOTS.mv]: media.mv! } : {}),
     ...(media.illustBackground !== null ? { [SIMULATOR_MEDIA_SLOTS.illustBackground]: media.illustBackground } : {}),
+    [SIMULATOR_MEDIA_SLOTS.displayImage]: input.manager.getDisplayImageRef(),
   };
-  bindings[SIMULATOR_MEDIA_SLOTS.displayImage] = input.manager.getDisplayImageRef();
-  const snapshot = await input.manager.createSnapshotFromRefs(Object.freeze(bindings));
+  // One snapshot carries the media and every resource the resolved Skin needs; the Simulator only opens it.
+  const launchBindings = (skin: SimulatorLaunchConfig["skin"]) => {
+    const bindings = { ...mediaBindings };
+    for (const requirement of simulatorResourceRequirementsForSkin(skin)) {
+      bindings[simulatorResourceSlot(requirement.logicalResource)] = simulatorResourceRef(requirement.logicalResource);
+    }
+    return Object.freeze(bindings);
+  };
+  let snapshot = await input.manager.createSnapshotFromRefs(launchBindings(config.skin));
+  // CE.Result.onFinishedLoadJudgeAtlas: a selected (HABAHIRO or special) Judge atlas that does not load is replaced
+  // by the default atlas. A platform outage is not a missing atlas and keeps the failure.
+  const judge = config.skin.judge.logicalResource;
+  if (snapshot.status === "rejected" && config.skin.judge.route !== "default" && judge !== null) {
+    const judgeOnly = await input.manager.ensureAvailable(simulatorResourceRef(judge));
+    if (judgeOnly.status === "rejected" && judgeOnly.failure.code !== "resource-platform-unavailable") {
+      config = Object.freeze({ ...config, skin: withDefaultJudgeAtlas(config.skin) });
+      snapshot = await input.manager.createSnapshotFromRefs(launchBindings(config.skin));
+    }
+  }
   if (snapshot.status === "rejected") {
     throw new Error(`${snapshot.failure.capability}: ${snapshot.failure.boundary}`);
   }
@@ -121,9 +146,9 @@ export async function buildSimulatorLaunchDescriptor(
     throw new Error(`${handoff.failure.capability}: ${handoff.failure.boundary}`);
   }
   const descriptor: SimulatorLaunchTransportDescriptor = Object.freeze({
-    schemaVersion: 6,
+    schemaVersion: 7,
     requestId: input.requestId,
-    mediaSnapshotId: snapshot.value.snapshotId,
+    snapshotId: snapshot.value.snapshotId,
     chartJson: JSON.stringify(chart),
     isFullLength: metadata.isFullLength === true,
     presentation: Object.freeze({

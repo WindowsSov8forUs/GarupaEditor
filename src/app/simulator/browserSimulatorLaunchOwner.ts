@@ -15,8 +15,7 @@ import type {
 export type BrowserSimulatorLaunchPhase =
   | "waiting-descriptor"
   | "preparing-window"
-  | "preparing-catalog"
-  | "acquiring-media"
+  | "opening-snapshot"
   | "building-request"
   | "checking-audio"
   | "awaiting-host-activation"
@@ -47,14 +46,15 @@ export interface BrowserSimulatorLaunchPlatformOwner {
 
 export interface BrowserSimulatorLaunchOwnerDependencies {
   lockWindow(): Promise<void>;
-  prepareCatalog(): Promise<void>;
-  acquireMedia(snapshotId: SimulatorLaunchTransportDescriptor["mediaSnapshotId"]): Promise<ResourceConsumerLease>;
+  /** Opens the launch snapshot the main program prepared; this owner holds it until cleanup. */
+  openSnapshot(snapshotId: SimulatorLaunchTransportDescriptor["snapshotId"]): Promise<ResourceConsumerLease>;
   buildRequest(
     descriptor: SimulatorLaunchTransportDescriptor,
-    media: ResourceConsumerLease,
+    snapshot: ResourceConsumerLease,
   ): Promise<SimulatorModuleLaunchRequest>;
   createAudio(): Promise<BrowserAudioContextResult<BrowserAudioContextCapability>>;
-  createPlatform(audioContext: AudioContext): Promise<BrowserSimulatorLaunchPlatformOwner>;
+  /** The platform reads every Simulator resource from the open launch snapshot. */
+  createPlatform(audioContext: AudioContext, snapshot: ResourceConsumerLease): Promise<BrowserSimulatorLaunchPlatformOwner>;
   validatePlatform(owner: BrowserSimulatorLaunchPlatformOwner): void;
   installPlatform(platform: unknown): void;
   launch(request: SimulatorModuleLaunchRequest): Promise<SimulatorModuleLaunchResult>;
@@ -82,7 +82,7 @@ export class BrowserSimulatorLaunchOwner {
   private runPromise: Promise<void> | null = null;
   private activationGate: { resolve(): void; promise: Promise<void> } | null = null;
   private activationFailure: BrowserSimulatorLaunchFailure | null = null;
-  private media: ResourceConsumerLease | null = null;
+  private snapshot: ResourceConsumerLease | null = null;
   private audio: BrowserAudioContextCapability | null = null;
   private platform: BrowserSimulatorLaunchPlatformOwner | null = null;
   private exitRequested = false;
@@ -99,11 +99,11 @@ export class BrowserSimulatorLaunchOwner {
     private readonly onStateChange: (state: BrowserSimulatorLaunchState) => void,
   ) {
     if (
-      requestId.length === 0 || descriptor.schemaVersion !== 6 || descriptor.requestId !== requestId
+      requestId.length === 0 || descriptor.schemaVersion !== 7 || descriptor.requestId !== requestId
     ) {
       throw new BrowserSimulatorLaunchDependencyError(
         "app.simulator.invalid-launch-descriptor",
-        "The launch owner requires one schema-3 descriptor whose requestId exactly matches the route identity, explicit コンボ状态显示 setting and Float32 transport bits.",
+        "The launch owner requires one schema-7 descriptor whose requestId exactly matches the route identity, explicit コンボ状态显示 setting and Float32 transport bits.",
       );
     }
   }
@@ -162,24 +162,19 @@ export class BrowserSimulatorLaunchOwner {
       await this.dependencies.lockWindow();
       if (await this.stopIfCancelled()) return;
 
-      this.publish("preparing-catalog", null);
-      await this.dependencies.prepareCatalog();
-      if (await this.stopIfCancelled()) return;
-
-      this.publish("acquiring-media", null);
-      const media = await this.dependencies.acquireMedia(this.descriptor.mediaSnapshotId);
+      this.publish("opening-snapshot", null);
+      const snapshot = await this.dependencies.openSnapshot(this.descriptor.snapshotId);
       if (this.disposed || this.exitRequested || this.terminal) {
-        await media.release();
+        await snapshot.release();
         await this.stopIfCancelled();
         return;
       }
-      this.media = media;
+      // Held for the whole session: the media are decoded into the request, and every Skin resource
+      // (including those of retries) is read from this snapshot.
+      this.snapshot = snapshot;
 
       this.publish("building-request", null);
-      const request = await this.dependencies.buildRequest(this.descriptor, media);
-      // The request owns decoded bytes. Finish the transport lease's asynchronous
-      // cleanup before any startup frames can run behind the loading overlay.
-      await this.releaseMedia();
+      const request = await this.dependencies.buildRequest(this.descriptor, snapshot);
       if (await this.stopIfCancelled()) return;
 
       this.publish("checking-audio", null);
@@ -212,7 +207,7 @@ export class BrowserSimulatorLaunchOwner {
       }
 
       this.publish("creating-platform", null);
-      const platform = await this.dependencies.createPlatform(audio.value.context);
+      const platform = await this.dependencies.createPlatform(audio.value.context, snapshot);
       if (this.disposed || this.exitRequested || this.terminal) {
         platform.dispose();
         await this.stopIfCancelled();
@@ -323,21 +318,22 @@ export class BrowserSimulatorLaunchOwner {
   private cleanup(): Promise<void> {
     if (this.cleanupPromise !== null) return this.cleanupPromise;
     this.cleanupPromise = (async () => {
-      await this.releaseMedia();
       const platform = this.platform;
       this.platform = null;
       try { platform?.dispose(); } catch { /* all remaining owners still release */ }
       const audio = this.audio;
       this.audio = null;
       if (audio !== null) await audio.dispose();
+      // Released after the platform, whose sessions read resources from it.
+      await this.releaseSnapshot();
     })();
     return this.cleanupPromise;
   }
 
-  private async releaseMedia(): Promise<void> {
-    const media = this.media;
-    this.media = null;
-    if (media !== null) await media.release();
+  private async releaseSnapshot(): Promise<void> {
+    const snapshot = this.snapshot;
+    this.snapshot = null;
+    if (snapshot !== null) await snapshot.release();
   }
 
   private publish(
