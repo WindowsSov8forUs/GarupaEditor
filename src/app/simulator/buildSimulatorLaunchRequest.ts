@@ -1,5 +1,4 @@
 import { normalizeSourcePng } from "../../resources/normalizeImagePng";
-import { parseGarupaChartJson } from "../../chart";
 import type { ResourceConsumerLease } from "../../resources/contracts";
 import type { SimulatorModuleLaunchRequest } from "../../simulator/public/contracts";
 import {
@@ -15,7 +14,9 @@ export async function buildSimulatorLaunchRequest(
   if (mediaLease.snapshotId !== descriptor.snapshotId) {
     throw new Error("Simulator media lease does not match the frozen transport snapshot.");
   }
-  const chart = parseGarupaChartJson(JSON.parse(descriptor.chartJson));
+  // The editor parsed and validated this chart before sending it; the Simulator's chart contract checks it again on
+  // entry, so the window only decodes the JSON.
+  const chart = JSON.parse(descriptor.chartJson) as SimulatorModuleLaunchRequest["chartData"]["chart"];
   const bgm = await readSingle(mediaLease, SIMULATOR_MEDIA_SLOTS.bgm);
   const jacketSource = await readSingle(mediaLease, SIMULATOR_MEDIA_SLOTS.jacket);
   const jacketPng = await normalizeJacketPng(jacketSource);

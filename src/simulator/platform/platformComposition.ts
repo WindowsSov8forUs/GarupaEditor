@@ -31,10 +31,7 @@ import { PortableRenderResourcePreflightAdapter } from "../backends/resources/lo
 import { createCurrentSinglePlayLifeProfile } from "../engine/data/currentSinglePlayLifeProfile";
 import type { ScoreLifeStateProfile } from "../engine/data/scoreLifeState";
 import { createSimulatorModeIdentity } from "../engine/data/inGameCalculatedData";
-import {
-  createOriginalLiveSettings,
-  originalLiveSettingsIdentity,
-} from "../engine/data/originalLiveSettings";
+import { originalLiveSettingsIdentity } from "../engine/data/originalLiveSettings";
 import { integrityFailure, ok, type SimulatorResult } from "../engine/result";
 import type { ManualInputFrame, ManualInputPosition } from "../engine/data/manualInput";
 import type { SimulatorEngine, SimulatorSnapshot } from "../host/contracts";
@@ -277,26 +274,8 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     if (score.status === "rejected") {
       return rejectedWithCleanup(score, releasePendingMovie());
     }
-    const originalLiveSettings = createOriginalLiveSettings({
-      highFrequencyMode: recipe.request.config.highFrequencyMode,
-      judgementAdjustValue: recipe.request.config.judgementAdjustValue,
-      judgementAdjustValueB: recipe.request.config.judgementAdjustValueB,
-      mvDarkness: recipe.request.config.mvDarkness,
-      longNoteLineBrightness: recipe.request.config.longNoteLineBrightness,
-      lightModeBrightness: recipe.request.config.lightModeBrightness,
-      suddenRate: recipe.request.config.suddenRate, suddenLane: recipe.request.config.suddenLane,
-      hideFastSlow: recipe.request.config.hideFastSlow,
-      displayStageEffect: recipe.request.config.displayStageEffect,
-      hideCombo: recipe.request.config.hideCombo,
-      displayComboPosition: recipe.request.config.displayComboPosition,
-      syncLine: recipe.request.config.syncLine,
-      noteColor: recipe.request.config.noteColor,
-      visibleTapLaneEffect: recipe.request.config.visibleTapLaneEffect,
-      allPerfectStatusDisplayMode: recipe.request.config.allPerfectStatusDisplayMode,
-    });
-    if (originalLiveSettings.status !== "ok") {
-      return rejectedWithCleanup(fromIntegrity(originalLiveSettings), releasePendingMovie());
-    }
+    // Derived once when the recipe was created; every build of this session (initial or retry) shares it.
+    const originalLiveSettings = recipe.liveSettings;
     // RhythmGameStartData.BackgroundModuleType: after MV, the Light module
     // (InGameGraphicsMode.Light; here, a chart with a custom background) is
     // used outside practice on a #HABAHIRO chart or without a Collaboration
@@ -371,8 +350,8 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
               const created = await createPixiStartupDirectionScene(
                 effectivePresentation.value, common.value, new BrowserPixiTextureDecoder(),
                 recipe.request.chartData.isFullLength, scene.surfaceLayout, mvResource.value === null,
-                score.value.mode.sessionMode === "live" && originalLiveSettings.value.displayStageEffect,
-                lightMode ? Object.freeze({ brightness: originalLiveSettings.value.core.lightModeBrightness }) : null,
+                score.value.mode.sessionMode === "live" && originalLiveSettings.displayStageEffect,
+                lightMode ? Object.freeze({ brightness: originalLiveSettings.core.lightModeBrightness }) : null,
               );
               if (created.status !== "ok") return fromIntegrity(created);
               firstView.scene = created.value;
@@ -417,10 +396,10 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
               surface.value,
               {
                 ...recipe.request.config.visual,
-                judgementAdjustValueB: originalLiveSettings.value.core.judgementAdjustValueB,
-                longNoteLineBrightness: originalLiveSettings.value.core.longNoteLineBrightness,
-                suddenRate: originalLiveSettings.value.core.suddenRate, suddenLane: originalLiveSettings.value.core.suddenLane,
-                displayComboPosition: originalLiveSettings.value.displayComboPosition,
+                judgementAdjustValueB: originalLiveSettings.core.judgementAdjustValueB,
+                longNoteLineBrightness: originalLiveSettings.core.longNoteLineBrightness,
+                suddenRate: originalLiveSettings.core.suddenRate, suddenLane: originalLiveSettings.core.suddenLane,
+                displayComboPosition: originalLiveSettings.displayComboPosition,
                 syncLineEdgeMargin: selection.skin.resolved.note.noteSyncEdgeMargin,
               },
               kind,
@@ -509,7 +488,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
         chart: chart.value,
         runtime: {
           specificSpeed: assembly.value.sceneLayout.ordinaryNoteScene.specificSpeed,
-          originalLiveSettings: originalLiveSettings.value,
+          originalLiveSettings: originalLiveSettings,
           mode: score.value.mode,
         },
         scoreLifeState: score.value,
@@ -655,7 +634,7 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
         engine: mountedEngine,
         bgmDurationSeconds: bgm.value.profile.durationSeconds,
         mode: score.value.mode,
-        originalLiveSettingsIdentity: originalLiveSettingsIdentity(originalLiveSettings.value),
+        originalLiveSettingsIdentity: originalLiveSettingsIdentity(originalLiveSettings),
         skinRecipeIdentity: assembly.value.skinRecipeIdentity,
         surface: surface.value,
         controlLayout: originalLayout.value,

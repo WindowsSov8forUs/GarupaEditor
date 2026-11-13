@@ -1,4 +1,4 @@
-import { createOriginalLiveSettings, createSimulatorModeIdentity, resolveOriginalSkinRecipe, validateAndFreezeOriginalSkinSettings } from "../../simulator/public/settings";
+import { createOriginalLiveSettings, createSimulatorModeIdentity, resolveOriginalSkinRecipe } from "../../simulator/public/settings";
 import type { SimulatorLaunchConfig, SimulatorOriginalSkinSettings } from "../../simulator/public/contracts";
 
 export const SIMULATOR_ALL_PERFECT_DISPLAY_DEFAULT_PRODUCT_SEMANTICS_ID =
@@ -67,9 +67,8 @@ export function buildSimulatorPreAdaptedConfig(
 ): SimulatorLaunchConfig {
   const live = createOriginalLiveSettings({ ...input, highFrequencyMode: input.fps === 120 });
   if (live.status !== "ok") throw new Error("Simulator Live settings are outside the original domains.");
-  const settings = validateAndFreezeOriginalSkinSettings(input.skin);
-  if (settings.status !== "ok") throw new Error("Simulator Skin settings are outside the original domains.");
-  const skin = resolveOriginalSkinRecipe(settings.value, createSimulatorModeIdentity(input.sessionMode, input.inputMode),
+  // The resolver validates the settings against the original domains before resolving them.
+  const skin = resolveOriginalSkinRecipe(input.skin, createSimulatorModeIdentity(input.sessionMode, input.inputMode),
     route.chartMode, route.backgroundMode);
   if (skin.status !== "ok") throw new Error(`${skin.capability}: ${skin.boundary}`);
   const masterGain = exactUnitPercent(input.masterGainPercent, "Master gain");

@@ -38,12 +38,14 @@ import type { SimulatorModeIdentity } from "../engine/data/inGameCalculatedData"
 import { copyAndFreezeGarupaChartJson } from "./garupaChartContract";
 import { copyAndFreezeSimulatorPresentation } from "./startupPresentationContract";
 import { validateAndFreezeResolvedSkinRecipe } from "../engine/skin/originalSkinValidation";
-import { createOriginalLiveSettings } from "../engine/data/originalLiveSettings";
+import { createOriginalLiveSettings, type OriginalLiveSettings } from "../engine/data/originalLiveSettings";
 import { GAME_OVER_AUDIO_RELEASE_DELAY_SECONDS } from "../engine/audio/audioCommandProducer";
 
 export interface SimulatorSessionRecipe {
   readonly schemaVersion: 16;
   readonly request: SimulatorModuleLaunchRequest;
+  /** Derived once from the request's Live settings; every engine build of this session reuses it. */
+  readonly liveSettings: OriginalLiveSettings;
 }
 
 export interface SimulatorRecipeEngineBuild {
@@ -69,15 +71,16 @@ export function createSimulatorSessionRecipe(
 ): SimulatorAssemblyResult<SimulatorSessionRecipe> {
   const copied = copyLaunchRequest(request);
   if (copied.status === "rejected") return copied;
-  if (copied.value.presentation.mv !== null &&
-    copied.value.config.sessionMode !== "live") {
+  if (copied.value.request.presentation.mv !== null &&
+    copied.value.request.config.sessionMode !== "live") {
     return rejected(
       "integrity-failure",
       "simulator.mv-live.unsupported-rehearsal-mode",
       "Original Practice does not select the Simple movie display; Rehearsal Manual/Auto, Retry and MoveTime MV routes are not inherited from the standard background.",
     );
   }
-  return accepted(Object.freeze({ schemaVersion: 16 as const, request: copied.value }));
+  return accepted(Object.freeze({ schemaVersion: 16 as const, request: copied.value.request,
+    liveSettings: copied.value.liveSettings }));
 }
 
 export class RecipeOwnedSessionFactory implements SimulatorOwnedSessionFactory {
@@ -417,7 +420,7 @@ class RecipeOwnedSession implements SimulatorOwnedSession {
 
 function copyLaunchRequest(
   request: SimulatorModuleLaunchRequest,
-): SimulatorAssemblyResult<SimulatorModuleLaunchRequest> {
+): SimulatorAssemblyResult<{ readonly request: SimulatorModuleLaunchRequest; readonly liveSettings: OriginalLiveSettings }> {
   const configRecord = request !== null && typeof request === "object" && !Array.isArray(request) &&
     request.config !== null && typeof request.config === "object" && !Array.isArray(request.config)
     ? request.config
@@ -478,7 +481,7 @@ function copyLaunchRequest(
       "The immutable chart package requires one explicit non-empty owned Uint8Array BGM resource; metadata is derived only inside simulator.",
     );
   }
-  return accepted(Object.freeze({
+  return accepted(Object.freeze({ liveSettings: originalLiveSettings.value, request: Object.freeze({
     chartData: Object.freeze({
       chart: copiedChart.value.chart,
       bgm: Uint8Array.from(bgm),
@@ -514,7 +517,7 @@ function copyLaunchRequest(
         seGain: Math.fround(request.config.audio.seGain),
       }),
     }),
-  }));
+  }) }));
 }
 
 function sameSurface(left: SimulatorSurfaceState, right: SimulatorSurfaceState): boolean {
