@@ -268,10 +268,6 @@ export class NoteManager {
     NoteBase,
     OrdinaryLongNormalChildState
   >();
-  /** Exit offset (extension) already applied to an ordinary Slide head. */
-  private readonly ordinarySlideRootExitApplied = new Set<NoteBase>();
-  /** The node whose applied exit offset an ordinary Slide front carries (absent: none). */
-  private readonly ordinarySlideFrontExitIndex = new Map<NoteBase, number>();
   private readonly ordinarySlideRenderStates = new Map<
     NoteBase,
     readonly OrdinarySlideChildState[]
@@ -539,8 +535,6 @@ export class NoteManager {
             }
             this.ordinaryLongRenderStates.delete(inactiveNote);
             this.ordinarySlideRenderStates.delete(inactiveNote);
-            this.ordinarySlideRootExitApplied.delete(inactiveNote);
-            this.ordinarySlideFrontExitIndex.delete(inactiveNote);
             this.ordinaryRenderMotionStates.delete(inactiveNote);
             this.manualNoteDeactivatedOwner?.(inactiveNote);
           },
@@ -796,7 +790,7 @@ export class NoteManager {
             if (afterChildren.status !== "ok") return afterChildren;
             if (note.noteInformation?.laneSpan !== undefined) {
               this.projectedGeometry?.reflectSlideOutput(note);
-            } else if ((note.pendingRenderHides.size > 0 || note.pendingGestureCloses.size > 0) &&
+            } else if (note.pendingRenderHides.size > 0 &&
               (note.state as NoteState) !== NoteState.Deactive) {
               const reflected = this.reflectOrdinarySlideHides(note);
               if (reflected.status !== "ok") return reflected;
@@ -1086,8 +1080,6 @@ export class NoteManager {
     this.completedSlidePresentationRoots.clear();
     this.ordinaryLongRenderStates.clear();
     this.ordinarySlideRenderStates.clear();
-    this.ordinarySlideRootExitApplied.clear();
-    this.ordinarySlideFrontExitIndex.clear();
     this.bpmPoolCursorValue = 0;
     this.outerFrameIndexValue = 0;
     this.slideNoteManager.dispose();
@@ -1164,8 +1156,6 @@ export class NoteManager {
     this.completedSlidePresentationRoots.clear();
     this.ordinaryLongRenderStates.clear();
     this.ordinarySlideRenderStates.clear();
-    this.ordinarySlideRootExitApplied.clear();
-    this.ordinarySlideFrontExitIndex.clear();
     return ok(undefined);
   }
 
@@ -1345,18 +1335,11 @@ export class NoteManager {
       }),
       this.ordinaryNoteScene,
       placement === "preserve" ? current.renderedTransform.localScale : placement,
-      // A head whose gesture presentation has closed shows the held body like a plain head.
-      note instanceof NoteSlide && placement !== null && note.state === NoteState.Stop && !note.gesturePresentationShown(-1) ? note.noteInformation : null,
+      note instanceof NoteSlide && placement !== null && note.state === NoteState.Stop ? note.noteInformation : null,
     );
     if (prepared.status !== "ok") return prepared;
     const committed = prepared.value.transaction.commit();
     if (committed.status !== "ok") return committed;
-    if (placement !== null) {
-      // A placement writes the head's own target (a late Began included): an exit
-      // offset is applied again once the head follows the line.
-      this.ordinarySlideRootExitApplied.delete(note);
-      this.ordinarySlideFrontExitIndex.delete(note);
-    }
     this.ordinaryRenderMotionStates.set(note, Object.freeze({
       ...(note instanceof NoteSlide ? {
         slideJudgeY: placement !== null ? current.slideJudgeY! : noteMotionY(prepared.value.motion),
@@ -1370,12 +1353,6 @@ export class NoteManager {
       }),
       renderedTransform: prepared.value.motion,
     }));
-    // A Directional gesture head carries its Add members as the original Multiple-Directional
-    // tail does (Add.Move from the connected note) while its gesture presentation is shown.
-    if (placement === null && note instanceof NoteSlide && this.slidePresentationRoots.has(note.noteInformation!.index) &&
-        slideFlickDirection(slideGestureAfterType(note.noteInformation!)) !== null && note.gesturePresentationShown(-1)) {
-      return this.advanceDirectionalVisualsForEndpoint(note, deltaTimeSeconds, realMoveSecond.value, false);
-    }
     return ok(undefined);
   }
 
@@ -1565,10 +1542,7 @@ export class NoteManager {
           judgementAdjustValueB: this.judgementAdjustValueB,
           virtualPerfectLine: virtualLine.value,
           rootSource: note.noteInformation!,
-          rootExitApplied: this.ordinarySlideRootExitApplied.has(note),
-          frontExitIndex: this.ordinarySlideFrontExitIndex.get(note) ?? null,
           ...(note instanceof NoteSlide ? {
-            gesturePresentationShown: (index: number) => note.gesturePresentationShown(index),
             meshTouched: (index: number) => note.isMeshTouched(index),
           } : {}),
           rootMotionState: front.motionState,
@@ -1577,7 +1551,6 @@ export class NoteManager {
             this.ordinaryNoteScene.goalPositions[0]!.x.value, this.ordinaryNoteScene.goalPositions[1]!.x.value,
           ),
           laneSpacingX: Math.fround(this.ordinaryNoteScene.goalPositions[1]!.x.value - this.ordinaryNoteScene.goalPositions[0]!.x.value),
-          startLaneSpacingX: Math.fround(this.ordinaryNoteScene.noteStartPositions[1]!.x.value - this.ordinaryNoteScene.noteStartPositions[0]!.x.value),
           stoppedChildWaited: note instanceof NoteSlide
             ? note.afterNotes.map((after) => after.stopAdjustmentWaited) : [],
         },
@@ -1587,21 +1560,7 @@ export class NoteManager {
       const committed = prepared.value.transaction.commit();
       if (committed.status !== "ok") return committed;
       this.ordinarySlideRenderStates.set(note, prepared.value.childStates);
-      if (prepared.value.rootExitApplied) this.ordinarySlideRootExitApplied.add(note);
-      if (prepared.value.frontExitIndex === null) this.ordinarySlideFrontExitIndex.delete(note);
-      else this.ordinarySlideFrontExitIndex.set(note, prepared.value.frontExitIndex);
       this.ordinaryRenderMotionStates.set(note, Object.freeze({ ...front, renderedTransform: prepared.value.frontTransform }));
-      // Gesture intermediates (extension) carry their Add members like the original tail does.
-      if (advanceMotion && note instanceof NoteSlide && this.slidePresentationRoots.has(note.noteInformation!.index)) {
-        for (let index = 0; index < childStates.length - 1; index += 1) {
-          const gesture = slideGestureAfterType(note.noteInformation!.slideNoteList[index]!);
-          if ((gesture !== AfterNoteType.SlideMultipleDirectionalFlickLeft && gesture !== AfterNoteType.SlideMultipleDirectionalFlickRight) ||
-            childStates[index]!.lifecycle.phase !== "move") continue;
-          const moved = this.advanceDirectionalVisualsForEndpoint(note, deltaTimeSeconds,
-            prepared.value.childStates[index]!.lifecycle.motionState.realMoveSecond, index + 1);
-          if (moved.status !== "ok") return moved;
-        }
-      }
       const previousTail = childStates[childStates.length - 1];
       const currentTail = prepared.value.childStates[prepared.value.childStates.length - 1];
       if (advanceMotion && previousTail?.lifecycle.phase === "move" && currentTail !== undefined) {
@@ -1609,29 +1568,14 @@ export class NoteManager {
           currentTail.lifecycle.motionState.realMoveSecond);
         if (moved.status !== "ok") return moved;
       }
-      if (note instanceof NoteSlide) {
-        const closed = this.closeOrdinaryGesturePresentations(note);
-        if (closed.status !== "ok") return closed;
-        note.commitRenderHides();
-      }
+      if (note instanceof NoteSlide) note.commitRenderHides();
     }
     return ok(undefined);
-  }
-
-  /** Extension: reflects gesture presentations that closed (judged or missed). */
-  private closeOrdinaryGesturePresentations(note: NoteSlide): SimulatorResult<void> {
-    if (note.pendingGestureCloses.size === 0 || this.renderProducer === null || note.noteInformation === null) return ok(undefined);
-    const prepared = this.renderProducer.preflightSlideGesturePresentationCloses(note.poolObjectId, note.noteInformation,
-      note.pendingGestureCloses);
-    if (prepared.status !== "ok") return prepared;
-    return prepared.value.commit();
   }
 
   private reflectOrdinarySlideHides(note: NoteSlide): SimulatorResult<void> {
     const children = this.ordinarySlideRenderStates.get(note);
     if (children === undefined || this.renderProducer === null) return ok(undefined);
-    const closed = this.closeOrdinaryGesturePresentations(note);
-    if (closed.status !== "ok") return closed;
     const prepared = this.renderProducer.preflightOrdinarySlideHides(note.poolObjectId, children, note.pendingRenderHides);
     if (prepared.status !== "ok") return prepared;
     const committed = prepared.value.transaction.commit();

@@ -447,8 +447,11 @@ function buildGarupaProductChartProfile(
   const originalItemIndices = new Set<number>();
   for (const [index, item] of chart.entries()) {
     if (item.type === "BPM" || item.type === "SV" || item.type === "Header" || item.type === "System") continue;
+    // The original has no Hidden head or tail and no Flick/Directional before a Slide's last node: such
+    // Slides are extension items (their judgement still follows the original rules).
     const compatible = item.type === "Slide"
-      ? item.connections[0]!.type !== "Hidden" && item.connections[item.connections.length - 1]!.type !== "Hidden" &&
+      ? item.connections.slice(0, -1).every(node => node.type !== "Flick" && node.type !== "Directional") &&
+        item.connections[0]!.type !== "Hidden" && item.connections[item.connections.length - 1]!.type !== "Hidden" &&
         item.connections.every(canUseFixedLaneGeometry)
       : canUseFixedLaneGeometry(item);
     if (compatible && !independentItems.has(index) && !svItemIndices.has(index)) originalItemIndices.add(index);
@@ -873,7 +876,9 @@ function positionFieldsFromAbsolute(absolutePos: number): PositionFields {
 }
 
 function rhythmSpan(connection: GarupaChartJsonSimpleNote, projected = false): SimulatorResult<ButtonSpan> {
-  if (connection.type === "Hidden" && connection.width <= 7) {
+  // An original-compatible Hidden encodes its lane as the original virtual lane. An extension item keeps
+  // its projected span, so a Hidden head still hands the whole Slide to the extension path.
+  if (connection.type === "Hidden" && connection.width <= 7 && !projected) {
     const lane = encodeVirtualLanePosition(connection.lane, 7 - connection.width);
     if (lane !== null) {
       const span = spanFromStart(lane.baseLane, connection.width);
