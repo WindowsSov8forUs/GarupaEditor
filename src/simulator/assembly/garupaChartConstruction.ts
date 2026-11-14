@@ -873,7 +873,9 @@ function positionFieldsFromAbsolute(absolutePos: number): PositionFields {
 }
 
 function rhythmSpan(connection: GarupaChartJsonSimpleNote, projected = false): SimulatorResult<ButtonSpan> {
-  if (connection.type === "Hidden" && connection.width <= 7) {
+  // An original-compatible Hidden encodes its lane as the original virtual lane. An extension item keeps
+  // its projected span, so a Hidden head still hands the whole Slide to the extension path.
+  if (connection.type === "Hidden" && connection.width <= 7 && !projected) {
     const lane = encodeVirtualLanePosition(connection.lane, 7 - connection.width);
     if (lane !== null) {
       const span = spanFromStart(lane.baseLane, connection.width);

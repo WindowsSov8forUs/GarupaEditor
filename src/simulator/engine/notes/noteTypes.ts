@@ -2182,11 +2182,13 @@ export class NoteSlide extends NoteFrontBase {
     return ok(undefined);
   }
 
-  /** Tail handling after the last visible node of a Hidden tail: release the
-   * finger, stop feedback and keep only the remaining hidden geometry. */
+  /** Tail handling after the last visible node of a Hidden tail: hide that node, release
+   * the finger, stop feedback and keep only the remaining hidden geometry. */
   private enterTrailingGeometryIfFinished(): void {
     if (this.trailingGeometryValue || this.state === NoteState.Deactive || !this.visibleRangeFinished) return;
     this.trailingGeometryValue = true;
+    // The judge line shows nothing after the last visible node: it leaves as a tail would.
+    this.hideBeforeSlideNode(this.lastVisibleAfterIndexValue + 1, false);
     this.feedback.setSound("fade");
     this.feedback.hideFlash();
     this.tapLane("off-reserve", this.laneEffectTarget);
