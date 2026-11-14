@@ -926,11 +926,9 @@ export class NoteSlide extends NoteFrontBase {
     return this.manualCurrentNode?.source ?? this.noteInformation;
   }
   private readonly pendingSpriteHides = new Map<number, SlideNodeHideRequest>();
-  private readonly pendingGestureCloseIndices = new Set<number>();
   private beganPlacementPending = false;
   private headGestureNode: SlideAfterRuntime | null = null;
   private gestureStateValue: SlideGestureState | null = null;
-  get headJudged(): boolean { return this.manualHeadJudgedValue; }
   /** Extension: whether a gesture head (-1) or intermediate node still shows its gesture
    * (flick icon, arrow, Add members). A touch-down that caches its result keeps it; it
    * closes when the node is judged or missed, and the node then looks like a plain node. */
@@ -1049,11 +1047,6 @@ export class NoteSlide extends NoteFrontBase {
     return this.pendingSpriteHides;
   }
 
-  /** Gesture presentations closed since the last render reflection (-1 is the head). */
-  get pendingGestureCloses(): ReadonlySet<number> {
-    return this.pendingGestureCloseIndices;
-  }
-
   get pendingBeganPlacement(): boolean {
     return this.beganPlacementPending;
   }
@@ -1064,12 +1057,6 @@ export class NoteSlide extends NoteFrontBase {
 
   commitRenderHides(): void {
     this.pendingSpriteHides.clear();
-    this.pendingGestureCloseIndices.clear();
-  }
-
-  private closeGesturePresentation(index: number): void {
-    const node = index === -1 ? this.headGestureNode : this.afterNotesValue[index];
-    if (node?.isGesture === true) this.pendingGestureCloseIndices.add(index);
   }
 
   /** The gesture state of a node starts fresh when it becomes current. */
@@ -1215,7 +1202,6 @@ export class NoteSlide extends NoteFrontBase {
     this.manualTailCacheValue = null;
     this.slideAfterMultipleGroupValue = multipleGroup.value;
     this.gestureStateValue = null;
-    this.pendingGestureCloseIndices.clear();
     this.manualTouchOriginValue = null;
     this.manualAfterMoveTimeValue = Math.fround(0);
     this.terminalJudgeNoteTypeValue = terminalJudgeNoteType.value;
@@ -1771,7 +1757,6 @@ export class NoteSlide extends NoteFrontBase {
     if (data.currentIndex === -1) {
       input.judgementTransaction.commit(plan.judgementPlan);
       this.manualHeadJudgedValue = true;
-      this.closeGesturePresentation(-1);
       this.clearGestureState(-1);
       this.beginGestureStateIfCurrent(input.currentPosition);
       if (data.stopFlash) { this.feedback.hideFlash(); this.feedback.setSound("fade"); }
@@ -1800,7 +1785,6 @@ export class NoteSlide extends NoteFrontBase {
       throw new Error("Slide current node changed after preflight");
     }
     // A judged gesture node stays on the line as a plain intermediate node.
-    this.closeGesturePresentation(this.currentAfterIndexValue);
     this.clearGestureState(this.currentAfterIndexValue);
     this.currentAfterIndexValue += 1;
     this.beginGestureStateIfCurrent(input.currentPosition);
@@ -1877,7 +1861,6 @@ export class NoteSlide extends NoteFrontBase {
         "Force Perfect Began requires the root target center in input coordinates.");
       this.manualTouchOriginValue = origin.value;
       this.manualHeadJudgedValue = true;
-      this.closeGesturePresentation(-1);
       this.feedback.restartFlash();
       this.feedback.setSound("start");
       // The invoked Began touches its next after node like a manual head.
@@ -1995,7 +1978,6 @@ export class NoteSlide extends NoteFrontBase {
       return marked;
     }
     this.hideBeforeSlideNode(selected.sourceIndex, false);
-    this.closeGesturePresentation(selected.sourceIndex);
     // forcePerfectStopState invokes ExecTouchMoved, which touches the next after node.
     if (!selected.isTerminal) this.touchMesh(selected.sourceIndex + 1);
     return selected.isTerminal ? this.changeState(NoteState.Deactive) : ok(undefined);
@@ -2354,7 +2336,6 @@ export class NoteSlide extends NoteFrontBase {
       return marked;
     }
     this.hideBeforeSlideNode(this.currentAfterIndexValue, false, true);
-    this.closeGesturePresentation(current.sourceIndex);
     this.currentAfterIndexValue += 1;
     // The after-update ExecTouchMoved progression touches the new next after node.
     if (!current.isTerminal) this.touchMesh(this.currentAfterIndexValue);
@@ -2373,7 +2354,6 @@ export class NoteSlide extends NoteFrontBase {
     this.afterNotesValue = [];
     this.beganPlacementPending = false;
     this.pendingSpriteHides.clear();
-    this.pendingGestureCloseIndices.clear();
     this.currentAfterIndexValue = 0;
     this.touchedMeshIndices.clear();
     this.laneEffectTarget = null;
@@ -2414,7 +2394,6 @@ export class NoteSlide extends NoteFrontBase {
     this.afterNotesValue = [];
     this.beganPlacementPending = false;
     this.pendingSpriteHides.clear();
-    this.pendingGestureCloseIndices.clear();
     this.currentAfterIndexValue = 0;
     this.touchedMeshIndices.clear();
     this.laneEffectTarget = null;

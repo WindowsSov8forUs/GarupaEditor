@@ -447,8 +447,11 @@ function buildGarupaProductChartProfile(
   const originalItemIndices = new Set<number>();
   for (const [index, item] of chart.entries()) {
     if (item.type === "BPM" || item.type === "SV" || item.type === "Header" || item.type === "System") continue;
+    // The original has no Hidden head or tail and no Flick/Directional before a Slide's last node: such
+    // Slides are extension items (their judgement still follows the original rules).
     const compatible = item.type === "Slide"
-      ? item.connections[0]!.type !== "Hidden" && item.connections[item.connections.length - 1]!.type !== "Hidden" &&
+      ? item.connections.slice(0, -1).every(node => node.type !== "Flick" && node.type !== "Directional") &&
+        item.connections[0]!.type !== "Hidden" && item.connections[item.connections.length - 1]!.type !== "Hidden" &&
         item.connections.every(canUseFixedLaneGeometry)
       : canUseFixedLaneGeometry(item);
     if (compatible && !independentItems.has(index) && !svItemIndices.has(index)) originalItemIndices.add(index);
