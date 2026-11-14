@@ -92,9 +92,22 @@ export function useEditorPointerLifecycle(params: any) {
       finishSelectionDrag(event.clientX, event.clientY);
     };
 
+    // A suppressed click belongs to the press that set it. Some releases are never followed by a
+    // click (a right-click ending a Slide build, a drag released off the board), so a new primary
+    // press drops whatever suppression is left; handlers of that press may still set it again.
+    const handleWindowMouseDown = (event: globalThis.MouseEvent) => {
+      if (event.button !== 0) {
+        return;
+      }
+      suppressNextBoardClickRef.current = false;
+      suppressNextNoteClickRef.current = false;
+    };
+
+    window.addEventListener("mousedown", handleWindowMouseDown, true);
     window.addEventListener("mousemove", handleWindowMouseMove);
     window.addEventListener("mouseup", handleWindowMouseUp);
     return () => {
+      window.removeEventListener("mousedown", handleWindowMouseDown, true);
       window.removeEventListener("mousemove", handleWindowMouseMove);
       window.removeEventListener("mouseup", handleWindowMouseUp);
     };
