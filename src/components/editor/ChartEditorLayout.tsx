@@ -2,7 +2,7 @@ import { flushSync } from "react-dom";
 import { EditorMinimap } from "./EditorMinimap";
 import { EditorBeatDivision } from "./EditorBeatDivision";
 import { ORIGINAL_HEADER_MENU_BOUNDS } from "../OriginalPageHeader";
-import { editorNoteHeight, editorDirectionalSegmentWidth } from "../../app/editorNoteMetrics";
+import { editorDirectionalBackLineWidth, editorDirectionalHeadGeometry, editorDirectionalSegmentWidth, editorFlickArrowGeometry, editorNoteHeight, editorNoteTokenWidth } from "../../app/editorNoteMetrics";
 import { OriginalMenuBackground } from "../OriginalMenuBackground";
 import { useApplicationPresentation, useReturnToTitle } from "../../app/titleNavigation";
 import { useStartupReadiness } from "../../app/startupReadiness";
@@ -141,7 +141,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     handleBoardContextMenu,
     boardHeight,
     scrollContentHeight,
-    renderBackendMode,
     renderBpmLines,
     renderSvLines,
     cursorPreview,
@@ -156,11 +155,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     boardWidth,
     handleBoardClick,
     renderLaneGuides,
-    renderGridLines,
-    renderSimultaneousSegments,
     renderSlideSegments,
-    slideBuildCommittedGuideLines,
-    slideBuildGuideLine,
     NOTE_SPECS,
     resolvePlacedNoteLayers,
     isDirectionalNoteType,
@@ -455,7 +450,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   }, [setStatusMessage]);
 
   const isColorAssistEnabled = appOptionSettings?.colorAssistEnabled === true;
-  const isCanvasRenderBackend = renderBackendMode === "canvas";
   const effectiveScrollContentHeight = Math.max(boardHeight, Number(scrollContentHeight) || 0);
   const canvasBpmCursorPreviewRef = useRef<HTMLDivElement | null>(null);
   const canvasBpmSnapPreviewRef = useRef<HTMLDivElement | null>(null);
@@ -474,13 +468,13 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     : 1;
   const canvasPreviewSpec = canvasPreviewType ? NOTE_SPECS[canvasPreviewType] : null;
   const canvasPreviewLayers = useMemo(() => {
-    if (!isCanvasRenderBackend || !canvasPreviewType) {
+    if (!canvasPreviewType) {
       return null;
     }
     return getSpriteLayers(canvasPreviewType, { width: canvasPreviewRhythmWidth });
-  }, [canvasPreviewRhythmWidth, canvasPreviewType, getSpriteLayers, isCanvasRenderBackend]);
+  }, [canvasPreviewRhythmWidth, canvasPreviewType, getSpriteLayers]);
   const canvasPreviewSingleAssistLayers = useMemo(() => {
-    if (!isCanvasRenderBackend || canvasPreviewType !== "single" || !isColorAssistEnabled) {
+    if (canvasPreviewType !== "single" || !isColorAssistEnabled) {
       return null;
     }
     return getSpriteLayers("single", {
@@ -493,7 +487,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     canvasPreviewRhythmWidth,
     canvasPreviewType,
     getSpriteLayers,
-    isCanvasRenderBackend,
     isColorAssistEnabled,
   ]);
   const canvasPreviewHasSprite = Boolean(canvasPreviewLayers?.base || canvasPreviewLayers?.overlay);
@@ -507,11 +500,24 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     : canvasPreviewRhythmWidth;
   const noteSpriteHeightPx = editorNoteHeight(LANE_WIDTH, noteVisualScale);
   const directionalBaseWidthPx = editorDirectionalSegmentWidth(LANE_WIDTH, noteVisualScale);
+  // The flick arrow and the Directional arrow head and back line, as the board's canvas draws them, for the
+  // DOM-drawn previews (cursor and paste) on the board.
+  const noteIconStyle = useMemo(() => {
+    const flick = editorFlickArrowGeometry(LANE_WIDTH, noteVisualScale);
+    const head = editorDirectionalHeadGeometry(LANE_WIDTH, noteVisualScale);
+    return {
+      "--flick-arrow-height": `${flick.height}px`,
+      "--flick-arrow-offset": `${flick.offset}px`,
+      "--directional-head-height": `${head.height}px`,
+      "--directional-head-offset": `${head.offset}px`,
+      "--directional-back-line-width": `${editorDirectionalBackLineWidth(LANE_WIDTH, noteVisualScale)}px`,
+    };
+  }, [LANE_WIDTH, noteVisualScale]);
   const canvasPreviewTokenWidth = canvasPreviewIsDirectional
     ? canvasPreviewSpanLanes * LANE_WIDTH
     : (
       canvasPreviewSpanLanes > 1
-        ? LANE_WIDTH * (canvasPreviewSpanLanes + 0.25) * noteVisualScale
+        ? editorNoteTokenWidth(canvasPreviewSpanLanes, false, LANE_WIDTH, noteVisualScale)
         : undefined
     );
   const canvasPreviewTokenClassName = `note-token has-sprite preview-token ${canvasPreviewLayers?.overlay ? "composite" : ""} ${canvasPreviewIsDirectional ? "directional" : ""}`;
@@ -735,9 +741,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     bottom: effectiveScrollContentHeight,
   }));
   const updateCanvasInteractionWindow = useCallback((scrollTop: number, clientHeight: number) => {
-    if (!isCanvasRenderBackend) {
-      return;
-    }
     const rawTop = Math.max(0, scrollTop - CANVAS_INTERACTION_OVERSCAN_PX);
     const rawBottom = Math.min(effectiveScrollContentHeight, scrollTop + clientHeight + CANVAS_INTERACTION_OVERSCAN_PX);
     const top = Math.max(0, Math.floor(rawTop / CANVAS_INTERACTION_SNAP_PX) * CANVAS_INTERACTION_SNAP_PX);
@@ -751,17 +754,14 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       }
       return { top, bottom };
     });
-  }, [effectiveScrollContentHeight, isCanvasRenderBackend]);
+  }, [effectiveScrollContentHeight]);
   useEffect(() => {
-    if (!isCanvasRenderBackend) {
-      return;
-    }
     const playfield = playfieldRef?.current;
     if (!playfield) {
       return;
     }
     updateCanvasInteractionWindow(playfield.scrollTop, playfield.clientHeight);
-  }, [effectiveScrollContentHeight, isCanvasRenderBackend, playfieldRef, updateCanvasInteractionWindow]);
+  }, [effectiveScrollContentHeight, playfieldRef, updateCanvasInteractionWindow]);
   const handlePlayfieldScrollInternal = useCallback((event: any) => {
     setPlayfieldScrollTop(event.currentTarget.scrollTop);
     handlePlayfieldScroll(event);
@@ -769,9 +769,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   }, [handlePlayfieldScroll, updateCanvasInteractionWindow]);
 
   useEffect(() => {
-    if (!isCanvasRenderBackend) {
-      return;
-    }
     let rafId = 0;
     const hide = (element: HTMLDivElement | null) => {
       if (!element) {
@@ -896,7 +893,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
             ? `${noteReplacePreview.spanLanes * LANE_WIDTH}px`
             : (
               noteReplacePreview.spanLanes > 1
-                ? `${LANE_WIDTH * (noteReplacePreview.spanLanes + 0.25) * noteVisualScale}px`
+                ? `${editorNoteTokenWidth(noteReplacePreview.spanLanes, false, LANE_WIDTH, noteVisualScale)}px`
                 : ""
             );
           if (replaceNode.style.width !== nextWidth) {
@@ -951,7 +948,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     canvasPreviewSpanLanes,
     canvasPreviewType,
     cursorPreviewRef,
-    isCanvasRenderBackend,
     isColorAssistEnabled,
     isDirectionalNoteType,
     isToolArmed,
@@ -1131,10 +1127,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         const spanLanes = getNoteSpanLanes(note);
         const { lane: renderLane, beat: renderBeat } = getRenderedNotePlacement(note);
         const renderY = getNoteDisplayY?.(note, renderBeat) ?? beatToY(renderBeat);
-        if (
-          isCanvasRenderBackend
-          && (renderY < canvasInteractionWindow.top - 48 || renderY > canvasInteractionWindow.bottom + 48)
-        ) {
+        if (renderY < canvasInteractionWindow.top - 48 || renderY > canvasInteractionWindow.bottom + 48) {
           return null;
         }
         const directionalStartLane =
@@ -1147,8 +1140,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         }
         const spriteLayers = resolved.layers;
         const spriteAspectRatio = getSpriteAspectRatio(resolved.layers);
-        const noteHitboxCoreWidth = Math.max(1, LANE_WIDTH * (spanLanes + 0.25));
-        const scaledHitboxCoreWidth = noteHitboxCoreWidth * noteVisualScale;
+        const scaledHitboxCoreWidth = editorNoteTokenWidth(spanLanes, false, LANE_WIDTH, noteVisualScale);
         const scaledHitboxCoreHeight = editorNoteHeight(LANE_WIDTH, noteVisualScale);
         const tokenWidth = isDirectional
           ? spanLanes * LANE_WIDTH
@@ -1185,21 +1177,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
             onClick={handleSharedNoteClick}
             onContextMenu={handleSharedNoteContextMenu}
           >
-            {!isCanvasRenderBackend && spriteLayers && (
-              isDirectional
-                ? renderDirectionalSprite(
-                    note.type as "directional_flick_left" | "directional_flick_right",
-                    spriteLayers,
-                    spanLanes,
-                    spec.label,
-                  )
-                : renderSpriteStack(
-                    spriteLayers,
-                    spec.label,
-                    "note-sprite-stack",
-                    spriteAspectRatio,
-                  )
-            )}
           </button>
         );
       }),
@@ -1217,7 +1194,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       handleSharedNoteClick,
       handleSharedNoteContextMenu,
       handleSharedNoteMouseDown,
-      isCanvasRenderBackend,
       isDirectionalNoteType,
       isNoteOutsideActiveTimingGroup,
       isSlideBuilding,
@@ -1353,19 +1329,18 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
               }}
             >
               <div
-                className={`playfield-host ${selectionDrag?.isDragging ? "is-marquee-selecting" : ""} ${isSlideBuilding ? "is-slide-building" : ""} ${isToolArmed ? "is-tool-armed" : ""} ${isCanvasRenderBackend ? "canvas-render-backend" : ""}`}
+                className={`playfield-host ${selectionDrag?.isDragging ? "is-marquee-selecting" : ""} ${isSlideBuilding ? "is-slide-building" : ""} ${isToolArmed ? "is-tool-armed" : ""} canvas-render-backend`}
                 style={{ height: scaledScrollContentHeight }}
                 onMouseDown={handleBoardMouseDown}
                 onMouseMove={handleBoardMouseMove}
                 onMouseLeave={handleBoardMouseLeave}
                 onContextMenu={handleBoardContextMenu}
               >
-                {isCanvasRenderBackend && (
-                  <div className="bpm-viewport-hitbox-layer" style={{ top: playfieldScrollTop }}>
+                                  <div className="bpm-viewport-hitbox-layer" style={{ top: playfieldScrollTop }}>
                     {renderBpmLines({ viewportHitbox: true, scrollTop: playfieldScrollTop, scale: viewportTimelineScale })}
                     {renderSvLines?.({ viewportHitbox: true, scrollTop: playfieldScrollTop, scale: viewportTimelineScale })}
                   </div>
-                )}
+                
                 <div
                   className="playfield-board-scale-layer"
                   style={{
@@ -1387,40 +1362,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                     "--timeline-label-x": `${timelineLabelX}px`,
                   } as CSSProperties}
                 >
-                  {!isCanvasRenderBackend && renderBpmLines()}
-                  {!isCanvasRenderBackend && renderSvLines?.()}
-                  {!isCanvasRenderBackend && isToolArmed && tool === "bpm" && cursorPreview && (
-                    <>
-                      <div className="bpm-marker bpm-preview bpm-preview-cursor" style={{ top: cursorPreview.y }}>
-                        <div className="bpm-line" />
-                      </div>
-                      {cursorPreview.snappedBeat !== null && (
-                        <div
-                          className="bpm-marker bpm-preview bpm-preview-snap"
-                          style={{ top: beatToY(cursorPreview.snappedBeat) }}
-                        >
-                          <div className="bpm-line" />
-                        </div>
-                      )}
-                    </>
-                  )}
-                  {!isCanvasRenderBackend && isToolArmed && tool === "sv" && cursorPreview && (
-                    <>
-                      <div className="bpm-marker sv-marker sv-preview sv-preview-cursor" style={{ top: cursorPreview.y }}>
-                        <div className="bpm-line sv-line" />
-                      </div>
-                      {cursorPreview.snappedBeat !== null && (
-                        <div
-                          className="bpm-marker sv-marker sv-preview sv-preview-snap"
-                          style={{ top: beatToY(cursorPreview.snappedBeat) }}
-                        >
-                          <div className="bpm-line sv-line" />
-                        </div>
-                      )}
-                    </>
-                  )}
-                  {isCanvasRenderBackend && (
-                    <>
+                                      <>
                       <div
                         ref={canvasBpmCursorPreviewRef}
                         className="bpm-marker bpm-preview bpm-preview-cursor"
@@ -1454,7 +1396,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                         <div className="bpm-line sv-line" />
                       </div>
                     </>
-                  )}
+                  
                   {isPasteToolSelected && pastePreviewVisuals.bpmYPositions.map((y: number, index: number) => (
                     <div
                       key={`paste-bpm-preview-${index}-${y.toFixed(3)}`}
@@ -1489,13 +1431,12 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                 </div>
                 <div
                   ref={playfieldBoardRef}
-                  className={`playfield-board viewport-track-owned ${isCanvasRenderBackend ? "canvas-render-backend" : ""}`}
-                  style={{ width: boardWidth, height: effectiveScrollContentHeight }}
+                  className={`playfield-board viewport-track-owned canvas-render-backend`}
+                  style={{ width: boardWidth, height: effectiveScrollContentHeight, ...noteIconStyle } as CSSProperties}
                   onClick={handleBoardClick}
                   onContextMenu={handleBoardContextMenu}
                 >
-                  {isCanvasRenderBackend && (
-                    <>
+                                      <>
                       <canvas
                         ref={playfieldTrackCanvasRef}
                         className="playfield-canvas-layer playfield-canvas-track-layer"
@@ -1518,269 +1459,18 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                         aria-hidden="true"
                       />
                     </>
-                  )}
+                  
                   <div className="judge-line" style={{ top: beatToY(0), bottom: "auto" }} />
 
-                  <div className="grid-layer">
-                    {renderGridLines(playfieldScrollTop, playfieldScrollTop + viewportHeight)}
-                  </div>
-
-                  <div className="simultaneous-layer">
-                    {renderSimultaneousSegments()}
-                  </div>
-
                   <div className="slide-chain-layer">
-                    {renderSlideSegments(isCanvasRenderBackend ? canvasInteractionWindow : null)}
+                    {renderSlideSegments(canvasInteractionWindow)}
                   </div>
 
-                  {!isCanvasRenderBackend && (slideBuildCommittedGuideLines.length > 0 || slideBuildGuideLine) && (
-                    <svg className="slide-build-guide-layer" width={boardWidth} height={effectiveScrollContentHeight} aria-hidden="true">
-                      {slideBuildCommittedGuideLines.map((line: any) => (
-                        <line
-                          key={line.key}
-                          x1={line.x1}
-                          y1={line.y1}
-                          x2={line.x2}
-                          y2={line.y2}
-                        />
-                      ))}
-                      {slideBuildGuideLine && (
-                        <line
-                          x1={slideBuildGuideLine.x1}
-                          y1={slideBuildGuideLine.y1}
-                          x2={slideBuildGuideLine.x2}
-                          y2={slideBuildGuideLine.y2}
-                        />
-                      )}
-                    </svg>
-                  )}
 
                   <div className="note-layer">
                     {renderedNoteButtons}
 
-                    {!isCanvasRenderBackend && isPlacementNoteTool && cursorPreview && (() => {
-                      const previewType = tool;
-                      const previewSpec = NOTE_SPECS[previewType];
-                      const previewWidthValue =
-                        isHabahiroEnabled && isRhythmWidthEditableType(previewType)
-                          ? normalizeRhythmWidth(toolRhythmWidth)
-                          : 1;
-                      const previewLayers = getSpriteLayers(previewType, { width: previewWidthValue });
-                      if (!previewLayers.base) {
-                        return null;
-                      }
-
-                      const previewAspectRatio = getSpriteAspectRatio(previewLayers);
-                      const useSnappedColorAssist =
-                        isColorAssistEnabled
-                        && previewType === "single"
-                        && cursorPreview.snappedBeat !== null
-                        && !isHalfBeatAligned(cursorPreview.snappedBeat);
-                      const snappedPreviewLayers = useSnappedColorAssist
-                        ? getSpriteLayers("single", {
-                            baseImageType: "single16",
-                            includeDirectionalOverlay: false,
-                            includeFlickOverlay: false,
-                            width: previewWidthValue,
-                          })
-                        : previewLayers;
-                      const snappedPreviewAspectRatio = getSpriteAspectRatio(snappedPreviewLayers);
-                      const isPreviewDirectional = isDirectionalNoteType(previewType);
-                      const previewSpanLanes = isPreviewDirectional
-                        ? normalizeDirectionalWidth(toolDirectionalWidth)
-                        : previewWidthValue;
-                      const previewTokenWidth = isPreviewDirectional
-                        ? previewSpanLanes * LANE_WIDTH
-                        : (
-                          previewSpanLanes > 1
-                            ? LANE_WIDTH * (previewSpanLanes + 0.25) * noteVisualScale
-                            : undefined
-                        );
-                      const previewTokenHeight = editorNoteHeight(LANE_WIDTH, noteVisualScale);
-
-                      const followStyle: CSSProperties = {
-                        left: cursorPreview.x,
-                        top: cursorPreview.y,
-                        ...(previewTokenWidth
-                          ? ({
-                              width: previewTokenWidth,
-                              "--lane-width": `${LANE_WIDTH}px`,
-                              "--directional-base-width": `${directionalBaseWidthPx}px`,
-                              "--note-visual-scale": `${noteVisualScale}`,
-                              "--note-sprite-height": `${previewTokenHeight}px`,
-                              "--sprite-aspect-ratio": `${previewAspectRatio}`,
-                            } as CSSProperties)
-                          : ({
-                              "--directional-base-width": `${directionalBaseWidthPx}px`,
-                              "--note-visual-scale": `${noteVisualScale}`,
-                              "--note-sprite-height": `${previewTokenHeight}px`,
-                              "--sprite-aspect-ratio": `${previewAspectRatio}`,
-                            } as CSSProperties)),
-                      };
-
-                      const snappedStyle: CSSProperties | null =
-                        cursorPreview.snappedLane === null || cursorPreview.snappedBeat === null
-                          ? null
-                          : (() => {
-                              const snappedStartLane =
-                                previewType === "directional_flick_left"
-                                  ? cursorPreview.snappedLane - previewSpanLanes + 1
-                                  : cursorPreview.snappedLane;
-                              return {
-                                left: (laneToColumn(snappedStartLane) + previewSpanLanes / 2) * LANE_WIDTH,
-                                top: beatToY(cursorPreview.snappedBeat),
-                                ...(previewTokenWidth
-                                  ? ({
-                                      width: previewTokenWidth,
-                                      "--lane-width": `${LANE_WIDTH}px`,
-                                      "--directional-base-width": `${directionalBaseWidthPx}px`,
-                                      "--note-visual-scale": `${noteVisualScale}`,
-                                      "--note-sprite-height": `${previewTokenHeight}px`,
-                                      "--sprite-aspect-ratio": `${previewAspectRatio}`,
-                                    } as CSSProperties)
-                                  : ({
-                                      "--directional-base-width": `${directionalBaseWidthPx}px`,
-                                      "--note-visual-scale": `${noteVisualScale}`,
-                                      "--note-sprite-height": `${previewTokenHeight}px`,
-                                      "--sprite-aspect-ratio": `${previewAspectRatio}`,
-                                    } as CSSProperties)),
-                              } as CSSProperties;
-                            })();
-
-                      const previewTokenClassName = `note-token has-sprite preview-token ${previewLayers.overlay ? "composite" : ""} ${isPreviewDirectional ? "directional" : ""}`;
-
-                      return (
-                        <>
-                          <div className={`${previewTokenClassName} preview-cursor`} style={followStyle} aria-hidden="true">
-                            {isPreviewDirectional
-                              ? renderDirectionalSprite(
-                                  previewType as "directional_flick_left" | "directional_flick_right",
-                                  previewLayers,
-                                  previewSpanLanes,
-                                  previewSpec.label,
-                                )
-                              : renderSpriteStack(
-                                  previewLayers,
-                                  previewSpec.label,
-                                  "note-sprite-stack",
-                                  previewAspectRatio,
-                                )}
-                          </div>
-
-                          {snappedStyle && (
-                            <div className={`${previewTokenClassName} preview-snap`} style={snappedStyle} aria-hidden="true">
-                              {isPreviewDirectional
-                                ? renderDirectionalSprite(
-                                    previewType as "directional_flick_left" | "directional_flick_right",
-                                    snappedPreviewLayers,
-                                    previewSpanLanes,
-                                    previewSpec.label,
-                                  )
-                                : renderSpriteStack(
-                                    snappedPreviewLayers,
-                                    previewSpec.label,
-                                    "note-sprite-stack",
-                                    snappedPreviewAspectRatio,
-                                  )}
-                            </div>
-                          )}
-                        </>
-                      );
-                    })()}
-                    {!isCanvasRenderBackend && isPlacementNoteTool && cursorPreview && (() => {
-                      const replacePreview = resolveNoteReplacePreviewAt?.(cursorPreview.x, cursorPreview.y) ?? null;
-                      if (!replacePreview) {
-                        return null;
-                      }
-                      const previewLayers = getSpriteLayers(replacePreview.type, { width: replacePreview.width });
-                      if (!previewLayers.base) {
-                        return null;
-                      }
-                      const previewSpec = NOTE_SPECS[replacePreview.type];
-                      const previewAspectRatio = getSpriteAspectRatio(previewLayers);
-                      const isPreviewDirectional = isDirectionalNoteType(replacePreview.type);
-                      const tokenWidth = isPreviewDirectional
-                        ? replacePreview.spanLanes * LANE_WIDTH
-                        : (
-                          replacePreview.spanLanes > 1
-                            ? LANE_WIDTH * (replacePreview.spanLanes + 0.25) * noteVisualScale
-                            : undefined
-                        );
-                      const tokenHeight = editorNoteHeight(LANE_WIDTH, noteVisualScale);
-                      const style: CSSProperties = {
-                        left: replacePreview.x,
-                        top: replacePreview.y,
-                        ...(tokenWidth
-                          ? ({
-                              width: tokenWidth,
-                              "--lane-width": `${LANE_WIDTH}px`,
-                              "--directional-base-width": `${directionalBaseWidthPx}px`,
-                              "--note-visual-scale": `${noteVisualScale}`,
-                              "--note-sprite-height": `${tokenHeight}px`,
-                              "--sprite-aspect-ratio": `${previewAspectRatio}`,
-                            } as CSSProperties)
-                          : ({
-                              "--directional-base-width": `${directionalBaseWidthPx}px`,
-                              "--note-visual-scale": `${noteVisualScale}`,
-                              "--note-sprite-height": `${tokenHeight}px`,
-                              "--sprite-aspect-ratio": `${previewAspectRatio}`,
-                            } as CSSProperties)),
-                      };
-                      return (
-                        <div
-                          className={`note-token has-sprite preview-token preview-snap ${previewLayers.overlay ? "composite" : ""} ${isPreviewDirectional ? "directional" : ""}`}
-                          style={style}
-                          aria-hidden="true"
-                        >
-                          {isPreviewDirectional
-                            ? renderDirectionalSprite(
-                                replacePreview.type as "directional_flick_left" | "directional_flick_right",
-                                previewLayers,
-                                replacePreview.spanLanes,
-                                previewSpec.label,
-                              )
-                            : renderSpriteStack(
-                                previewLayers,
-                                previewSpec.label,
-                                "note-sprite-stack",
-                                previewAspectRatio,
-                              )}
-                        </div>
-                      );
-                    })()}
-                    {!isCanvasRenderBackend && isPlacementNoteTool && isDirectionalNoteType(tool) && cursorPreview && (() => {
-                      const widenPreview = resolveDirectionalWidenPreviewAt?.(cursorPreview.x, cursorPreview.y) ?? null;
-                      if (!widenPreview) {
-                        return null;
-                      }
-                      const previewLayers = getSpriteLayers(widenPreview.type);
-                      if (!previewLayers.base) {
-                        return null;
-                      }
-                      const previewSpec = NOTE_SPECS[widenPreview.type];
-                      const previewAspectRatio = getSpriteAspectRatio(previewLayers);
-                      const tokenHeight = editorNoteHeight(LANE_WIDTH, noteVisualScale);
-                      const style: CSSProperties = {
-                        left: widenPreview.x,
-                        top: widenPreview.y,
-                        width: LANE_WIDTH,
-                        "--lane-width": `${LANE_WIDTH}px`,
-                        "--directional-base-width": `${directionalBaseWidthPx}px`,
-                        "--note-visual-scale": `${noteVisualScale}`,
-                        "--note-sprite-height": `${tokenHeight}px`,
-                        "--sprite-aspect-ratio": `${previewAspectRatio}`,
-                      } as CSSProperties;
-                      return (
-                        <div
-                          className={`note-token has-sprite preview-token preview-snap ${previewLayers.overlay ? "composite" : ""} directional`}
-                          style={style}
-                          aria-hidden="true"
-                        >
-                          {renderDirectionalSprite(widenPreview.type, previewLayers, 1, previewSpec.label)}
-                        </div>
-                      );
-                    })()}
-                    {isCanvasRenderBackend && canvasPreviewType && canvasPreviewSpec && canvasPreviewLayers && canvasPreviewHasSprite && (
+                    {canvasPreviewType && canvasPreviewSpec && canvasPreviewLayers && canvasPreviewHasSprite && (
                       <>
                         <div
                           ref={canvasNoteCursorPreviewRef}
@@ -1888,7 +1578,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                         ? note.spanLanes * LANE_WIDTH
                         : (
                           note.spanLanes > 1
-                            ? LANE_WIDTH * (note.spanLanes + 0.25) * noteVisualScale
+                            ? editorNoteTokenWidth(note.spanLanes, false, LANE_WIDTH, noteVisualScale)
                             : undefined
                         );
                       const tokenHeight = editorNoteHeight(LANE_WIDTH, noteVisualScale);
@@ -1936,18 +1626,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                     })}
                   </div>
 
-                  {!isCanvasRenderBackend && selectionDrag?.isDragging && (
-                    <div
-                      className="selection-rect"
-                      style={{
-                        left: Math.min(selectionDrag.startX, selectionDrag.currentX),
-                        top: Math.min(selectionDrag.startY, selectionDrag.currentY),
-                        width: Math.abs(selectionDrag.currentX - selectionDrag.startX),
-                        height: Math.abs(selectionDrag.currentY - selectionDrag.startY),
-                      }}
-                      aria-hidden="true"
-                    />
-                  )}
                 </div>
                   </div>
                 </div>

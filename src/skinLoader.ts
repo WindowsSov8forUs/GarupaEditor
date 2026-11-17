@@ -281,15 +281,14 @@ type PlayfieldSpriteRuntimeAssets =
 
 interface PlayfieldLineRuntimeAssets {
   longLine: string;
-  longLineSpecial: string;
+  curveSlideLine: string;
   simultaneousLine: string;
+  /** The line joining a multi-lane Directional's lanes (FlickNoteLine_l / _r). */
+  directionalBackLineLeft: string;
+  directionalBackLineRight: string;
 }
 
-export type CanvasRenderResourceRuntimeAssets = PlayfieldSpriteRuntimeAssets & {
-  longLine: string;
-  longLineSpecial: string;
-  simultaneousLine: string;
-};
+export type CanvasRenderResourceRuntimeAssets = PlayfieldSpriteRuntimeAssets & PlayfieldLineRuntimeAssets;
 
 export function isHabahiroRhythmRipName(ripName: string): boolean {
   return ripName.trim().toLowerCase() === "habahiro";
@@ -476,11 +475,13 @@ export function projectPlayfieldLineRuntimeAssets<
 >(
   skinAssets: SkinAssets<TRhythmSkin, TDirectionalSkin>,
 ): PlayfieldLineRuntimeAssets {
-  const { rhythmAssets } = resolveRuntimeAssetBases(skinAssets);
+  const { rhythmAssets, directionalAssets } = resolveRuntimeAssetBases(skinAssets);
   return {
     longLine: rhythmAssets.longNoteLine,
-    longLineSpecial: rhythmAssets.longNoteLine2,
+    curveSlideLine: rhythmAssets.longNoteLine2,
     simultaneousLine: rhythmAssets.simultaneousLine,
+    directionalBackLineLeft: directionalAssets.flickNoteLineL,
+    directionalBackLineRight: directionalAssets.flickNoteLineR,
   };
 }
 
@@ -490,13 +491,9 @@ export function projectCanvasRenderResourceRuntimeAssets<
 >(
   skinAssets: SkinAssets<TRhythmSkin, TDirectionalSkin>,
 ): CanvasRenderResourceRuntimeAssets {
-  const { rhythmAssets } = resolveRuntimeAssetBases(skinAssets);
-  const spriteRuntime = projectPlayfieldSpriteRuntimeAssets(skinAssets);
   return {
-    ...spriteRuntime,
-    longLine: rhythmAssets.longNoteLine,
-    longLineSpecial: rhythmAssets.longNoteLine2,
-    simultaneousLine: rhythmAssets.simultaneousLine,
+    ...projectPlayfieldSpriteRuntimeAssets(skinAssets),
+    ...projectPlayfieldLineRuntimeAssets(skinAssets),
   };
 }
 

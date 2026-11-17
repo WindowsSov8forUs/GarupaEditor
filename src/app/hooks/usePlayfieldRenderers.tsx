@@ -1,4 +1,4 @@
-﻿import { editorGridWindow } from "../editorGridWindow";
+﻿import { editorSlideLineWidth } from "../editorNoteMetrics";
 import { useMemo, type ReactNode } from "react";
 import { projectPlayfieldLineRuntimeAssets } from "../../skinLoader";
 
@@ -6,11 +6,6 @@ export function usePlayfieldRenderers(params: any) {
   const {
     laneValues,
     LANE_WIDTH,
-    totalSteps,
-    yToBeat,
-    isSvPreviewEnabled,
-    beatDivision,
-    beatsPerMeasure,
     approxEq,
     beatToY,
     trackBeatToY,
@@ -45,7 +40,6 @@ export function usePlayfieldRenderers(params: any) {
     getRenderedNotePlacement,
     getSlideAnchorLane,
     laneToColumn,
-    simultaneousSegments,
     selectedLongLineSegmentId,
     setSelectedLongLineSegmentId,
     connectionSegments,
@@ -54,11 +48,8 @@ export function usePlayfieldRenderers(params: any) {
     slideBuildCursor,
     onLongLineContextAction,
     onSlideToolLongLineClick,
-    renderBackendMode,
     noteVisualScale,
-    isSimultaneousLineEnabled,
   } = params;
-  const isCanvasBackend = renderBackendMode === "canvas";
   const isPlacementNoteTool = isToolArmed && tool !== "bpm" && tool !== "sv" && tool !== "copy" && tool !== "paste";
   const isPasteToolSelected = isToolArmed && tool === "paste";
   const shouldBypassLongLineLeftClick = isPlacementNoteTool || isPasteToolSelected;
@@ -96,31 +87,6 @@ export function usePlayfieldRenderers(params: any) {
     return guides;
   };
 
-  const renderGridLines = (top: number, bottom: number) => {
-    if (isCanvasBackend) {
-      return [] as ReactNode[];
-    }
-    const lines: ReactNode[] = [];
-
-    for (const { step, y } of editorGridWindow({ top, bottom, totalSteps, beatDivision, beatToY: beatToTrackY, yToBeat, fullScan: isSvPreviewEnabled })) {
-      const beat = step / beatDivision;
-      const roundedBeat = Math.round(beat);
-      const isWholeBeat = approxEq(beat, roundedBeat);
-      const isMeasureStart = isWholeBeat && roundedBeat % beatsPerMeasure === 0;
-
-      const lineClass = `grid-line${isWholeBeat ? " beat" : ""}${isMeasureStart ? " measure" : ""}`;
-      lines.push(
-        <div
-          key={`line-${step}`}
-          className={lineClass}
-          style={{ top: y }}
-          aria-hidden="true"
-        />,
-      );
-    }
-
-    return lines;
-  };
 
   const renderBpmLines = (options?: { viewportHitbox?: boolean; scrollTop?: number; scale?: number }) => {
     const lines: ReactNode[] = [];
@@ -211,12 +177,12 @@ export function usePlayfieldRenderers(params: any) {
       lines.push(
         <div
           key={`bpm-line-${lineKey}`}
-          className={`bpm-marker ${isSelected ? "selected" : ""} ${isCanvasBackend ? "canvas-hitbox" : ""}`}
+          className={`bpm-marker ${isSelected ? "selected" : ""} canvas-hitbox`}
           style={{ top: lineY, zIndex: nodeIndex + 1 }}
         >
           <button
             type="button"
-            className={`bpm-line-button ${isSelected ? "selected" : ""} ${isCanvasBackend ? "canvas-hitbox" : ""}`}
+            className={`bpm-line-button ${isSelected ? "selected" : ""} canvas-hitbox`}
             onMouseDown={(event) => {
               if (shouldHandleBpmLineEvent()) {
                 event.stopPropagation();
@@ -228,7 +194,7 @@ export function usePlayfieldRenderers(params: any) {
           >
             <div className="bpm-line" />
           </button>
-          <span className={`bpm-label-button ${isSelected ? "selected" : ""} ${isCanvasBackend ? "canvas-hitbox" : ""}`}>
+          <span className={`bpm-label-button ${isSelected ? "selected" : ""} canvas-hitbox`}>
             BPM {node.bpm.toFixed(2)}
           </span>
         </div>,
@@ -237,42 +203,10 @@ export function usePlayfieldRenderers(params: any) {
 
     return lines;
   };
-
 
 
-  const renderSimultaneousSegments = () => {
-    if (isCanvasBackend) {
-      return [] as ReactNode[];
-    }
-    if (!isSimultaneousLineEnabled) {
-      return [] as ReactNode[];
-    }
-    const texture = runtimeLineAssets?.simultaneousLine;
-    if (!texture) {
-      return [] as ReactNode[];
-    }
-    const segments: ReactNode[] = [];
-    for (const segment of simultaneousSegments ?? []) {
-      if (!Number.isFinite(segment.width) || segment.width <= 1e-6) {
-        continue;
-      }
-      segments.push(
-        <div
-          key={`simultaneous-segment-${segment.key}`}
-          className="simultaneous-segment"
-          style={{
-            left: segment.fromX,
-            top: segment.y,
-            width: segment.width,
-          }}
-          aria-hidden="true"
-        >
-          <img src={texture} alt="" className="simultaneous-segment-image" draggable={false} />
-        </div>,
-      );
-    }
-    return segments;
-  };
+
+
 
   const renderSvLines = (options?: { viewportHitbox?: boolean; scrollTop?: number; scale?: number }) => {
     const lines: ReactNode[] = [];
@@ -316,12 +250,12 @@ export function usePlayfieldRenderers(params: any) {
       lines.push(
         <div
           key={`sv-line-${event.id}`}
-          className={`bpm-marker sv-marker ${eventTimingGroup !== "#Global" ? "non-global" : ""} ${isSelected ? "selected" : ""} ${isSvInteractionDisabled ? "timing-group-muted" : ""} ${isCanvasBackend ? "canvas-hitbox" : ""}`}
+          className={`bpm-marker sv-marker ${eventTimingGroup !== "#Global" ? "non-global" : ""} ${isSelected ? "selected" : ""} ${isSvInteractionDisabled ? "timing-group-muted" : ""} canvas-hitbox`}
           style={{ top: lineY }}
         >
           <button
             type="button"
-            className={`bpm-line-button sv-line-button ${isSelected ? "selected" : ""} ${isCanvasBackend ? "canvas-hitbox" : ""}`}
+            className={`bpm-line-button sv-line-button ${isSelected ? "selected" : ""} canvas-hitbox`}
             disabled={isSvInteractionDisabled}
             onMouseDown={(mouseEvent) => {
               if (shouldHandleSvLineEvent()) {
@@ -334,7 +268,7 @@ export function usePlayfieldRenderers(params: any) {
           >
             <div className="bpm-line sv-line" />
           </button>
-          <span className={`bpm-label-button sv-label-button ${isSelected ? "selected" : ""} ${isCanvasBackend ? "canvas-hitbox" : ""}`}>
+          <span className={`bpm-label-button sv-label-button ${isSelected ? "selected" : ""} canvas-hitbox`}>
             ×{event.value.toFixed(2)}
           </span>
         </div>,
@@ -343,22 +277,17 @@ export function usePlayfieldRenderers(params: any) {
     return lines;
   };
 
-  const renderSlideSegments = (
-    visibleWindow: { top: number; bottom: number } | null = null,
-  ) => {
+  /** The Slide and Long line segments' hit areas over the interaction window (the canvas draws the lines). */
+  const renderSlideSegments = (visibleWindow: { top: number; bottom: number }) => {
     const segments: ReactNode[] = [];
     const longTexture = runtimeLineAssets?.longLine;
-    const slideTexture = runtimeLineAssets?.longLineSpecial;
+    const curveSlideTexture = runtimeLineAssets?.curveSlideLine;
     for (const segment of connectionSegments ?? []) {
-      if (
-        isCanvasBackend
-        && visibleWindow
-        && (segment.maxY < visibleWindow.top - 8 || segment.minY > visibleWindow.bottom + 8)
-      ) {
+      if (segment.maxY < visibleWindow.top - 8 || segment.minY > visibleWindow.bottom + 8) {
         continue;
       }
       const isPreviewChain = segment.isPreviewChain;
-      const lineTexture = segment.textureKind === "slide" ? slideTexture : longTexture;
+      const lineTexture = segment.textureKind === "curveSlide" ? curveSlideTexture : longTexture;
       if (!lineTexture) {
         continue;
       }
@@ -373,7 +302,16 @@ export function usePlayfieldRenderers(params: any) {
       }
       const horizontalOffset = bottomX - topX;
       const skewDeg = (Math.atan2(horizontalOffset, height) * 180) / Math.PI;
-      const lineWidth = LANE_WIDTH * Math.max(1, segment.spanLanes) * noteVisualScale;
+      // The segment's element is its hit area only (the canvas draws the line): as wide as the wider end,
+      // clipped to the trapezoid when its ends differ (as the original's NoteMesh, each end as wide as its own note).
+      const fromWidth = editorSlideLineWidth(segment.fromSpanLanes, LANE_WIDTH, noteVisualScale);
+      const toWidth = editorSlideLineWidth(segment.toSpanLanes, LANE_WIDTH, noteVisualScale);
+      const lineWidth = Math.max(fromWidth, toWidth);
+      const topInset = (lineWidth - (topIsFrom ? fromWidth : toWidth)) / 2;
+      const bottomInset = (lineWidth - (topIsFrom ? toWidth : fromWidth)) / 2;
+      const clipPath = topInset > 1e-3 || bottomInset > 1e-3
+        ? `polygon(${topInset}px 0, ${lineWidth - topInset}px 0, ${lineWidth - bottomInset}px 100%, ${bottomInset}px 100%)`
+        : undefined;
       const segmentGroupId = segment.groupId;
       const isGroupStart = segment.groupStart;
       const isGroupEnd = segment.groupEnd;
@@ -382,13 +320,14 @@ export function usePlayfieldRenderers(params: any) {
       segments.push(
         <div
           key={`slide-segment-${segment.chainId}-${segment.index}`}
-          className={`slide-segment ${isPreviewChain || isMuted ? "" : "selectable"} ${isSelectedGroup ? "selected" : ""} ${isGroupStart ? "group-start" : ""} ${isGroupEnd ? "group-end" : ""} ${isMuted ? "timing-group-muted" : ""} ${isCanvasBackend ? "hitbox-only" : ""}`}
+          className={`slide-segment ${isPreviewChain || isMuted ? "" : "selectable"} ${isSelectedGroup ? "selected" : ""} ${isGroupStart ? "group-start" : ""} ${isGroupEnd ? "group-end" : ""} ${isMuted ? "timing-group-muted" : ""} hitbox-only`}
           style={{
             left: topX - lineWidth * 0.5,
             top: topY,
             width: lineWidth,
             height,
             transform: `skewX(${skewDeg}deg)`,
+            clipPath,
           }}
           onMouseDown={(event) => {
             if (isPreviewChain) {
@@ -478,17 +417,6 @@ export function usePlayfieldRenderers(params: any) {
           }}
           aria-hidden={isPreviewChain}
         >
-          {!isCanvasBackend && (
-            <img
-              src={lineTexture}
-              alt=""
-              className="slide-segment-image"
-              draggable={false}
-              style={{
-                opacity: segment.opacity * (isMuted ? 0.36 : 1),
-              }}
-            />
-          )}
         </div>,
       );
     }
@@ -551,8 +479,6 @@ export function usePlayfieldRenderers(params: any) {
 
   return {
     renderLaneGuides,
-    renderGridLines,
-    renderSimultaneousSegments,
     renderBpmLines,
     renderSvLines,
     renderSlideSegments,

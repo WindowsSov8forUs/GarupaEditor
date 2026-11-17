@@ -208,7 +208,6 @@ button:where(:not(.original-button):not(.note-token):not(.bpm-label-button):not(
   filter: saturate(0.72);
 }
 
-
 .hidden-input {
   position: absolute;
   width: 1px;
@@ -757,13 +756,14 @@ button.tool-icon-button.active:not(.note-token):not(.bpm-label-button):not(.bpm-
   z-index: 2;
 }
 
+/* The flick arrow, above the note where its loop starts (sizes from editorNoteMetrics, set on the board). */
 .note-sprite-layer.layer-overlay.overlay-flick {
   inset: auto;
   left: 50%;
-  top: 25%;
+  top: calc(50% - var(--flick-arrow-offset, 0px));
   width: auto;
-  height: 100%;
-  transform: translate(-50%, -91%);
+  height: var(--flick-arrow-height, 115%);
+  transform: translate(-50%, -50%);
 }
 
 .note-token.preview-token:not(.directional) .note-sprite-layer.layer-base,
@@ -779,8 +779,6 @@ button.tool-icon-button.active:not(.note-token):not(.bpm-label-button):not(.bpm-
   pointer-events: none;
   --directional-span-lanes: 1;
   --note-visual-scale: 1;
-  --directional-head-inset-ratio: 0.55;
-  --directional-head-scale: 1.25;
 }
 
 .note-directional-segment {
@@ -796,7 +794,7 @@ button.tool-icon-button.active:not(.note-token):not(.bpm-label-button):not(.bpm-
   position: absolute;
   left: 50%;
   top: 50%;
-  width: var(--directional-base-width, max(calc(var(--lane-width, 47px) * 1.34), 60px));
+  width: var(--directional-base-width, calc(var(--lane-width, 47px) * 1.4));
   height: 100%;
   transform: translate(-50%, -50%);
 }
@@ -815,23 +813,34 @@ button.tool-icon-button.active:not(.note-token):not(.bpm-label-button):not(.bpm-
   object-fit: fill;
 }
 
+/* The arrow head, out from its lane's centre where its loop starts (sizes from editorNoteMetrics, set on the board). */
 .note-directional-head {
   inset: auto;
   top: 50%;
   width: auto;
-  height: calc(100% * var(--directional-head-scale));
+  height: var(--directional-head-height, 143%);
   object-fit: contain;
-  transform: translateY(-50%);
+  transform: translate(-50%, -50%);
 }
 
 .note-directional-head.head-right {
-  left: 100%;
-  transform: translate(calc(-100% * var(--directional-head-inset-ratio)), -50%);
+  left: calc(50% + var(--directional-head-offset, 0px));
 }
 
 .note-directional-head.head-left {
-  left: 0%;
-  transform: translate(calc(-100% + 100% * var(--directional-head-inset-ratio)), -50%);
+  left: calc(50% - var(--directional-head-offset, 0px));
+}
+
+/* The line joining a multi-lane Directional's first and last lanes' centres, behind its bodies. */
+.note-directional-back-line {
+  inset: auto;
+  /* An img is not stretched between left and right: its width is set (first to last lane centre). */
+  left: calc(50% / var(--directional-span-lanes));
+  top: 50%;
+  width: calc(100% - 100% / var(--directional-span-lanes));
+  height: var(--directional-back-line-width, 0px);
+  object-fit: fill;
+  transform: translateY(-50%);
 }
 
 .selected-note-grid label,
@@ -1232,9 +1241,6 @@ label.ui-checkbox.is-disabled .ui-checkbox-box {
   -webkit-text-stroke: 0 transparent;
 }
 
-
-
-
 .metadata-file-row {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -1266,7 +1272,6 @@ label.ui-checkbox.is-disabled .ui-checkbox-box {
 .metadata-file-hidden {
   display: none;
 }
-
 
 .inline-stepper {
   display: grid;
@@ -1712,37 +1717,6 @@ button.apply-icon-button:not(.original-button):not(.note-token):not(.bpm-label-b
   z-index: 4;
 }
 
-.grid-layer {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.simultaneous-layer {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.simultaneous-segment {
-  position: absolute;
-  transform: translateY(-50%);
-  pointer-events: none;
-}
-
-.simultaneous-segment-image {
-  display: block;
-  width: 100%;
-  height: auto;
-  transform: scaleY(0.3333333333);
-  transform-origin: center center;
-  image-rendering: -webkit-optimize-contrast;
-  pointer-events: none;
-  user-select: none;
-}
-
 .playfield-canvas-layer {
   position: absolute;
   left: 0;
@@ -1772,23 +1746,6 @@ button.apply-icon-button:not(.original-button):not(.note-token):not(.bpm-label-b
   width: 3px;
   transform: translateX(-50%);
   background: rgba(98, 124, 162, 0.46);
-}
-
-.grid-line {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: var(--grid);
-}
-
-.grid-line.beat {
-  background: var(--grid-beat);
-}
-
-.grid-line.measure {
-  height: 1px;
-  background: var(--grid-measure);
 }
 
 .bpm-marker {
@@ -2029,10 +1986,6 @@ button.apply-icon-button:not(.original-button):not(.note-token):not(.bpm-label-b
   background: transparent;
 }
 
-.slide-segment.selectable.selected .slide-segment-image {
-  filter: none;
-}
-
 .slide-segment.selectable.selected::after {
   content: "";
   position: absolute;
@@ -2055,31 +2008,6 @@ button.apply-icon-button:not(.original-button):not(.note-token):not(.bpm-label-b
 
 .playfield-board.canvas-render-backend .slide-segment.selectable.selected::after {
   content: none;
-}
-
-.slide-segment-image {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: fill;
-  image-rendering: -webkit-optimize-contrast;
-  backface-visibility: hidden;
-  transform: translateZ(0);
-  mix-blend-mode: normal;
-  pointer-events: none;
-  user-select: none;
-}
-
-.slide-build-guide-layer {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 2;
-}
-
-.slide-build-guide-layer line {
-  stroke: rgba(83, 232, 140, 0.95);
-  stroke-width: 2.5;
 }
 
 .note-layer {
@@ -2574,7 +2502,6 @@ button.app-settings-apply-button:not(.original-button):not(.note-token):not(.bpm
   min-height: 34px;
   padding: 0 20px;
 }
-
 
 .bestdori-login-submit .btn-content {
   color: #ffffff;

@@ -1,5 +1,14 @@
 import { editorGridWindow } from "../editorGridWindow";
-import { editorNoteHeight, editorDirectionalSegmentWidth } from "../editorNoteMetrics";
+import {
+  editorDirectionalBackLineWidth,
+  editorDirectionalHeadGeometry,
+  editorDirectionalSegmentWidth,
+  editorFlickArrowGeometry,
+  editorNoteHeight,
+  editorNoteTokenWidth,
+  editorSimultaneousLineWidth,
+  editorSlideLineWidth,
+} from "../editorNoteMetrics";
 import { useMemo, useRef, type RefObject } from "react";
 import {
   projectCanvasRenderResourceRuntimeAssets,
@@ -22,14 +31,14 @@ const MAX_RENDER_DPR = 2;
 const PLAYBACK_LINE_CLEAR_HALF_BAND_PX = 4;
 const PLAYBACK_VIEWPORT_EDGE_TOLERANCE_PX = 8;
 const CONNECTION_SEGMENT_X_CONTINUITY_TOLERANCE_PX = 1;
-const DIRECTIONAL_HEAD_INSET_RATIO = 0.55;
-const DIRECTIONAL_HEAD_SCALE = 1.25;
 
 type SegmentGeometry = {
   topX: number;
   topY: number;
   height: number;
   shearX: number;
+  /** Whether the segment's from end is its top. */
+  topIsFrom: boolean;
 };
 
 type SegmentEndpoints = {
@@ -125,23 +134,67 @@ export function resolveSegmentGeometry(endpoints: SegmentEndpoints): SegmentGeom
     topY,
     height,
     shearX: horizontalOffset / height,
+    topIsFrom,
   };
 }
 
+/**
+ * A Slide or Long line segment, as the original's NoteMesh: `fromWidth` wide at its from end and `toWidth` at its to
+ * end, the width running linearly between them, the texture stretched over its length and across each row's width.
+ *
+ * Joints are drawn as a GPU rasterizes meshes that share their vertices: each row of pixels belongs to one segment
+ * whole. The strip runs a little past both ends and is clipped to its own rows (a band with horizontal edges, which
+ * clips exactly), so no anti-aliased partial row is drawn by two segments (two semi-transparent partial coverages
+ * show as a seam). Ends of differing widths are drawn one device-pixel row at a time, each row the texture's matching
+ * row stretched to that row's width and clipped to that row.
+ */
 export function drawConnectionSegment(
   context: CanvasRenderingContext2D,
-  segment: RenderConnectionSegment,
+  segment: { opacity: number; muted?: boolean },
   geometry: SegmentGeometry,
-  laneWidth: number,
+  fromWidth: number,
+  toWidth: number,
   texture: HTMLImageElement,
 ) {
+  const topWidth = geometry.topIsFrom ? fromWidth : toWidth;
+  const bottomWidth = geometry.topIsFrom ? toWidth : fromWidth;
   context.save();
   // B-test: force non-smoothed texture sampling for long-line segments.
   context.imageSmoothingEnabled = false;
   context.globalAlpha = segment.opacity * (segment.muted ? 0.36 : 1);
+  const base = context.getTransform();
+  const devicePixelsPerUnit = Math.max(1, Math.abs(base.d));
+  const overrun = 2 / devicePixelsPerUnit;
+  // The band is an axis-aligned rectangle in the unsheared space (exact on device rows), as narrow as the strip.
+  const halfSpan = Math.max(topWidth, bottomWidth) * 0.5 + Math.abs(geometry.shearX) * geometry.height + 4;
   context.translate(geometry.topX, geometry.topY);
   context.transform(1, 0, geometry.shearX, 1, 0, 0);
-  context.drawImage(texture, -laneWidth * 0.5, 0, laneWidth, geometry.height);
+  const sheared = context.getTransform();
+  const clipRows = (top: number, height: number) => {
+    context.setTransform(base);
+    context.beginPath();
+    context.rect(geometry.topX - halfSpan, geometry.topY + top, 2 * halfSpan, height);
+    context.clip();
+    context.setTransform(sheared);
+  };
+  if (Math.abs(topWidth - bottomWidth) <= 1e-3) {
+    clipRows(0, geometry.height);
+    context.drawImage(texture, -topWidth * 0.5, -overrun, topWidth, geometry.height + 2 * overrun);
+  } else {
+    const sourceHeight = texture.naturalHeight || texture.height;
+    const sourceWidth = texture.naturalWidth || texture.width;
+    const rows = Math.max(1, Math.ceil(geometry.height * devicePixelsPerUnit));
+    const rowHeight = geometry.height / rows;
+    for (let row = 0; row < rows; row += 1) {
+      const start = row / rows;
+      const width = topWidth + (bottomWidth - topWidth) * (row + 0.5) / rows;
+      context.save();
+      clipRows(geometry.height * start, rowHeight);
+      context.drawImage(texture, 0, sourceHeight * start, sourceWidth, sourceHeight / rows,
+        -width * 0.5, geometry.height * start - overrun, width, rowHeight + 2 * overrun);
+      context.restore();
+    }
+  }
   context.restore();
 }
 
@@ -157,6 +210,8 @@ export function drawNoteVisual(
   noteVisualScale: number,
   getImage: (url: string | undefined | null) => HTMLImageElement | null,
   alpha = 1,
+  /** The line joining a multi-lane Directional's lanes, by direction. */
+  directionalBackLines?: { left?: string | null; right?: string | null },
 ) {
   const baseImage = getImage(note.base);
   const overlayImage = getImage(note.overlay);
@@ -164,15 +219,15 @@ export function drawNoteVisual(
     return;
   }
 
+  // Sizes as the original draws a note stopped on the judge line (editorNoteMetrics).
   const NOTE_HEIGHT = editorNoteHeight(laneWidth, noteVisualScale);
   const centerX = note.x + boardXOffset;
   const centerY = note.y;
   const directional = isDirectionalVisual(note.type);
-  const tokenWidth = directional
-    ? note.spanLanes * laneWidth
-    : Math.max(1, laneWidth * (Math.max(1, note.spanLanes) + 0.25) * noteVisualScale);
+  const tokenWidth = editorNoteTokenWidth(note.spanLanes, directional, laneWidth, noteVisualScale);
   const tokenLeft = centerX - tokenWidth * 0.5;
   const tokenTop = centerY - NOTE_HEIGHT * 0.5;
+  const aspectOf = (image: HTMLImageElement) => image.naturalHeight > 0 ? image.naturalWidth / image.naturalHeight : 1;
 
   context.save();
   context.globalAlpha *= alpha;
@@ -182,81 +237,45 @@ export function drawNoteVisual(
   if (directional) {
     const laneCount = Math.max(1, Math.round(note.spanLanes));
     const segmentWidth = editorDirectionalSegmentWidth(laneWidth, noteVisualScale);
-    const headSegmentIndex = note.type === "directional_flick_right" ? laneCount - 1 : 0;
-    const headSegmentCenterX = tokenLeft + ((headSegmentIndex + 0.5) / laneCount) * tokenWidth;
-    const headSegmentLeft = headSegmentCenterX - segmentWidth * 0.5;
-    const headSegmentRight = headSegmentCenterX + segmentWidth * 0.5;
+    const laneCenterX = (index: number) => tokenLeft + ((index + 0.5) / laneCount) * tokenWidth;
+    const headIndex = note.type === "directional_flick_right" ? laneCount - 1 : 0;
+
+    // Behind the bodies, a line joins the first and last lanes' centres.
+    const backLine = laneCount > 1
+      ? getImage(note.type === "directional_flick_right" ? directionalBackLines?.right : directionalBackLines?.left)
+      : null;
+    if (backLine) {
+      const thickness = editorDirectionalBackLineWidth(laneWidth, noteVisualScale);
+      context.drawImage(backLine, laneCenterX(0), centerY - thickness * 0.5, laneCenterX(laneCount - 1) - laneCenterX(0), thickness);
+    }
 
     if (baseImage) {
       for (let index = 0; index < laneCount; index += 1) {
-        const segmentCenterX = tokenLeft + ((index + 0.5) / laneCount) * tokenWidth;
-        const segmentLeft = segmentCenterX - segmentWidth * 0.5;
-        context.drawImage(
-          baseImage,
-          segmentLeft,
-          tokenTop,
-          segmentWidth,
-          NOTE_HEIGHT,
-        );
+        context.drawImage(baseImage, laneCenterX(index) - segmentWidth * 0.5, tokenTop, segmentWidth, NOTE_HEIGHT);
       }
     }
 
+    // The arrow head, out from its lane's centre where its loop starts.
     if (overlayImage && note.overlayMode === "directional") {
-      const headAspectRatio =
-        overlayImage.naturalHeight > 0
-          ? overlayImage.naturalWidth / overlayImage.naturalHeight
-          : 1;
-      const headHeight = NOTE_HEIGHT * DIRECTIONAL_HEAD_SCALE;
-      const headWidth = Math.max(1, headHeight * headAspectRatio);
-      const headInset = headWidth * DIRECTIONAL_HEAD_INSET_RATIO;
-      const headLeft = note.type === "directional_flick_right"
-        ? headSegmentRight - headInset
-        : headSegmentLeft - headWidth + headInset;
-      const headTop = tokenTop - (headHeight - NOTE_HEIGHT) * 0.5;
-      context.drawImage(
-        overlayImage,
-        headLeft,
-        headTop,
-        headWidth,
-        headHeight,
-      );
+      const head = editorDirectionalHeadGeometry(laneWidth, noteVisualScale);
+      const headWidth = Math.max(1, head.height * aspectOf(overlayImage));
+      const headCenterX = laneCenterX(headIndex) + (note.type === "directional_flick_right" ? head.offset : -head.offset);
+      context.drawImage(overlayImage, headCenterX - headWidth * 0.5, centerY - head.height * 0.5, headWidth, head.height);
     }
   } else {
     if (baseImage) {
-      context.drawImage(
-        baseImage,
-        tokenLeft,
-        tokenTop,
-        tokenWidth,
-        NOTE_HEIGHT,
-      );
+      context.drawImage(baseImage, tokenLeft, tokenTop, tokenWidth, NOTE_HEIGHT);
     }
 
     if (overlayImage) {
       if (note.overlayMode === "flick") {
-        const overlayAspectRatio =
-          overlayImage.naturalHeight > 0
-            ? overlayImage.naturalWidth / overlayImage.naturalHeight
-            : 1;
-        const overlayHeight = NOTE_HEIGHT;
-        const overlayWidth = Math.max(1, overlayHeight * overlayAspectRatio);
-        const overlayLeft = centerX - overlayWidth * 0.5;
-        const overlayTop = tokenTop + NOTE_HEIGHT * 0.25 - overlayHeight * 0.91;
-        context.drawImage(
-          overlayImage,
-          overlayLeft,
-          overlayTop,
-          overlayWidth,
-          overlayHeight,
-        );
+        // The flick arrow, above the note where its loop starts.
+        const arrow = editorFlickArrowGeometry(laneWidth, noteVisualScale);
+        const arrowWidth = Math.max(1, arrow.height * aspectOf(overlayImage));
+        context.drawImage(overlayImage, centerX - arrowWidth * 0.5, centerY - arrow.offset - arrow.height * 0.5,
+          arrowWidth, arrow.height);
       } else {
-        context.drawImage(
-          overlayImage,
-          tokenLeft,
-          tokenTop,
-          tokenWidth,
-          NOTE_HEIGHT,
-        );
+        context.drawImage(overlayImage, tokenLeft, tokenTop, tokenWidth, NOTE_HEIGHT);
       }
     }
   }
@@ -823,7 +842,7 @@ export function useCanvasPlayfieldBackend(params: {
 
       const simultaneousTexture = getFrameImage(snapshot.runtimeSkin?.simultaneousLine);
       if (simultaneousTexture) {
-        const lineHeight = Math.max(1, simultaneousTexture.naturalHeight / 3);
+        const lineHeight = Math.max(1, editorSimultaneousLineWidth(snapshot.laneWidth, snapshot.noteVisualScale));
         const halfHeight = lineHeight * 0.5;
         for (const segment of snapshot.simultaneousSegments) {
           if (segment.y < windowTop - lineHeight || segment.y > windowBottom + lineHeight) {
@@ -843,8 +862,8 @@ export function useCanvasPlayfieldBackend(params: {
       }
 
       const longLineTexture = getFrameImage(snapshot.runtimeSkin?.longLine);
-      const slideLineTexture = getFrameImage(
-        snapshot.runtimeSkin?.longLineSpecial,
+      const curveSlideLineTexture = getFrameImage(
+        snapshot.runtimeSkin?.curveSlideLine,
       );
       const orderedSegments = (() => {
         const cached = sortedConnectionSegmentsRef.current;
@@ -869,9 +888,11 @@ export function useCanvasPlayfieldBackend(params: {
         const rawEndpoints = resolveSegmentEndpoints(segment, renderDpr, boardXOffset);
         const localRawEndpoints: SegmentEndpoints = {
           fromX: rawEndpoints.fromX,
-          fromY: rawEndpoints.fromY - windowTop,
+          // A joint's Y on a device pixel boundary: both segments then cover its rows whole, as a GPU rasterizes
+          // two meshes sharing the joint's vertices (no anti-aliased partial rows drawn twice, which shows as a seam).
+          fromY: snapToDevicePixel(rawEndpoints.fromY - windowTop, renderDpr),
           toX: rawEndpoints.toX,
-          toY: rawEndpoints.toY - windowTop,
+          toY: snapToDevicePixel(rawEndpoints.toY - windowTop, renderDpr),
         };
         const isContinuousChain = previousTail && previousTail.index + 1 === segment.index;
         const shouldKeepContinuousX = Boolean(
@@ -900,13 +921,14 @@ export function useCanvasPlayfieldBackend(params: {
         if (segment.maxY < windowTop - 3 || segment.minY > windowBottom + 3) {
           continue;
         }
-        const texture = segment.textureKind === "slide" ? slideLineTexture : longLineTexture;
+        const texture = segment.textureKind === "curveSlide" ? curveSlideLineTexture : longLineTexture;
         if (!texture) {
           continue;
         }
-        const longLineWidth =
-          snapshot.laneWidth * Math.max(1, segment.spanLanes) * snapshot.noteVisualScale;
-        drawConnectionSegment(context, segment, geometry, longLineWidth, texture);
+        const lineWidthAt = (lanes: number) => editorSlideLineWidth(lanes, snapshot.laneWidth, snapshot.noteVisualScale);
+        const longLineWidth = lineWidthAt(segment.spanLanes);
+        drawConnectionSegment(context, segment, geometry, lineWidthAt(segment.fromSpanLanes),
+          lineWidthAt(segment.toSpanLanes), texture);
 
         if (
           snapshot.selectedLongLineSegmentId
@@ -981,6 +1003,7 @@ export function useCanvasPlayfieldBackend(params: {
           snapshot.noteVisualScale,
           getFrameImage,
           note.muted ? 0.36 : 1,
+          { left: snapshot.runtimeSkin?.directionalBackLineLeft, right: snapshot.runtimeSkin?.directionalBackLineRight },
         );
       }
 

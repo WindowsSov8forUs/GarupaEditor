@@ -23,7 +23,10 @@ export type RenderConnectionSegment = {
   groupStart: boolean;
   groupEnd: boolean;
   isPreviewChain: boolean;
+  /** The wider end's lanes (for bounds); the line is fromSpanLanes wide at its from end, toSpanLanes at its to end. */
   spanLanes: number;
+  fromSpanLanes: number;
+  toSpanLanes: number;
   fromX: number;
   fromY: number;
   toX: number;
@@ -32,7 +35,9 @@ export type RenderConnectionSegment = {
   deltaY: number;
   minY: number;
   maxY: number;
-  textureKind: "long" | "slide";
+  /** The line material, as the original picks it for a whole Slide: a curve Slide (one with Hidden nodes) or a
+   * long note line. */
+  textureKind: "long" | "curveSlide";
   opacity: number;
   muted?: boolean;
 };
@@ -169,8 +174,11 @@ export function useEditorRenderModel(params: any) {
           ? placement.lane - spanLanes + 1
           : placement.lane;
         const endLane = startLane + spanLanes - 1;
-        const leftX = normalizeCoord(laneToColumn(startLane) * LANE_WIDTH);
-        const rightX = normalizeCoord((laneToColumn(endLane) + 1) * LANE_WIDTH);
+        // A note's sync line ends at its centre; a Directional's at the centre of its lane nearest the other note.
+        const directional = isDirectionalType(note.type);
+        const centerX = normalizeCoord((laneToColumn(startLane) + spanLanes / 2) * LANE_WIDTH);
+        const leftX = directional ? normalizeCoord((laneToColumn(startLane) + 0.5) * LANE_WIDTH) : centerX;
+        const rightX = directional ? normalizeCoord((laneToColumn(endLane) + 0.5) * LANE_WIDTH) : centerX;
         return {
           id: note.id,
           beat: placement.beat,
@@ -219,9 +227,9 @@ export function useEditorRenderModel(params: any) {
         for (let i = groupStart; i < groupEnd; i += 1) {
           const left = laneAnchors[i];
           const right = laneAnchors[i + 1];
-          const extension = LANE_WIDTH * 0.25;
-          const fromX = normalizeCoord(left.rightX - extension);
-          const toX = normalizeCoord(right.leftX + extension);
+          // As the original (the default skins' sync edge margin is 0): centre to centre, under the notes.
+          const fromX = left.rightX;
+          const toX = right.leftX;
           const width = normalizeCoord(toX - fromX);
           if (!Number.isFinite(width) || width <= 1e-6) {
             continue;
@@ -273,7 +281,7 @@ export function useEditorRenderModel(params: any) {
       const isPreviewChain = chain.id === "__slide_preview__";
       const hasHiddenNote = chainNotes.some((note: ChartNote) => note.type === "hidden");
       const isAllHiddenChain = chainNotes.every((note: ChartNote) => note.type === "hidden");
-      const textureKind: "long" | "slide" = hasHiddenNote ? "slide" : "long";
+      const textureKind: "long" | "curveSlide" = hasHiddenNote ? "curveSlide" : "long";
       const opacity = (isAllHiddenChain ? 0.5 : 1) * longLineOpacityScale;
       const muted = Boolean(isSlideChainMuted?.(chain));
       const segmentGroupByIndex = new Map<number, string>();
@@ -337,9 +345,11 @@ export function useEditorRenderModel(params: any) {
       for (let index = 0; index < chainNotes.length - 1; index += 1) {
         const fromAnchor = chainNodeAnchors[index];
         const toAnchor = chainNodeAnchors[index + 1];
-        const spanLanes = fromAnchor.directional || toAnchor.directional
-          ? 1
-          : Math.max(fromAnchor.spanLanes, toAnchor.spanLanes);
+        // As the original's NoteMesh: each end is as wide as its own note's buttons (a Directional member is one),
+        // the line's width runs linearly between them.
+        const fromSpanLanes = fromAnchor.directional ? 1 : fromAnchor.spanLanes;
+        const toSpanLanes = toAnchor.directional ? 1 : toAnchor.spanLanes;
+        const spanLanes = Math.max(fromSpanLanes, toSpanLanes);
         const fromX = fromAnchor.outgoingX;
         const fromY = fromAnchor.y;
         const toX = toAnchor.incomingX;
@@ -363,6 +373,8 @@ export function useEditorRenderModel(params: any) {
           groupEnd,
           isPreviewChain,
           spanLanes,
+          fromSpanLanes,
+          toSpanLanes,
           fromX,
           fromY,
           toX,

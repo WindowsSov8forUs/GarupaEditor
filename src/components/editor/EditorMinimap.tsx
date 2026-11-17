@@ -1,3 +1,4 @@
+import { editorSlideLineWidth } from "../../app/editorNoteMetrics";
 import { useLayoutEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { drawNoteVisual, drawConnectionSegment, resolveSegmentGeometry, type CanvasNoteVisual } from "../../app/hooks/useCanvasPlayfieldBackend";
 import type { RenderConnectionSegment } from "../../app/hooks/useEditorRenderModel";
@@ -55,10 +56,11 @@ export function EditorMinimap({ notes, segments, duration, laneCount, axis, view
     for (const segment of segments) {
       if (!minimapLaneVisible(segment.fromX, segment.spanLanes, laneCount) ||
           !minimapLaneVisible(segment.toX, segment.spanLanes, laneCount)) continue;
-      const texture = getImage(segment.textureKind === "slide" ? skin?.longLineSpecial : skin?.longLine);
+      const texture = getImage(segment.textureKind === "curveSlide" ? skin?.curveSlideLine : skin?.longLine);
       const geometry = resolveSegmentGeometry({ fromX: 2 + segment.fromX * laneWidth, fromY: y(segment.fromY),
         toX: 2 + segment.toX * laneWidth, toY: y(segment.toY) });
-      if (texture && geometry) drawConnectionSegment(ctx, segment, geometry, laneWidth * segment.spanLanes * noteScale, texture);
+      if (texture && geometry) drawConnectionSegment(ctx, segment, geometry,
+        editorSlideLineWidth(segment.fromSpanLanes, laneWidth, noteScale), editorSlideLineWidth(segment.toSpanLanes, laneWidth, noteScale), texture);
     }
     for (const note of notes) {
       if (note.y < 0 || note.y > duration || !minimapLaneVisible(note.x, note.spanLanes, laneCount)) continue;

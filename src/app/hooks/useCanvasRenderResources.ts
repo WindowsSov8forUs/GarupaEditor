@@ -35,8 +35,10 @@ export function useCanvasRenderResources(params: {
     push(runtime.directionalFlickLeftTop);
     push(runtime.directionalFlickRightTop);
     push(runtime.longLine);
-    push(runtime.longLineSpecial);
+    push(runtime.curveSlideLine);
     push(runtime.simultaneousLine);
+    push(runtime.directionalBackLineLeft);
+    push(runtime.directionalBackLineRight);
     if (runtime.habahiro) {
       for (const value of Object.values(runtime.singleByWidth)) {
         push(value);

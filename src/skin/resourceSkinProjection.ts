@@ -23,8 +23,10 @@ export function projectSkinRuntimeResourceMap(
     ["note.directional-left-top", runtime.directionalFlickLeftTop],
     ["note.directional-right-top", runtime.directionalFlickRightTop],
     ["line.long", runtime.longLine],
-    ["line.long-special", runtime.longLineSpecial],
+    ["line.long-special", runtime.curveSlideLine],
     ["line.simultaneous", runtime.simultaneousLine],
+    ["line.directional-back-left", runtime.directionalBackLineLeft],
+    ["line.directional-back-right", runtime.directionalBackLineRight],
   ];
   if (runtime.habahiro) {
     for (const width of [1, 2, 3, 4, 5, 6, 7] as const) {
