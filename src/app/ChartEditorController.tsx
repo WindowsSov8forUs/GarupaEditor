@@ -180,10 +180,6 @@ import {
 } from "../chart";
 
 const TIMELINE_REFERENCE_BPM = 120;
-const RENDER_BACKEND_MODE =
-  String((import.meta as any).env?.VITE_PLAYFIELD_RENDER_BACKEND ?? "canvas").toLowerCase() === "dom"
-    ? "dom"
-    : "canvas";
 const PLAYBACK_SPEED_OPTIONS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4] as const;
 const PLAYBACK_SE_POOL_SIZE = 8;
 const PLAYBACK_SE_TRIGGER_LEAD_SEC = 0.02;
@@ -1428,7 +1424,7 @@ function ChartEditorController() {
   const setCursorPreview = useCallback((next: CursorPreviewState | null) => {
     canvasCursorPreviewRef.current = next;
     const shouldSyncCanvasState = activeToolRef.current === "paste";
-    if (RENDER_BACKEND_MODE === "canvas" && !shouldSyncCanvasState) {
+    if (!shouldSyncCanvasState) {
       return;
     }
     cursorPreviewPendingRef.current = next;
@@ -3674,7 +3670,6 @@ function ChartEditorController() {
     playfieldBoardRef,
     selectionMoveRef,
     cursorPreview,
-    isCanvasRenderBackend: RENDER_BACKEND_MODE === "canvas",
     findNoteAtBoardPoint,
     resolveBoardPlacement,
     isPlacementBlocked,
@@ -5217,7 +5212,6 @@ function ChartEditorController() {
     isColorAssistEnabled: appOptionSettings.colorAssistEnabled,
     DEFAULT_SPRITE_ASPECT_RATIO,
   });
-  const isCanvasRenderBackend = RENDER_BACKEND_MODE === "canvas";
   const getNoteDisplayY = useCallback((note: ChartNote, beat: number): number => {
     const hitSec = beatToSeconds(beat, bpmTimeline);
     const timingGroup = noteTimingGroupById.get(note.id) ?? normalizeTimingGroupId(note.timingGroup);
@@ -5539,20 +5533,18 @@ function ChartEditorController() {
     error: canvasResourceError,
     version: canvasResourceVersion,
   } = useCanvasRenderResources({
-    enabled: isCanvasRenderBackend,
+    enabled: true,
     skinAssets,
   });
   const startupMediaReady = Object.entries(chartMediaResources).every(([key, ref]) =>
     ref === null || Boolean(chartMediaLease.urls[key as keyof typeof chartMediaLease.urls]));
   useStartupReadiness("editor", settingsResourcesReady && !isSkinApplying && isSkinReady
-    && (!isCanvasRenderBackend || isCanvasResourceReady) && startupMediaReady,
+    && isCanvasResourceReady && startupMediaReady,
     settingsResourcesReady && !isSkinApplying ? chartMediaLease.error ?? canvasResourceError
       ?? (!isSkinReady ? "当前编辑器皮肤未准备完成，请重试资源加载。" : null) : null);
 
   const {
     renderLaneGuides,
-    renderGridLines,
-    renderSimultaneousSegments,
     renderBpmLines,
     renderSvLines,
     renderSlideSegments,
@@ -5616,7 +5608,6 @@ function ChartEditorController() {
     skinAssets,
     slideBuildState,
     slideBuildCursor,
-    renderBackendMode: RENDER_BACKEND_MODE,
     noteVisualScale,
     isSimultaneousLineEnabled: appOptionSettings.simultaneousLineEnabled,
     setSelectedBpmEventIds,
@@ -5625,7 +5616,7 @@ function ChartEditorController() {
     onSlideToolLongLineClick: insertSingleNodeOnLongLine,
   });
   useCanvasPlayfieldBackend({
-    enabled: isCanvasRenderBackend && isSkinReady && isCanvasResourceReady,
+    enabled: isSkinReady && isCanvasResourceReady,
     trackCanvasRef: playfieldTrackCanvasRef,
     noteCanvasRef: playfieldNoteCanvasRef,
     playbackCanvasRef: playfieldPlaybackCanvasRef,
@@ -6122,7 +6113,7 @@ function ChartEditorController() {
 
   const layoutVm = useStableEvents({
         settingsResourcesReady,
-        workspaceReady: settingsResourcesReady && !isSkinApplying && isSkinReady && (!isCanvasRenderBackend || isCanvasResourceReady) && startupMediaReady,
+        workspaceReady: settingsResourcesReady && !isSkinApplying && isSkinReady && isCanvasResourceReady && startupMediaReady,
         jsonImportRef,
         bestdoriV2ImportRef,
         handleJsonImport,
@@ -6337,7 +6328,6 @@ function ChartEditorController() {
         handleBoardContextMenu,
         boardHeight,
         scrollContentHeight,
-        renderBackendMode: RENDER_BACKEND_MODE,
         renderBpmLines,
         renderSvLines,
         cursorPreview,
@@ -6353,11 +6343,7 @@ function ChartEditorController() {
         boardWidth,
         handleBoardClick,
         renderLaneGuides,
-        renderGridLines,
-        renderSimultaneousSegments,
         renderSlideSegments,
-        slideBuildCommittedGuideLines,
-        slideBuildGuideLine,
         NOTE_SPECS,
         resolvePlacedNoteLayers,
         isDirectionalNoteType,
