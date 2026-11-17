@@ -36,6 +36,8 @@ import {
   shareFile,
 } from "./mobileRuntime";
 import type { RenderConnectionSegment, RenderSimultaneousSegment } from "./hooks/useEditorRenderModel";
+import { drawConnectionSegment, drawNoteVisual, resolveSegmentGeometry } from "./hooks/useCanvasPlayfieldBackend";
+import { editorSimultaneousLineWidth, editorSlideLineWidth } from "./editorNoteMetrics";
 import type { StaticBpmVisualLine, StaticNoteVisual, StaticRenderPayload, StaticSvVisualLine } from "./staticRenderTypes";
 
 const GRID_COLOR = "rgb(26, 51, 59)";
@@ -44,8 +46,6 @@ const GRID_MEASURE_COLOR = "rgb(0, 166, 166)";
 const LANE_GUIDE_COLOR = "rgba(98, 124, 162, 0.46)";
 const BOARD_BG_COLOR = "#02050d";
 const CONNECTION_SEGMENT_X_CONTINUITY_TOLERANCE_PX = 1;
-const DIRECTIONAL_HEAD_INSET_RATIO = 0.55;
-const DIRECTIONAL_HEAD_SCALE = 1.25;
 const CONTENT_VERTICAL_MARGIN_PX = 96;
 const SEGMENT_SIDE_EXPAND_LANES = 3;
 const ZOOM_MIN = 0.25;
@@ -65,13 +65,6 @@ type SegmentEndpoints = {
   fromY: number;
   toX: number;
   toY: number;
-};
-
-type SegmentGeometry = {
-  topX: number;
-  topY: number;
-  height: number;
-  shearX: number;
 };
 
 type RenderBounds = {
@@ -163,10 +156,6 @@ function upperBoundByTime(sortedTimes: number[], target: number): number {
   return low;
 }
 
-function isDirectionalVisual(type: string): boolean {
-  return type === "directional_flick_left" || type === "directional_flick_right";
-}
-
 function snapToDevicePixel(value: number, pixelRatio: number): number {
   if (!Number.isFinite(value)) {
     return value;
@@ -190,155 +179,26 @@ function resolveSegmentEndpoints(
   };
 }
 
-function resolveSegmentGeometry(endpoints: SegmentEndpoints): SegmentGeometry | null {
-  const { fromX, fromY, toX, toY } = endpoints;
-  const deltaY = toY - fromY;
-  if (!Number.isFinite(deltaY) || Math.abs(deltaY) <= 1e-6) {
-    return null;
-  }
-  const topIsFrom = fromY <= toY;
-  const topX = topIsFrom ? fromX : toX;
-  const topY = topIsFrom ? fromY : toY;
-  const bottomX = topIsFrom ? toX : fromX;
-  const bottomY = topIsFrom ? toY : fromY;
-  const height = bottomY - topY;
-  if (!Number.isFinite(height) || height <= 1e-6) {
-    return null;
-  }
-  const horizontalOffset = bottomX - topX;
-  return {
-    topX,
-    topY,
-    height,
-    shearX: horizontalOffset / height,
-  };
-}
-
-function drawConnectionSegment(
-  context: CanvasRenderingContext2D,
-  segment: RenderConnectionSegment,
-  geometry: SegmentGeometry,
-  laneWidth: number,
-  texture: HTMLImageElement,
-) {
-  context.save();
-  context.imageSmoothingEnabled = false;
-  context.globalAlpha = segment.opacity;
-  context.translate(geometry.topX, geometry.topY);
-  context.transform(1, 0, geometry.shearX, 1, 0, 0);
-  context.drawImage(texture, -laneWidth * 0.5, 0, laneWidth, geometry.height);
-  context.restore();
-}
-
-function drawNoteVisual(
+/** A note as the editor board draws it (useCanvasPlayfieldBackend's drawNoteVisual), from the payload's resource
+ * keys. */
+function drawStaticNoteVisual(
   context: CanvasRenderingContext2D,
   note: StaticNoteVisual,
   laneWidth: number,
   noteVisualScale: number,
   resourceUrls: Readonly<Record<string, string>>,
   getImage: (url: string | undefined | null) => HTMLImageElement | null,
+  runtimeSkin: StaticRenderPayload["runtimeSkin"],
 ) {
-  const baseImage = getImage(note.baseResourceKey === null ? null : resourceUrls[note.baseResourceKey]);
-  const overlayImage = getImage(note.overlayResourceKey === null ? null : resourceUrls[note.overlayResourceKey]);
-  if (!baseImage && !overlayImage) {
-    return;
-  }
-
-  const noteHeight = 24 * noteVisualScale;
-  const centerX = note.x;
-  const centerY = note.y;
-  const directional = isDirectionalVisual(note.type);
-  const tokenWidth = directional
-    ? note.spanLanes * laneWidth
-    : Math.max(1, laneWidth * (Math.max(1, note.spanLanes) + 0.25) * noteVisualScale);
-  const tokenLeft = centerX - tokenWidth * 0.5;
-  const tokenTop = centerY - noteHeight * 0.5;
-
-  context.save();
-  context.imageSmoothingEnabled = true;
-  context.imageSmoothingQuality = "high";
-
-  if (directional) {
-    const laneCount = Math.max(1, Math.round(note.spanLanes));
-    const segmentWidth = Math.max(laneWidth * 1.34 * noteVisualScale, 60 * noteVisualScale);
-    const headSegmentIndex = note.type === "directional_flick_right" ? laneCount - 1 : 0;
-    const headSegmentCenterX = tokenLeft + ((headSegmentIndex + 0.5) / laneCount) * tokenWidth;
-    const headSegmentLeft = headSegmentCenterX - segmentWidth * 0.5;
-    const headSegmentRight = headSegmentCenterX + segmentWidth * 0.5;
-
-    if (baseImage) {
-      for (let index = 0; index < laneCount; index += 1) {
-        const segmentCenterX = tokenLeft + ((index + 0.5) / laneCount) * tokenWidth;
-        const segmentLeft = segmentCenterX - segmentWidth * 0.5;
-        context.drawImage(
-          baseImage,
-          segmentLeft,
-          tokenTop,
-          segmentWidth,
-          noteHeight,
-        );
-      }
-    }
-
-    if (overlayImage && note.overlayMode === "directional") {
-      const headAspectRatio =
-        overlayImage.naturalHeight > 0
-          ? overlayImage.naturalWidth / overlayImage.naturalHeight
-          : 1;
-      const headHeight = noteHeight * DIRECTIONAL_HEAD_SCALE;
-      const headWidth = Math.max(1, headHeight * headAspectRatio);
-      const headInset = headWidth * DIRECTIONAL_HEAD_INSET_RATIO;
-      const headLeft = note.type === "directional_flick_right"
-        ? headSegmentRight - headInset
-        : headSegmentLeft - headWidth + headInset;
-      const headTop = tokenTop - (headHeight - noteHeight) * 0.5;
-      context.drawImage(
-        overlayImage,
-        headLeft,
-        headTop,
-        headWidth,
-        headHeight,
-      );
-    }
-  } else {
-    if (baseImage) {
-      context.drawImage(
-        baseImage,
-        tokenLeft,
-        tokenTop,
-        tokenWidth,
-        noteHeight,
-      );
-    }
-    if (overlayImage) {
-      if (note.overlayMode === "flick") {
-        const overlayAspectRatio =
-          overlayImage.naturalHeight > 0
-            ? overlayImage.naturalWidth / overlayImage.naturalHeight
-            : 1;
-        const overlayHeight = noteHeight;
-        const overlayWidth = Math.max(1, overlayHeight * overlayAspectRatio);
-        const overlayLeft = centerX - overlayWidth * 0.5;
-        const overlayTop = tokenTop + noteHeight * 0.25 - overlayHeight * 0.91;
-        context.drawImage(
-          overlayImage,
-          overlayLeft,
-          overlayTop,
-          overlayWidth,
-          overlayHeight,
-        );
-      } else {
-        context.drawImage(
-          overlayImage,
-          tokenLeft,
-          tokenTop,
-          tokenWidth,
-          noteHeight,
-        );
-      }
-    }
-  }
-  context.restore();
+  const url = (key: string | null | undefined) => (key ? resourceUrls[key] ?? null : null);
+  drawNoteVisual(context, {
+    id: note.id, type: note.type, x: note.x, y: note.y, spanLanes: note.spanLanes,
+    base: url(note.baseResourceKey), overlay: url(note.overlayResourceKey), overlayMode: note.overlayMode,
+    selected: false,
+  }, 0, laneWidth, noteVisualScale, getImage, 1, {
+    left: url(runtimeSkin.directionalBackLineLeftResourceKey),
+    right: url(runtimeSkin.directionalBackLineRightResourceKey),
+  });
 }
 
 function beatToY(payload: StaticRenderPayload, beat: number): number {
@@ -493,7 +353,7 @@ function drawSegmentFrame(args: {
 
   const simultaneousTexture = getImage(resourceUrls[payload.runtimeSkin.simultaneousLineResourceKey]);
   if (simultaneousTexture) {
-    const lineHeight = Math.max(1, simultaneousTexture.naturalHeight / 3);
+    const lineHeight = Math.max(1, editorSimultaneousLineWidth(payload.laneWidth, payload.noteVisualScale));
     const halfHeight = lineHeight * 0.5;
     for (const segment of payload.simultaneousSegments as RenderSimultaneousSegment[]) {
       if (segment.y < segmentTop - lineHeight || segment.y > segmentBottom + lineHeight) {
@@ -527,7 +387,7 @@ function drawSegmentFrame(args: {
   }
 
   const longLineTexture = getImage(resourceUrls[payload.runtimeSkin.longLineResourceKey]);
-  const slideLineTexture = getImage(resourceUrls[payload.runtimeSkin.longLineSpecialResourceKey]);
+  const curveSlideLineTexture = getImage(resourceUrls[payload.runtimeSkin.curveSlideLineResourceKey]);
   const chainTailById = new Map<string, { index: number; x: number }>();
   for (const segment of orderedSegments) {
     if (segment.maxY < segmentTop - 3 || segment.minY > segmentBottom + 3) {
@@ -564,15 +424,18 @@ function drawSegmentFrame(args: {
       index: segment.index,
       x: alignedEndpoints.toX,
     });
-    const texture = segment.textureKind === "slide" ? slideLineTexture : longLineTexture;
-    const lineWidth = payload.laneWidth * Math.max(1, segment.spanLanes) * payload.noteVisualScale;
+    const texture = segment.textureKind === "curveSlide" ? curveSlideLineTexture : longLineTexture;
+    const lineWidth = editorSlideLineWidth(segment.spanLanes, payload.laneWidth, payload.noteVisualScale);
     if (texture) {
-      drawConnectionSegment(context, segment, geometry, lineWidth, texture);
+      // The static render draws every segment at its own opacity (no timing-group muting).
+      drawConnectionSegment(context, { opacity: segment.opacity }, geometry,
+        editorSlideLineWidth(segment.fromSpanLanes, payload.laneWidth, payload.noteVisualScale),
+        editorSlideLineWidth(segment.toSpanLanes, payload.laneWidth, payload.noteVisualScale), texture);
       continue;
     }
     context.save();
     context.globalAlpha = clamp(segment.opacity, 0, 1);
-    context.strokeStyle = segment.textureKind === "slide" ? "rgba(98, 229, 145, 0.8)" : "rgba(74, 186, 255, 0.8)";
+    context.strokeStyle = segment.textureKind === "curveSlide" ? "rgba(98, 229, 145, 0.8)" : "rgba(74, 186, 255, 0.8)";
     context.lineWidth = Math.max(1, lineWidth);
     context.lineCap = "round";
     context.beginPath();
@@ -586,7 +449,7 @@ function drawSegmentFrame(args: {
     if (note.y < segmentTop - 48 || note.y > segmentBottom + 48) {
       continue;
     }
-    drawNoteVisual(
+    drawStaticNoteVisual(
       context,
       {
         ...note,
@@ -597,6 +460,7 @@ function drawSegmentFrame(args: {
       payload.noteVisualScale,
       resourceUrls,
       getImage,
+      payload.runtimeSkin,
     );
   }
 

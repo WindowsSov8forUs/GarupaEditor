@@ -6,6 +6,7 @@ import {
 } from "../../chartCore";
 import {
   projectNotePaletteRuntimeAssets,
+  projectPlayfieldLineRuntimeAssets,
   projectPlayfieldSpriteRuntimeAssets,
   type SkinNoteType,
 } from "../../skinLoader";
@@ -170,7 +171,8 @@ function createSpriteRenderers(params: any) {
     spriteAspectRatios,
     setSpriteAspectRatios,
     DEFAULT_SPRITE_ASPECT_RATIO,
-  } = params;
+    directionalBackLines,
+  } = params as { directionalBackLines?: { left?: string; right?: string } } & Record<string, any>;
 
   const rememberSpriteAspectRatio = (event: SyntheticEvent<HTMLImageElement>) => {
     const image = event.currentTarget;
@@ -259,12 +261,17 @@ function createSpriteRenderers(params: any) {
     }
 
     const laneCount = Math.max(1, Math.round(spanLanes));
+    // Behind the bodies, a line joins the first and last lanes' centres.
+    const backLine = laneCount > 1
+      ? (type === "directional_flick_right" ? directionalBackLines?.right : directionalBackLines?.left)
+      : undefined;
 
     return (
       <span
         className={className}
         style={{ "--directional-span-lanes": `${laneCount}` } as CSSProperties}
       >
+        {backLine && <img src={backLine} alt="" className="note-sprite-layer note-directional-back-line" />}
         {Array.from({ length: laneCount }, (_, index) => {
           const isHeadSegment = type === "directional_flick_right"
             ? index === laneCount - 1
@@ -366,6 +373,11 @@ export function usePlayfieldSpriteRendering(params: any) {
     () => (skinAssets ? projectPlayfieldSpriteRuntimeAssets(skinAssets) : null),
     [skinAssets],
   );
+  const directionalBackLines = useMemo(() => {
+    if (!skinAssets) return undefined;
+    const lines = projectPlayfieldLineRuntimeAssets(skinAssets);
+    return { left: lines.directionalBackLineLeft, right: lines.directionalBackLineRight };
+  }, [skinAssets]);
   const { getSpriteLayers } = useMemo(
     () => createSpriteLayerResolver(playfieldRuntimeAssets),
     [playfieldRuntimeAssets],
@@ -377,8 +389,9 @@ export function usePlayfieldSpriteRendering(params: any) {
           spriteAspectRatios,
           setSpriteAspectRatios,
           DEFAULT_SPRITE_ASPECT_RATIO,
+          directionalBackLines,
         }),
-      [DEFAULT_SPRITE_ASPECT_RATIO, setSpriteAspectRatios, spriteAspectRatios],
+      [DEFAULT_SPRITE_ASPECT_RATIO, directionalBackLines, setSpriteAspectRatios, spriteAspectRatios],
     );
 
   const resolvePlacedNoteLayers = useCallback((

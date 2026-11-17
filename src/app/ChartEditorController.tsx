@@ -5720,8 +5720,10 @@ function ChartEditorController() {
       })),
       runtimeSkin: {
         longLineResourceKey: "line.long",
-        longLineSpecialResourceKey: "line.long-special",
+        curveSlideLineResourceKey: "line.long-special",
         simultaneousLineResourceKey: "line.simultaneous",
+        directionalBackLineLeftResourceKey: "line.directional-back-left",
+        directionalBackLineRightResourceKey: "line.directional-back-right",
       },
     };
   }, [

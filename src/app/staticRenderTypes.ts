@@ -34,8 +34,10 @@ export type StaticBpmTimelineNode = {
 
 export type StaticRuntimeSkin = {
   longLineResourceKey: string;
-  longLineSpecialResourceKey: string;
+  curveSlideLineResourceKey: string;
   simultaneousLineResourceKey: string;
+  directionalBackLineLeftResourceKey: string;
+  directionalBackLineRightResourceKey: string;
 };
 
 export type StaticRenderPayload = {

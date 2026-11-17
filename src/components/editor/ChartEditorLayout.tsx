@@ -2,7 +2,7 @@ import { flushSync } from "react-dom";
 import { EditorMinimap } from "./EditorMinimap";
 import { EditorBeatDivision } from "./EditorBeatDivision";
 import { ORIGINAL_HEADER_MENU_BOUNDS } from "../OriginalPageHeader";
-import { editorNoteHeight, editorDirectionalSegmentWidth } from "../../app/editorNoteMetrics";
+import { editorDirectionalBackLineWidth, editorDirectionalHeadGeometry, editorDirectionalSegmentWidth, editorFlickArrowGeometry, editorNoteHeight, editorNoteTokenWidth } from "../../app/editorNoteMetrics";
 import { OriginalMenuBackground } from "../OriginalMenuBackground";
 import { useApplicationPresentation, useReturnToTitle } from "../../app/titleNavigation";
 import { useStartupReadiness } from "../../app/startupReadiness";
@@ -500,11 +500,24 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     : canvasPreviewRhythmWidth;
   const noteSpriteHeightPx = editorNoteHeight(LANE_WIDTH, noteVisualScale);
   const directionalBaseWidthPx = editorDirectionalSegmentWidth(LANE_WIDTH, noteVisualScale);
+  // The flick arrow and the Directional arrow head and back line, as the board's canvas draws them, for the
+  // DOM-drawn previews (cursor and paste) on the board.
+  const noteIconStyle = useMemo(() => {
+    const flick = editorFlickArrowGeometry(LANE_WIDTH, noteVisualScale);
+    const head = editorDirectionalHeadGeometry(LANE_WIDTH, noteVisualScale);
+    return {
+      "--flick-arrow-height": `${flick.height}px`,
+      "--flick-arrow-offset": `${flick.offset}px`,
+      "--directional-head-height": `${head.height}px`,
+      "--directional-head-offset": `${head.offset}px`,
+      "--directional-back-line-width": `${editorDirectionalBackLineWidth(LANE_WIDTH, noteVisualScale)}px`,
+    };
+  }, [LANE_WIDTH, noteVisualScale]);
   const canvasPreviewTokenWidth = canvasPreviewIsDirectional
     ? canvasPreviewSpanLanes * LANE_WIDTH
     : (
       canvasPreviewSpanLanes > 1
-        ? LANE_WIDTH * (canvasPreviewSpanLanes + 0.25) * noteVisualScale
+        ? editorNoteTokenWidth(canvasPreviewSpanLanes, false, LANE_WIDTH, noteVisualScale)
         : undefined
     );
   const canvasPreviewTokenClassName = `note-token has-sprite preview-token ${canvasPreviewLayers?.overlay ? "composite" : ""} ${canvasPreviewIsDirectional ? "directional" : ""}`;
@@ -880,7 +893,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
             ? `${noteReplacePreview.spanLanes * LANE_WIDTH}px`
             : (
               noteReplacePreview.spanLanes > 1
-                ? `${LANE_WIDTH * (noteReplacePreview.spanLanes + 0.25) * noteVisualScale}px`
+                ? `${editorNoteTokenWidth(noteReplacePreview.spanLanes, false, LANE_WIDTH, noteVisualScale)}px`
                 : ""
             );
           if (replaceNode.style.width !== nextWidth) {
@@ -1127,8 +1140,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         }
         const spriteLayers = resolved.layers;
         const spriteAspectRatio = getSpriteAspectRatio(resolved.layers);
-        const noteHitboxCoreWidth = Math.max(1, LANE_WIDTH * (spanLanes + 0.25));
-        const scaledHitboxCoreWidth = noteHitboxCoreWidth * noteVisualScale;
+        const scaledHitboxCoreWidth = editorNoteTokenWidth(spanLanes, false, LANE_WIDTH, noteVisualScale);
         const scaledHitboxCoreHeight = editorNoteHeight(LANE_WIDTH, noteVisualScale);
         const tokenWidth = isDirectional
           ? spanLanes * LANE_WIDTH
@@ -1420,7 +1432,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                 <div
                   ref={playfieldBoardRef}
                   className={`playfield-board viewport-track-owned canvas-render-backend`}
-                  style={{ width: boardWidth, height: effectiveScrollContentHeight }}
+                  style={{ width: boardWidth, height: effectiveScrollContentHeight, ...noteIconStyle } as CSSProperties}
                   onClick={handleBoardClick}
                   onContextMenu={handleBoardContextMenu}
                 >
@@ -1566,7 +1578,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                         ? note.spanLanes * LANE_WIDTH
                         : (
                           note.spanLanes > 1
-                            ? LANE_WIDTH * (note.spanLanes + 0.25) * noteVisualScale
+                            ? editorNoteTokenWidth(note.spanLanes, false, LANE_WIDTH, noteVisualScale)
                             : undefined
                         );
                       const tokenHeight = editorNoteHeight(LANE_WIDTH, noteVisualScale);

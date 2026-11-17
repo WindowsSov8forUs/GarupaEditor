@@ -756,13 +756,14 @@ button.tool-icon-button.active:not(.note-token):not(.bpm-label-button):not(.bpm-
   z-index: 2;
 }
 
+/* The flick arrow, above the note where its loop starts (sizes from editorNoteMetrics, set on the board). */
 .note-sprite-layer.layer-overlay.overlay-flick {
   inset: auto;
   left: 50%;
-  top: 25%;
+  top: calc(50% - var(--flick-arrow-offset, 0px));
   width: auto;
-  height: 100%;
-  transform: translate(-50%, -91%);
+  height: var(--flick-arrow-height, 115%);
+  transform: translate(-50%, -50%);
 }
 
 .note-token.preview-token:not(.directional) .note-sprite-layer.layer-base,
@@ -778,8 +779,6 @@ button.tool-icon-button.active:not(.note-token):not(.bpm-label-button):not(.bpm-
   pointer-events: none;
   --directional-span-lanes: 1;
   --note-visual-scale: 1;
-  --directional-head-inset-ratio: 0.55;
-  --directional-head-scale: 1.25;
 }
 
 .note-directional-segment {
@@ -795,7 +794,7 @@ button.tool-icon-button.active:not(.note-token):not(.bpm-label-button):not(.bpm-
   position: absolute;
   left: 50%;
   top: 50%;
-  width: var(--directional-base-width, max(calc(var(--lane-width, 47px) * 1.34), 60px));
+  width: var(--directional-base-width, calc(var(--lane-width, 47px) * 1.4));
   height: 100%;
   transform: translate(-50%, -50%);
 }
@@ -814,23 +813,34 @@ button.tool-icon-button.active:not(.note-token):not(.bpm-label-button):not(.bpm-
   object-fit: fill;
 }
 
+/* The arrow head, out from its lane's centre where its loop starts (sizes from editorNoteMetrics, set on the board). */
 .note-directional-head {
   inset: auto;
   top: 50%;
   width: auto;
-  height: calc(100% * var(--directional-head-scale));
+  height: var(--directional-head-height, 143%);
   object-fit: contain;
-  transform: translateY(-50%);
+  transform: translate(-50%, -50%);
 }
 
 .note-directional-head.head-right {
-  left: 100%;
-  transform: translate(calc(-100% * var(--directional-head-inset-ratio)), -50%);
+  left: calc(50% + var(--directional-head-offset, 0px));
 }
 
 .note-directional-head.head-left {
-  left: 0%;
-  transform: translate(calc(-100% + 100% * var(--directional-head-inset-ratio)), -50%);
+  left: calc(50% - var(--directional-head-offset, 0px));
+}
+
+/* The line joining a multi-lane Directional's first and last lanes' centres, behind its bodies. */
+.note-directional-back-line {
+  inset: auto;
+  /* An img is not stretched between left and right: its width is set (first to last lane centre). */
+  left: calc(50% / var(--directional-span-lanes));
+  top: 50%;
+  width: calc(100% - 100% / var(--directional-span-lanes));
+  height: var(--directional-back-line-width, 0px);
+  object-fit: fill;
+  transform: translateY(-50%);
 }
 
 .selected-note-grid label,

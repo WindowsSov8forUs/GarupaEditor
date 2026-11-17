@@ -1,4 +1,5 @@
-﻿import { useMemo, type ReactNode } from "react";
+﻿import { editorSlideLineWidth } from "../editorNoteMetrics";
+import { useMemo, type ReactNode } from "react";
 import { projectPlayfieldLineRuntimeAssets } from "../../skinLoader";
 
 export function usePlayfieldRenderers(params: any) {
@@ -280,13 +281,13 @@ export function usePlayfieldRenderers(params: any) {
   const renderSlideSegments = (visibleWindow: { top: number; bottom: number }) => {
     const segments: ReactNode[] = [];
     const longTexture = runtimeLineAssets?.longLine;
-    const slideTexture = runtimeLineAssets?.longLineSpecial;
+    const curveSlideTexture = runtimeLineAssets?.curveSlideLine;
     for (const segment of connectionSegments ?? []) {
       if (segment.maxY < visibleWindow.top - 8 || segment.minY > visibleWindow.bottom + 8) {
         continue;
       }
       const isPreviewChain = segment.isPreviewChain;
-      const lineTexture = segment.textureKind === "slide" ? slideTexture : longTexture;
+      const lineTexture = segment.textureKind === "curveSlide" ? curveSlideTexture : longTexture;
       if (!lineTexture) {
         continue;
       }
@@ -301,7 +302,16 @@ export function usePlayfieldRenderers(params: any) {
       }
       const horizontalOffset = bottomX - topX;
       const skewDeg = (Math.atan2(horizontalOffset, height) * 180) / Math.PI;
-      const lineWidth = LANE_WIDTH * Math.max(1, segment.spanLanes) * noteVisualScale;
+      // The segment's element is its hit area only (the canvas draws the line): as wide as the wider end,
+      // clipped to the trapezoid when its ends differ (as the original's NoteMesh, each end as wide as its own note).
+      const fromWidth = editorSlideLineWidth(segment.fromSpanLanes, LANE_WIDTH, noteVisualScale);
+      const toWidth = editorSlideLineWidth(segment.toSpanLanes, LANE_WIDTH, noteVisualScale);
+      const lineWidth = Math.max(fromWidth, toWidth);
+      const topInset = (lineWidth - (topIsFrom ? fromWidth : toWidth)) / 2;
+      const bottomInset = (lineWidth - (topIsFrom ? toWidth : fromWidth)) / 2;
+      const clipPath = topInset > 1e-3 || bottomInset > 1e-3
+        ? `polygon(${topInset}px 0, ${lineWidth - topInset}px 0, ${lineWidth - bottomInset}px 100%, ${bottomInset}px 100%)`
+        : undefined;
       const segmentGroupId = segment.groupId;
       const isGroupStart = segment.groupStart;
       const isGroupEnd = segment.groupEnd;
@@ -317,6 +327,7 @@ export function usePlayfieldRenderers(params: any) {
             width: lineWidth,
             height,
             transform: `skewX(${skewDeg}deg)`,
+            clipPath,
           }}
           onMouseDown={(event) => {
             if (isPreviewChain) {
