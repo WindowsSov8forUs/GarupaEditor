@@ -326,6 +326,25 @@ export function OriginalFormNote({ text, lines }: { text: string; lines?: number
   </div>;
 }
 
+/**
+ * A window's body text: the common dialog's message (SelectableCommonDialog ContentsText: 24px, line spacing 6,
+ * centred, dark grey) across the page, `lines` text lines tall.
+ */
+export function OriginalFormMessage({ text, lines = 1 }: { text: string; lines?: number }) {
+  const { ref, width } = useFormWidth();
+  const source = new OriginalPrefabModel(ORIGINAL_PREFABS.selectablecommondialog!);
+  const label = source.componentAt(source.nodeAt("Window/ContentsText").id, "UILabel")!, node = source.nodes.get(label.node)!;
+  const height = lines * (label.data.mFontSize + label.data.mSpacingY);
+  const model = new OriginalPrefabModel({ resource: source.prefab.resource,
+    nodes: [{ ...node, parent: null, active: true, position: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } }],
+    components: [label] }, { components: { [label.id]: { mText: text, mWidth: Math.max(1, width), mHeight: height } } });
+  const box = width > 0 ? model.rect(model.components.get(label.id)!) : null;
+  // A fixed row: a scrolling page must not shrink it into the next one.
+  return <div ref={ref} className="original-form-message" style={{ position: "relative", height, flexShrink: 0 }}>
+    {box && <div className="original-prefab-origin" style={{ left: -box.x, top: -box.y }}><OriginalPrefabView model={model} /></div>}
+  </div>;
+}
+
 export const ORIGINAL_DIFFICULTIES = ["EASY", "NORMAL", "HARD", "EXPERT", "SPECIAL"] as const;
 export function OriginalDifficultySelect({ value, onChange, layout, children, available, readOnly = false }: {
   value: typeof ORIGINAL_DIFFICULTIES[number] | null; onChange(value: typeof ORIGINAL_DIFFICULTIES[number]): void;
@@ -406,6 +425,18 @@ export const ORIGINAL_FORM_BUTTON_SPRITE_WIDTH = (() => {
   const node = buttonSource.components.get(45)!.node;
   return buttonSource.componentAt(node, "UISprite")!.data.mWidth as number;
 })();
+/** The label text of an OriginalFormButton (SelectableCommonDialog's button labels): its size and colour, for content
+ * drawn in its place. */
+export function originalFormButtonLabelStyle(tone: "pink" | "gray"): CSSProperties {
+  const label = buttonSource.components.get(tone === "pink" ? 42 : 38)!.data;
+  const c = label.mColor as { r: number; g: number; b: number; a: number };
+  return { fontSize: label.mFontSize as number, color: `rgba(${c.r * 255}, ${c.g * 255}, ${c.b * 255}, ${c.a})` };
+}
+/** A normal OriginalFormButton's visible sprite height. */
+export const ORIGINAL_FORM_BUTTON_SPRITE_HEIGHT = (() => {
+  const node = buttonSource.components.get(45)!.node;
+  return buttonSource.componentAt(node, "UISprite")!.data.mHeight as number;
+})();
 /** How far a normal OriginalFormButton's visible sprite is inset from its layout box on each side (its hit area is
  * the wider). */
 export const ORIGINAL_FORM_BUTTON_SPRITE_INSET = (() => {
@@ -418,16 +449,19 @@ function labelText(children: ReactNode): string {
 }
 
 /** Original button subtree, including its label, hit box, template and press cover. */
-export function OriginalFormButton({ tone = "gray", size = "normal", children, onClick, disabled, className = "",
+export function OriginalFormButton({ tone = "gray", size = "normal", children, content, onClick, disabled, className = "",
   "aria-label": ariaLabel, title, singleLine = false }: {
-  tone?: "pink" | "gray"; size?: "normal" | "small" | "icon"; children: ReactNode; onClick?: () => void; disabled?: boolean;
+  /** small: template 4 × 3 (168 × 48); tall: the same width, template height 4 (64), for two lines of content. */
+  tone?: "pink" | "gray"; size?: "normal" | "small" | "tall" | "icon"; children?: ReactNode; onClick?: () => void; disabled?: boolean;
+  /** Drawn in place of the label (left empty), centred on the button; `children` is then only its accessible text. */
+  content?: ReactNode;
   /** The label kept on one line, shrunk to fit as the source label shrinks its content (a long label). */
   singleLine?: boolean;
   className?: string; "aria-label"?: string; title?: string; type?: "button";
 }) {
   // The model and its layout depend only on tone, size and the label text; keep them across re-renders.
   const buttonId = tone === "pink" ? 45 : 39;
-  const label = labelText(children);
+  const label = content === undefined ? labelText(children) : "";
   const { model, left, top, width, height } = useMemo(() => {
     const labelId = tone === "pink" ? 42 : 38;
     const root = buttonSource.nodes.get(buttonSource.components.get(buttonId)!.node)!;
@@ -436,9 +470,9 @@ export function OriginalFormButton({ tone = "gray", size = "normal", children, o
     const model = new OriginalPrefabModel({ ...buttonSource.prefab, nodes,
       components: buttonSource.prefab.components.filter(component => nodes.some(node => node.id === component.node))
         .map(component => component.id === buttonId && size !== "normal" ? { ...component, data: { ...component.data,
-          initializeTemplateWidth: size === "icon" ? 8 : 4, initializeTemplateHeight: 3 } } : component) },
+          initializeTemplateWidth: size === "icon" ? 8 : 4, initializeTemplateHeight: size === "tall" ? 4 : 3 } } : component) },
       { components: { [labelId]: { mText: label, ...(size !== "normal"
-        ? { mWidth: size === "icon" ? 54 : 150, mHeight: 48, mMaxLineCount: 1 } : singleLine ? { mMaxLineCount: 1 } : {}) } } });
+        ? { mWidth: size === "icon" ? 54 : 150, mHeight: size === "tall" ? 64 : 48, mMaxLineCount: 1 } : singleLine ? { mMaxLineCount: 1 } : {}) } } });
     const sprite = model.componentAt(root.id, "UISprite")!;
     // Layout must reserve the original hit region as well as the visible sprite.
     const collider = model.componentAt(root.id, "BoxCollider2D");
@@ -452,9 +486,10 @@ export function OriginalFormButton({ tone = "gray", size = "normal", children, o
     style={{ width, height }}>
     <div className="original-prefab-origin" style={{ left: -left, top: -top }}>
       <OriginalPrefabView model={model} bindings={{ buttons: {
-        [buttonId]: { action: onClick, disabled, label: ariaLabel ?? labelText(children) },
+        [buttonId]: { action: onClick, disabled, label: ariaLabel ?? labelText(children ?? content) },
       } }} />
     </div>
-    {typeof children === "string" ? null : <div className="transfer-authored-button-content">{children}</div>}
+    {/* Text children are the prefab label's own text; only content without text (an icon) is drawn over it. */}
+    {label !== "" ? null : <div className="transfer-authored-button-content">{content ?? children}</div>}
   </div>;
 }

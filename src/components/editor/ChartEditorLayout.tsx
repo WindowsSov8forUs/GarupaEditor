@@ -210,6 +210,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     importJsonText,
     uploadCommunityPostContent,
     uploadCommunityPostTags,
+    uploadChartAuthor,
+    setUploadChartAuthor,
     setImportJsonText,
     setUploadCommunityPostContent,
     setUploadCommunityPostTags,
@@ -375,6 +377,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   const [confirmingReplaceProject, setConfirmingReplaceProject] = useState(false);
   // 发布到测试服 asks first: it publishes the chart as it is.
   const [confirmingTestServer, setConfirmingTestServer] = useState(false);
+  // Which publishing page the export window opens on: 发布到 Bestdori (upload) or 发布到 NotGarupa (upload-server).
+  const [publishTarget, setPublishTarget] = useState<"upload" | "upload-server">("upload");
   const openSongEdit = (creating: boolean, open: (stack: PageStack) => PageStack) => {
     setSongEditCreating(creating); setSongEditSession(session => session + 1); setPageStack(open);
   };
@@ -541,6 +545,10 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   const [bestdoriLoginErrorMessage, setBestdoriLoginErrorMessage] = useState("");
   const [bestdoriNicknameDisplay, setBestdoriNicknameDisplay] = useState("");
   const [bestdoriUsernameDisplay, setBestdoriUsernameDisplay] = useState("");
+  // 谱面作者 follows the Bestdori login: its nickname (the username for an account without one) once signed in,
+  // empty when signed out or expired; the field can be edited in between.
+  useEffect(() => { setUploadChartAuthor(bestdoriNicknameDisplay || bestdoriUsernameDisplay); },
+    [bestdoriNicknameDisplay, bestdoriUsernameDisplay, setUploadChartAuthor]);
 
   // A login Bestdori no longer accepts, found at startup or before an upload, is shown signed out.
   useEffect(() => onBestdoriSessionExpired(() => {
@@ -2013,7 +2021,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         onExportBestdoriV2={() => { setEditorOptionsOpen(false); void exportBestdoriV2ToFile(); }}
         onEditCode={() => { setEditorOptionsOpen(false); openImportJsonModal(); }}
         onPublishTestServer={() => { setEditorOptionsOpen(false); setConfirmingTestServer(true); }}
-        onPublishBestdori={() => { setEditorOptionsOpen(false); downloadJson(); }} />
+        onPublishBestdori={() => { setEditorOptionsOpen(false); setPublishTarget("upload"); downloadJson(); }}
+        onPublishNotGarupa={() => { setEditorOptionsOpen(false); setPublishTarget("upload-server"); downloadJson(); }} />
       <OriginalChoiceDialog open={confirmingTestServer} title="发布到测试服" message="是否将当前谱面发布到测试服？"
         onClose={() => setConfirmingTestServer(false)} choices={[
           { label: "取消", action: () => setConfirmingTestServer(false) },
@@ -2134,13 +2143,15 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       />
 
       <input ref={vm.projectFiles.input} type="file" accept=".gcp" hidden onChange={vm.projectFiles.open} />
-      {/* Opened from the drawer's 发布到 Bestdori: its post's description and tags, then 上传. */}
-      <ExportJsonModal only={{ tab: "upload", title: "发布到 Bestdori" }}
+      {/* Opened from the drawer's 发布到 Bestdori or 发布到 NotGarupa: the description and tags, then 上传. */}
+      <ExportJsonModal only={{ tab: publishTarget, title: publishTarget === "upload" ? "发布到 Bestdori" : "发布到 NotGarupa" }}
         onSaveProject={() => void vm.projectFiles.save()}
         projectBusy={vm.projectFiles.busy}
         open={isExportJsonModalOpen}
         jsonText={garupaChartJsonText}
         uploadCommunityPostContent={uploadCommunityPostContent}
+        uploadChartAuthor={uploadChartAuthor}
+        onUploadChartAuthorChange={setUploadChartAuthor}
         uploadCommunityPostTags={uploadCommunityPostTags}
         onClose={closeExportJsonModal}
         onSaveAs={() => void saveExportJsonToSelectedPath()}

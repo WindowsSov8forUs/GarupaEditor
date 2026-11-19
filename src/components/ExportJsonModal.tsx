@@ -5,10 +5,22 @@ import {
   type BestdoriPostTag,
   type BestdoriPostTagSearchEntry,
 } from "../services/bestdori/api";
-import { OriginalFormTitle, OriginalFormSubtitle, OriginalFormNote, OriginalFormInput, OriginalFormButton as OriginalButton } from "./OriginalFormParts";
+import { OriginalFormTitle, OriginalFormSubtitle, OriginalFormNote, OriginalFormInput, OriginalFormMessage, OriginalFormButton as OriginalButton, originalFormButtonLabelStyle } from "./OriginalFormParts";
+import { OriginalMarqueeText } from "./OriginalMarquee";
+import { OriginalChoiceDialog } from "./OriginalChoiceDialog";
+import { NOTGARUPA_AUTHOR_REQUIRED } from "../services/bestdori/resourceFlows";
 import { isMobileRuntime } from "../app/mobileRuntime";
 import { OverlayDialogModal } from "./OverlayDialogModal";
 import { appLog } from "../logging/applicationLogger";
+
+// Tags are Bestdori's text tags only (its other types take game IDs).
+const TAG_TYPE = "text";
+
+// A 标签备选 button's two lines (＃tag, (count)), on a tall button (64 high) so they keep clear of its edges.
+const TAG_CANDIDATE_LINE_WIDTH = 150;
+const TAG_CANDIDATE_LINE_HEIGHT = 24;
+// The size a small button's own label prints at once shrunk to its 150 × 48 box (measured: 20), so two lines fit.
+const TAG_CANDIDATE_FONT_SIZE = 20;
 
 export type ExportModalTab = "chart-code" | "upload-server" | "upload" | "upload-test";
 
@@ -20,6 +32,9 @@ type ExportJsonModalProps = {
   open: boolean;
   jsonText: string;
   uploadCommunityPostContent: string;
+  /** 谱面作者 (发布到 NotGarupa only). */
+  uploadChartAuthor: string;
+  onUploadChartAuthorChange: (value: string) => void;
   uploadCommunityPostTags: BestdoriPostTag[];
   onClose: () => void;
   onSaveAs: () => void;
@@ -37,6 +52,8 @@ export function ExportJsonModal({
   open,
   jsonText,
   uploadCommunityPostContent,
+  uploadChartAuthor,
+  onUploadChartAuthorChange,
   uploadCommunityPostTags,
   onClose,
   onSaveAs,
@@ -48,29 +65,40 @@ export function ExportJsonModal({
   onApplyUploadTestServerChart,
 }: ExportJsonModalProps) {
   const [tab, setTab] = useState<ExportModalTab>(only?.tab ?? "chart-code");
-  const [isTagPickerOpen, setIsTagPickerOpen] = useState(false);
-  const [tagPickerType, setTagPickerType] = useState("text");
-  const [tagPickerKeyword, setTagPickerKeyword] = useState("");
+  // The tag window: 添加标签 (index null) or 编辑标签 (the tag at index); its 文本 is what 添加/保存 applies.
+  const [tagEditor, setTagEditor] = useState<{ index: number | null } | null>(null);
+  const [tagEditorText, setTagEditorText] = useState("");
   const [tagCandidates, setTagCandidates] = useState<BestdoriPostTagSearchEntry[]>([]);
   const [isTagCandidatesLoading, setIsTagCandidatesLoading] = useState(false);
   const [tagCandidatesError, setTagCandidatesError] = useState("");
   const [errorDialog, setErrorDialog] = useState("");
+  // 上传 asks first, as 发布到测试服 does: the page it was pressed on, until answered.
+  const [confirmingUpload, setConfirmingUpload] = useState<"upload" | "upload-server" | null>(null);
+  // An upload refused before it asks (发布到 NotGarupa without 谱面作者).
+  const [uploadNotice, setUploadNotice] = useState("");
   const tagSearchSeqRef = useRef(0);
   const mobileReadOnly = isMobileRuntime();
 
-  const upsertTag = (nextTag: BestdoriPostTag) => {
+  /** Puts `nextTag` at `index` (null: after the others); a tag the others already have is not repeated. */
+  const applyTag = (index: number | null, nextTag: BestdoriPostTag) => {
     const normalizedType = nextTag.type.trim();
     const normalizedData = nextTag.data.trim();
     if (!normalizedType || !normalizedData) {
       return;
     }
-    const exists = uploadCommunityPostTags.some(
-      (tag) => tag.type === normalizedType && tag.data === normalizedData,
-    );
-    if (exists) {
+    const others = uploadCommunityPostTags.filter((_, currentIndex) => currentIndex !== index);
+    if (others.some((tag) => tag.type === normalizedType && tag.data === normalizedData)) {
+      onUploadCommunityPostTagsChange(others);
       return;
     }
-    onUploadCommunityPostTagsChange([...uploadCommunityPostTags, { type: normalizedType, data: normalizedData }]);
+    const normalized = { type: normalizedType, data: normalizedData };
+    onUploadCommunityPostTagsChange(index === null ? [...uploadCommunityPostTags, normalized]
+      : uploadCommunityPostTags.map((tag, currentIndex) => currentIndex === index ? normalized : tag));
+  };
+
+  const openTagEditor = (index: number | null) => {
+    setTagEditor({ index });
+    setTagEditorText(index === null ? "" : uploadCommunityPostTags[index]?.data ?? "");
   };
 
   const removeTagAt = (index: number) => {
@@ -83,13 +111,14 @@ export function ExportJsonModal({
   useEffect(() => {
     if (open) {
       setTab(only?.tab ?? "chart-code");
-      setIsTagPickerOpen(false);
-      setTagPickerType("text");
-      setTagPickerKeyword("");
+      setTagEditor(null);
+      setTagEditorText("");
       setTagCandidates([]);
       setTagCandidatesError("");
       setErrorDialog("");
       setIsTagCandidatesLoading(false);
+      setConfirmingUpload(null);
+      setUploadNotice("");
     }
   }, [open, only?.tab]);
 
@@ -100,7 +129,7 @@ export function ExportJsonModal({
   }, [mobileReadOnly, tab]);
 
   useEffect(() => {
-    if (!open || !isTagPickerOpen) {
+    if (!open || tagEditor === null) {
       return;
     }
     const currentSeq = tagSearchSeqRef.current + 1;
@@ -112,8 +141,8 @@ export function ExportJsonModal({
       void (async () => {
         try {
           const result = await fetchBestdoriCommunityPostTags(
-            tagPickerType.trim() || "text",
-            tagPickerKeyword,
+            TAG_TYPE,
+            tagEditorText,
             true,
           );
           if (tagSearchSeqRef.current !== currentSeq) {
@@ -143,11 +172,22 @@ export function ExportJsonModal({
       // Closing the picker or changing its query invalidates in-flight results.
       if (tagSearchSeqRef.current === currentSeq) tagSearchSeqRef.current++;
     };
-  }, [open, isTagPickerOpen, tagPickerType, tagPickerKeyword]);
+  }, [open, tagEditor, tagEditorText]);
 
 
-  const uploadSettings = (
+  // A publishing page: what the upload does, then its description and tags.
+  const uploadSettings = (message: string, withAuthor = false) => (
     <>
+      <OriginalFormMessage text={message} />
+      {withAuthor && <div className="export-json-field">
+        <OriginalFormSubtitle text="谱面作者" />
+        <OriginalFormInput
+          aria-label="谱面作者"
+          value={uploadChartAuthor}
+          onChange={(event) => onUploadChartAuthorChange(event.currentTarget.value)}
+          spellCheck={false}
+        />
+      </div>}
       <div className="export-json-field">
         <OriginalFormSubtitle text="描述文本" />
         <OriginalFormInput multiline
@@ -158,24 +198,14 @@ export function ExportJsonModal({
           spellCheck={false}
         />
       </div>
-      <OriginalFormNote text="上传时会使用当前谱面与谱面信息（标题、艺术家、谱师、等级），并上传音频与封面资源。" />
       <div className="setting-block">
         <OriginalFormSubtitle text="标签" />
         <div className="upload-tag-current-row">
           {uploadCommunityPostTags.map((tag, index) => (
-            <div key={`${tag.type}:${tag.data}:${index}`} className="upload-tag-chip">
-              <OriginalFormInput readOnly aria-label="已选标签" title={tag.data} value={`#${tag.data}`} />
-              <OriginalButton
-                size="small"
-                onClick={() => removeTagAt(index)}
-                title="删除标签"
-                aria-label="删除标签"
-              >
-                删除
-              </OriginalButton>
-            </div>
+            <OriginalButton key={`${tag.type}:${tag.data}:${index}`} size="small" title={tag.data}
+              onClick={() => openTagEditor(index)}>{`＃${tag.data}`}</OriginalButton>
           ))}
-          <OriginalButton size="small" onClick={() => setIsTagPickerOpen(true)}>添加</OriginalButton>
+          <OriginalButton size="small" onClick={() => openTagEditor(null)}>添加</OriginalButton>
         </div>
       </div>
     </>
@@ -210,15 +240,13 @@ export function ExportJsonModal({
 
           {tab === "upload-server" && (
             <div className="transfer-page">
-              <OriginalFormTitle text="上传至 NotGarupa 服务器" followedBySubtitle />
-              {uploadSettings}
+              {uploadSettings("将上传当前谱面、谱面信息、音频与封面，并通过你的 Bestdori 登录确认上传者身份。", true)}
             </div>
           )}
 
           {tab === "upload" && (
             <div className="transfer-page">
-              <OriginalFormTitle text="上传 Bestdori 社区谱面" followedBySubtitle />
-              {uploadSettings}
+              {uploadSettings("将上传当前谱面、谱面信息、音频与封面，发布为 Bestdori 社区谱面。")}
             </div>
           )}
 
@@ -244,7 +272,7 @@ export function ExportJsonModal({
 
           {tab === "upload" && (
             <div className="transfer-actions">
-              <OriginalButton tone="pink" type="button" onClick={onApplyUploadCommunityChart}>
+              <OriginalButton tone="pink" type="button" onClick={() => setConfirmingUpload("upload")}>
                 <span className="btn-content">上传</span>
               </OriginalButton>
               <OriginalButton tone="gray" type="button" onClick={onClose}>
@@ -255,7 +283,10 @@ export function ExportJsonModal({
 
           {tab === "upload-server" && (
             <div className="transfer-actions">
-              <OriginalButton tone="pink" type="button" onClick={onApplyUploadNotGarupaServerChart}>
+              <OriginalButton tone="pink" type="button" onClick={() => {
+                if (!uploadChartAuthor.trim()) setUploadNotice(NOTGARUPA_AUTHOR_REQUIRED);
+                else setConfirmingUpload("upload-server");
+              }}>
                 <span className="btn-content">上传</span>
               </OriginalButton>
               <OriginalButton tone="gray" type="button" onClick={onClose}>
@@ -276,21 +307,17 @@ export function ExportJsonModal({
           )}
         </div>
     </OriginalTransferDialog>
-      <OriginalTransferDialog open={open && isTagPickerOpen} title="添加标签" onClose={() => setIsTagPickerOpen(false)}>
+      <OriginalTransferDialog open={open && tagEditor !== null} title={tagEditor?.index == null ? "添加标签" : "编辑标签"}
+        onClose={() => setTagEditor(null)}>
             <div className="transfer-body">
               <div className="export-tag-picker-body">
-                <div className="setting-block">
-                  <OriginalFormSubtitle text="类型" />
-                  <OriginalFormInput aria-label="标签类型" value="自定义" readOnly />
-                </div>
                 <div className="setting-block">
                   <OriginalFormSubtitle text="文本" />
                   <OriginalFormInput
                     type="text"
-                    aria-label="搜索标签"
-                    value={tagPickerKeyword}
-                    onChange={(event) => setTagPickerKeyword(event.currentTarget.value)}
-                    placeholder="输入关键字搜索标签"
+                    aria-label="标签文本"
+                    value={tagEditorText}
+                    onChange={(event) => setTagEditorText(event.currentTarget.value)}
                   />
                 </div>
                 <div className="setting-block">
@@ -302,33 +329,54 @@ export function ExportJsonModal({
                     {!isTagCandidatesLoading && !tagCandidatesError && tagCandidates.length <= 0 && (
                       <OriginalFormNote text="暂无匹配标签" />
                     )}
-                    {!isTagCandidatesLoading && !tagCandidatesError && tagCandidates.map((candidate, index) => (
-                      <OriginalButton
+                    {!isTagCandidatesLoading && !tagCandidatesError && tagCandidates.map((candidate, index) => {
+                      const count = `(${Math.max(0, Math.trunc(Number(candidate.count) || 0))})`;
+                      return <OriginalButton
                         key={`${candidate.type}:${candidate.data}:${index}`}
-                        className="original-tag-candidate"
-                        onClick={() => {
-                          upsertTag({ type: candidate.type, data: candidate.data });
-                          setIsTagPickerOpen(false);
-                        }}
-                      >
-                        <span className="export-tag-candidate-data">
-                          <span className="export-tag-candidate-hash">#</span>
-                          <span>{candidate.data}</span>
-                        </span>
-                        <span className="export-tag-candidate-count"> ({Math.max(0, Math.trunc(Number(candidate.count) || 0))})</span>
-                      </OriginalButton>
-                    ))}
+                        size="tall"
+                        aria-label={`＃${candidate.data} ${count}`}
+                        title={candidate.data}
+                        onClick={() => setTagEditorText(candidate.data)}
+                        content={<div className="export-tag-candidate-lines">
+                          {[`＃${candidate.data}`, count].map((line, lineIndex) => (
+                            <OriginalMarqueeText key={lineIndex} text={line} width={TAG_CANDIDATE_LINE_WIDTH}
+                              height={TAG_CANDIDATE_LINE_HEIGHT} textStyle={{ ...originalFormButtonLabelStyle("gray"), fontSize: TAG_CANDIDATE_FONT_SIZE }} />
+                          ))}
+                        </div>}
+                      />;
+                    })}
                   </div>
                 </div>
               </div>
               <div className="transfer-actions">
-                <OriginalButton tone="gray" type="button" onClick={() => setIsTagPickerOpen(false)}>
-                  <span className="btn-content">关闭</span>
-                </OriginalButton>
+                {tagEditor?.index != null && (
+                  <OriginalButton tone="gray" type="button" onClick={() => {
+                    removeTagAt(tagEditor.index!);
+                    setTagEditor(null);
+                  }}>删除</OriginalButton>
+                )}
+                <OriginalButton tone="gray" type="button" onClick={() => setTagEditor(null)}>关闭</OriginalButton>
+                <OriginalButton tone="pink" type="button" disabled={!tagEditorText.trim()} onClick={() => {
+                  applyTag(tagEditor?.index ?? null, { type: TAG_TYPE, data: tagEditorText });
+                  setTagEditor(null);
+                }}>{tagEditor?.index == null ? "添加" : "保存"}</OriginalButton>
               </div>
             </div>
       </OriginalTransferDialog>
-      <OverlayDialogModal dialog={open && isTagPickerOpen && errorDialog ? { tone: "error", message: errorDialog } : null}
+      <OverlayDialogModal dialog={open && uploadNotice ? { tone: "error", message: uploadNotice } : null}
+      onConfirm={() => setUploadNotice("")} onCancel={() => setUploadNotice("")} />
+    <OriginalChoiceDialog open={confirmingUpload !== null} title={confirmingUpload === "upload-server" ? "发布到 NotGarupa" : "发布到 Bestdori"}
+      message={confirmingUpload === "upload-server" ? "是否将当前谱面发布到 NotGarupa？" : "是否将当前谱面发布到 Bestdori？"}
+      onClose={() => setConfirmingUpload(null)} choices={[
+        { label: "取消", action: () => setConfirmingUpload(null) },
+        { label: "确定", tone: "pink", action: () => {
+          const target = confirmingUpload;
+          setConfirmingUpload(null);
+          if (target === "upload-server") onApplyUploadNotGarupaServerChart();
+          else if (target === "upload") onApplyUploadCommunityChart();
+        } },
+      ]} />
+    <OverlayDialogModal dialog={open && tagEditor !== null && errorDialog ? { tone: "error", message: errorDialog } : null}
         onConfirm={() => setErrorDialog("")} onCancel={() => setErrorDialog("")} />
     </>
   );

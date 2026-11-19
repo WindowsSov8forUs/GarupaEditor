@@ -1,7 +1,12 @@
-//! Level uploads to the NotGarupa! server. The server only accepts uploads
-//! signed with its upload key: an HMAC-SHA256 over the SHA-256 of every part,
-//! sent in three headers. The key is injected when this backend is built
-//! (`NOTGARUPA_UPLOAD_KEY`), so the frontend never sees it.
+//! Level uploads to the NotGarupa! server (sonolus-notgarupa-server
+//! docs/UPLOAD.md). An upload is made with the signed-in Bestdori account: its
+//! session goes in `X-NotGarupa-Bestdori-Session`, which the server checks
+//! with Bestdori, and this GarupaEditor's version in `X-NotGarupa-Client`. The
+//! server only accepts uploads signed with its upload key: an HMAC-SHA256 over
+//! the client, the session's SHA-256 and the SHA-256 of every part, sent in
+//! three headers. The key is injected when this backend is built
+//! (`NOTGARUPA_UPLOAD_KEY`) and the session stays in this backend, so the
+//! frontend sees neither.
 
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -11,6 +16,8 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 const UPLOAD_URL: &str = "https://notgarupa.sov8.cn/api/levels";
 const UPLOAD_KEY: Option<&str> = option_env!("NOTGARUPA_UPLOAD_KEY");
+/// `X-NotGarupa-Client`: the server refuses versions older than it accepts.
+const CLIENT: &str = concat!("GarupaEditor/", env!("CARGO_PKG_VERSION"));
 /// The server reads an upload for at most a minute; leave room to connect.
 const UPLOAD_TIMEOUT: Duration = Duration::from_secs(90);
 /// The signed fields and files, in signing order.
@@ -36,7 +43,9 @@ struct NotGarupaUploadFile {
 }
 
 /// The server's answer: its status, its JSON body (`{"uid", "status"}` or
-/// `{"error"}`) and, for 429, the seconds to wait.
+/// `{"error", "code"}`) and, for 429 and 503, the seconds to wait. Without a
+/// Bestdori login nothing is sent and the answer is the server's
+/// `login_required`.
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NotGarupaUploadResponse {
@@ -46,10 +55,20 @@ pub struct NotGarupaUploadResponse {
 }
 
 #[tauri::command]
-pub async fn notgarupa_upload_level(params: NotGarupaUploadParams) -> Result<NotGarupaUploadResponse, String> {
+pub async fn notgarupa_upload_level(
+    auth_state: tauri::State<'_, crate::BestdoriAuthState>,
+    params: NotGarupaUploadParams,
+) -> Result<NotGarupaUploadResponse, String> {
     let key = UPLOAD_KEY
         .filter(|key| !key.is_empty())
         .ok_or_else(|| "this GarupaEditor build has no NotGarupa upload key".to_string())?;
+    let Some(session) = crate::get_bestdori_cookie_header(&auth_state)?.filter(|session| !session.trim().is_empty()) else {
+        return Ok(NotGarupaUploadResponse {
+            status: 401,
+            body: Some(serde_json::json!({ "error": "上传需要登录 Bestdori 账号。", "code": "login_required" })),
+            retry_after: None,
+        });
+    };
     for name in params.fields.keys() {
         if !SIGNED_FIELDS.contains(&name.as_str()) {
             return Err(format!("unknown NotGarupa upload field {name}"));
@@ -75,7 +94,10 @@ pub async fn notgarupa_upload_level(params: NotGarupaUploadParams) -> Result<Not
         .as_secs()
         .to_string();
     let nonce = new_nonce();
-    let mut message = format!("NotGarupa-Upload-1\n{timestamp}\n{nonce}");
+    let mut message = format!(
+        "NotGarupa-Upload-2\n{timestamp}\n{nonce}\n{CLIENT}\n{}",
+        hex(&Sha256::digest(session.as_bytes()))
+    );
     for name in SIGNED_FIELDS {
         let value = params.fields.get(name).map(String::as_bytes).unwrap_or_default();
         message.push('\n');
@@ -108,6 +130,8 @@ pub async fn notgarupa_upload_level(params: NotGarupaUploadParams) -> Result<Not
     let response = crate::build_bestdori_http_client()?
         .post(UPLOAD_URL)
         .timeout(UPLOAD_TIMEOUT)
+        .header("X-NotGarupa-Client", CLIENT)
+        .header("X-NotGarupa-Bestdori-Session", session)
         .header("X-NotGarupa-Timestamp", timestamp)
         .header("X-NotGarupa-Nonce", nonce)
         .header("X-NotGarupa-Signature", signature)
