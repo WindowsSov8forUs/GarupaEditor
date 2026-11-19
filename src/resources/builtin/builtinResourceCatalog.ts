@@ -31,16 +31,15 @@ import jsonImportUrl from "../../assets/icons/json-import.svg?url&no-inline";
 import mirrorActionUrl from "../../assets/icons/mirror-action.svg?url&no-inline";
 import optionsTitleUrl from "../../assets/icons/options-title.svg?url&no-inline";
 import pasteActionUrl from "../../assets/icons/paste-action.svg?url&no-inline";
-import previewUrl from "../../assets/icons/preview.svg?url&no-inline";
 import settingsUrl from "../../assets/icons/settings.svg?url&no-inline";
 import simulatorPauseUrl from "../../assets/icons/simulator-pause.svg?url&no-inline";
-import simulatorPlayUrl from "../../assets/icons/simulator-play.svg?url&no-inline";
 import skinUrl from "../../assets/icons/skin.svg?url&no-inline";
 import undoActionUrl from "../../assets/icons/undo-action.svg?url&no-inline";
 import redoActionUrl from "../../assets/icons/redo-action.svg?url&no-inline";
 import clipboardUrl from "../../assets/icons/clipboard.svg?url&no-inline";
 import editorPlayUrl from "../../assets/icons/editor-play.svg?url&no-inline";
 import editorPauseUrl from "../../assets/icons/editor-pause.svg?url&no-inline";
+import bestdoriIconUrl from "../../assets/icons/bestdori.png?url&no-inline";
 import chartUiPrimaryFontUrl from "../../assets/fonts/TTShinGoM.ttf?url&no-inline";
 import chartUiFallbackFontUrl from "../../assets/fonts/GB18030.ttf?url&no-inline";
 import defaultCoverUrl from "../../assets/default-cover.png?url&no-inline";
@@ -154,16 +153,17 @@ const DEFINITIONS: readonly BuiltinDefinition[] = Object.freeze([
   icon("ui.icon.mirror-action", "builtin/ui/icon/mirror-action", "icons/mirror-action.svg", "Mirror", mirrorActionUrl),
   icon("ui.icon.options-title", "builtin/ui/icon/options-title", "icons/options-title.svg", "Options title", optionsTitleUrl),
   icon("ui.icon.paste-action", "builtin/ui/icon/paste-action", "icons/paste-action.svg", "Paste", pasteActionUrl),
-  icon("ui.icon.preview", "builtin/ui/icon/preview", "icons/preview.svg", "Preview", previewUrl),
   icon("ui.icon.settings", "builtin/ui/icon/settings", "icons/settings.svg", "Settings", settingsUrl),
   icon("ui.icon.simulator-pause", "builtin/ui/icon/simulator-pause", "icons/simulator-pause.svg", "Simulator pause", simulatorPauseUrl),
-  icon("ui.icon.simulator-play", "builtin/ui/icon/simulator-play", "icons/simulator-play.svg", "Simulator play", simulatorPlayUrl),
   icon("ui.icon.skin", "builtin/ui/icon/skin", "icons/skin.svg", "Skin", skinUrl),
   icon("ui.icon.undo-action", "builtin/ui/icon/undo-action", "icons/undo-action.svg", "Undo", undoActionUrl),
   icon("ui.icon.redo-action", "builtin/ui/icon/redo-action", "icons/redo-action.svg", "Redo", redoActionUrl),
   icon("ui.icon.clipboard", "builtin/ui/icon/clipboard", "icons/clipboard.svg", "Clipboard", clipboardUrl),
   icon("ui.icon.editor-play", "builtin/ui/icon/editor-play", "icons/editor-play.svg", "Editor play", editorPlayUrl),
   icon("ui.icon.editor-pause", "builtin/ui/icon/editor-pause", "icons/editor-pause.svg", "Editor pause", editorPauseUrl),
+  // bestdori.com's own icon (its /thumb.png), for the menu's Bestdori 账号.
+  Object.freeze({ slot: "ui.icon.bestdori", id: "builtin/ui/icon/bestdori", path: "icons/bestdori.png",
+    title: "Bestdori", kind: "image", mediaType: "image/png", url: bestdoriIconUrl }),
   Object.freeze({
     slot: "ui.font.chart-ui-primary",
     id: "builtin/ui/font/chart-ui-primary",

@@ -58,8 +58,19 @@ export function MusicFilterSourceHeading({ text, top, node }: { text: string; to
   </div>;
 }
 const sectionGap = source.nodes.get(16)!.position.y - source.nodes.get(30)!.position.y; // 47
+/** Vertical distance from a section heading to its first option row, in design px (the difficulty group). */
+export const originalMusicFilterHeadingGap = sectionGap;
+/** Horizontal centre of the drawer's option groups, in design px. */
+export const originalMusicFilterGroupCenter = groupCenter;
+/** Horizontal centre of the section heading bars (560 wide from the caption inset), in design px: the drawer's
+ * content centre, where its 关闭 button is centred too. */
+export const originalMusicFilterSectionCenter = captionLeft + 560 / 2;
 const difficultyToLevel = source.nodes.get(13)!.position.y - source.nodes.get(38)!.position.y; // 160
 const levelToGauge = source.nodes.get(38)!.position.y - source.nodes.get(55)!.position.y; // 68
+/** From a two-row option group's heading to the next group's heading (difficulty to level), in design px. */
+export const originalMusicFilterTwoRowGroupHeight = difficultyToLevel;
+/** From a heading to the centre of a tall control under it (level heading to its range gauge), in design px. */
+export const originalMusicFilterHeadingToControl = levelToGauge;
 export function MusicFilterHeading({ text, top, kind = "section" }: { text: string; top: number; kind?: "section" | "difficulty" | "field" }) {
   const root = kind === "section" ? 27 : kind === "difficulty" ? 13 : 38;
   const label = kind === "section" ? 134 : kind === "difficulty" ? 145 : 119;
@@ -168,7 +179,7 @@ export function OriginalMusicFilterDialog({ open, value, onChange, onSearch, onC
   mode?: "search" | "filter";
   title?: string;
   open: boolean; value: MusicFilterFields; onChange(value: MusicFilterFields): void;
-  custom?: { resetLabel?: string; fields: readonly ("id" | "keyword" | "artist")[]; height: number; render(top: number): ReactNode };
+  custom?: { resetLabel?: string; hideReset?: boolean; fields: readonly ("id" | "keyword" | "artist")[]; height: number; render(top: number): ReactNode };
   defaults: MusicFilterFields; bounds: readonly [number, number]; compact?: boolean;
   onSearch(value: MusicFilterFields, field: "id" | "keyword" | "artist"): void; onClose(): void;
 }) {
@@ -225,9 +236,11 @@ export function OriginalMusicFilterDialog({ open, value, onChange, onSearch, onC
   const levelTop = difficultyTop + (compact ? 0 : difficultyToLevel);
   const sortTop = levelTop + levelToGauge + 100;
   const contentHeight = searching ? searchHeight : custom ? filterTop + custom.height : compact ? sortTop : sortTop + 49 + 40;
-  const headerModel = new OriginalPrefabModel(header, { components: {
-    163: { mText: displayedTitle, mWidth: 350 }, 189: { mText: custom?.resetLabel ?? "恢复默认" },
-  } });
+  const headerModel = new OriginalPrefabModel(header, {
+    nodes: custom?.hideReset ? { [header.components.find(component => component.id === 199)!.node]: { active: false } } : undefined,
+    components: {
+      163: { mText: displayedTitle, mWidth: 350 }, 189: { mText: custom?.resetLabel ?? "恢复默认" },
+    } });
   return createPortal(<div className="music-filter-drawer-projection" style={{
     width: (640 + safeRight) * view.scale, height: view.height,
   }}>

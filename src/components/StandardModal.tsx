@@ -19,6 +19,8 @@ type StandardModalBaseProps = {
   closeLabel?: string;
   closeDisabled?: boolean;
   hideCloseAction?: boolean;
+  /** Added to the modal stack's z-index; confirmation dialogs use it to stay above fixed drawers (z-index 100). */
+  layerOffset?: number;
   children: ReactNode;
 };
 
@@ -121,7 +123,8 @@ export function StandardValueModal<T>({
   ...props
 }: StandardValueModalProps<T>) {
   const { mounted, phase, renderedValue, transitionStyle, transitionRef } = useModalTransitionValue(value, props.motion);
-  const layerStyle = useModalLayer(value !== null, mounted);
+  const stackLayer = useModalLayer(value !== null, mounted);
+  const layerStyle = props.layerOffset ? { ...stackLayer, zIndex: Number(stackLayer.zIndex) + props.layerOffset } : stackLayer;
   useOriginalDialogInput(transitionRef, mounted, props.onClose, value === null || !!props.closeDisabled);
 
   if (!mounted || renderedValue === null) {

@@ -3,16 +3,18 @@ import profile from "../../data/originalSongDetailProfile.json";
 import { OriginalPrefabModel, type OriginalPrefab } from "../originalPrefabModel";
 import { flushSync } from "react-dom";
 import { EditorMinimap } from "./EditorMinimap";
-import { ORIGINAL_HEADER_MENU_BOUNDS } from "../OriginalPageHeader";
 import { EDITOR_EDGE_SOFTNESS } from "../../app/editorEdgeMask";
 import { hitTestEventBubble, type EventBubbleHit, type TimelineEventTarget } from "../../app/hooks/useCanvasPlayfieldBackend";
 import type { EventBubbleHandlers } from "../../app/hooks/usePlayfieldRenderers";
 import { EditorBpmDialog } from "./EditorBpmDialog";
 import { EditorSvDialog } from "./EditorSvDialog";
-import { GLOBAL_TIMING_GROUP_ID, toolPreviewNoteType } from "../../chartCore";
+import { DEFAULT_METADATA, GLOBAL_TIMING_GROUP_ID, toolPreviewNoteType } from "../../chartCore";
 import { EditorBeatDivisionButton } from "./EditorBeatDivision";
-import { EDITOR_HISTORY_TRAILING_WIDTH, EditorControlColumn, EditorHistoryTools, EditorMirrorTools } from "./EditorControlColumn";
+import { EditorOptionsButton } from "./EditorOptionsButton";
+import { EditorOptionsDrawer } from "./EditorOptionsDrawer";
+import { EDITOR_HISTORY_TRAILING_WIDTH, EditorControlColumn, EditorHistoryTools, EditorMirrorTools, EditorPlaybackClock } from "./EditorControlColumn";
 import { useApplicationResourceUrl } from "../../resources/applicationResourceContext";
+import { ORIGINAL_HEADER_MENU_BOUNDS, ORIGINAL_HEADER_TITLE_BOTTOM } from "../OriginalPageHeader";
 import { editorDirectionalBackLineWidth, editorDirectionalHeadGeometry, editorFlickArrowGeometry, editorNoteHeight, editorDirectionalSegmentWidth, editorNoteTokenWidth, SELECTION_FRAME_MARGIN, SELECTION_RESIZE_GRIP_MAX_HEIGHT, SELECTION_RESIZE_GRIP_SCALE, SELECTION_RESIZE_GRIP_WIDTH, SELECTION_RESIZE_HIT_WIDTH } from "../../app/editorNoteMetrics";
 import { EditorSelectionOverlay, type EditorSelectionOverlayHandle } from "./EditorSelectionOverlay";
 import { OriginalMenuBackground } from "../OriginalMenuBackground";
@@ -24,8 +26,9 @@ import { OriginalUiSoundProvider } from "../OriginalUiSound";
 import { BestdoriLoginModal } from "../BestdoriLoginModal";
 import { useLayoutEffect,  useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
 import { ExportJsonModal } from "../ExportJsonModal";
-import { ImportJsonModal } from "../ImportJsonModal";
-import { SongInformationPage } from "../SongInformationPage";
+import { ChartCodeEditModal } from "../ChartCodeEditModal";
+import { SongInformationEditPage } from "../SongInformationEditPage";
+import { OriginalChoiceDialog } from "../OriginalChoiceDialog";
 import { SONG_INFORMATION_CONTENT_BOUNDS } from "../OriginalSongDetailParts";
 import { LivePreparationPage, MvDownloadDialog } from "../LivePreparationPage";
 import { ResourceLoadErrorDialog } from "../OriginalConfirmDialog";
@@ -58,6 +61,9 @@ import { resolveOriginalPreviewSkin } from "../../simulator/public/settings";
 
 /** Standard lanes; lane counts above it add lanes evenly on both sides (an ExGarupa feature). */
 const STANDARD_LANE_COUNT = 7;
+/** 创建工程 starts from a new project's song: no name or artist (filled in before 确定), default settings, no media. */
+const NEW_PROJECT_METADATA = Object.freeze({ ...DEFAULT_METADATA, title: "", artist: "" });
+const NO_MEDIA = Object.freeze({ cover: null, mv: null, illustBackground: null, audio: null });
 
 /**
  * Extended lane counts: white dashed lines at the track zone's edges, and faint ones between the outer lanes
@@ -194,7 +200,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     bestdoriV2ImportRef,
     handleJsonImport,
     handleBestdoriV2Import,
-    triggerJsonImport,
     triggerBestdoriV2Import,
     openImportJsonModal,
     downloadJson,
@@ -202,24 +207,13 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     openSimulatorWindow,
     garupaChartJsonText,
     isImportJsonModalOpen,
-    importJsonModalLevel,
     importJsonText,
-    importOfficialChartId,
-    importOfficialChartDifficulty,
-    importCommunityPostId,
     uploadCommunityPostContent,
     uploadCommunityPostTags,
-    importJsonSelectedPath,
-    importBestdoriV2SelectedPath,
     setImportJsonText,
-    setImportOfficialChartId,
-    setImportOfficialChartDifficulty,
-    setImportCommunityPostId,
     setUploadCommunityPostContent,
     setUploadCommunityPostTags,
     applyImportJsonText,
-    applyImportOfficialChart,
-    applyImportCommunityChart,
     applyUploadCommunityChart,
     applyUploadNotGarupaServerChart,
     applyUploadTestServerChart,
@@ -227,7 +221,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     isExportJsonModalOpen,
     closeExportJsonModal,
     saveExportJsonToSelectedPath,
-    exportBestdoriV2ToClipboard,
+    exportBestdoriV2ToFile,
     overlayDialog,
     confirmOverlayDialog,
     cancelOverlayDialog,
@@ -318,7 +312,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     isHabahiroEnabled,
     renderDirectionalSprite,
     isSkinApplying,
-    setMetadata,
     isAppSettingsOpen,
     setIsAppSettingsOpen,
     appOptionSettings,
@@ -371,6 +364,33 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     mirrorIcon={vm.mirrorActionIcon} canDelete={vm.canDeleteSelection} onDelete={deleteSelection}
     deleteIcon={vm.clearActionIcon} />,
   [vm.canMirror, vm.mirrorSelectionAlong, vm.mirrorActionIcon, vm.canDeleteSelection, deleteSelection, vm.clearActionIcon]);
+  const [isEditorOptionsOpen, setEditorOptionsOpen] = useState(false);
+  // Each opening of 编辑信息 / 创建工程 starts a new draft.
+  const [songEditSession, setSongEditSession] = useState(0);
+  const [songEditCreating, setSongEditCreating] = useState(false);
+  // The two confirmations: starting a new project from the home page, and dropping it on 创建工程.
+  const [confirmingCreate, setConfirmingCreate] = useState(false);
+  const [confirmingCancelCreate, setConfirmingCancelCreate] = useState(false);
+  // 新建工程 (menu) over a project in progress: it is replaced once the new one is saved.
+  const [confirmingReplaceProject, setConfirmingReplaceProject] = useState(false);
+  // 发布到测试服 asks first: it publishes the chart as it is.
+  const [confirmingTestServer, setConfirmingTestServer] = useState(false);
+  const openSongEdit = (creating: boolean, open: (stack: PageStack) => PageStack) => {
+    setSongEditCreating(creating); setSongEditSession(session => session + 1); setPageStack(open);
+  };
+  // 创建工程 over the page it is opened on (cancelling it returns there); opened again on itself, a new draft.
+  const openSongCreate = () => openSongEdit(true, stack =>
+    topPage(stack) === "songEdit" && songEditCreating ? stack : [...stack, "songEdit"]);
+  // The menu's 新建工程: warns when a project is in progress, otherwise opens 创建工程 at once.
+  const startNewProject = () => { if (vm.hasProjectContent) setConfirmingReplaceProject(true); else openSongCreate(); };
+  // 创建工程 leaves through its confirmation; 编辑信息 to the page it came from.
+  const leaveSongEdit = () => { if (songEditCreating) setConfirmingCancelCreate(true); else setPageStack(popPage); };
+  // Cancelling 创建工程 returns to the page it was opened on (编辑信息 included, as a new draft).
+  const cancelSongCreate = () => {
+    const below = pageStack[pageStack.length - 2];
+    setPageStack(popPage);
+    if (below === "songEdit") { setSongEditCreating(false); setSongEditSession(session => session + 1); }
+  };
   const longBodyTexture = useMemo(() => vm.skinAssets ? projectPlayfieldLineRuntimeAssets(vm.skinAssets).longLine : undefined, [vm.skinAssets]);
   const curveSlideLineTexture = useMemo(() => vm.skinAssets ? projectPlayfieldLineRuntimeAssets(vm.skinAssets).curveSlideLine : undefined, [vm.skinAssets]);
   const [viewportTop, setViewportTop] = useState(0);
@@ -398,7 +418,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     trackLane: flatTrackLane, boardLaneWidth: LANE_WIDTH }), [vm.curveToolSettings, curveSave, curveCancel, flatTrackLane, LANE_WIDTH]);
   const [viewportRight, setViewportRight] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(window.innerHeight);
-  void viewportRight;
   const [timelineLabelX, setTimelineLabelX] = useState(8);
   const rhythmSkinTypes = bestdoriSkinCatalogOptions?.rhythm ?? [];
   const directionalSkinTypes = bestdoriSkinCatalogOptions?.directional ?? [];
@@ -1429,8 +1448,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   return (
     <OriginalUiSoundProvider volumePercent={appOptionSettings.simulatorSettings.systemSeVolumePercent}
       masterPercent={appOptionSettings.simulatorSettings.masterVolumePercent} onError={message => vm.showDialog(`界面音效失败：${message}`, "error")}>
-    <OriginalMenuBackground type={backgroundPage === "live" ? (preparationMode.sessionMode === "rehearsal" ? 2 : 1)
-      : backgroundPage === "search" ? 1 : backgroundPage === "song" ? 257 : backgroundPage === "entrance" ? "home" : "editor"} onError={message => vm.showDialog(message, "error")} />
+    <OriginalMenuBackground type={page === "live" ? (preparationMode.sessionMode === "rehearsal" ? 2 : 1)
+      : page === "search" ? 1 : page === "song" || page === "songEdit" ? 257 : page === "entrance" ? "home" : "editor"} onError={message => vm.showDialog(message, "error")} />
     <main className={`app-shell ${mobileRuntime ? "is-mobile-runtime" : ""}`}
       data-ui-layout={uiViewport.stacked ? "stacked" : "columns"}
       >
@@ -1467,12 +1486,13 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         stackPageKeys={pageStack.slice(0, -1).filter(entry => entry !== "editor")
           .map(entry => pageSwitchKey(entry, appOptionSettings.musicSelectionSource))}
         pageId={page}
-        section={page === "song" ? "歌曲" : page === "entrance" ? "首页" : "演出"}
+        section={page === "song" || page === "songEdit" ? "歌曲" : page === "entrance" ? "首页" : "演出"}
         title={page === "live" ? songDetailSource.wording[preparationMode.sessionMode === "rehearsal"
-          ? "header_mainTitle_freeLivePracticeMode" : "header_mainTitle_freeLive"] : page === "song" ? "歌曲信息" : page === "search" ? "谱面搜索" : "选择功能"}
+          ? "header_mainTitle_freeLivePracticeMode" : "header_mainTitle_freeLive"] : page === "song" ? "歌曲信息" : page === "songEdit" ? (songEditCreating ? "创建工程" : "编辑信息") : page === "search" ? "谱面搜索" : "选择功能"}
         onOpenMenu={openAppSettings} menuOpen={isAppSettingsOpen}
         onBack={() => {
           if (page === "entrance") handleReturnToTitle();
+          else if (page === "songEdit") leaveSongEdit();
           else setPageStack(popPage);
         }} page={page === "live" ?
       <LivePreparationPage metadata={playSelection ? { ...metadata, title: playSelection.title,
@@ -1494,24 +1514,31 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
           if (destination === "play") setPageStack(stack => openDetailPage(stack, "live"));
           else setPageStack(EDITOR_STACK);
         }} /> : page === "entrance" ?
-      <LiveSelectionPage onFreeLive={() => setPageStack(stack => pushPage(stack, "editor"))}
+      <LiveSelectionPage onFreeLive={() => {
+          // Without a project in progress, a new one is made first (创建工程).
+          if (vm.hasProjectContent) setPageStack(stack => pushPage(stack, "editor"));
+          else setConfirmingCreate(true);
+        }}
         onImportProject={() => vm.projectFiles.choose(() => setPageStack(EDITOR_STACK),
-          () => vm.openOverlayDialog({ tone: "info", message: "未选择项目文件" }))}
-        onSearchCharts={() => setPageStack(stack => pushPage(stack, "search"))} /> : <SongInformationPage
+          () => vm.showDialog("未选择项目文件"))}
+        onSearchCharts={() => setPageStack(stack => pushPage(stack, "search"))} /> : <SongInformationEditPage
+        key={page === "songEdit" ? `edit-${songEditSession}` : "view"}
+        mode={page === "song" ? "view" : songEditCreating ? "create" : "edit"}
         audioDurationSec={audioDurationSec}
         noteCount={visibleNoteCount}
         notes={notes}
         slideChains={vm.slideChains}
-        metadata={metadata}
-        mediaSources={chartMediaSources}
-          onCoverUpload={vm.handleCoverUpload}
-          onMvUpload={vm.handleMvUpload}
-          onIllustBackgroundUpload={vm.handleIllustBackgroundUpload}
-          onIllustBackgroundRemove={vm.removeIllustBackground}
-          optionSettings={appOptionSettings}
-          habahiro={isHabahiroEnabled}
-          onError={vm.setStatusMessage}
-        setMetadata={setMetadata}
+        metadata={page === "songEdit" && songEditCreating ? NEW_PROJECT_METADATA : metadata}
+        mediaSources={page === "songEdit" && songEditCreating ? NO_MEDIA : chartMediaSources}
+        optionSettings={appOptionSettings}
+        habahiro={isHabahiroEnabled}
+        onError={message => vm.showDialog(message, "error")}
+        onNotice={message => vm.showDialog(message, "info")}
+        onConfirm={songEditCreating ? vm.createSongProject : vm.applySongInformationEdit}
+        onLeave={page === "song" ? () => setPageStack(popPage)
+          : songEditCreating ? () => setPageStack(EDITOR_STACK) : () => setPageStack(popPage)}
+        onCancel={leaveSongEdit}
+        onEdit={() => openSongEdit(false, stack => pushPage(stack, "songEdit"))}
       />
 
       }>
@@ -1519,6 +1546,10 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
 
       <section className={`workspace ${mobileRuntime ? "is-mobile-workspace" : ""}`}
         style={{ position: "relative", gap: SONG_INFORMATION_CONTENT_BOUNDS.columnGap * uiViewport.scale }}>
+        <EditorOptionsButton onClick={() => setEditorOptionsOpen(true)} scale={uiViewport.scale}
+          top={uiViewport.safeInsets.top - workspaceTop} right={uiViewport.safeInsets.right - viewportRight}
+          leading={<EditorPlaybackClock getSeconds={vm.getPlaybackClockSec} maxSeconds={vm.audioDurationSec} />}
+          leadingBottom={ORIGINAL_HEADER_TITLE_BOTTOM} />
         <EditorBpmDialog open={bpmEditOpen} title="BPM 编辑" value={bpmEditTarget?.bpm ?? 0}
           onClose={() => setBpmEditOpen(false)}
           onConfirm={value => { if (bpmEditTarget) vm.setBpmEventValue(bpmEditTarget.selectionId, value); }}
@@ -1947,11 +1978,9 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
 
       <AppSettingsModal
         onReturnToTitle={returnToTitle ? handleReturnToTitle : undefined}
-        onSongInformation={() => { setIsAppSettingsOpen(false); setPageStack(stack => openDetailPage(stack, "song")); }}
-        onLivePreparation={() => { setIsAppSettingsOpen(false); setPageStack(stack => openDetailPage(stack, "live")); }}
+        onNewProject={startNewProject}
         optionsOpen={preparationSettingsOpen} onOptionsClose={() => setPreparationSettingsOpen(false)}
         resourcesReady={vm.settingsResourcesReady}
-        onImport={openImportJsonModal} onExport={downloadJson} onPreview={openStaticRenderWindow}
         onSettingsError={message => vm.showDialog(`设置操作失败：${message}`, "error")}
         onSimulator={openSimulatorWindow} onSkinLibrary={openSkinSettings} onAccount={openBestdoriLoginModal}
         open={isAppSettingsOpen}
@@ -1974,6 +2003,38 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         onApplyOptionSettings={applyAppOptionSettings}
       />
 
+      <EditorOptionsDrawer open={isEditorOptionsOpen} onClose={() => setEditorOptionsOpen(false)}
+        mode={vm.editorMode} onModeChange={mode => { void vm.setEditorMode(mode); }}
+        habahiro={isHabahiroEnabled} onHabahiroChange={value => { void vm.setHabahiroMode(value); }}
+        laneCount={vm.settings.laneCount} onLaneCountChange={vm.setLaneCount}
+        onSongInformation={() => { setEditorOptionsOpen(false); setPageStack(stack => openDetailPage(stack, "song")); }}
+        onEditSongInformation={() => { setEditorOptionsOpen(false); openSongEdit(false, stack => openDetailPage(stack, "songEdit")); }}
+        onExportProject={() => { setEditorOptionsOpen(false); void vm.projectFiles.save(); }} exportBusy={vm.projectFiles.busy}
+        onExportBestdoriV2={() => { setEditorOptionsOpen(false); void exportBestdoriV2ToFile(); }}
+        onEditCode={() => { setEditorOptionsOpen(false); openImportJsonModal(); }}
+        onPublishTestServer={() => { setEditorOptionsOpen(false); setConfirmingTestServer(true); }}
+        onPublishBestdori={() => { setEditorOptionsOpen(false); downloadJson(); }} />
+      <OriginalChoiceDialog open={confirmingTestServer} title="发布到测试服" message="是否将当前谱面发布到测试服？"
+        onClose={() => setConfirmingTestServer(false)} choices={[
+          { label: "取消", action: () => setConfirmingTestServer(false) },
+          { label: "确定", tone: "pink", action: () => { setConfirmingTestServer(false); void applyUploadTestServerChart(); } },
+        ]} />
+      <OriginalChoiceDialog open={confirmingCreate} title="创建工程" message="是否创建新的谱面工程？"
+        onClose={() => setConfirmingCreate(false)} choices={[
+          { label: "取消", action: () => setConfirmingCreate(false) },
+          { label: "确定", tone: "pink", action: () => { setConfirmingCreate(false); openSongCreate(); } },
+        ]} />
+      <OriginalChoiceDialog open={confirmingCancelCreate} title="创建工程" message="是否取消创建工程？"
+        onClose={() => setConfirmingCancelCreate(false)} choices={[
+          { label: "返回", action: () => setConfirmingCancelCreate(false) },
+          { label: "确定", tone: "pink", action: () => { setConfirmingCancelCreate(false); cancelSongCreate(); } },
+        ]} />
+      <OriginalChoiceDialog open={confirmingReplaceProject} title="新建工程"
+        message="已有一个进行中的谱面，继续将会删除之前的工程。是否继续？"
+        onClose={() => setConfirmingReplaceProject(false)} choices={[
+          { label: "取消", action: () => setConfirmingReplaceProject(false) },
+          { label: "确定", tone: "pink", action: () => { setConfirmingReplaceProject(false); openSongCreate(); } },
+        ]} />
       <SkinSettingsModal
         open={isSkinSettingsOpen}
         onClose={() => setIsSkinSettingsOpen(false)}
@@ -2073,7 +2134,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       />
 
       <input ref={vm.projectFiles.input} type="file" accept=".gcp" hidden onChange={vm.projectFiles.open} />
-      <ExportJsonModal
+      {/* Opened from the drawer's 发布到 Bestdori: its post's description and tags, then 上传. */}
+      <ExportJsonModal only={{ tab: "upload", title: "发布到 Bestdori" }}
         onSaveProject={() => void vm.projectFiles.save()}
         projectBusy={vm.projectFiles.busy}
         open={isExportJsonModalOpen}
@@ -2082,7 +2144,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         uploadCommunityPostTags={uploadCommunityPostTags}
         onClose={closeExportJsonModal}
         onSaveAs={() => void saveExportJsonToSelectedPath()}
-        onExportBestdoriV2={() => void exportBestdoriV2ToClipboard()}
+        onExportBestdoriV2={() => void exportBestdoriV2ToFile()}
         onUploadCommunityPostContentChange={setUploadCommunityPostContent}
         onUploadCommunityPostTagsChange={setUploadCommunityPostTags}
         onApplyUploadCommunityChart={() => void applyUploadCommunityChart()}
@@ -2090,28 +2152,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         onApplyUploadTestServerChart={() => void applyUploadTestServerChart()}
       />
 
-      <ImportJsonModal
-        onOpenProject={() => vm.projectFiles.choose()}
-        projectBusy={vm.projectFiles.busy}
-        open={isImportJsonModalOpen}
-        level={importJsonModalLevel}
-        chartJsonText={importJsonText}
-        officialChartId={importOfficialChartId}
-        officialChartDifficulty={importOfficialChartDifficulty}
-        communityPostId={importCommunityPostId}
-        importJsonSelectedPath={importJsonSelectedPath}
-        importBestdoriV2SelectedPath={importBestdoriV2SelectedPath}
-        onChartJsonTextChange={setImportJsonText}
-        onOfficialChartIdChange={setImportOfficialChartId}
-        onOfficialChartDifficultyChange={setImportOfficialChartDifficulty}
-        onCommunityPostIdChange={setImportCommunityPostId}
-        onApplyChartJson={applyImportJsonText}
-        onApplyOfficialChart={() => void applyImportOfficialChart()}
-        onApplyCommunityChart={() => void applyImportCommunityChart()}
-        onImportJsonFile={triggerJsonImport}
-        onImportBestdoriV2File={triggerBestdoriV2Import}
-        onClose={closeImportJsonModal}
-      />
+      <ChartCodeEditModal open={isImportJsonModalOpen} text={importJsonText} onTextChange={setImportJsonText}
+        onImportBestdoriV2={triggerBestdoriV2Import} onApply={applyImportJsonText} onClose={closeImportJsonModal} />
 
       <OverlayDialogModal
         dialog={overlayDialog}

@@ -1,5 +1,7 @@
 import { useMemo } from "react";
-import { OriginalPrefabModel, ORIGINAL_PREFABS } from "./originalPrefabModel";
+import { originalAtlasFor, OriginalPrefabModel, ORIGINAL_PREFABS } from "./originalPrefabModel";
+import { originalSpriteDrawingRect } from "./originalSpriteGeometry";
+import { originalSurfaceRow } from "./useOriginalSurface";
 import { OriginalPrefabView } from "./OriginalPrefabView";
 import { OriginalHeaderMenuButton } from "./OriginalMenuParts";
 import { useUiViewport } from "./useUiViewport";
@@ -19,6 +21,15 @@ const nodes = source.prefab.nodes.filter(node => source.isWithin(node.id, left.i
   .map(node => node.id === left.id ? { ...node, parent: null, position: { x: 0, y: 0, z: 0 } } : node);
 const leftPrefab = { ...source.prefab, nodes,
   components: source.prefab.components.filter(item => nodes.some(node => node.id === item.node)) };
+const titleBaseModel = new OriginalPrefabModel(leftPrefab);
+const titleBaseSprite = source.componentAt(source.nodeAt("LeftTop/screenInfo/screenSubNameBase").id, "UISprite")!;
+const titleBaseTransform = titleBaseModel.transform(titleBaseSprite.node);
+// The sprite's drawn rect after atlas padding, i.e. the visible edge of the title base.
+const titleBase = originalSpriteDrawingRect(titleBaseModel.rect(titleBaseSprite),
+  originalSurfaceRow(originalAtlasFor(titleBaseSprite), titleBaseSprite.data.mSpriteName), titleBaseSprite.data.mType,
+  titleBaseTransform.scaleX, titleBaseTransform.scaleY, false, false, titleBaseSprite.data.mDrawRegion ?? undefined);
+/** Visible bottom edge of the title base (screenSubNameBase) below the header's safe-area top, in design px. */
+export const ORIGINAL_HEADER_TITLE_BOTTOM = titleBase.y + titleBase.height;
 
 /** LeftTop and TopRightMenu share the host safe-area anchors; child offsets stay authored. */
 export function OriginalPageHeader({ section, title, onBack, showBack = true, menuOpen, onOpenMenu }: {

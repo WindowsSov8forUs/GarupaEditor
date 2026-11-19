@@ -3,7 +3,7 @@
  * BackUIScreen returns to the one below. Home ("entrance") is the root; the editor is one
  * page entered from it, not the fallback when nothing is open.
  */
-export type AppPage = "entrance" | "editor" | "search" | "live" | "song";
+export type AppPage = "entrance" | "editor" | "search" | "live" | "song" | "songEdit";
 export type PageStack = readonly AppPage[];
 
 export const HOME_STACK: PageStack = Object.freeze(["entrance"]);
@@ -15,12 +15,12 @@ export function pushPage(stack: PageStack, page: AppPage): PageStack {
   return topPage(stack) === page ? stack : [...stack, page];
 }
 
-/** Song information and live preparation are reached from each other and from the menu
- * as siblings: opening one replaces the other instead of stacking on it. */
-export function openDetailPage(stack: PageStack, page: "song" | "live"): PageStack {
+/** Song information, its editing and live preparation are siblings: opening one replaces another
+ * instead of stacking on it. */
+export function openDetailPage(stack: PageStack, page: "song" | "songEdit" | "live"): PageStack {
   const top = topPage(stack);
   if (top === page) return stack;
-  return top === "song" || top === "live" ? [...stack.slice(0, -1), page] : [...stack, page];
+  return top === "song" || top === "songEdit" || top === "live" ? [...stack.slice(0, -1), page] : [...stack, page];
 }
 
 export function popPage(stack: PageStack): PageStack {

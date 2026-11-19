@@ -772,11 +772,6 @@
       "sha256": "4958C683360F1196B23CC69109A2A00E8D7A8FB9139B5A9EC5D9F4A3647F1D35"
     },
     {
-      "path": "icons/preview.svg",
-      "byteLength": 3852,
-      "sha256": "2672575D7022983E87FCD228E03F1FC80CF0266111142ADBFAE92A1FF1D90619"
-    },
-    {
       "path": "icons/settings.svg",
       "byteLength": 2524,
       "sha256": "BB0271E98458AE33111BBEBC9B8EDC954E591768A9222E880417DA508F4E40B0"
@@ -785,11 +780,6 @@
       "path": "icons/simulator-pause.svg",
       "byteLength": 458,
       "sha256": "F789AEEBFBAEB883DBF460323DB6120A9C40EB3FA06474D6A9FEE7B67D603940"
-    },
-    {
-      "path": "icons/simulator-play.svg",
-      "byteLength": 346,
-      "sha256": "7CCE08F68662B7ED6CEF7143F58586DE04B32F481697A092F616FF61E779D904"
     },
     {
       "path": "icons/skin.svg",
@@ -875,6 +865,11 @@
       "path": "icons/editor-pause.svg",
       "byteLength": 190,
       "sha256": "E4E2989C3D064FEAE556D40DFA1EA34EC5455154A2BCB314A036FDA0AC86B9A5"
+    },
+    {
+      "path": "icons/bestdori.png",
+      "byteLength": 6408,
+      "sha256": "A74315675571C030B9135AB1454F0D87A10C6D87006FB8D9DC366CE3CD4A42FF"
     }
   ]
 }

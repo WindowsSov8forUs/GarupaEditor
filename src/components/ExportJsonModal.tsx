@@ -10,9 +10,11 @@ import { isMobileRuntime } from "../app/mobileRuntime";
 import { OverlayDialogModal } from "./OverlayDialogModal";
 import { appLog } from "../logging/applicationLogger";
 
-type ExportModalTab = "chart-code" | "upload-server" | "upload" | "upload-test";
+export type ExportModalTab = "chart-code" | "upload-server" | "upload" | "upload-test";
 
 type ExportJsonModalProps = {
+  /** One page alone, without the tab strip, under this title (发布到 Bestdori: the "upload" page). */
+  only?: { tab: ExportModalTab; title: string };
   onSaveProject: () => void;
   projectBusy: boolean;
   open: boolean;
@@ -30,6 +32,7 @@ type ExportJsonModalProps = {
 };
 
 export function ExportJsonModal({
+  only,
   onSaveProject, projectBusy,
   open,
   jsonText,
@@ -44,7 +47,7 @@ export function ExportJsonModal({
   onApplyUploadNotGarupaServerChart,
   onApplyUploadTestServerChart,
 }: ExportJsonModalProps) {
-  const [tab, setTab] = useState<ExportModalTab>("chart-code");
+  const [tab, setTab] = useState<ExportModalTab>(only?.tab ?? "chart-code");
   const [isTagPickerOpen, setIsTagPickerOpen] = useState(false);
   const [tagPickerType, setTagPickerType] = useState("text");
   const [tagPickerKeyword, setTagPickerKeyword] = useState("");
@@ -79,7 +82,7 @@ export function ExportJsonModal({
 
   useEffect(() => {
     if (open) {
-      setTab("chart-code");
+      setTab(only?.tab ?? "chart-code");
       setIsTagPickerOpen(false);
       setTagPickerType("text");
       setTagPickerKeyword("");
@@ -88,7 +91,7 @@ export function ExportJsonModal({
       setErrorDialog("");
       setIsTagCandidatesLoading(false);
     }
-  }, [open]);
+  }, [open, only?.tab]);
 
   useEffect(() => {
     if (mobileReadOnly && tab !== "chart-code") {
@@ -180,8 +183,8 @@ export function ExportJsonModal({
 
   return (
     <>
-    <OriginalTransferDialog open={open} title="导出谱面" onClose={onClose}
-      tabs={[
+    <OriginalTransferDialog open={open} title={only?.title ?? "导出谱面"} onClose={onClose}
+      tabs={only ? undefined : [
               { key: "chart-code", label: "导出谱面代码" },
               { key: "upload-server", label: "上传至服务器" },
               { key: "upload", label: "上传社区谱面" },
