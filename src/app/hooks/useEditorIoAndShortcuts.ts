@@ -1680,8 +1680,7 @@ export function useEditorIoAndShortcuts(params: any) {
       const svWarning = result.svDropped ? "（注意：SV 不支持，已在上传前转换时忽略）" : "";
       completeDownloadProgress("社区谱面上传完成。");
       showDialog(`社区谱面上传成功。\n${result.postUrl}${svWarning ? `\n${svWarning}` : ""}`);
-      setImportJsonModalLevel("chart");
-      setIsImportJsonModalOpen(false);
+      setIsExportJsonModalOpen(false);
     } catch (error) {
       const message = userFacingErrorMessage(error);
       completeDownloadProgress(`社区谱面上传失败：${message}`, 900);
@@ -1746,8 +1745,7 @@ export function useEditorIoAndShortcuts(params: any) {
 
       completeDownloadProgress("NotGarupa 服务器谱面上传完成。");
       showDialog(`NotGarupa 服务器上传成功。\nID: ${result.uid}\n${result.levelUrl}`);
-      setImportJsonModalLevel("chart");
-      setIsImportJsonModalOpen(false);
+      setIsExportJsonModalOpen(false);
     } catch (error) {
       const message = userFacingErrorMessage(error);
       completeDownloadProgress(`NotGarupa 服务器谱面上传失败：${message}`, 900);
@@ -1803,8 +1801,6 @@ export function useEditorIoAndShortcuts(params: any) {
       const svWarning = result.svDropped ? "\n注意：SV 不支持，已在上传前转换时忽略。" : "";
       completeDownloadProgress("测试服谱面上传完成。");
       showDialog(`测试服上传成功。\nID: ${result.uid}${svWarning}`);
-      setImportJsonModalLevel("chart");
-      setIsImportJsonModalOpen(false);
     } catch (error) {
       const message = userFacingErrorMessage(error);
       completeDownloadProgress(`测试服谱面上传失败：${message}`, 900);

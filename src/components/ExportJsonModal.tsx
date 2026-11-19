@@ -5,7 +5,8 @@ import {
   type BestdoriPostTag,
   type BestdoriPostTagSearchEntry,
 } from "../services/bestdori/api";
-import { OriginalFormTitle, OriginalFormSubtitle, OriginalFormNote, OriginalFormInput, OriginalFormButton as OriginalButton } from "./OriginalFormParts";
+import { OriginalFormTitle, OriginalFormSubtitle, OriginalFormNote, OriginalFormInput, OriginalFormMessage, OriginalFormButton as OriginalButton } from "./OriginalFormParts";
+import { OriginalChoiceDialog } from "./OriginalChoiceDialog";
 import { isMobileRuntime } from "../app/mobileRuntime";
 import { OverlayDialogModal } from "./OverlayDialogModal";
 import { appLog } from "../logging/applicationLogger";
@@ -55,6 +56,8 @@ export function ExportJsonModal({
   const [isTagCandidatesLoading, setIsTagCandidatesLoading] = useState(false);
   const [tagCandidatesError, setTagCandidatesError] = useState("");
   const [errorDialog, setErrorDialog] = useState("");
+  // 上传 asks first, as 发布到测试服 does: the page it was pressed on, until answered.
+  const [confirmingUpload, setConfirmingUpload] = useState<"upload" | "upload-server" | null>(null);
   const tagSearchSeqRef = useRef(0);
   const mobileReadOnly = isMobileRuntime();
 
@@ -90,6 +93,7 @@ export function ExportJsonModal({
       setTagCandidatesError("");
       setErrorDialog("");
       setIsTagCandidatesLoading(false);
+      setConfirmingUpload(null);
     }
   }, [open, only?.tab]);
 
@@ -146,8 +150,10 @@ export function ExportJsonModal({
   }, [open, isTagPickerOpen, tagPickerType, tagPickerKeyword]);
 
 
-  const uploadSettings = (
+  // A publishing page: what the upload does, then its description and tags.
+  const uploadSettings = (message: string) => (
     <>
+      <OriginalFormMessage text={message} />
       <div className="export-json-field">
         <OriginalFormSubtitle text="描述文本" />
         <OriginalFormInput multiline
@@ -158,7 +164,6 @@ export function ExportJsonModal({
           spellCheck={false}
         />
       </div>
-      <OriginalFormNote text="上传时会使用当前谱面与谱面信息（标题、艺术家、谱师、等级），并上传音频与封面资源。" />
       <div className="setting-block">
         <OriginalFormSubtitle text="标签" />
         <div className="upload-tag-current-row">
@@ -210,15 +215,13 @@ export function ExportJsonModal({
 
           {tab === "upload-server" && (
             <div className="transfer-page">
-              <OriginalFormTitle text="上传至 NotGarupa 服务器" followedBySubtitle />
-              {uploadSettings}
+              {uploadSettings("将上传当前谱面、谱面信息、音频与封面，并通过你的 Bestdori 登录确认上传者身份。")}
             </div>
           )}
 
           {tab === "upload" && (
             <div className="transfer-page">
-              <OriginalFormTitle text="上传 Bestdori 社区谱面" followedBySubtitle />
-              {uploadSettings}
+              {uploadSettings("将上传当前谱面、谱面信息、音频与封面，发布为 Bestdori 社区谱面。")}
             </div>
           )}
 
@@ -244,7 +247,7 @@ export function ExportJsonModal({
 
           {tab === "upload" && (
             <div className="transfer-actions">
-              <OriginalButton tone="pink" type="button" onClick={onApplyUploadCommunityChart}>
+              <OriginalButton tone="pink" type="button" onClick={() => setConfirmingUpload("upload")}>
                 <span className="btn-content">上传</span>
               </OriginalButton>
               <OriginalButton tone="gray" type="button" onClick={onClose}>
@@ -255,7 +258,7 @@ export function ExportJsonModal({
 
           {tab === "upload-server" && (
             <div className="transfer-actions">
-              <OriginalButton tone="pink" type="button" onClick={onApplyUploadNotGarupaServerChart}>
+              <OriginalButton tone="pink" type="button" onClick={() => setConfirmingUpload("upload-server")}>
                 <span className="btn-content">上传</span>
               </OriginalButton>
               <OriginalButton tone="gray" type="button" onClick={onClose}>
@@ -328,7 +331,18 @@ export function ExportJsonModal({
               </div>
             </div>
       </OriginalTransferDialog>
-      <OverlayDialogModal dialog={open && isTagPickerOpen && errorDialog ? { tone: "error", message: errorDialog } : null}
+    <OriginalChoiceDialog open={confirmingUpload !== null} title={confirmingUpload === "upload-server" ? "发布到 NotGarupa" : "发布到 Bestdori"}
+      message={confirmingUpload === "upload-server" ? "是否将当前谱面发布到 NotGarupa？" : "是否将当前谱面发布到 Bestdori？"}
+      onClose={() => setConfirmingUpload(null)} choices={[
+        { label: "取消", action: () => setConfirmingUpload(null) },
+        { label: "确定", tone: "pink", action: () => {
+          const target = confirmingUpload;
+          setConfirmingUpload(null);
+          if (target === "upload-server") onApplyUploadNotGarupaServerChart();
+          else if (target === "upload") onApplyUploadCommunityChart();
+        } },
+      ]} />
+    <OverlayDialogModal dialog={open && isTagPickerOpen && errorDialog ? { tone: "error", message: errorDialog } : null}
         onConfirm={() => setErrorDialog("")} onCancel={() => setErrorDialog("")} />
     </>
   );

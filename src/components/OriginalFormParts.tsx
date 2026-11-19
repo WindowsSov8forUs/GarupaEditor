@@ -326,6 +326,25 @@ export function OriginalFormNote({ text, lines }: { text: string; lines?: number
   </div>;
 }
 
+/**
+ * A window's body text: the common dialog's message (SelectableCommonDialog ContentsText: 24px, line spacing 6,
+ * centred, dark grey) across the page, `lines` text lines tall.
+ */
+export function OriginalFormMessage({ text, lines = 1 }: { text: string; lines?: number }) {
+  const { ref, width } = useFormWidth();
+  const source = new OriginalPrefabModel(ORIGINAL_PREFABS.selectablecommondialog!);
+  const label = source.componentAt(source.nodeAt("Window/ContentsText").id, "UILabel")!, node = source.nodes.get(label.node)!;
+  const height = lines * (label.data.mFontSize + label.data.mSpacingY);
+  const model = new OriginalPrefabModel({ resource: source.prefab.resource,
+    nodes: [{ ...node, parent: null, active: true, position: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } }],
+    components: [label] }, { components: { [label.id]: { mText: text, mWidth: Math.max(1, width), mHeight: height } } });
+  const box = width > 0 ? model.rect(model.components.get(label.id)!) : null;
+  // A fixed row: a scrolling page must not shrink it into the next one.
+  return <div ref={ref} className="original-form-message" style={{ position: "relative", height, flexShrink: 0 }}>
+    {box && <div className="original-prefab-origin" style={{ left: -box.x, top: -box.y }}><OriginalPrefabView model={model} /></div>}
+  </div>;
+}
+
 export const ORIGINAL_DIFFICULTIES = ["EASY", "NORMAL", "HARD", "EXPERT", "SPECIAL"] as const;
 export function OriginalDifficultySelect({ value, onChange, layout, children, available, readOnly = false }: {
   value: typeof ORIGINAL_DIFFICULTIES[number] | null; onChange(value: typeof ORIGINAL_DIFFICULTIES[number]): void;
