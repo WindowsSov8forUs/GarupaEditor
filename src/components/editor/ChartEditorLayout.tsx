@@ -210,6 +210,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     importJsonText,
     uploadCommunityPostContent,
     uploadCommunityPostTags,
+    uploadChartAuthor,
+    setUploadChartAuthor,
     setImportJsonText,
     setUploadCommunityPostContent,
     setUploadCommunityPostTags,
@@ -543,6 +545,10 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   const [bestdoriLoginErrorMessage, setBestdoriLoginErrorMessage] = useState("");
   const [bestdoriNicknameDisplay, setBestdoriNicknameDisplay] = useState("");
   const [bestdoriUsernameDisplay, setBestdoriUsernameDisplay] = useState("");
+  // 谱面作者 follows the Bestdori login: its nickname (the username for an account without one) once signed in,
+  // empty when signed out or expired; the field can be edited in between.
+  useEffect(() => { setUploadChartAuthor(bestdoriNicknameDisplay || bestdoriUsernameDisplay); },
+    [bestdoriNicknameDisplay, bestdoriUsernameDisplay, setUploadChartAuthor]);
 
   // A login Bestdori no longer accepts, found at startup or before an upload, is shown signed out.
   useEffect(() => onBestdoriSessionExpired(() => {
@@ -2144,6 +2150,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         open={isExportJsonModalOpen}
         jsonText={garupaChartJsonText}
         uploadCommunityPostContent={uploadCommunityPostContent}
+        uploadChartAuthor={uploadChartAuthor}
+        onUploadChartAuthorChange={setUploadChartAuthor}
         uploadCommunityPostTags={uploadCommunityPostTags}
         onClose={closeExportJsonModal}
         onSaveAs={() => void saveExportJsonToSelectedPath()}

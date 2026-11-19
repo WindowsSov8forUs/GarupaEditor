@@ -7,6 +7,7 @@ import {
 } from "../services/bestdori/api";
 import { OriginalFormTitle, OriginalFormSubtitle, OriginalFormNote, OriginalFormInput, OriginalFormMessage, OriginalFormButton as OriginalButton } from "./OriginalFormParts";
 import { OriginalChoiceDialog } from "./OriginalChoiceDialog";
+import { NOTGARUPA_AUTHOR_REQUIRED } from "../services/bestdori/resourceFlows";
 import { isMobileRuntime } from "../app/mobileRuntime";
 import { OverlayDialogModal } from "./OverlayDialogModal";
 import { appLog } from "../logging/applicationLogger";
@@ -21,6 +22,9 @@ type ExportJsonModalProps = {
   open: boolean;
   jsonText: string;
   uploadCommunityPostContent: string;
+  /** 谱面作者 (发布到 NotGarupa only). */
+  uploadChartAuthor: string;
+  onUploadChartAuthorChange: (value: string) => void;
   uploadCommunityPostTags: BestdoriPostTag[];
   onClose: () => void;
   onSaveAs: () => void;
@@ -38,6 +42,8 @@ export function ExportJsonModal({
   open,
   jsonText,
   uploadCommunityPostContent,
+  uploadChartAuthor,
+  onUploadChartAuthorChange,
   uploadCommunityPostTags,
   onClose,
   onSaveAs,
@@ -58,6 +64,8 @@ export function ExportJsonModal({
   const [errorDialog, setErrorDialog] = useState("");
   // 上传 asks first, as 发布到测试服 does: the page it was pressed on, until answered.
   const [confirmingUpload, setConfirmingUpload] = useState<"upload" | "upload-server" | null>(null);
+  // An upload refused before it asks (发布到 NotGarupa without 谱面作者).
+  const [uploadNotice, setUploadNotice] = useState("");
   const tagSearchSeqRef = useRef(0);
   const mobileReadOnly = isMobileRuntime();
 
@@ -94,6 +102,7 @@ export function ExportJsonModal({
       setErrorDialog("");
       setIsTagCandidatesLoading(false);
       setConfirmingUpload(null);
+      setUploadNotice("");
     }
   }, [open, only?.tab]);
 
@@ -151,9 +160,18 @@ export function ExportJsonModal({
 
 
   // A publishing page: what the upload does, then its description and tags.
-  const uploadSettings = (message: string) => (
+  const uploadSettings = (message: string, withAuthor = false) => (
     <>
       <OriginalFormMessage text={message} />
+      {withAuthor && <div className="export-json-field">
+        <OriginalFormSubtitle text="谱面作者" />
+        <OriginalFormInput
+          aria-label="谱面作者"
+          value={uploadChartAuthor}
+          onChange={(event) => onUploadChartAuthorChange(event.currentTarget.value)}
+          spellCheck={false}
+        />
+      </div>}
       <div className="export-json-field">
         <OriginalFormSubtitle text="描述文本" />
         <OriginalFormInput multiline
@@ -215,7 +233,7 @@ export function ExportJsonModal({
 
           {tab === "upload-server" && (
             <div className="transfer-page">
-              {uploadSettings("将上传当前谱面、谱面信息、音频与封面，并通过你的 Bestdori 登录确认上传者身份。")}
+              {uploadSettings("将上传当前谱面、谱面信息、音频与封面，并通过你的 Bestdori 登录确认上传者身份。", true)}
             </div>
           )}
 
@@ -258,7 +276,10 @@ export function ExportJsonModal({
 
           {tab === "upload-server" && (
             <div className="transfer-actions">
-              <OriginalButton tone="pink" type="button" onClick={() => setConfirmingUpload("upload-server")}>
+              <OriginalButton tone="pink" type="button" onClick={() => {
+                if (!uploadChartAuthor.trim()) setUploadNotice(NOTGARUPA_AUTHOR_REQUIRED);
+                else setConfirmingUpload("upload-server");
+              }}>
                 <span className="btn-content">上传</span>
               </OriginalButton>
               <OriginalButton tone="gray" type="button" onClick={onClose}>
@@ -331,6 +352,8 @@ export function ExportJsonModal({
               </div>
             </div>
       </OriginalTransferDialog>
+      <OverlayDialogModal dialog={open && uploadNotice ? { tone: "error", message: uploadNotice } : null}
+      onConfirm={() => setUploadNotice("")} onCancel={() => setUploadNotice("")} />
     <OriginalChoiceDialog open={confirmingUpload !== null} title={confirmingUpload === "upload-server" ? "发布到 NotGarupa" : "发布到 Bestdori"}
       message={confirmingUpload === "upload-server" ? "是否将当前谱面发布到 NotGarupa？" : "是否将当前谱面发布到 Bestdori？"}
       onClose={() => setConfirmingUpload(null)} choices={[

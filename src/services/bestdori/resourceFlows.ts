@@ -393,6 +393,9 @@ function buildSonolusChartUrl(uid: string): string {
 
 export type UploadNotGarupaLevelFlowStage = "converting-chart" | "resolving-audio" | "resolving-cover" | "uploading";
 
+/** The notice when 谱面作者 is empty: NotGarupa lists a level under its author. */
+export const NOTGARUPA_AUTHOR_REQUIRED = "请填写谱面作者后再上传。";
+
 export interface UploadNotGarupaLevelFlowParams {
   garupaChartJson: GarupaChartJson;
   metadata: ChartMetadata;
@@ -403,6 +406,8 @@ export interface UploadNotGarupaLevelFlowParams {
   coverMimeType: string;
   illustBackgroundFileBytes?: Uint8Array | null;
   illustBackgroundMimeType?: string | null;
+  /** 谱面作者, shown as the level's author; required. */
+  author: string;
   description?: string | null;
   tags?: BestdoriPostTag[] | null;
   difficulty?: number;
@@ -485,7 +490,8 @@ export async function uploadNotGarupaLevelFlow(
 
   const title = trimNonEmptyStringOrNull(metadata.title) ?? "GarupaEditor Chart";
   const artists = trimNonEmptyStringOrNull(metadata.artist) ?? "Unknown Artist";
-  const author = trimNonEmptyStringOrNull(metadata.charter) ?? "GarupaEditor";
+  const author = trimNonEmptyStringOrNull(params.author);
+  if (author === null) throw new Error(NOTGARUPA_AUTHOR_REQUIRED);
   if (!(params.audioFileBytes instanceof Uint8Array) || params.audioFileBytes.byteLength === 0) {
     throw new Error("上传至 NotGarupa 服务器需要歌曲音频资源。");
   }

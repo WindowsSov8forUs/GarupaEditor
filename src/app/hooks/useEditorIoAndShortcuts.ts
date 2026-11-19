@@ -64,6 +64,7 @@ import {
 } from "../../services/bestdori/api";
 import {
   uploadNotGarupaLevelFlow,
+  NOTGARUPA_AUTHOR_REQUIRED,
   publishBestdoriCommunityChartFlow,
   uploadSonolusLevelFlow,
 } from "../../services/bestdori/resourceFlows";
@@ -399,6 +400,9 @@ export function useEditorIoAndShortcuts(params: any) {
   const [importOfficialChartDifficulty, setImportOfficialChartDifficulty] = useState<OfficialChartDifficulty>("EASY");
   const [importCommunityPostId, setImportCommunityPostId] = useState("");
   const [uploadCommunityPostContent, setUploadCommunityPostContent] = useState("");
+  // 谱面作者 of an upload to NotGarupa: the Bestdori account's nickname by default (the layout fills it in on sign-in
+  // and clears it on sign-out or expiry); an upload needs one.
+  const [uploadChartAuthor, setUploadChartAuthor] = useState("");
   const [uploadCommunityPostTags, setUploadCommunityPostTags] = useState<BestdoriPostTag[]>([]);
   const [importJsonSelectedPath, setImportJsonSelectedPath] = useState("");
   const [importBestdoriV2SelectedPath, setImportBestdoriV2SelectedPath] = useState("");
@@ -1697,6 +1701,10 @@ export function useEditorIoAndShortcuts(params: any) {
 
   const applyUploadNotGarupaServerChart = async () => {
     if (rejectUnprojectableChart()) return;
+    if (!uploadChartAuthor.trim()) {
+      showDialog(NOTGARUPA_AUTHOR_REQUIRED, "error");
+      return;
+    }
     appLog("info", "editor.action", { action: "applyUploadNotGarupaServerChart" });
     const uploadOperationId = `upload-notgarupa-server-chart-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
     const pushUploadProgress = (percent: number, message: string) =>
@@ -1731,6 +1739,7 @@ export function useEditorIoAndShortcuts(params: any) {
         coverMimeType: chartMediaLease.mediaTypes.cover ?? "image/png",
         illustBackgroundFileBytes,
         illustBackgroundMimeType: chartMediaLease.mediaTypes.illustBackground ?? null,
+        author: uploadChartAuthor,
         description: uploadCommunityPostContent,
         tags: uploadCommunityPostTags,
         difficulty: resolvedDifficulty,
@@ -2237,6 +2246,7 @@ export function useEditorIoAndShortcuts(params: any) {
     importOfficialChartDifficulty,
     importCommunityPostId,
     uploadCommunityPostContent,
+    uploadChartAuthor,
     uploadCommunityPostTags,
     importJsonSelectedPath,
     importBestdoriV2SelectedPath,
@@ -2245,6 +2255,7 @@ export function useEditorIoAndShortcuts(params: any) {
     setImportOfficialChartDifficulty,
     setImportCommunityPostId,
     setUploadCommunityPostContent,
+    setUploadChartAuthor,
     setUploadCommunityPostTags,
     applyImportJsonText,
     applyImportOfficialChart,
