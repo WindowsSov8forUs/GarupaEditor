@@ -14,6 +14,7 @@ import { OriginalSprite } from "./OriginalUi";
 import { OriginalProfilePagination } from "./originalProfilePagination";
 import { DIFFICULTY_LABEL_STYLE } from "./text/difficultyLabelStyle";
 import { useHorizontalTextScroll } from "./useHorizontalTextScroll";
+import { ORIGINAL_MARQUEE, ORIGINAL_MARQUEE_MASK, useOriginalMarquee } from "./OriginalMarquee";
 
 const prefabs = source.prefabs as unknown as Record<keyof typeof source.prefabs, OriginalPrefab>;
 
@@ -742,13 +743,8 @@ function ProfileLabel({ id, model: base, text, label, left, centerY, width }: {
     <OriginalPrefabView model={model} root={component.node} />
   </div>;
 }
-/*
- * The detail's band name marquee (StarUIMarqueeLabel, CN 10.1.3): a soft clipped panel (softness 4) with the label's
- * left edge 2 in from its left; when the text is wider than the panel less both softnesses it moves left at
- * 100 × speed (1) px/s, linearly, after 1 s, until its right edge reaches the panel's left edge, then restarts from
- * the panel's right edge with no delay, forever. Otherwise it stays put.
- */
-const MARQUEE = { softness: 4, inset: 2, height: 50, speed: 100, delay: 1000 };
+// The detail's band name marquee (StarUIMarqueeLabel, see OriginalMarquee.tsx), its panel 50 high.
+const MARQUEE_HEIGHT = 50;
 function ProfileMarqueeLabel({ id, model: base, text, label, left, centerY, width }: {
   id: number; model: OriginalPrefabModel; text: string; label: string; left: number; centerY: number; width: number;
 }) {
@@ -760,7 +756,7 @@ function ProfileMarqueeLabel({ id, model: base, text, label, left, centerY, widt
   const component = model.components.get(id)!;
   const rect = model.rect(component);
   // The panel: from 2 left of the label's left edge to the row's right edge.
-  const clip = { left: left - MARQUEE.inset, width: width + MARQUEE.inset };
+  const clip = { left: left - ORIGINAL_MARQUEE.inset, width: width + ORIGINAL_MARQUEE.inset };
   const track = useRef<HTMLDivElement>(null);
   const [textWidth, setTextWidth] = useState(0);
   useLayoutEffect(() => {
@@ -772,23 +768,12 @@ function ProfileMarqueeLabel({ id, model: base, text, label, left, centerY, widt
     observer.observe(content);
     return () => observer.disconnect();
   }, [text]);
-  useLayoutEffect(() => {
-    const element = track.current;
-    if (!element || textWidth <= clip.width - 2 * MARQUEE.softness) return;
-    const end = -textWidth;
-    const pass = (from: number, delay: number, iterations: number) => element.animate(
-      [{ transform: `translateX(${from}px)` }, { transform: `translateX(${end}px)` }],
-      { duration: (from - end) / MARQUEE.speed * 1000, delay, iterations, easing: "linear", fill: "both" });
-    let loop: Animation | null = null;
-    const first = pass(MARQUEE.inset, MARQUEE.delay, 1);
-    first.onfinish = () => { loop = pass(clip.width, 0, Infinity); first.cancel(); };
-    return () => { first.cancel(); loop?.cancel(); };
-  }, [textWidth, clip.width]);
-  const fade = `linear-gradient(to right, transparent, #000 ${MARQUEE.softness}px, #000 calc(100% - ${MARQUEE.softness}px), transparent)`;
-  return <div aria-label={label} style={{ position: "absolute", left: clip.left, top: centerY - MARQUEE.height / 2,
-    width: clip.width, height: MARQUEE.height, overflow: "hidden", zIndex: 11, maskImage: fade, WebkitMaskImage: fade }}>
-    <div ref={track} style={{ position: "absolute", left: 0, top: 0, transform: `translateX(${MARQUEE.inset}px)` }}>
-      <div className="original-prefab-origin" style={{ left: -rect.x, top: MARQUEE.height / 2 - rect.y - rect.height / 2 }}>
+  useOriginalMarquee(track, textWidth, clip.width);
+  return <div aria-label={label} style={{ position: "absolute", left: clip.left, top: centerY - MARQUEE_HEIGHT / 2,
+    width: clip.width, height: MARQUEE_HEIGHT, overflow: "hidden", zIndex: 11,
+    maskImage: ORIGINAL_MARQUEE_MASK, WebkitMaskImage: ORIGINAL_MARQUEE_MASK }}>
+    <div ref={track} style={{ position: "absolute", left: 0, top: 0, transform: `translateX(${ORIGINAL_MARQUEE.inset}px)` }}>
+      <div className="original-prefab-origin" style={{ left: -rect.x, top: MARQUEE_HEIGHT / 2 - rect.y - rect.height / 2 }}>
         <OriginalPrefabView model={model} root={component.node} />
       </div>
     </div>
