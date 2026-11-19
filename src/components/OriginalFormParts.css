@@ -57,15 +57,12 @@
 .transfer-authored-content .import-json-load-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 .transfer-authored-content .original-file-select { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .original-difficulty-select { display: flex; align-items: center; gap: 16px; }
-.transfer-authored-content .upload-tag-current-row { gap: 16px; }
-.transfer-authored-content .upload-tag-chip { padding: 0; gap: 8px; border: 0; border-radius: 0; background: none; font: inherit; }
-.transfer-authored-content .export-tag-candidate-list { max-height: none; display: flex; flex-wrap: wrap; gap: 24px; padding: 12px; }
+/* Tags and 标签备选 are small original buttons side by side; each reserves its own hit area, so they touch. */
+.transfer-authored-content .upload-tag-current-row,
+.transfer-authored-content .export-tag-candidate-list { display: flex; flex-wrap: wrap; align-items: center; gap: 0; }
+.export-tag-candidate-lines { display: flex; flex-direction: column; }
 
-.transfer-authored-content .upload-tag-current-row { display: flex; flex-wrap: wrap; align-items: center; }
-.transfer-authored-content .upload-tag-chip { display: flex; align-items: center; max-width: 100%; }
 .original-form-note { width: 100%; }
-.transfer-authored-content .upload-tag-chip { width: 100%; }
-.transfer-authored-content .upload-tag-chip > .original-form-input { flex: 1; width: auto; }
 
 /* 谱面代码编辑: the code field takes the page's height the rest leaves. */
 .chart-code-edit-field { flex-shrink: 0; }
