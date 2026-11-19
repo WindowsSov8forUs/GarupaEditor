@@ -2,11 +2,28 @@ import { useCallback, useLayoutEffect, useRef, useState, type RefObject } from "
 import { MODIFIER_WHEEL_SURFACE_ATTRIBUTE } from "../modifierWheel";
 
 export type EditorZoom = { width: number; vertical: number };
-/** Largest horizontal zoom: the track may fill this share of the editor width. */
-export const MAX_HORIZONTAL_ZOOM_WIDTH = 0.85;
+/**
+ * Total width of the track zone as a share of the editor width. Event lines span the zone, and the horizontal
+ * zoom stops when the track fills it.
+ */
+export const TRACK_ZONE_WIDTH = 0.85;
+
+/**
+ * The track zone in the editor, in screen px: `width` of the track (which always fills the zone) and `shift`, how far
+ * the zone's centre sits right of the editor's centre. The zone's left edge stays where a TRACK_ZONE_WIDTH zone
+ * pushed against the right mask would put it (the space left of it holds the event bubbles); the zone is then
+ * narrowed so that the lane art, `laneArtRatio` times the track width and centred on it, ends at the solid edge of
+ * the right mask (`edgeInset` inside the editor's right edge). A mask wider than the side margin keeps it centred.
+ */
+export function trackZoneGeometry(viewportWidth: number, edgeInset: number, laneArtRatio: number): { width: number; shift: number } {
+  const nominal = TRACK_ZONE_WIDTH * viewportWidth;
+  const left = (viewportWidth - nominal) / 2 + Math.max(0, viewportWidth * (1 - TRACK_ZONE_WIDTH) / 2 - edgeInset);
+  const width = Math.max(1, 2 * nominal / (1 + Math.max(1, laneArtRatio)));
+  return { width, shift: left + width / 2 - viewportWidth / 2 };
+}
 export function scaleEditorZoom(value: EditorZoom, factor: number, axis: "x" | "y" | "both"): EditorZoom {
-  const low = Math.max(axis === "y" ? 0 : 0.25 / value.width, axis === "x" ? 0 : 0.5 / value.vertical);
-  const high = Math.min(axis === "y" ? Infinity : MAX_HORIZONTAL_ZOOM_WIDTH / value.width, axis === "x" ? Infinity : 5 / value.vertical);
+  const low = Math.max(axis === "y" ? 0 : 0.25 / value.width, axis === "x" ? 0 : 0.1 / value.vertical);
+  const high = Math.min(axis === "y" ? Infinity : TRACK_ZONE_WIDTH / value.width, axis === "x" ? Infinity : 10 / value.vertical);
   const applied = Math.max(low, Math.min(high, factor));
   return { width: axis === "y" ? value.width : value.width * applied,
     vertical: axis === "x" ? value.vertical : value.vertical * applied };
@@ -19,7 +36,8 @@ export function useEditorViewportZoom(viewport: RefObject<HTMLDivElement | null>
     viewport.current = node;
     setElement(node);
   }, [viewport]);
-  const [zoom, setZoom] = useState<EditorZoom>({ width: 2 / 3, vertical: 1 });
+  // The track always fills the track zone; only the vertical axis zooms.
+  const [zoom, setZoom] = useState<EditorZoom>({ width: TRACK_ZONE_WIDTH, vertical: 1 });
   const current = useRef(zoom); current.current = zoom;
   useLayoutEffect(() => {
     if (!element) return;
@@ -28,7 +46,10 @@ export function useEditorViewportZoom(viewport: RefObject<HTMLDivElement | null>
     // Every wheel event compounds into `pending` at once; React sees at most one zoom update per frame.
     let frame = 0;
     let pending: EditorZoom | null = null;
-    const apply = (factor: number, axis: "x" | "y" | "both") => {
+    const apply = (factor: number, requested: "x" | "y" | "both") => {
+      // Horizontal zoom is fixed at the track zone: a horizontal gesture does nothing, a combined one zooms vertically.
+      if (requested === "x") return;
+      const axis = "y";
       const previous = pending ?? current.current, next = scaleEditorZoom(previous, factor, axis);
       if (next.width === previous.width && next.vertical === previous.vertical) return;
       pending = next;
@@ -39,7 +60,7 @@ export function useEditorViewportZoom(viewport: RefObject<HTMLDivElement | null>
         if (latest) { current.current = latest; setZoom(latest); }
       });
     };
-    // Ctrl + wheel zooms both axes, Shift + wheel the vertical axis, Alt + wheel the horizontal one.
+    // Ctrl + wheel and Shift + wheel zoom the vertical axis; Alt + wheel (horizontal) is consumed and ignored.
     const wheel = (event: WheelEvent) => {
       const axis = event.ctrlKey ? "both" : event.shiftKey ? "y" : event.altKey ? "x" : null;
       if (axis === null) return;
@@ -89,5 +110,5 @@ export function useEditorViewportZoom(viewport: RefObject<HTMLDivElement | null>
       element.removeEventListener("touchstart", start); element.removeEventListener("touchmove", move);
       element.removeEventListener("touchend", end); element.removeEventListener("touchcancel", end); };
   }, [element, ready]);
-  return { trackWidth: width * zoom.width, verticalZoom: zoom.vertical, attachViewport, viewportElement: element };
+  return { trackWidth: width * zoom.width, verticalZoom: zoom.vertical, viewportWidth: width, attachViewport, viewportElement: element };
 }

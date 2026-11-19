@@ -20,6 +20,8 @@ import {
   type ChartSvEvent,
   normalizeNoteTimingGroup,
   type NoteType,
+  isDirectionalNoteType,
+  renumberTimingGroups,
 } from "../../chartCore";
 import { type SkinSelection } from "../../skinLoader";
 import { useApplicationResourceManager } from "../../resources/applicationResourceContext";
@@ -53,7 +55,7 @@ import {
   regressChartWithoutSpRhythm,
   type ChartStateLike,
 } from "../modeChartRegression";
-import { applyHabahiroSlideWidths } from "../habahiroSlideWidth";
+import { applyHabahiroLongWidths } from "../habahiroLongWidth";
 import {
   fetchBestdoriCommunityPostDetails, isBestdoriChartPost, communitySongMediaHostScope, fetchBestdoriFileBlob,
   fetchTestServerChart, fetchTestServerMedia,
@@ -67,10 +69,6 @@ import {
   uploadSonolusLevelFlow,
 } from "../../services/bestdori/resourceFlows";
 import { isTauriRuntimeEnvironment } from "../../services/bestdori/transport";
-
-// An import that cannot tell whether its song is full-length says so; the song settings can change it.
-/** Separates an import status from the notes it produced; the editor shows those notes in one dialog. */
-export const IMPORT_NOTICE_MARKER = "\n导入说明：\n";
 
 type ParsedJsonNote = {
   note: ChartNote;
@@ -178,8 +176,8 @@ export function useEditorIoAndShortcuts(params: any) {
     sortBpmEvents,
     sortSvEvents,
     sortNotes,
-    clearSelectedNotes,
     openOverlayDialog,
+    clearSelection,
     showDialog,
     setNotes,
     setSlideChains,
@@ -188,10 +186,7 @@ export function useEditorIoAndShortcuts(params: any) {
     setBpmEvents,
     setTimingGroups,
     setSvEvents,
-    setToolBpmValue,
     setSingleSelectedNote,
-    clearSelectedBpmEvents,
-    setSelectedBpmEventId,
     normalizeBaseBpmForWrite,
     normalizeEventBpmForWrite,
     normalizeTimingGroup,
@@ -218,15 +213,10 @@ export function useEditorIoAndShortcuts(params: any) {
     setSkinSelection,
     approxEq,
     selectedNoteIds,
-    selectedBpmEventIds,
-    selectedBpmEventId,
-    selectedSvEventIds,
-    selectedSvEventId,
-    deleteCurrentSelection,
+    deleteSelectedNotes,
     NOTE_TYPES,
     setTool,
     setIsToolArmed,
-    clearAllSelections,
     NOTE_SPECS,
     undoLastOperation,
     redoLastOperation,
@@ -621,8 +611,8 @@ export function useEditorIoAndShortcuts(params: any) {
     setNotes([]);
     setSlideChains([]);
     setSvEvents([]);
-    clearSelectedNotes();
-  }, [clearSelectedNotes, setNotes, setSlideChains, showDialog, setSvEvents]);
+    clearSelection();
+  }, [clearSelection, setNotes, setSlideChains, showDialog, setSvEvents]);
 
   const confirmClearAllNotes = useCallback(() => {
     showDialog("确定清空所有音符吗？此操作不可撤销。", "warning", { onConfirm: executeClearAllNotes });
@@ -705,10 +695,10 @@ export function useEditorIoAndShortcuts(params: any) {
 
       if (
         event.key === "Delete" &&
-        (selectedNoteIds.length > 0 || selectedBpmEventIds.length > 0 || selectedBpmEventId !== null || selectedSvEventIds.length > 0 || selectedSvEventId !== null)
+        selectedNoteIds.length > 0
       ) {
         event.preventDefault();
-        deleteCurrentSelection();
+        deleteSelectedNotes();
         return;
       }
 
@@ -718,13 +708,17 @@ export function useEditorIoAndShortcuts(params: any) {
         if (keyNumber === NOTE_TYPES.length + 1) {
           setTool("bpm");
           setIsToolArmed(true);
-          clearAllSelections();
+          clearSelection();
           return;
         }
         const nextTool = NOTE_TYPES[keyNumber - 1] as NoteType;
+        // 基础 mode has no directional flick tools.
+        if (isDirectionalNoteType(nextTool) && appOptionSettings.spRhythmNoteEnabled !== true) {
+          return;
+        }
         setTool(nextTool);
         setIsToolArmed(true);
-        clearAllSelections();
+        clearSelection();
       }
     };
 
@@ -733,12 +727,10 @@ export function useEditorIoAndShortcuts(params: any) {
   }, [
     NOTE_SPECS,
     NOTE_TYPES,
-    clearAllSelections,
-    clearSelectedNotes,
+    appOptionSettings.spRhythmNoteEnabled,
+    clearSelection,
     confirmClearAllNotes,
-    deleteCurrentSelection,
-    selectedBpmEventId,
-    selectedBpmEventIds,
+    deleteSelectedNotes,
     selectedNoteIds,
     setIsToolArmed,
     showDialog,
@@ -1136,10 +1128,12 @@ export function useEditorIoAndShortcuts(params: any) {
       regressedChartState = regressChartWithoutHabahiro(regressedChartState);
       regressedHabahiro = true;
     }
+    // Timing groups are #0 (global) and #1, #2, …; other names are renumbered.
+    regressedChartState = renumberTimingGroups(regressedChartState);
     const importedSlideChains = regressedChartState.slideChains;
     const importedSvEvents = regressedChartState.svEvents ?? nextSvEvents;
     const widthAdjustedNotes = !preserveForPlay && chartHabahiro
-      ? applyHabahiroSlideWidths(regressedChartState.notes, importedSlideChains)
+      ? applyHabahiroLongWidths(regressedChartState.notes, importedSlideChains)
       : regressedChartState.notes;
     let normalizedHoldWidths = 0;
     if (widthAdjustedNotes !== regressedChartState.notes) {
@@ -1188,10 +1182,7 @@ export function useEditorIoAndShortcuts(params: any) {
     if (regressedChartState.timingGroups && typeof setTimingGroups === "function") {
       setTimingGroups(regressedChartState.timingGroups);
     }
-    setToolBpmValue(baseBpm);
     setSingleSelectedNote(importedNotes.find((note: ChartNote) => note.type !== "hidden")?.id ?? null);
-    clearSelectedBpmEvents();
-    setSelectedBpmEventId(null);
 
     const visibleNoteCount = importedNotes.reduce(
       (count: number, note: ChartNote) => (note.type === "hidden" ? count : count + 1),

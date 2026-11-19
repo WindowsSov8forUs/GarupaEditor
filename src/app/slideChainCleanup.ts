@@ -148,3 +148,32 @@ export function cleanupSlideChainsHidden<T extends SlideChainLike>(args: {
 
   return cleanedChains;
 }
+
+/**
+ * Chains after notes were overwritten: the removed notes leave their chains, and a chain left with fewer than
+ * two nodes is dropped. Chains that lost nothing are returned unchanged.
+ */
+export function dropNoteIdsFromChains<T extends SlideChainLike>(
+  chains: T[],
+  removedIds: ReadonlySet<string>,
+  remainingNotes: ChartNote[],
+): T[] {
+  if (removedIds.size === 0 || chains.every((chain) => !chain.noteIds.some((id) => removedIds.has(id)))) {
+    return chains;
+  }
+  const noteMap = new Map(remainingNotes.map((note) => [note.id, note] as const));
+  return chains.flatMap((chain) => chain.noteIds.some((id) => removedIds.has(id))
+    ? cleanupSlideChainsHidden({
+      chains: [{ ...chain, noteIds: chain.noteIds.filter((id) => !removedIds.has(id)) }],
+      noteMap,
+      minLength: 2,
+    })
+    : [chain]);
+}
+
+/** {@link dropNoteIdsFromChains} for an edit that produced the next note list: any chain node it lacks was removed. */
+export function dropRemovedNotesFromChains<T extends SlideChainLike>(chains: T[], nextNotes: ChartNote[]): T[] {
+  const present = new Set(nextNotes.map((note) => note.id));
+  const removedIds = new Set(chains.flatMap((chain) => chain.noteIds.filter((id) => !present.has(id))));
+  return dropNoteIdsFromChains(chains, removedIds, nextNotes);
+}

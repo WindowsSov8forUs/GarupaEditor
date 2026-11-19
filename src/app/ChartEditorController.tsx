@@ -1,8 +1,11 @@
 // @refresh reset
 // This controller owns the editor hook tree; hot updates must not reuse an older hook layout.
 import { minimapLaneVisible } from "./editorMinimapGeometry";
+import { allowedSelectionWidthDelta, canResizeSelectionWidth, planSelectionWidthChange, type SelectionWidthContext, type SelectionWidthEdge } from "./selectionWidthDrag";
+import { editorNoteHeight, editorNoteTokenWidth, editorSlideLineWidth, SELECTION_FRAME_MARGIN } from "./editorNoteMetrics";
 import { useEditorScrollExtent } from "./hooks/useEditorScrollExtent";
-import { useEditorViewportZoom } from "./hooks/useEditorViewportZoom";
+import { useUiViewport } from "../components/useUiViewport";
+import { TRACK_ZONE_WIDTH, trackZoneGeometry, useEditorViewportZoom } from "./hooks/useEditorViewportZoom";
 import { holdAuxiliaryPreparation } from "./RoutePresentation";
 import { useChartProjectFiles } from "./hooks/useChartProjectFiles";
 import { projectDraft, type ChartProject, type ChartProjectDraft } from "../project/chartProject";
@@ -24,6 +27,7 @@ import { emitTo, listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { getCurrentWebviewWindow, WebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { LogicalSize, getCurrentWindow } from "@tauri-apps/api/window";
 import { ChartEditorLayout } from "../components/editor/ChartEditorLayout";
+import { FIELD_WIDTH_LANES } from "../components/editor/previewLaneStrip";
 import { createEditorDisplayAxis } from "./editorDisplayAxis";
 import {
   BASE_BPM_LINE_ID,
@@ -38,29 +42,25 @@ import {
   type SlideChain,
 } from "./editorHelpers";
 import { useBoardInteractionActions } from "./hooks/useBoardInteractionActions";
-import { useCanvasPlayfieldBackend } from "./hooks/useCanvasPlayfieldBackend";
+import { useCanvasPlayfieldBackend, type EventBubbleHit } from "./hooks/useCanvasPlayfieldBackend";
 import { useCanvasRenderResources } from "./hooks/useCanvasRenderResources";
 import { useIsStartingApplication, useStartupReadiness } from "./startupReadiness";
 import { useEditorGeometry } from "./hooks/useEditorGeometry";
 import { useEditorIoAndShortcuts } from "./hooks/useEditorIoAndShortcuts";
 import { useEditorSessionCache } from "./hooks/useEditorSessionCache";
-import { useEditorRenderModel } from "./hooks/useEditorRenderModel";
+import { useEditorRenderModel, type RenderConnectionSegment } from "./hooks/useEditorRenderModel";
 import { useStableEvents } from "./hooks/useStableEvents";
-import {
-  useLongLineEditorSettings,
-  type LongLineCurveType,
-  type LongLineDivision,
-  type LongLinePrecision,
-  type LongLineShape,
-} from "./hooks/useLongLineEditorSettings";
-import { useLongLineActions } from "./hooks/useLongLineActions";
+import { EDITOR_EDGE_SOFTNESS } from "./editorEdgeMask";
+import { DEFAULT_SLIDE_FIT_SETTINGS, type SlideFitSettings } from "./slideFitShapes";
+import { useSlideSegmentActions } from "./hooks/useSlideSegmentActions";
 import { useEditorPointerLifecycle } from "./hooks/useEditorPointerLifecycle";
 import { useEditorSelectionActions } from "./hooks/useEditorSelectionActions";
 import { usePlayfieldRenderers } from "./hooks/usePlayfieldRenderers";
 import { useSelectionAndEditorSync } from "./hooks/useSelectionAndEditorSync";
 import { isMobileRuntime, setMobileSimulatorImmersive, writeMobileRoutePayload } from "./mobileRuntime";
-import { buildSelectionMirrorOffsetMap } from "./slideHiddenMoveOffsets";
-import { cleanupSlideChainsHidden } from "./slideChainCleanup";
+import { canMirrorSelection, mirrorSelection, type MirrorAxis, type SelectionMirrorContext } from "./selectionMirror";
+import { cleanupSlideChainsHidden, dropNoteIdsFromChains } from "./slideChainCleanup";
+import { parseSlideSegmentId } from "./slideSegments";
 import {
   useNotePaletteSpriteRendering,
   usePlayfieldSpriteRendering,
@@ -70,15 +70,17 @@ import {
   canUseHabahiro,
   canUseSpRhythm,
   isChartUsingExGarupa,
+  isChartUsingHabahiro,
   isChartUsingSpRhythm,
   regressChartWithoutExGarupa,
+  regressChartWithoutHabahiro,
   regressChartWithoutSpRhythm,
   type ChartStateLike,
 } from "./modeChartRegression";
 import {
-  applyHabahiroSlideWidths,
-  inferPreferredHabahiroSlideWidths,
-} from "./habahiroSlideWidth";
+  applyHabahiroLongWidths,
+  inferPreferredHabahiroLongWidths,
+} from "./habahiroLongWidth";
 import {
   DEFAULT_SKIN_SELECTION,
   isHabahiroRhythmRipName,
@@ -123,7 +125,6 @@ import {
   normalizeTimingGroup,
   normalizeRhythmWidth,
   ensureTimingGroups,
-  buildTimingGroupsFromSvEvents,
   normalizeMetadata,
   normalizeEditorOptionSettings,
   normalizeNote,
@@ -149,6 +150,12 @@ import {
   type ChartSettings,
   type EditorTool,
   type NoteType,
+  normalizeLaneCount,
+  renumberTimingGroups,
+  nextTimingGroupId,
+  GLOBAL_TIMING_GROUP_DISPLAY_NAME,
+  sortTimingGroupIds,
+  applySvEventsToTimingGroups,
 } from "../chartCore";
 import {
   useApplicationResourceManager,
@@ -183,7 +190,6 @@ const PLAYBACK_SPEED_OPTIONS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4] as const
 const PLAYBACK_SE_POOL_SIZE = 8;
 const PLAYBACK_SE_TRIGGER_LEAD_SEC = 0.02;
 const PLAYBACK_VIEWPORT_EDGE_TOLERANCE_PX = 8;
-const MIRROR_AXIS_LANE = 3;
 const STATIC_RENDER_WINDOW_READY_EVENT = "static-render:ready";
 const STATIC_RENDER_WINDOW_PAYLOAD_EVENT = "static-render:payload";
 
@@ -216,7 +222,7 @@ function lowerBoundByTime<T>(
   return low;
 }
 
-type EditorConfigCacheKey = EditorSettingsTool | "longline";
+type EditorConfigCacheKey = EditorSettingsTool;
 type EditorSettingsTool = NoteType | "bpm";
 type CursorPreviewState = {
   x: number;
@@ -239,15 +245,7 @@ type NoteReplacePreviewState = {
 type EditorConfigCacheValue =
   | { type: "bpm"; bpmValue: number }
   | { type: "directional"; width: number; direction: "left" | "right" }
-  | { type: "rhythm"; width: number }
-  | {
-    type: "longline";
-    shape: LongLineShape;
-    curveType: LongLineCurveType | null;
-    precision: LongLinePrecision;
-    division: LongLineDivision;
-    vibration: number;
-  };
+  | { type: "rhythm"; width: number };
 type PlaybackLineMode = "follow" | "free";
 type WidthSettingMode = "directional" | "rhythm" | null;
 type ResolvedPlaybackSeSources = {
@@ -339,6 +337,9 @@ function resolvePlaybackSeSources(runtimeSe: SeSkinAssets): ResolvedPlaybackSeSo
   };
 }
 
+// Tool BPM for placing BPM events. Lives for the whole app run (120 at launch) and is not part of any chart project.
+let runtimeToolBpm = 120;
+
 function ChartEditorController() {
   const resourceManager = useApplicationResourceManager();
   const defaultCoverImage = useApplicationResourceUrl("ui.default-cover");
@@ -373,17 +374,18 @@ function ChartEditorController() {
   const [toolRhythmWidth, setToolRhythmWidth] = useState(1);
   const [toolLane, setToolLane] = useState(0);
   const [useToolLaneOverride, setUseToolLaneOverride] = useState(false);
-  const [toolBpmValue, setToolBpmValue] = useState(DEFAULT_METADATA.bpm);
+  const [toolBpmValue, setToolBpmValueState] = useState(runtimeToolBpm);
+  const setToolBpmValue = useCallback((value: number) => {
+    runtimeToolBpm = value;
+    setToolBpmValueState(value);
+  }, []);
   const [toolSvValue, setToolSvValue] = useState(1);
+  /** The timing group new SV events go to; #0 (global) by default. */
+  const [toolSvTimingGroup, setToolSvTimingGroup] = useState<ChartTimingGroupId>(GLOBAL_TIMING_GROUP_ID);
   const [selectedNoteIds, setSelectedNoteIds] = useState<string[]>([]);
-  const [selectedBpmEventIds, setSelectedBpmEventIds] = useState<string[]>([]);
-  const [selectedBpmEventId, setSelectedBpmEventId] = useState<string | null>(null);
-  const [selectedSvEventIds, setSelectedSvEventIds] = useState<string[]>([]);
-  const [selectedSvEventId, setSelectedSvEventId] = useState<string | null>(null);
   const [selectedTimingGroupId, setSelectedTimingGroupId] = useState<ChartTimingGroupId>(GLOBAL_TIMING_GROUP_ID);
   const [isTimingGroupPanelOpen, setIsTimingGroupPanelOpen] = useState(false);
   const [isTimingGroupModeEnabled, setIsTimingGroupModeEnabled] = useState(false);
-  const [selectedLongLineSegmentId, setSelectedLongLineSegmentId] = useState<string | null>(null);
   const [isSvPreviewEnabled, setIsSvPreviewEnabled] = useState(false);
   const [svPreviewTimeSec, setSvPreviewTimeSec] = useState(0);
   const isSvPreviewEnabledRef = useRef(false);
@@ -644,10 +646,10 @@ function ChartEditorController() {
     setNotesState((previous) => {
       const rawNext = resolveStateAction(nextAction, previous);
       const next = isHabahiroEnabled
-        ? applyHabahiroSlideWidths(
+        ? applyHabahiroLongWidths(
           rawNext,
           slideChainsRef.current,
-          inferPreferredHabahiroSlideWidths(previous, rawNext, slideChainsRef.current),
+          inferPreferredHabahiroLongWidths(previous, rawNext, slideChainsRef.current),
         )
         : rawNext;
       return next;
@@ -667,7 +669,7 @@ function ChartEditorController() {
     if (!isHabahiroEnabled || slideChains.length === 0) {
       return;
     }
-    setNotesState((previous) => applyHabahiroSlideWidths(previous, slideChains));
+    setNotesState((previous) => applyHabahiroLongWidths(previous, slideChains));
   }, [isHabahiroEnabled, slideChains]);
 
   const setBpmEvents = useCallback((nextAction: SetStateAction<ChartBpmEvent[]>) => {
@@ -691,23 +693,16 @@ function ChartEditorController() {
     setTimingGroupsState((previousGroups) => {
       const previous = flattenTimingGroups(previousGroups);
       const next = resolveStateAction(nextAction, previous);
-      return buildTimingGroupsFromSvEvents(next);
+      // Only the groups this edit touched change; a group it empties is cleaned up unless a note or slide chain
+      // still belongs to it.
+      const belongs = (id: ChartTimingGroupId) => (item: { timingGroup?: string }) =>
+        normalizeTimingGroup(item.timingGroup, GLOBAL_TIMING_GROUP_ID) === id;
+      return next === previous ? previousGroups : applySvEventsToTimingGroups(previousGroups, next,
+        (id) => notesRef.current.some(belongs(id)) || slideChainsRef.current.some(belongs(id)));
     });
   }, [requestUndoCapture, resolveStateAction]);
 
-  const timingGroupIds = useMemo(() => {
-    const ids = Object.keys(ensureTimingGroups(timingGroups));
-    ids.sort((left, right) => {
-      if (left === GLOBAL_TIMING_GROUP_ID) {
-        return -1;
-      }
-      if (right === GLOBAL_TIMING_GROUP_ID) {
-        return 1;
-      }
-      return left.localeCompare(right, "en", { numeric: true });
-    });
-    return ids;
-  }, [timingGroups]);
+  const timingGroupIds = useMemo(() => sortTimingGroupIds(Object.keys(timingGroups)), [timingGroups]);
 
   const isTimingGroupModeActive =
     isTimingGroupModeEnabled && selectedTimingGroupId !== GLOBAL_TIMING_GROUP_ID;
@@ -734,92 +729,35 @@ function ChartEditorController() {
       return;
     }
     setTimingGroups((previous) => {
-      const groups = ensureTimingGroups(previous);
-      let index = 1;
-      while (groups[`#${index}`]) {
-        index += 1;
-      }
-      const id = `#${index}`;
+      const id = nextTimingGroupId(Object.keys(previous));
       setSelectedTimingGroupId(id);
       setIsTimingGroupModeEnabled(true);
       return {
-        ...groups,
+        ...previous,
         [id]: { sv: [] },
       };
     });
     setSelectedNoteIds([]);
-    setSelectedBpmEventIds([]);
-    setSelectedBpmEventId(null);
-    setSelectedSvEventIds([]);
-    setSelectedSvEventId(null);
-    setSelectedLongLineSegmentId(null);
   }, [
     isExGarupaEnabled,
-    setSelectedBpmEventId,
-    setSelectedBpmEventIds,
-    setSelectedLongLineSegmentId,
     setSelectedNoteIds,
-    setSelectedSvEventId,
-    setSelectedSvEventIds,
     showDialog,
     setTimingGroups,
   ]);
 
-  const renameTimingGroup = useCallback((sourceId: ChartTimingGroupId, targetId: ChartTimingGroupId) => {
+  /**
+   * Adds the next numbered timing group (#n, filling gaps) and returns its id, without switching the editor into
+   * timing group mode; the SV tool's group picker uses it. Null when ExGarupa is off.
+   */
+  const addTimingGroup = useCallback((): ChartTimingGroupId | null => {
     if (!isExGarupaEnabled) {
-      return;
+      showDialog("ExGarupa 模式关闭时不可使用 Timing Group。");
+      return null;
     }
-    const normalizedSource = normalizeObjectTimingGroup(sourceId);
-    const normalizedTarget = normalizeObjectTimingGroup(targetId);
-    if (normalizedSource === GLOBAL_TIMING_GROUP_ID) {
-      return;
-    }
-    if (normalizedTarget === GLOBAL_TIMING_GROUP_ID || !/^#[A-Za-z0-9 -]+$/.test(targetId)) {
-      return;
-    }
-    if (normalizedSource === normalizedTarget) {
-      return;
-    }
-    const groups = ensureTimingGroups(timingGroupsRef.current);
-    if (groups[normalizedTarget]) {
-      return;
-    }
-    setTimingGroups((previous) => {
-      const current = ensureTimingGroups(previous);
-      const sourceGroup = current[normalizedSource];
-      if (!sourceGroup) {
-        return current;
-      }
-      const next: ChartTimingGroupMap = {};
-      for (const [id, group] of Object.entries(current)) {
-        if (id === normalizedSource) {
-          next[normalizedTarget] = {
-            sv: group.sv.map((event) => ({ ...event, timingGroup: normalizedTarget })),
-          };
-          continue;
-        }
-        next[id] = group;
-      }
-      return next;
-    });
-    setNotes((previous) => previous.map((note) =>
-      normalizeObjectTimingGroup(note.timingGroup) === normalizedSource
-        ? { ...note, timingGroup: normalizedTarget }
-        : note,
-    ));
-    setSlideChains((previous) => previous.map((chain) =>
-      normalizeObjectTimingGroup(chain.timingGroup) === normalizedSource
-        ? { ...chain, timingGroup: normalizedTarget }
-        : chain,
-    ));
-    setSelectedTimingGroupId(normalizedTarget);
-  }, [
-    isExGarupaEnabled,
-    normalizeObjectTimingGroup,
-    setNotes,
-    setSlideChains,
-    setTimingGroups,
-  ]);
+    const id = nextTimingGroupId(Object.keys(timingGroupsRef.current));
+    setTimingGroups((previous) => (previous[id] ? previous : { ...previous, [id]: { sv: [] } }));
+    return id;
+  }, [isExGarupaEnabled, setTimingGroups, showDialog]);
 
   const deleteTimingGroup = useCallback((groupId: ChartTimingGroupId) => {
     if (!isExGarupaEnabled) {
@@ -828,15 +766,15 @@ function ChartEditorController() {
     }
     const normalized = normalizeObjectTimingGroup(groupId);
     if (normalized === GLOBAL_TIMING_GROUP_ID) {
+      showDialog(`${GLOBAL_TIMING_GROUP_DISPLAY_NAME} 不能删除。`);
       return;
     }
     setTimingGroups((previous) => {
-      const current = ensureTimingGroups(previous);
-      if (!current[normalized]) {
-        return current;
+      if (!previous[normalized]) {
+        return previous;
       }
       const next: ChartTimingGroupMap = {};
-      for (const [id, group] of Object.entries(current)) {
+      for (const [id, group] of Object.entries(previous)) {
         if (id !== normalized) {
           next[id] = group;
         }
@@ -855,53 +793,35 @@ function ChartEditorController() {
     ));
     setSelectedTimingGroupId(GLOBAL_TIMING_GROUP_ID);
     setIsTimingGroupModeEnabled(false);
-    setSelectedSvEventIds([]);
-    setSelectedSvEventId(null);
     setSelectedNoteIds([]);
-    setSelectedLongLineSegmentId(null);
   }, [
     isExGarupaEnabled,
     normalizeObjectTimingGroup,
     setNotes,
     setSelectedNoteIds,
-    setSelectedLongLineSegmentId,
-    setSelectedSvEventId,
-    setSelectedSvEventIds,
     setSlideChains,
     showDialog,
     setTimingGroups,
   ]);
 
   useEffect(() => {
-    const groups = ensureTimingGroups(timingGroups);
-    if (groups[selectedTimingGroupId]) {
+    if (timingGroups[selectedTimingGroupId]) {
       return;
     }
     setSelectedTimingGroupId(GLOBAL_TIMING_GROUP_ID);
     setIsTimingGroupModeEnabled(false);
   }, [selectedTimingGroupId, timingGroups]);
 
-  useEffect(() => {
-    if (isTimingGroupModeActive) {
-      return;
-    }
-    setSelectedSvEventIds((previous) => {
-      const globalIds = new Set(
-        svEvents
-          .filter((event) => normalizeObjectTimingGroup(event.timingGroup) === GLOBAL_TIMING_GROUP_ID)
-          .map((event) => event.id),
-      );
-      const next = previous.filter((id) => globalIds.has(id));
-      return next.length === previous.length ? previous : next;
-    });
-    setSelectedSvEventId((previous) => {
-      if (!previous) {
-        return previous;
-      }
-      const event = svEvents.find((item) => item.id === previous);
-      return event && normalizeObjectTimingGroup(event.timingGroup) === GLOBAL_TIMING_GROUP_ID ? previous : null;
-    });
-  }, [isTimingGroupModeActive, normalizeObjectTimingGroup, svEvents]);
+  /**
+   * Drops the whole undo/redo history, including the step the current operation is about to record. Used after a
+   * mode switch regresses the chart: history from before it could restore features the new mode does not allow.
+   */
+  const discardUndoHistory = useCallback(() => {
+    undoStackRef.current = [];
+    redoStackRef.current = [];
+    pendingUndoSourcesRef.current = null;
+    setUndoVersion((previous) => previous + 1);
+  }, []);
 
   const canUndoLastOperation = useMemo(
     () => undoStackRef.current.length > 0,
@@ -940,11 +860,6 @@ function ChartEditorController() {
     setBpmEventsState(snapshot.bpmEvents.map((event) => ({ ...event })));
     setTimingGroupsState(ensureTimingGroups(snapshot.timingGroups));
     setSelectedNoteIds([]);
-    setSelectedBpmEventIds([]);
-    setSelectedBpmEventId(null);
-    setSelectedSvEventIds([]);
-    setSelectedSvEventId(null);
-    setSelectedLongLineSegmentId(null);
     setUndoVersion((previous) => previous + 1);
 
     queueMicrotask(() => {
@@ -981,11 +896,6 @@ function ChartEditorController() {
     setBpmEventsState(snapshot.bpmEvents.map((event) => ({ ...event })));
     setTimingGroupsState(ensureTimingGroups(snapshot.timingGroups));
     setSelectedNoteIds([]);
-    setSelectedBpmEventIds([]);
-    setSelectedBpmEventId(null);
-    setSelectedSvEventIds([]);
-    setSelectedSvEventId(null);
-    setSelectedLongLineSegmentId(null);
     setUndoVersion((previous) => previous + 1);
 
     queueMicrotask(() => {
@@ -1003,7 +913,6 @@ function ChartEditorController() {
   const [svInputText, setSvInputText] = useState("");
   const [laneInputText, setLaneInputText] = useState("");
   const [widthInputText, setWidthInputText] = useState("");
-  const [slideVibrationInputText, setSlideVibrationInputText] = useState("");
   const [selectionMovePreview, setSelectionMovePreview] = useState<{
     laneDelta: number;
     beatDelta: number;
@@ -1016,7 +925,6 @@ function ChartEditorController() {
   const svInputEditingRef = useRef(false);
   const laneInputEditingRef = useRef(false);
   const widthInputEditingRef = useRef(false);
-  const slideVibrationInputEditingRef = useRef(false);
 
   const [windowPresetId, setWindowPresetId] = useState(DEFAULT_WINDOW_PRESET_ID);
   const [playbackWindowPresetId, setPlaybackWindowPresetId] = useState(DEFAULT_PLAYBACK_WINDOW_PRESET_ID);
@@ -1067,13 +975,23 @@ function ChartEditorController() {
   const isSkinReady = skinAssets !== null;
 
   const playfieldRef = useRef<HTMLDivElement | null>(null);
-  const { trackWidth, verticalZoom, attachViewport, viewportElement } = useEditorViewportZoom(playfieldRef, isSkinReady);
+  const { verticalZoom, viewportWidth, attachViewport, viewportElement } = useEditorViewportZoom(playfieldRef, isSkinReady);
+  const uiScale = useUiViewport().scale;
   const scrollPadding = useEditorScrollExtent(playfieldRef, viewportElement, viewportPlaybackPositionPercent);
+  // The track always fills the track zone, which ends where the flat lane art (FIELD_WIDTH_LANES lanes, wider than
+  // the lanes by its edge bars) meets the right mask.
+  const trackZone = trackZoneGeometry(viewportWidth, EDITOR_EDGE_SOFTNESS * uiScale, FIELD_WIDTH_LANES / settings.laneCount);
+  const trackWidth = trackZone.width;
+  const trackZoneShiftX = trackZone.shift;
   const LANE_WIDTH = Math.max(1, trackWidth / settings.laneCount);
+  // Half of one standard lane of the track zone. It must not follow the lane count: the minimap's width changes
+  // the editor's width, which would move the track a frame after every lane count change.
+  const minimapWidth = Math.max(1, TRACK_ZONE_WIDTH * viewportWidth / 7 / 2);
   const playfieldBoardRef = useRef<HTMLDivElement | null>(null);
   const playfieldTrackCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  /** Event bubble hit boxes from the last track frame: the bubbles are where events are selected and deleted. */
+  const eventBubbleHitsRef = useRef<EventBubbleHit[]>([]);
   const playfieldNoteCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const playfieldPlaybackCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const playbackAudioRef = useRef<HTMLAudioElement | null>(null);
   const playbackTickRafRef = useRef<number | null>(null);
   const playbackTickLastNowMsRef = useRef<number | null>(null);
@@ -1227,7 +1145,7 @@ function ChartEditorController() {
   const longLineOpacityScale = clamp(appOptionSettings.longLineBrightnessPercent / 100, 0.1, 1);
   const verticalScale = clamp(appOptionSettings.verticalScalePercent / 100, 0.5, 2) * verticalZoom;
   const noteSeVolumeScale = clamp(appOptionSettings.noteSeVolumePercent / 100, 0, 1);
-  const timelinePixelsPerSecond = (BEAT_HEIGHT * verticalScale * TIMELINE_REFERENCE_BPM) / 60;
+  const timelinePixelsPerSecond = (BEAT_HEIGHT * uiScale * verticalScale * TIMELINE_REFERENCE_BPM) / 60;
   const bpmTimeline = useMemo(
     () => buildBpmTimeline(metadata.bpm, bpmEvents),
     [metadata.bpm, bpmEvents],
@@ -1288,7 +1206,6 @@ function ChartEditorController() {
   const playbackSpeedLabel = `${Number(currentPlaybackSpeed.toFixed(2))}x`;
   const playbackVolumeLabel = `${Math.round(playbackVolumePercent)}`;
   const playbackPositionLabel = `${Math.round(playbackLinePositionPercent)}%`;
-  const getPlaybackNowTimeSec = useCallback(() => playbackNowSecRef.current, []);
   const getPlaybackNowLabel = useCallback(
     () => formatDuration(playbackNowSecRef.current),
     [formatDuration],
@@ -1308,6 +1225,16 @@ function ChartEditorController() {
     playbackLineModeRef.current = playbackLineMode;
   }, [playbackLineMode]);
   const noteById = useMemo(() => new Map(notes.map((note) => [note.id, note] as const)), [notes]);
+  // While an edge of the selection frame is dragged, the notes are drawn as the drag would leave them. The
+  // preview is render-only: the chart, its undo history and every interaction keep the committed notes.
+  const [selectionWidthPreview, setSelectionWidthPreview] = useState<{
+    edge: SelectionWidthEdge; delta: number; notes: ChartNote[] | null;
+  } | null>(null);
+  const displayNotes = selectionWidthPreview?.notes ?? notes;
+  const displayNoteById = useMemo(
+    () => displayNotes === notes ? noteById : new Map(displayNotes.map((note) => [note.id, note] as const)),
+    [displayNotes, noteById, notes],
+  );
   const visibleNoteCount = useMemo(
     () => notes.reduce((count, note) => (note.type === "hidden" ? count : count + 1), 0),
     [notes],
@@ -1381,19 +1308,9 @@ function ChartEditorController() {
     [slideBuildState],
   );
   const selectedNoteIdSet = useMemo(() => new Set(selectedNoteIds), [selectedNoteIds]);
-  const selectedBpmEventIdSet = useMemo(() => new Set(selectedBpmEventIds), [selectedBpmEventIds]);
-  const selectedSvEventIdSet = useMemo(() => new Set(selectedSvEventIds), [selectedSvEventIds]);
   const selectedNotes = useMemo(
     () => notes.filter((note) => selectedNoteIdSet.has(note.id)),
     [notes, selectedNoteIdSet],
-  );
-  const selectedBpmEvents = useMemo(
-    () => bpmEvents.filter((event) => selectedBpmEventIdSet.has(event.id)),
-    [bpmEvents, selectedBpmEventIdSet],
-  );
-  const selectedSvEvents = useMemo(
-    () => svEvents.filter((event) => selectedSvEventIdSet.has(event.id)),
-    [svEvents, selectedSvEventIdSet],
   );
   const noteTimingGroupIdByNoteId = useMemo(() => {
     const map = new Map<string, ChartTimingGroupId>();
@@ -1451,6 +1368,10 @@ function ChartEditorController() {
   const interactiveNotes = useMemo(
     () => notes.filter((note) => !isNoteOutsideActiveTimingGroup(note)),
     [isNoteOutsideActiveTimingGroup, notes],
+  );
+  const displayInteractiveNotes = useMemo(
+    () => displayNotes === notes ? interactiveNotes : displayNotes.filter((note) => !isNoteOutsideActiveTimingGroup(note)),
+    [displayNotes, interactiveNotes, isNoteOutsideActiveTimingGroup, notes],
   );
   useEffect(() => {
     if (!isTimingGroupModeActive) {
@@ -1712,14 +1633,10 @@ function ChartEditorController() {
           .map((event) => normalizeObjectTimingGroup(event.timingGroup))
           .filter((groupId) => groupId !== GLOBAL_TIMING_GROUP_ID),
       ));
-      const allocatedGroupIds = new Set(Object.keys(ensureTimingGroups(timingGroupsRef.current)));
+      const allocatedGroupIds = new Set(Object.keys(timingGroupsRef.current));
       const pastedGroupBySource = new Map<string, string>();
       for (const sourceGroupId of copiedGroupIds) {
-        let index = 1;
-        while (allocatedGroupIds.has(`#${index}`)) {
-          index += 1;
-        }
-        const nextGroupId = `#${index}`;
+        const nextGroupId = nextTimingGroupId(allocatedGroupIds);
         allocatedGroupIds.add(nextGroupId);
         pastedGroupBySource.set(sourceGroupId, nextGroupId);
       }
@@ -1892,7 +1809,7 @@ function ChartEditorController() {
               : previous;
           const nextNotes = sortNotes([...remainedNotes, ...pastedNotes]);
           return isHabahiroEnabled
-            ? applyHabahiroSlideWidths(nextNotes, pastedSlideChains)
+            ? applyHabahiroLongWidths(nextNotes, pastedSlideChains)
             : nextNotes;
         });
       }
@@ -1927,11 +1844,6 @@ function ChartEditorController() {
         .filter((note) => note.type !== "hidden")
         .map((note) => note.id);
       setSelectedNoteIds(pastedVisibleNoteIds);
-      setSelectedBpmEventIds(pastedBpmEvents.map((event) => event.id));
-      setSelectedBpmEventId(pastedBpmEvents[0]?.id ?? null);
-      setSelectedSvEventIds(pastedSvEvents.map((event) => event.id));
-      setSelectedSvEventId(pastedSvEvents[0]?.id ?? null);
-      setSelectedLongLineSegmentId(null);
     },
     [
       beatDivision,
@@ -1950,11 +1862,6 @@ function ChartEditorController() {
       normalizeNote,
       setNotes,
       setBpmEvents,
-      setSelectedBpmEventId,
-      setSelectedBpmEventIds,
-      setSelectedSvEventId,
-      setSelectedSvEventIds,
-      setSelectedLongLineSegmentId,
       setSelectedNoteIds,
       setSlideChains,
       setSvEvents,
@@ -1975,27 +1882,8 @@ function ChartEditorController() {
     [copySelectionToClipboardPayload, isToolArmed, tool],
   );
   const copyCurrentSelectionByShortcut = useCallback(() => {
-    const bpmIds =
-      selectedBpmEventIds.length > 0
-        ? selectedBpmEventIds
-        : (
-          selectedBpmEventId && selectedBpmEventId !== BASE_BPM_LINE_ID
-            ? [selectedBpmEventId]
-            : []
-        );
-    const svIds = selectedSvEventIds.length > 0
-      ? selectedSvEventIds
-      : (selectedSvEventId ? [selectedSvEventId] : []);
-    copySelectionToClipboardPayload(selectedNoteIds, bpmIds, svIds);
-  }, [
-    BASE_BPM_LINE_ID,
-    copySelectionToClipboardPayload,
-    selectedBpmEventId,
-    selectedBpmEventIds,
-    selectedNoteIds,
-    selectedSvEventId,
-    selectedSvEventIds,
-  ]);
+    copySelectionToClipboardPayload(selectedNoteIds, [], []);
+  }, [copySelectionToClipboardPayload, selectedNoteIds]);
   const pasteAtMousePositionByShortcut = useCallback(() => {
     if (!copiedChartPayload) {
       return;
@@ -2032,62 +1920,17 @@ function ChartEditorController() {
     [notes, selectedNoteId],
   );
   const selectedNoteCount = selectedNoteIds.length;
-  const selectedBpmEventCount = selectedBpmEventIds.length;
-  const selectedSvEventCount = selectedSvEventIds.length;
   const hasNoteSelection = selectedNoteCount > 0;
-  const hasTimelineEventSelection = selectedBpmEventCount > 0 || selectedSvEventCount > 0;
-  const hasBeatEditableSelection = hasNoteSelection || hasTimelineEventSelection;
-  const minSelectedBeat = useMemo(() => {
-    const beats: number[] = [];
-    for (const note of selectedNotes) {
-      beats.push(note.beat);
-    }
-    for (const event of selectedBpmEvents) {
-      beats.push(event.beat);
-    }
-    for (const event of selectedSvEvents) {
-      beats.push(event.beat);
-    }
-    if (selectedBpmEventId === BASE_BPM_LINE_ID) {
-      beats.push(0);
-    }
-    if (beats.length === 0) {
-      return 0;
-    }
-    return beats.reduce((minValue, beat) => Math.min(minValue, beat), beats[0]);
-  }, [selectedBpmEventId, selectedBpmEvents, selectedNotes, selectedSvEvents]);
+  const minSelectedBeat = useMemo(
+    () => selectedNotes.reduce((minValue, note) => Math.min(minValue, note.beat), selectedNotes[0]?.beat ?? 0),
+    [selectedNotes],
+  );
   const minSelectedLane = selectedNotes.length > 0
     ? selectedNotes.reduce((minValue, note) => Math.min(minValue, note.lane), selectedNotes[0].lane)
     : 0;
   const coverImageSrc = chartMediaLease.urls.cover && !isCoverLoadFailed
     ? chartMediaLease.urls.cover
     : defaultCoverImage;
-  const selectedBpmEvent = useMemo(
-    () => {
-      if (selectedBpmEventId === BASE_BPM_LINE_ID) {
-        return {
-          id: BASE_BPM_LINE_ID,
-          beat: 0,
-          bpm: metadata.bpm,
-        };
-      }
-      return bpmEvents.find((event) => event.id === selectedBpmEventId) ?? null;
-    },
-    [bpmEvents, metadata.bpm, selectedBpmEventId],
-  );
-  const selectedSvEvent = useMemo(
-    () => selectedSvEventId ? (svEvents.find((event) => event.id === selectedSvEventId) ?? null) : null,
-    [selectedSvEventId, svEvents],
-  );
-  const isBaseBpmSelected = selectedBpmEventId === BASE_BPM_LINE_ID;
-  const hasBaseSvBeatSelection =
-    selectedSvEvents.some((event) => approxEq(event.beat, 0)) ||
-    (selectedSvEvent !== null && approxEq(selectedSvEvent.beat, 0));
-
-  const isEditingPlacedBpm = selectedBpmEvent !== null;
-  const isEditingPlacedSv = selectedSvEvent !== null;
-  const isEditingPlacedObject = hasNoteSelection || isEditingPlacedBpm || isEditingPlacedSv;
-  const hasLongLineSelection = selectedLongLineSegmentId !== null;
   const playbackNoteHitEvents = useMemo(() => {
     const events: Array<{ id: string; note: ChartNote; timeSec: number }> = [];
     for (const note of notes) {
@@ -2169,29 +2012,9 @@ function ChartEditorController() {
       }),
     [playbackSlideLoopRanges],
   );
-  const {
-    slideShape,
-    slideCurveType,
-    slidePrecision,
-    slideDivision,
-    slideVibration,
-    isSlideCurveTypeDisabled,
-    isSlideDivisionDisabled,
-    setSlideShape,
-    setSlideCurveType,
-    stepSlidePrecision,
-    stepSlideDivision,
-    setSlideSettings,
-    setSlideVibrationValue,
-    stepSlideVibration,
-    canStepSlidePrecisionDown,
-    canStepSlidePrecisionUp,
-    canStepSlideDivisionDown,
-    canStepSlideDivisionUp,
-  } = useLongLineEditorSettings(selectedLongLineSegmentId);
-  const activeSettingsType: EditorSettingsTool | null = selectedBpmEvent
-    ? "bpm"
-    : selectedNote
+  /** The curve tool's setting (the fit applied to a Slide segment), kept for the editor session. */
+  const [curveToolSettings, setCurveToolSettings] = useState<SlideFitSettings>(DEFAULT_SLIDE_FIT_SETTINGS);
+  const activeSettingsType: EditorSettingsTool | null = selectedNote
     ? selectedNote.type
     : (
       isToolArmed && (tool === "bpm" || isNoteTool(tool))
@@ -2199,17 +2022,13 @@ function ChartEditorController() {
         : null
     );
   const isDirectionalToolSettings =
-    !hasBeatEditableSelection &&
-    !hasLongLineSelection &&
-    !isEditingPlacedBpm &&
+    !hasNoteSelection &&
     (activeSettingsType === "directional_flick_left" || activeSettingsType === "directional_flick_right");
   const hasDirectionalNoteSelection =
     selectedNotes.length > 0 && selectedNotes.every((note) => isDirectionalNoteType(note.type));
   const isRhythmWidthToolSettings =
     isHabahiroEnabled &&
-    !hasBeatEditableSelection &&
-    !hasLongLineSelection &&
-    !isEditingPlacedBpm &&
+    !hasNoteSelection &&
     activeSettingsType !== null &&
     isRhythmWidthEditableType(activeSettingsType as NoteType);
   const hasRhythmWidthNoteSelection =
@@ -2229,19 +2048,12 @@ function ChartEditorController() {
       ? (activeSettingsType === "directional_flick_left" ? "left" : "right")
       : null);
   const showBeatSetting =
-    !hasLongLineSelection &&
-    (
-      hasBeatEditableSelection ||
-      isEditingPlacedBpm ||
-      (isExGarupaEnabled && isEditingPlacedSv) ||
-      (isExGarupaEnabled && isToolArmed && tool === "sv") ||
-      (activeSettingsType !== null && activeSettingsType !== "slide")
-    );
+    hasNoteSelection ||
+    (isExGarupaEnabled && isToolArmed && tool === "sv") ||
+    (activeSettingsType !== null && activeSettingsType !== "slide");
   const showLaneSetting =
     hasNoteSelection ||
-    (!hasLongLineSelection &&
-      !isEditingPlacedBpm &&
-      activeSettingsType !== null &&
+    (activeSettingsType !== null &&
       activeSettingsType !== "slide" &&
       activeSettingsType !== "bpm");
   const widthSettingMode: WidthSettingMode =
@@ -2252,52 +2064,26 @@ function ChartEditorController() {
         : null;
   const showWidthSetting = widthSettingMode !== null;
   const showDirectionSetting = hasDirectionalNoteSelection || isDirectionalToolSettings;
-  const showBpmSetting = !hasLongLineSelection && !hasNoteSelection && activeSettingsType === "bpm";
+  const showBpmSetting = !hasNoteSelection && activeSettingsType === "bpm";
   const showSvSetting =
     isExGarupaEnabled &&
-    !hasLongLineSelection &&
     !hasNoteSelection &&
-    !isEditingPlacedBpm &&
-    (isEditingPlacedSv || (!hasBeatEditableSelection && isToolArmed && tool === "sv"));
+    isToolArmed &&
+    tool === "sv";
   const showTimingGroupSetting =
     isExGarupaEnabled &&
-    !hasLongLineSelection &&
-    !isEditingPlacedBpm &&
-    !isEditingPlacedSv &&
-    !hasTimelineEventSelection &&
     (
       hasNoteSelection ||
       (activeSettingsType !== null && activeSettingsType !== "bpm" && activeSettingsType !== "slide")
     );
-  const showSlideSegmentSetting =
-    isExGarupaEnabled
-    && hasLongLineSelection
-    && !hasBeatEditableSelection
-    && !showBpmSetting;
   const hideSettingsPanel =
-    (hasLongLineSelection && !isExGarupaEnabled) ||
-    (
-      !hasBeatEditableSelection &&
-      !hasLongLineSelection &&
-      !isEditingPlacedBpm &&
-      !isEditingPlacedSv &&
-      (!isToolArmed || (tool === "slide" && !showWidthSetting) || tool === "copy" || tool === "paste")
-    );
-  const isBeatSettingLocked = hasBeatEditableSelection
-    ? hasBaseSvBeatSelection
-    : (!isEditingPlacedObject || isBaseBpmSelected || hasBaseSvBeatSelection);
-  const isLaneSettingLocked = hasNoteSelection ? false : !isEditingPlacedObject;
+    !hasNoteSelection &&
+    (!isToolArmed || (tool === "slide" && !showWidthSetting) || tool === "copy" || tool === "paste" || tool === "curve");
+  const isBeatSettingLocked = !hasNoteSelection;
+  const isLaneSettingLocked = !hasNoteSelection;
   const isTimingGroupSettingLocked = !hasNoteSelection;
 
-  const activeBeatValue = hasBeatEditableSelection
-    ? minSelectedBeat
-    : isEditingPlacedBpm
-    ? (selectedBpmEvent?.beat ?? 0)
-    : isEditingPlacedSv
-      ? (selectedSvEvent?.beat ?? 0)
-    : 0;
-  const activeBpmValue = isEditingPlacedBpm ? (selectedBpmEvent?.bpm ?? toolBpmValue) : toolBpmValue;
-  const activeSvValue = isEditingPlacedSv ? (selectedSvEvent?.value ?? toolSvValue) : toolSvValue;
+  const activeBeatValue = hasNoteSelection ? minSelectedBeat : 0;
   const activeLaneValue = hasNoteSelection ? minSelectedLane : toolLane;
   const activeWidthValue =
     widthSettingMode === "directional"
@@ -2320,46 +2106,8 @@ function ChartEditorController() {
         )
         : 1;
 
-  const formatSlideVibrationText = useCallback((value: number): string => {
-    const normalized = Number(value.toFixed(6));
-    if (Object.is(normalized, -0)) {
-      return "0";
-    }
-    return String(normalized);
-  }, []);
-
-  const commitSlideVibrationInput = useCallback(() => {
-    const text = slideVibrationInputText.trim();
-    const parsed = text === "" ? 0 : parseNumericExpression(text);
-    if (parsed === null) {
-      setSlideVibrationInputText(formatSlideVibrationText(slideVibration));
-      return;
-    }
-    const nextValue = Number(toFinite(parsed, slideVibration).toFixed(6));
-    setSlideVibrationValue(nextValue);
-    setSlideVibrationInputText(formatSlideVibrationText(nextValue));
-  }, [
-    formatSlideVibrationText,
-    parseNumericExpression,
-    setSlideVibrationValue,
-    slideVibration,
-    slideVibrationInputText,
-    toFinite,
-  ]);
-
-  useEffect(() => {
-    if (!showSlideSegmentSetting) {
-      setSlideVibrationInputText("");
-      return;
-    }
-    if (slideVibrationInputEditingRef.current) {
-      return;
-    }
-    setSlideVibrationInputText(formatSlideVibrationText(slideVibration));
-  }, [formatSlideVibrationText, showSlideSegmentSetting, slideVibration]);
-  const currentEditorConfigType: EditorConfigCacheKey | null = showSlideSegmentSetting
-    ? "longline"
-    : (hideSettingsPanel || activeSettingsType === null ? null : activeSettingsType);
+  const currentEditorConfigType: EditorConfigCacheKey | null =
+    hideSettingsPanel || activeSettingsType === null ? null : activeSettingsType;
 
   useEffect(() => {
     if (!currentEditorConfigType || isApplyingEditorCacheRef.current) {
@@ -2369,7 +2117,7 @@ function ChartEditorController() {
       case "bpm":
         editorConfigCacheRef.current.bpm = {
           type: "bpm",
-          bpmValue: activeBpmValue,
+          bpmValue: toolBpmValue,
         };
         break;
       case "directional_flick_left":
@@ -2390,32 +2138,17 @@ function ChartEditorController() {
           };
         }
         break;
-      case "longline":
-        editorConfigCacheRef.current.longline = {
-          type: "longline",
-          shape: slideShape,
-          curveType: slideCurveType,
-          precision: slidePrecision,
-          division: slideDivision,
-          vibration: slideVibration,
-        };
-        break;
       default:
         break;
     }
   }, [
-    activeBpmValue,
     activeDirectionalValue,
     activeWidthValue,
     currentEditorConfigType,
     isHabahiroEnabled,
     normalizeDirectionalWidth,
     normalizeRhythmWidth,
-    slideCurveType,
-    slideDivision,
-    slidePrecision,
-    slideShape,
-    slideVibration,
+    toolBpmValue,
   ]);
 
   useEffect(() => {
@@ -2433,14 +2166,7 @@ function ChartEditorController() {
 
     isApplyingEditorCacheRef.current = true;
     try {
-      if (cached.type === "bpm" && !isEditingPlacedBpm) {
-        const normalizedCachedBpm = normalizeEditorBpm(cached.bpmValue, toolBpmValue);
-        if (!approxEq(normalizedCachedBpm, toolBpmValue)) {
-          setToolBpmValue(normalizedCachedBpm);
-        }
-      }
-
-      if (cached.type === "directional" && !hasBeatEditableSelection && !hasLongLineSelection && !isEditingPlacedBpm) {
+      if (cached.type === "directional" && !hasNoteSelection) {
         const nextWidth = normalizeDirectionalWidth(cached.width);
         if (nextWidth !== normalizeDirectionalWidth(toolDirectionalWidth)) {
           setToolDirectionalWidth(nextWidth);
@@ -2454,32 +2180,11 @@ function ChartEditorController() {
       if (
         cached.type === "rhythm"
         && isHabahiroEnabled
-        && !hasBeatEditableSelection
-        && !hasLongLineSelection
-        && !isEditingPlacedBpm
+        && !hasNoteSelection
       ) {
         const nextWidth = normalizeRhythmWidth(cached.width);
         if (nextWidth !== normalizeRhythmWidth(toolRhythmWidth)) {
           setToolRhythmWidth(nextWidth);
-        }
-      }
-
-      if (cached.type === "longline" && hasLongLineSelection) {
-        const nextCurveType = cached.shape === "line" ? null : (cached.curveType ?? "in");
-        const needApply =
-          slideShape !== cached.shape ||
-          slideCurveType !== nextCurveType ||
-          slidePrecision !== cached.precision ||
-          slideDivision !== cached.division ||
-          Number(slideVibration.toFixed(6)) !== Number((cached.vibration ?? 0).toFixed(6));
-        if (needApply) {
-          setSlideSettings({
-            shape: cached.shape,
-            curveType: nextCurveType,
-            precision: cached.precision,
-            division: cached.division,
-            vibration: Number.isFinite(cached.vibration) ? cached.vibration : 0,
-          });
         }
       }
     } finally {
@@ -2488,165 +2193,25 @@ function ChartEditorController() {
   }, [
     approxEq,
     currentEditorConfigType,
-    hasBeatEditableSelection,
-    hasLongLineSelection,
+    hasNoteSelection,
     isHabahiroEnabled,
-    isEditingPlacedBpm,
     isToolArmed,
     normalizeDirectionalWidth,
     normalizeEditorBpm,
     normalizeRhythmWidth,
-    setSlideCurveType,
-    setSlideSettings,
-    setSlideShape,
     setTool,
-    setToolBpmValue,
     setToolDirectionalWidth,
     setToolRhythmWidth,
-    slideCurveType,
-    slideDivision,
-    slidePrecision,
-    slideShape,
-    slideVibration,
     tool,
     toolBpmValue,
     toolDirectionalWidth,
     toolRhythmWidth,
   ]);
-  const canDeleteSelection =
-    selectedNoteCount > 0 ||
-    selectedBpmEventCount > 0 ||
-    selectedSvEventCount > 0 ||
-    (selectedBpmEventId !== null && selectedBpmEventId !== BASE_BPM_LINE_ID) ||
-    selectedSvEventId !== null ||
-    hasLongLineSelection;
-  const canMirrorSelection = selectedNoteCount > 0;
-  const mirrorSelectedNotes = useCallback(() => {
-    if (selectedNoteIds.length === 0) {
-      return;
-    }
-    if (!selectedNoteIds.some((id) => noteById.has(id))) {
-      return;
-    }
-
-    const selectedSet = new Set(selectedNoteIds);
-    const toFixed6 = (value: number): number => Number(value.toFixed(6));
-    const notePositionKey = (lane: number, beat: number): string => `${lane.toFixed(6)}|${beat.toFixed(6)}`;
-    const mirrorLaneByNote = (note: Pick<ChartNote, "type" | "width">, lane: number): number => {
-      const mirrored = toFixed6(2 * MIRROR_AXIS_LANE - lane);
-      if (isHabahiroEnabled && !isDirectionalNoteType(note.type)) {
-        const span = normalizeRhythmWidth(note.width);
-        return toFixed6(mirrored - (span - 1));
-      }
-      return mirrored;
-    };
-    const mirrorLaneDeltaByNote = (note: ChartNote): number => {
-      const mirroredLane = mirrorLaneByNote(note, note.lane);
-      return toFixed6(mirroredLane - note.lane);
-    };
-
-    setNotes((previous: ChartNote[]) => {
-      const selectedOffsetById = new Map<string, { lane: number; beat: number }>();
-      for (const note of previous) {
-        if (!selectedSet.has(note.id)) {
-          continue;
-        }
-        selectedOffsetById.set(note.id, {
-          lane: mirrorLaneDeltaByNote(note),
-          beat: 0,
-        });
-      }
-      if (selectedOffsetById.size === 0) {
-        return previous;
-      }
-
-      const offsetById = buildSelectionMirrorOffsetMap({
-        notes: previous,
-        slideChains: slideChains as Array<{ noteIds: string[] }>,
-        selectedNoteIds: selectedSet,
-        selectedOffsetById,
-        resolveMirrorLaneDelta: mirrorLaneDeltaByNote,
-      });
-      if (offsetById.size === 0) {
-        return previous;
-      }
-
-      const transformedById = new Map<string, ChartNote>();
-      for (const note of previous) {
-        const offset = offsetById.get(note.id);
-        if (!offset) {
-          continue;
-        }
-
-        if (selectedSet.has(note.id)) {
-          const mirroredType =
-            note.type === "directional_flick_left"
-              ? "directional_flick_right"
-              : note.type === "directional_flick_right"
-                ? "directional_flick_left"
-                : note.type;
-          const transformed = normalizeNote(
-            {
-              ...note,
-              type: mirroredType,
-              lane: mirrorLaneByNote(note, note.lane),
-              ...(typeof note.endLane === "number"
-                ? { endLane: mirrorLaneByNote(note, note.endLane) }
-                : { endLane: undefined }),
-            },
-            settings,
-          );
-          if (transformed) {
-            transformedById.set(transformed.id, transformed);
-          }
-          continue;
-        }
-
-        const transformed = normalizeNote(
-          {
-            ...note,
-            lane: toFixed6(note.lane + offset.lane),
-          },
-          settings,
-        );
-        if (transformed) {
-          transformedById.set(transformed.id, transformed);
-        }
-      }
-
-      if (transformedById.size === 0) {
-        return previous;
-      }
-
-      const transformedNotes = Array.from(transformedById.values());
-      const occupied = new Set(transformedNotes.map((note) => notePositionKey(note.lane, note.beat)));
-      const transformedIdSet = new Set(transformedById.keys());
-      const remained = previous.filter(
-        (note) =>
-          !transformedIdSet.has(note.id) &&
-          !occupied.has(notePositionKey(note.lane, note.beat)),
-      );
-      return sortNotes([...remained, ...transformedNotes]);
-    });
-
-  }, [
-    isHabahiroEnabled,
-    isDirectionalNoteType,
-    normalizeNote,
-    normalizeRhythmWidth,
-    noteById,
-    selectedNoteIds,
-    setNotes,
-    settings,
-    slideChains,
-    sortNotes,
-  ]);
+  const canDeleteSelection = selectedNoteCount > 0;
   const {
-    clearSelectedNotes,
-    clearSelectedBpmEvents,
-    clearAllSelections,
+    clearSelection,
     removeNoteIdsFromSlideChains,
-    deleteNotesWithSlideHiddenFallback,
+    deleteNotes,
     setSingleSelectedNote,
     setMultiSelectedNotes,
     toggleSelectedNote,
@@ -2654,11 +2219,6 @@ function ChartEditorController() {
     applySelectedOffset,
   } = useSelectionAndEditorSync({
     setSelectedNoteIds,
-    setSelectedBpmEventIds,
-    setSelectedBpmEventId,
-    setSelectedSvEventIds,
-    setSelectedSvEventId,
-    setSelectedLongLineSegmentId,
     setSlideChains,
     normalizeSlideChains: setSlideChainsState,
     normalizeNotes: setNotesState,
@@ -2667,19 +2227,12 @@ function ChartEditorController() {
     noteById,
     sortNotes,
     allNotes: notes,
-    bpmEvents,
-    svEvents: interactiveSvEvents,
-    metadata,
     slideChains,
     setSlideBuildState,
     slideBuildRef,
-    BASE_BPM_LINE_ID,
-    selectedBpmEventId,
     selectedNoteIds,
     selectionMoveRef,
     setSelectionMovePreview,
-    selectedBpmEventIds,
-    selectedSvEventIds,
     showBeatSetting,
     isBeatSettingLocked,
     setBeatInputText,
@@ -2689,11 +2242,11 @@ function ChartEditorController() {
     showBpmSetting,
     setBpmInputText,
     bpmInputEditingRef,
-    activeBpmValue,
+    activeBpmValue: toolBpmValue,
     showSvSetting,
     setSvInputText,
     svInputEditingRef,
-    activeSvValue,
+    activeSvValue: toolSvValue,
     showLaneSetting,
     isLaneSettingLocked,
     setLaneInputText,
@@ -2725,7 +2278,8 @@ function ChartEditorController() {
     modeOptions: appOptionSettings,
   });
 
-  const { splitLongLineSegment, deleteSelectedLongLineSegment, applyLongLineSettings } = useLongLineActions({
+  // Deleting a segment (cutting its Slide) is part of note deletion: see `planNoteDeletion`.
+  const { applySlideSegmentSettings } = useSlideSegmentActions({
     slideChains,
     notes: interactiveNotes,
     isHabahiroEnabled,
@@ -2733,7 +2287,6 @@ function ChartEditorController() {
     setSlideChains,
     setNotes,
     sortNotes,
-    setSelectedLongLineSegmentId,
     showDialog,
     createId,
   });
@@ -2745,25 +2298,24 @@ function ChartEditorController() {
     setActiveDirectionalType,
     commitBeatInput,
     commitBpmInput,
+    updateActiveBpm,
+    setBpmEventValue,
     commitLaneInput,
     commitWidthInput,
     deleteSelectedNotes,
-    deleteCurrentSelection,
-    deleteNote,
+    deleteRightClickedNotes,
   } = useEditorSelectionActions({
     metadata,
     setMetadata,
     setSettings,
     setNotes,
     setBpmEvents,
-    setSvEvents,
     normalizeSettings,
     normalizeNote,
     normalizeBpmEvent,
     isLastBeatOrderedBpmNegative,
     sortNotes,
     sortBpmEvents,
-    selectedBpmEventId,
     BASE_BPM_LINE_ID,
     bpmEvents,
     normalizeEditorBpm,
@@ -2771,15 +2323,11 @@ function ChartEditorController() {
     normalizeEventBpmForWrite,
     toFinite,
     approxEq,
-    hasBeatEditableSelection,
     applySelectedOffset,
     commitSelectedNoteTransform,
     minSelectedBeat,
-    isEditingPlacedBpm,
-    selectedBpmEvent,
-    isBaseBpmSelected,
     activeBeatValue,
-    activeBpmValue,
+    activeBpmValue: toolBpmValue,
     activeLaneValue,
     activeWidthValue,
     activeDirectionalValue,
@@ -2805,30 +2353,16 @@ function ChartEditorController() {
     parseNumericExpression,
     bpmInputText,
     setBpmInputText,
-    isEditingPlacedSv,
-    selectedSvEvent,
-    normalizeTimingGroup,
-    sortSvEvents,
     isLaneSettingLocked,
     laneInputText,
     setLaneInputText,
     widthInputText,
     setWidthInputText,
-    deleteNotesWithSlideHiddenFallback,
-    clearSelectedNotes,
+    deleteNotes,
+    clearSelection,
     selectedNoteIds,
-    selectedBpmEventIds,
-    selectedSvEventIds,
-    selectedSvEventId,
     showDialog,
     setSelectedNoteIds,
-    setSelectedBpmEventIds,
-    setSelectedBpmEventId,
-    setSelectedSvEventIds,
-    setSelectedSvEventId,
-    selectedLongLineSegmentId,
-    deleteSelectedLongLineSegment,
-    setSelectedLongLineSegmentId,
   });
 
   const project = useMemo<ChartProjectDraft>(() => ({ projectId, metadata,
@@ -2836,17 +2370,21 @@ function ChartEditorController() {
     audioFileName, audioDurationSec,
   }), [projectId, metadata, settings, notes, slideChains, bpmEvents, timingGroups, chartMediaResources, audioFileName, audioDurationSec]);
   const restoreProject = useCallback((loaded: ChartProject) => {
-    const next = projectDraft(loaded);
+    const draft = projectDraft(loaded);
+    // Timing groups are #0 (global) and #1, #2, …; projects from before that scheme are renumbered.
+    const next = { ...draft, chart: { ...draft.chart, ...renumberTimingGroups({
+      notes: draft.chart.notes, slideChains: draft.chart.slideChains, timingGroups: draft.chart.timingGroups,
+    }) } };
     rememberProjectMedia(resourceManager, loaded);
     skipProjectWidthAdjustmentRef.current = true;
     setProjectId(next.projectId);
     setMetadataState(next.metadata); setSettingsState(next.chart.settings);
     setNotesState(next.chart.notes); setSlideChainsState(next.chart.slideChains);
-    setBpmEventsState(next.chart.bpmEvents); setTimingGroupsState(next.chart.timingGroups);
+    setBpmEventsState(next.chart.bpmEvents); setTimingGroupsState(ensureTimingGroups(next.chart.timingGroups));
     setChartMediaResources(next.mediaRefs); setAudioFileName(next.audioFileName); setAudioDurationSec(next.audioDurationSec);
-    setToolBpmValue(next.metadata.bpm); clearAllSelections();
+    clearSelection();
     undoStackRef.current = []; redoStackRef.current = []; pendingUndoSourcesRef.current = null; setUndoVersion(v => v + 1);
-  }, [resourceManager, clearAllSelections]);
+  }, [resourceManager, clearSelection]);
 
   const {
     garupaChartJsonText,
@@ -2922,7 +2460,7 @@ function ChartEditorController() {
     sortSvEvents,
     sortNotes,
     removeNoteIdsFromSlideChains,
-    clearSelectedNotes,
+    clearSelection,
     showDialog,
     setNotes,
     setSlideChains,
@@ -2936,10 +2474,7 @@ function ChartEditorController() {
     setBpmEvents,
     setTimingGroups,
     setSvEvents,
-    setToolBpmValue,
     setSingleSelectedNote,
-    clearSelectedBpmEvents,
-    setSelectedBpmEventId,
     toFinite,
     normalizeBaseBpmForWrite,
     normalizeEventBpmForWrite,
@@ -2964,19 +2499,13 @@ function ChartEditorController() {
     setSkinAssets,
     setAppliedSkinResources,
     setIsSkinApplying,
-    formatTypeLabel,
     setSkinSelection,
     approxEq,
     selectedNoteIds,
-    selectedBpmEventIds,
-    selectedBpmEventId,
-    selectedSvEventIds,
-    selectedSvEventId,
-    deleteCurrentSelection,
+    deleteSelectedNotes,
     NOTE_TYPES,
     setTool,
     setIsToolArmed,
-    clearAllSelections,
     NOTE_SPECS,
     undoLastOperation,
     redoLastOperation,
@@ -3050,7 +2579,6 @@ function ChartEditorController() {
     setBpmEvents: setBpmEventsState,
     setTimingGroups: setTimingGroupsState,
     setSvEvents,
-    setToolBpmValue,
     setAudioFileName,
     setAudioDurationSec,
     setUploadCommunityPostContent,
@@ -3063,7 +2591,7 @@ function ChartEditorController() {
     setPlaybackAllPerfectStatusDisplayMode,
     applyWindowPresetById,
     applyBestdoriSkinSelection,
-    clearAllSelections,
+    clearSelection,
     showDialog,
   });
 
@@ -3156,7 +2684,7 @@ function ChartEditorController() {
     getSlideAnchorLane,
     getRenderedNotePlacement,
     findNoteAtBoardPoint,
-    isPlacementBlocked,
+    findPlacementOverlaps,
     resolveBoardPlacement,
     finishSelectionDrag,
     calcSelectionMoveDelta,
@@ -3201,16 +2729,11 @@ function ChartEditorController() {
     playfieldBoardRef,
     bpmEvents,
     svEvents: interactiveSvEvents,
-    clearAllSelections,
+    clearSelection,
     showDialog,
     setMultiSelectedNotes,
     setToolLane,
     setUseToolLaneOverride,
-    clearSelectedNotes,
-    setSelectedBpmEventIds,
-    setSelectedBpmEventId,
-    setSelectedSvEventIds,
-    setSelectedSvEventId,
     NOTE_SPECS,
     setSelectionDrag,
     selectionMoveRef,
@@ -3221,8 +2744,9 @@ function ChartEditorController() {
   });
   resolveBoardPlacementRef.current = resolveBoardPlacement;
 
-  const insertSingleNodeOnLongLine = useCallback((segment: any, event: ReactMouseEvent<HTMLElement>) => {
-    if (!isToolArmed || tool !== "slide" || slideBuildRef.current) {
+  /** Middle tool on a Slide's line: a single node inserted where it was pressed, between that segment's two nodes. */
+  const insertSingleNodeOnConnection = useCallback((segment: any, event: ReactMouseEvent<HTMLElement>) => {
+    if (!isToolArmed || tool !== "middle" || slideBuildRef.current) {
       return;
     }
     const board = playfieldBoardRef.current;
@@ -3235,13 +2759,23 @@ function ChartEditorController() {
       event.clientY - rect.top,
       { type: "single" },
     );
-    if (!placement || isPlacementBlocked(placement.lane, placement.beat, { type: "single" })) {
+    if (!placement) {
       return;
     }
 
     const chainId = typeof segment?.chainId === "string" ? segment.chainId : null;
     const segmentIndex = Number(segment?.index);
     if (!chainId || !Number.isInteger(segmentIndex) || segmentIndex < 0) {
+      return;
+    }
+    const chain = committedSlideChainById.get(chainId);
+    if (chain?.long === true) {
+      showDialog("Long 不能添加中间节点。");
+      return;
+    }
+    const from = chain ? noteById.get(chain.noteIds[segmentIndex]) : undefined;
+    const to = chain ? noteById.get(chain.noteIds[segmentIndex + 1]) : undefined;
+    if (!chain || !from || !to) {
       return;
     }
 
@@ -3251,23 +2785,65 @@ function ChartEditorController() {
         type: "single",
         lane: Number(toFinite(placement.lane, 0).toFixed(6)),
         beat: quantizeBeat(placement.beat, beatDivision),
-        timingGroup: normalizeNoteTimingGroup(toolTimingGroup),
+        timingGroup: normalizeNoteTimingGroup(chain.timingGroup),
       },
       settings,
     );
     if (!normalized) {
       return;
     }
-
-    setNotes((previous: ChartNote[]) => {
-      const filtered = previous.filter(
-        (note) =>
-          note.type === "hidden" ||
-          !(note.lane === normalized.lane && approxEq(note.beat, normalized.beat)),
+    // A Hidden node of this Slide on that beat becomes the visible node in place, keeping its position: its lane as it
+    // is under ExGarupa, rounded to a whole lane otherwise. (Deleting the node turns it back into a Hidden node, so a
+    // fitted Slide can be split at one of its Hidden nodes and joined again.)
+    const replacedHidden = chain.noteIds
+      .map((id) => noteById.get(id))
+      .filter((note): note is ChartNote => note?.type === "hidden" && approxEq(note.beat, normalized.beat))
+      .sort((a, b) => Math.abs(a.lane - normalized.lane) - Math.abs(b.lane - normalized.lane))[0];
+    if (replacedHidden) {
+      const replacement = normalizeNote(
+        {
+          ...replacedHidden,
+          type: "single",
+          lane: isExGarupaEnabled ? replacedHidden.lane : Math.round(replacedHidden.lane),
+          timingGroup: normalizeNoteTimingGroup(chain.timingGroup),
+        },
+        settings,
       );
-      return sortNotes([...filtered, normalized]);
-    });
-    setSlideChains((previous: SlideChain[]) =>
+      if (!replacement) {
+        return;
+      }
+      const overwrittenIds = new Set(
+        findPlacementOverlaps(replacement.lane, replacement.beat, { type: "single" })
+          .map((note) => note.id)
+          .filter((id) => id !== replacedHidden.id),
+      );
+      const remainingNotes = notes.flatMap((note) =>
+        overwrittenIds.has(note.id) ? [] : [note.id === replacedHidden.id ? replacement : note]);
+      setNotes((previous: ChartNote[]) => sortNotes(previous.flatMap((note) =>
+        overwrittenIds.has(note.id) ? [] : [note.id === replacedHidden.id ? replacement : note])));
+      if (overwrittenIds.size > 0) {
+        setSlideChains((previous: SlideChain[]) => dropNoteIdsFromChains(previous, overwrittenIds, remainingNotes));
+      }
+      clearSelection();
+      return;
+    }
+
+    // The snapped node must stay within the segment and not land on either end (it would overwrite that node).
+    const beatEpsilon = 1e-6;
+    const isEnd = (note: ChartNote) => approxEq(note.beat, normalized.beat) && approxEq(note.lane, normalized.lane);
+    if (normalized.beat < Math.min(from.beat, to.beat) - beatEpsilon || normalized.beat > Math.max(from.beat, to.beat) + beatEpsilon
+      || isEnd(from) || isEnd(to)) {
+      return;
+    }
+
+    // The node overwrites what it covers; an overwritten slide node leaves its chain.
+    const overwrittenIds = new Set(
+      findPlacementOverlaps(normalized.lane, normalized.beat, { type: "single" }).map((note) => note.id),
+    );
+    const remainingNotes = [...notes.filter((note) => !overwrittenIds.has(note.id)), normalized];
+    setNotes((previous: ChartNote[]) =>
+      sortNotes([...previous.filter((note) => !overwrittenIds.has(note.id)), normalized]));
+    setSlideChains((previous: SlideChain[]) => dropNoteIdsFromChains(
       previous.map((chain) => {
         if (chain.id !== chainId || segmentIndex >= chain.noteIds.length - 1) {
           return chain;
@@ -3279,22 +2855,22 @@ function ChartEditorController() {
           noteIds: nextNoteIds,
         };
       }),
-    );
-    setSelectedLongLineSegmentId(null);
-    clearSelectedNotes();
-    clearSelectedBpmEvents();
-    setSelectedBpmEventId(null);
+      overwrittenIds,
+      remainingNotes,
+    ));
+    clearSelection();
   }, [
     approxEq,
+    committedSlideChainById,
     beatDivision,
-    clearSelectedBpmEvents,
-    clearSelectedNotes,
-    isPlacementBlocked,
+    clearSelection,
+    findPlacementOverlaps,
+    isExGarupaEnabled,
     isToolArmed,
+    noteById,
+    notes,
     resolveBoardPlacement,
     setNotes,
-    setSelectedBpmEventId,
-    setSelectedLongLineSegmentId,
     setSlideChains,
     showDialog,
     settings,
@@ -3303,6 +2879,9 @@ function ChartEditorController() {
 
   const {
     applyToolFromPalette: applyToolFromPaletteRaw,
+    applyLongToolFromPalette: applyLongToolFromPaletteRaw,
+    applyMiddleToolFromPalette: applyMiddleToolFromPaletteRaw,
+    applyCurveToolFromPalette: applyCurveToolFromPaletteRaw,
     applyBpmToolFromPalette: applyBpmToolFromPaletteRaw,
     applySvToolFromPalette: applySvToolFromPaletteRaw,
     applyCopyToolFromPalette: applyCopyToolFromPaletteRaw,
@@ -3322,7 +2901,7 @@ function ChartEditorController() {
   } = useBoardInteractionActions({
     setTool,
     setIsToolArmed,
-    clearAllSelections,
+    clearSelection,
     showDialog,
     NOTE_SPECS,
     useToolLaneOverride,
@@ -3348,8 +2927,6 @@ function ChartEditorController() {
     setToolLane,
     setUseToolLaneOverride,
     setSingleSelectedNote,
-    clearSelectedBpmEvents,
-    setSelectedBpmEventId,
     formatBeat,
     tool,
     noteById,
@@ -3374,25 +2951,16 @@ function ChartEditorController() {
     setSvEvents,
     bpmEvents,
     svEvents,
-    BASE_BPM_LINE_ID,
-    clearSelectedNotes,
-    setSelectedBpmEventIds,
-    setSelectedSvEventIds,
-    setSelectedSvEventId,
     toolSvValue,
     toolTimingGroup,
+    toolSvTimingGroup,
     selectedNoteIds,
-    selectedBpmEventIds,
-    selectedBpmEventId,
-    selectedSvEventIds,
-    selectedSvEventId,
-    selectedLongLineSegmentId,
     playfieldBoardRef,
     selectionMoveRef,
     cursorPreview,
     findNoteAtBoardPoint,
     resolveBoardPlacement,
-    isPlacementBlocked,
+    findPlacementOverlaps,
     selectionDragRef,
     isToolArmed,
     selectionDrag,
@@ -3654,27 +3222,54 @@ function ChartEditorController() {
       showDialog("SV 值必须为有限数字。");
       return;
     }
-    if (selectedSvEvent) {
-      setSvEvents((previous) => sortSvEvents(previous.map((event) =>
-        event.id === selectedSvEvent.id ? { ...event, value: nextValue } : event,
-      )));
+    setToolSvValue(nextValue);
+  }, [showDialog, toFinite, toolSvValue]);
+
+  /** The SV tool's setting: the value and timing group that new SV events get. */
+  const applySvToolSetting = useCallback((value: number, timingGroup: ChartTimingGroupId) => {
+    const nextValue = Number(toFinite(value, toolSvValue).toFixed(6));
+    if (!Number.isFinite(nextValue)) {
+      showDialog("SV 值必须为有限数字。");
       return;
     }
     setToolSvValue(nextValue);
-  }, [selectedSvEvent, setSvEvents, sortSvEvents, toFinite, toolSvValue]);
+    setToolSvTimingGroup(normalizeTimingGroup(timingGroup, GLOBAL_TIMING_GROUP_ID));
+  }, [showDialog, toFinite, toolSvValue]);
+
+  /** Writes one SV event's value and timing group; an SV event already on that beat in the target group is replaced. */
+  const updateSvEvent = useCallback((eventId: string, value: number, timingGroup: ChartTimingGroupId) => {
+    const nextValue = Number(toFinite(value, 1).toFixed(6));
+    if (!Number.isFinite(nextValue)) {
+      showDialog("SV 值必须为有限数字。");
+      return;
+    }
+    const targetGroup = normalizeTimingGroup(timingGroup, GLOBAL_TIMING_GROUP_ID);
+    setSvEvents((previous) => {
+      const current = previous.find((event) => event.id === eventId);
+      if (!current) {
+        return previous;
+      }
+      const remaining = previous.filter((event) => event.id === eventId || !(
+        normalizeTimingGroup(event.timingGroup, GLOBAL_TIMING_GROUP_ID) === targetGroup && approxEq(event.beat, current.beat)
+      ));
+      return sortSvEvents(remaining.map((event) =>
+        event.id === eventId ? { ...event, value: nextValue, timingGroup: targetGroup } : event,
+      ));
+    });
+  }, [approxEq, setSvEvents, showDialog, sortSvEvents, toFinite]);
 
   const commitSvInput = useCallback(() => {
     const text = svInputText.trim();
     const parsed = text === "" ? 0 : parseNumericExpression(text);
     if (parsed === null) {
-      setSvInputText(formatEditorNumeric(activeSvValue));
+      setSvInputText(formatEditorNumeric(toolSvValue));
       return;
     }
-    const nextValue = Number(toFinite(parsed, activeSvValue).toFixed(6));
+    const nextValue = Number(toFinite(parsed, toolSvValue).toFixed(6));
     setActiveSvValue(nextValue);
     setSvInputText(formatEditorNumeric(nextValue));
   }, [
-    activeSvValue,
+    toolSvValue,
     parseNumericExpression,
     setActiveSvValue,
     svInputText,
@@ -3704,16 +3299,23 @@ function ChartEditorController() {
     }
     playbackViewportSyncStampRef.current = nowMs;
     const viewportHeight = Math.max(1, playfield.clientHeight);
-    const maxScrollTop = Math.max(0, scrollContentHeight - viewportHeight);
-    const ratioFromBottom = clamp(viewportPlaybackPositionPercent / 100, 0, 1);
-    const anchorLocalY = viewportHeight * (1 - ratioFromBottom);
+    // The DOM scroll range includes the editor bleed below the board, so use it rather than the board height.
+    const maxScrollTop = Math.max(0, playfield.scrollHeight - playfield.clientHeight);
+    const ratioFromBottom = clamp(playbackLinePositionPercent / 100, 0, 1);
+    const playfieldTopClient = playfield.getBoundingClientRect().top;
+  // Judge range: from the workspace top down to the Beat 0 limit (the anchor element sits on that edge).
+  const judgeTopEl = document.querySelector<HTMLElement>(".editor-viewport-region")?.parentElement ?? null;
+  const judgeBottomEl = document.querySelector<HTMLElement>(".editor-judge-anchor");
+  const regionTopLocal = judgeTopEl ? judgeTopEl.getBoundingClientRect().top - playfieldTopClient : 0;
+  const regionBottomLocal = judgeBottomEl ? judgeBottomEl.getBoundingClientRect().bottom - playfieldTopClient : viewportHeight;
+  const anchorLocalY = regionBottomLocal + (regionTopLocal - regionBottomLocal) * ratioFromBottom;
     const worldY = timeToY(timeSec);
     const nextScrollTop = clamp(worldY - anchorLocalY, 0, maxScrollTop);
     if (Math.abs(playfield.scrollTop - nextScrollTop) > 0.5) {
       playfield.scrollTop = nextScrollTop;
     }
     viewBottomTimeSecRef.current = displayAxis.viewportTimeAtY(playfield.scrollTop + playfield.clientHeight);
-  }, [clamp, displayAxis, viewportPlaybackPositionPercent, scrollContentHeight, timeToY, viewBottomTimeSecRef]);
+  }, [clamp, displayAxis, playbackLinePositionPercent, scrollContentHeight, timeToY, viewBottomTimeSecRef]);
 
   const ensurePlaybackSeAudioContext = useCallback((): AudioContext | null => {
     const existingContext = playbackSeAudioContextRef.current;
@@ -4220,8 +3822,8 @@ function ChartEditorController() {
       setSvPreviewTimeSec(nextTimeSec);
     }
     processPlaybackSoundFrame(prevTimeSec, nextTimeSec);
-    syncPlaybackViewport(nextTimeSec);
-    updatePlaybackRuntimeLine(nextTimeSec);
+        syncPlaybackViewport(nextTimeSec);
+      updatePlaybackRuntimeLine(nextTimeSec);
     if (nextTimeSec >= safeDuration - 1e-3) {
       stopPlayback();
       return;
@@ -4334,7 +3936,7 @@ function ChartEditorController() {
       const next = !previous;
       if (next) {
         setIsToolArmed(false);
-        clearAllSelections();
+        clearSelection();
         hidePlaybackGuide();
         hidePlaybackRuntimeLine();
       } else {
@@ -4346,7 +3948,7 @@ function ChartEditorController() {
       }
       return next;
     });
-  }, [clearAllSelections, hidePlaybackGuide, hidePlaybackRuntimeLine, isPlaybackPlaying, showDialog, stopPlayback]);
+  }, [clearSelection, hidePlaybackGuide, hidePlaybackRuntimeLine, isPlaybackPlaying, showDialog, stopPlayback]);
 
   const applyToolFromPalette = useCallback((nextType: NoteType) => {
     if (isPlayToolSelected) {
@@ -4359,6 +3961,60 @@ function ChartEditorController() {
     }
     applyToolFromPaletteRaw(nextType);
   }, [applyToolFromPaletteRaw, hidePlaybackGuide, hidePlaybackRuntimeLine, isPlayToolSelected, isPlaybackPlaying, stopPlayback]);
+
+  const applyMiddleToolFromPalette = useCallback(() => {
+    if (isPlayToolSelected) {
+      setIsPlayToolSelected(false);
+      hidePlaybackGuide();
+      hidePlaybackRuntimeLine();
+      if (isPlaybackPlaying) {
+        stopPlayback();
+      }
+    }
+    applyMiddleToolFromPaletteRaw();
+  }, [applyMiddleToolFromPaletteRaw, hidePlaybackGuide, hidePlaybackRuntimeLine, isPlayToolSelected, isPlaybackPlaying, stopPlayback]);
+
+  /** The curve tool's dialog's 保存: keeps the fit (applied to each Slide segment pressed with the tool) and arms the
+   * tool. */
+  const saveCurveToolSettings = useCallback((next: SlideFitSettings) => {
+    setCurveToolSettings(next);
+    if (isPlayToolSelected) {
+      setIsPlayToolSelected(false);
+      hidePlaybackGuide();
+      hidePlaybackRuntimeLine();
+      if (isPlaybackPlaying) {
+        stopPlayback();
+      }
+    }
+    applyCurveToolFromPaletteRaw();
+  }, [applyCurveToolFromPaletteRaw, hidePlaybackGuide, hidePlaybackRuntimeLine, isPlayToolSelected, isPlaybackPlaying,
+    stopPlayback]);
+  /** Its dialog's 取消: the preset is not kept and the curve tool does not stay armed (another armed tool does). */
+  const cancelCurveTool = useCallback(() => {
+    if (isToolArmed && tool === "curve") setIsToolArmed(false);
+  }, [isToolArmed, tool]);
+  /** The armed curve tool on a pressed Slide segment: its preset replaces the segment's Hidden nodes. A Long keeps its
+   * shape. */
+  const applyCurveToolOnConnection = useCallback((segment: RenderConnectionSegment) => {
+    if (!isToolArmed || tool !== "curve") return;
+    if (committedSlideChainById.get(segment.chainId)?.long === true) {
+      showDialog("Long 不能应用形状预设。");
+      return;
+    }
+    applySlideSegmentSettings(segment.slideSegmentId, curveToolSettings);
+  }, [applySlideSegmentSettings, committedSlideChainById, curveToolSettings, isToolArmed, showDialog, tool]);
+
+  const applyLongToolFromPalette = useCallback(() => {
+    if (isPlayToolSelected) {
+      setIsPlayToolSelected(false);
+      hidePlaybackGuide();
+      hidePlaybackRuntimeLine();
+      if (isPlaybackPlaying) {
+        stopPlayback();
+      }
+    }
+    applyLongToolFromPaletteRaw();
+  }, [applyLongToolFromPaletteRaw, hidePlaybackGuide, hidePlaybackRuntimeLine, isPlayToolSelected, isPlaybackPlaying, stopPlayback]);
 
   const applyBpmToolFromPalette = useCallback(() => {
     if (isPlayToolSelected) {
@@ -4544,6 +4200,11 @@ function ChartEditorController() {
       shouldApplyRegressedChart = true;
     }
 
+    if (turningOffExGarupa) {
+      // Extra lanes are an ExGarupa feature; the regression above moved their notes into lanes 0–6.
+      setSettings((previous) => previous.laneCount === 7 ? previous : { ...previous, laneCount: 7 });
+    }
+
     if (shouldApplyRegressedChart) {
       setNotes(sortNotes(nextChartState.notes));
       setSlideChains(nextChartState.slideChains);
@@ -4553,10 +4214,12 @@ function ChartEditorController() {
       if (nextChartState.timingGroups) {
         setTimingGroups(nextChartState.timingGroups);
       }
-      clearAllSelections();
+      clearSelection();
       setSelectedTimingGroupId(GLOBAL_TIMING_GROUP_ID);
       setIsTimingGroupModeEnabled(false);
       setIsTimingGroupPanelOpen(false);
+      // The regression is not an undoable edit, and older history may hold features this mode removes.
+      discardUndoHistory();
     }
 
     setAppOptionSettings(normalizedNext);
@@ -4564,8 +4227,10 @@ function ChartEditorController() {
   }, [
     canUseSpRhythmMode,
     isExGarupaEnabled,
-    clearAllSelections,
+    clearSelection,
+    discardUndoHistory,
     normalizeEditorOptionSettings,
+    setSettings,
     notes,
     requestExGarupaRegressionConfirm,
     requestSpRhythmRegressionConfirm,
@@ -4579,6 +4244,59 @@ function ChartEditorController() {
     svEvents,
     timingGroups,
   ]);
+
+  /** Editor mode: 基础 (no SP, no ExGarupa), SP 音符 (SP) or ExGarupa (SP and ExGarupa). */
+  const editorMode: "basic" | "special" | "exgarupa" = isExGarupaEnabled
+    ? "exgarupa" : canUseSpRhythmMode ? "special" : "basic";
+  const setEditorMode = useCallback((mode: "basic" | "special" | "exgarupa") => {
+    // Leaving a mode regresses the chart through applyAppOptionSettings, which asks before irreversible changes.
+    return applyAppOptionSettings({ ...appOptionSettings,
+      spRhythmNoteEnabled: mode !== "basic", exGarupaEnabled: mode === "exgarupa" });
+  }, [appOptionSettings, applyAppOptionSettings]);
+
+  /** Lane count (7–13, step 2) sets the horizontal scale of the track; extra lanes are an ExGarupa feature. */
+  const setLaneCount = useCallback((value: number) => {
+    if (!isExGarupaEnabled) return;
+    const laneCount = normalizeLaneCount(value);
+    setSettings((previous) => previous.laneCount === laneCount ? previous : { ...previous, laneCount });
+  }, [isExGarupaEnabled, setSettings]);
+
+  const requestHabahiroRegressionConfirm = useCallback(() => {
+    return new Promise<boolean>((resolve) => {
+      showDialog(
+        "关闭“HABAHIRO”将对当前谱面执行不可逆修改（多宽音符回退为单宽，并移除变轨位置），并清空撤销与重做记录。是否继续应用？",
+        "warning",
+        { onConfirm: () => resolve(true), onCancel: () => resolve(false) },
+      );
+    });
+  }, [showDialog]);
+
+  /**
+   * HABAHIRO adds the chart's #HABAHIRO header (wide notes, lane changes); the skin sync below switches the note
+   * skin to the HABAHIRO skin while it is on and back when it is off. Turning it off removes the header.
+   */
+  const setHabahiroMode = useCallback(async (enabled: boolean) => {
+    if (enabled === isHabahiroEnabled) return true;
+    if (enabled) {
+      setSettings((previous) => ({ ...previous, habahiro: true as const }));
+      return true;
+    }
+    const chartState: ChartStateLike = { notes, slideChains, svEvents, timingGroups };
+    const usesHabahiro = isChartUsingHabahiro(chartState) || (settings.laneChangeBeats?.length ?? 0) > 0;
+    if (usesHabahiro && !await requestHabahiroRegressionConfirm()) return false;
+    if (isChartUsingHabahiro(chartState)) {
+      setNotes(sortNotes(regressChartWithoutHabahiro(chartState).notes));
+      clearSelection();
+    }
+    setSettings((previous) => {
+      const { habahiro: _habahiro, laneChangeBeats: _laneChangeBeats, ...rest } = previous;
+      return rest;
+    });
+    // The regression is not an undoable edit, and older history may hold wide notes.
+    discardUndoHistory();
+    return true;
+  }, [clearSelection, discardUndoHistory, isHabahiroEnabled, notes, requestHabahiroRegressionConfirm, setNotes, setSettings, showDialog,
+    settings.laneChangeBeats, slideChains, sortNotes, svEvents, timingGroups]);
 
   useEffect(() => {
     // Session restore applies the saved skin first; syncing before it lands would apply a
@@ -4706,14 +4424,7 @@ function ChartEditorController() {
         playbackAudioRef.current = null;
       }
     };
-  }, [
-    audioObjectUrl,
-    clamp,
-    currentPlaybackSpeed,
-    playbackVolumePercent,
-    stopPlayback,
-    stopPlaybackBgmSource,
-  ]);
+  }, [audioObjectUrl, clamp]);
 
   const startingApplication = useIsStartingApplication();
   const [startupAudio, setStartupAudio] = useState<{ key: string; error: string | null } | null>(null);
@@ -4738,13 +4449,25 @@ function ChartEditorController() {
       setIsTimingGroupPanelOpen(false);
       setIsTimingGroupModeEnabled(false);
       setSelectedTimingGroupId(GLOBAL_TIMING_GROUP_ID);
-      setSelectedSvEventIds([]);
-      setSelectedSvEventId(null);
       if (tool === "sv") {
         setIsToolArmed(false);
       }
     }
-  }, [isExGarupaEnabled, setSelectedSvEventId, setSelectedSvEventIds, tool]);
+  }, [isExGarupaEnabled, tool]);
+
+  // Shared by the Space shortcut and the toolbar play button: start from the playfield's current position, or stop.
+  const togglePlaybackFromCurrentPosition = useCallback(() => {
+    if (playbackIsPlayingRef.current) {
+      stopPlayback();
+      return;
+    }
+    void startPlaybackAt(getPlayfieldBottomTimeSec());
+  }, [getPlayfieldBottomTimeSec, startPlaybackAt, stopPlayback]);
+  // Playback clock while playing, otherwise the playfield position that playback would start from.
+  const getPlaybackClockSec = useCallback(
+    () => (playbackIsPlayingRef.current ? playbackNowSecRef.current : getPlayfieldBottomTimeSec()),
+    [getPlayfieldBottomTimeSec],
+  );
 
   useEffect(() => {
     if (isMobileRuntime()) {
@@ -4768,14 +4491,11 @@ function ChartEditorController() {
         return;
       }
       event.preventDefault();
-      if (playbackIsPlayingRef.current) {
-        stopPlayback();
-        return;
-      }
+      togglePlaybackFromCurrentPosition();
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [getPlayfieldBottomTimeSec, startPlaybackAt, stopPlayback]);
+  }, [togglePlaybackFromCurrentPosition]);
 
   useEffect(() => {
     return () => {
@@ -4921,19 +4641,19 @@ function ChartEditorController() {
     noteTimingGroupById,
     svPreviewTimingGroups,
   ]);
-  const getTrackDisplayY = useCallback((beat: number): number => {
-    const hitSec = beatToSeconds(beat, bpmTimeline);
+  const trackTimeToY = useCallback((timeSec: number): number => {
     const group = isSvPreviewEnabled
       ? (svPreviewTimingGroups.get(GLOBAL_TIMING_GROUP_ID) ?? null)
       : null;
-    return displayAxis.timeToGroupY(hitSec, group);
+    return displayAxis.timeToGroupY(timeSec, group);
   }, [
-    beatToSeconds,
-    bpmTimeline,
     displayAxis,
     isSvPreviewEnabled,
     svPreviewTimingGroups,
   ]);
+  const getTrackDisplayY = useCallback((beat: number): number => (
+    trackTimeToY(beatToSeconds(beat, bpmTimeline))
+  ), [beatToSeconds, bpmTimeline, trackTimeToY]);
   const isSlideChainOutsideActiveTimingGroup = useCallback((chain: SlideChain): boolean => {
     if (!isTimingGroupModeActive) {
       return false;
@@ -4944,10 +4664,10 @@ function ChartEditorController() {
     bpmTimeline,
     totalBeats,
     beatToY,
-    notes: interactiveNotes,
+    notes: displayInteractiveNotes,
     effectiveSlideChains,
     slideBuildState,
-    noteById,
+    noteById: displayNoteById,
     getRenderedNotePlacement,
     getNoteDisplayY,
     getSlideAnchorLane,
@@ -5092,7 +4812,7 @@ function ChartEditorController() {
     ],
   );
   const canvasNoteVisuals = useMemo(() => {
-    return notes.flatMap((note) => {
+    return displayNotes.flatMap((note) => {
       if (note.type === "hidden") {
         return [];
       }
@@ -5130,11 +4850,103 @@ function ChartEditorController() {
     isSlideBuilding,
     isNoteOutsideActiveTimingGroup,
     laneToColumn,
-    notes,
+    displayNotes,
     resolvePlacedNoteLayers,
     selectedNoteIdSet,
     slideBuildSelectedIdSet,
   ]);
+  // Slide segments (see slideSegments.ts) have no selection state of their own: a segment is selected when both its
+  // end notes are.
+  const effectiveChainById = useMemo(() => new Map(effectiveSlideChains.map(chain => [chain.id, chain] as const)),
+    [effectiveSlideChains]);
+  /** A Slide segment's two end notes, Hidden ones included. */
+  const slideSegmentEndNoteIds = useCallback((segmentId: string): string[] => {
+    const parsed = parseSlideSegmentId(segmentId);
+    const chain = parsed ? effectiveChainById.get(parsed.chainId) : undefined;
+    if (!parsed || !chain) return [];
+    return [chain.noteIds[parsed.start], chain.noteIds[parsed.end]]
+      .filter((id): id is string => id !== undefined && noteById.has(id));
+  }, [effectiveChainById, noteById]);
+  /** Pressing a Slide segment selects its end notes (Ctrl/Cmd adds them to the selection). */
+  const selectSlideSegment = useCallback((segmentId: string, additive: boolean) => {
+    const ids = slideSegmentEndNoteIds(segmentId);
+    if (ids.length === 0) return;
+    setMultiSelectedNotes(additive ? [...selectedNoteIds, ...ids] : ids, ids[0]);
+  }, [slideSegmentEndNoteIds, selectedNoteIds, setMultiSelectedNotes]);
+  /** The Slide segments whose end notes are both selected. */
+  const selectedSlideSegmentIds = useMemo(() => {
+    const segmentIds = new Set<string>();
+    if (selectedNoteIdSet.size === 0) return segmentIds;
+    for (const segment of renderModel.connectionSegments) {
+      if (segment.isPreviewChain || segmentIds.has(segment.slideSegmentId)) continue;
+      const ids = slideSegmentEndNoteIds(segment.slideSegmentId);
+      if (ids.length > 0 && ids.every(id => selectedNoteIdSet.has(id))) segmentIds.add(segment.slideSegmentId);
+    }
+    return segmentIds;
+  }, [renderModel.connectionSegments, slideSegmentEndNoteIds, selectedNoteIdSet]);
+  /**
+   * One frame around everything selected: the selected notes' buttons and the selected Slide segments,
+   * grown by SELECTION_FRAME_MARGIN design px on each side. Board coordinates; null when nothing is selected.
+   */
+  const selectionFrame = useMemo(() => {
+    let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
+    const include = (x0: number, y0: number, x1: number, y1: number) => {
+      left = Math.min(left, x0); top = Math.min(top, y0); right = Math.max(right, x1); bottom = Math.max(bottom, y1);
+    };
+    const tokenHeight = editorNoteHeight(LANE_WIDTH, noteVisualScale);
+    for (const note of canvasNoteVisuals) {
+      if (!note.selected) continue;
+      const width = editorNoteTokenWidth(note.spanLanes, isDirectionalNoteType(note.type), LANE_WIDTH, noteVisualScale);
+      include(note.x - width / 2, note.y - tokenHeight / 2, note.x + width / 2, note.y + tokenHeight / 2);
+    }
+    if (selectedSlideSegmentIds.size > 0) {
+      for (const segment of renderModel.connectionSegments) {
+        if (segment.isPreviewChain || !selectedSlideSegmentIds.has(segment.slideSegmentId)) continue;
+        const halfWidth = editorSlideLineWidth(segment.spanLanes, LANE_WIDTH, noteVisualScale) / 2;
+        include(Math.min(segment.fromX, segment.toX) - halfWidth, segment.minY,
+          Math.max(segment.fromX, segment.toX) + halfWidth, segment.maxY);
+      }
+    }
+    if (!Number.isFinite(left)) return null;
+    const margin = SELECTION_FRAME_MARGIN * uiScale;
+    return { left: left - margin, top: top - margin, width: right - left + 2 * margin, height: bottom - top + 2 * margin };
+  }, [LANE_WIDTH, canvasNoteVisuals, noteVisualScale, renderModel.connectionSegments, selectedSlideSegmentIds, uiScale]);
+  /** Dragging an edge of the selection frame widens or narrows the selected notes (see selectionWidthDrag). */
+  const selectionWidthContext = useMemo<SelectionWidthContext>(() => ({
+    notes, selectedNoteIds, slideChains, habahiro: isHabahiroEnabled,
+    laneMin, laneMax: laneValues[laneValues.length - 1]!,
+  }), [isHabahiroEnabled, laneMin, laneValues, notes, selectedNoteIds, slideChains]);
+  const canResizeSelection = !isToolArmed && canResizeSelectionWidth(selectionWidthContext);
+  /** Moves the dragged edge by `raw` lanes as far as the selection allows and draws the result. */
+  const previewSelectionWidth = useCallback((edge: SelectionWidthEdge, raw: number) => {
+    const delta = allowedSelectionWidthDelta(selectionWidthContext, edge, raw);
+    setSelectionWidthPreview(previous => previous?.edge === edge && previous.delta === delta ? previous
+      : { edge, delta, notes: delta === 0 ? null : planSelectionWidthChange(selectionWidthContext, edge, delta) });
+  }, [selectionWidthContext]);
+  /** Releasing the edge commits the previewed widths as one undo step. */
+  const endSelectionWidth = useCallback(() => {
+    if (selectionWidthPreview?.notes) setNotes(selectionWidthPreview.notes);
+    setSelectionWidthPreview(null);
+  }, [selectionWidthPreview, setNotes]);
+  const cancelSelectionWidth = useCallback(() => setSelectionWidthPreview(null), []);
+  /** Left-right / up-down mirror of the selection (several notes, or notes of a Slide with Hidden nodes). */
+  const selectionMirrorContext = useMemo<SelectionMirrorContext<SlideChain>>(() => ({
+    notes, slideChains, selectedNoteIds,
+    habahiro: isHabahiroEnabled, exGarupa: isExGarupaEnabled, laneMin, laneMax: laneValues[laneValues.length - 1]!,
+  }), [isExGarupaEnabled, isHabahiroEnabled, laneMin, laneValues, notes, selectedNoteIds, slideChains]);
+  const canMirror = canMirrorSelection(selectionMirrorContext);
+  const mirrorSelectionAlong = useCallback((axis: MirrorAxis) => {
+    const result = mirrorSelection(selectionMirrorContext, axis);
+    if (!result) return;
+    if (!result.ok) {
+      showDialog(result.reason === "overlap" ? "翻转后会与其他音符重叠，未翻转。"
+        : result.reason === "out-of-board" ? "翻转后会超出轨道范围，未翻转。"
+        : "翻转后 Slide 的结构不再合法，未翻转。");
+      return;
+    }
+    setNotes(result.notes);
+    setSlideChains(result.slideChains);
+  }, [selectionMirrorContext, setNotes, setSlideChains, showDialog]);
   const minimapNotes = useMemo(() => notes.flatMap(note => {
     if (note.type === "hidden") return [];
     const placement = getRenderedNotePlacement(note);
@@ -5169,39 +4981,35 @@ function ChartEditorController() {
         const sourceEvent = isBaseLine
           ? null
           : (bpmEvents.find((event: any) => approxEq(event.beat, node.beat)) ?? null);
-        const selectionId = isBaseLine ? BASE_BPM_LINE_ID : sourceEvent?.id ?? null;
-        const bpmPreviewOffset =
-          selectionMovePreview?.isDragging
-          && selectionId !== null
-          && selectionId !== BASE_BPM_LINE_ID
-          && selectedBpmEventIdSet.has(selectionId)
-            ? selectionMovePreview.beatDelta
-            : 0;
         return {
           key: isBaseLine
             ? "base"
             : (sourceEvent?.id ?? `bpm-${index}-${node.beat.toFixed(6)}-${node.bpm.toFixed(6)}`),
-          beat: Math.max(0, node.beat + bpmPreviewOffset),
-          y: getTrackDisplayY(Math.max(0, node.beat + bpmPreviewOffset)),
+          beat: Math.max(0, node.beat),
+          y: getTrackDisplayY(Math.max(0, node.beat)),
           bpm: node.bpm,
-          selected: selectionId === BASE_BPM_LINE_ID
-            ? selectedBpmEventId === BASE_BPM_LINE_ID
-            : selectionId !== null
-              ? selectedBpmEventIdSet.has(selectionId)
-              : false,
         };
       });
   }, [
-    BASE_BPM_LINE_ID,
     approxEq,
     bpmEvents,
     bpmTimeline,
     getTrackDisplayY,
-    selectedBpmEventId,
-    selectedBpmEventIdSet,
-    selectionMovePreview,
     totalBeats,
   ]);
+  // `#LANE_CHANGE` positions of a HABAHIRO chart; the original applies only the latest one.
+  const canvasLaneChangeVisualLines = useMemo(() => {
+    const beats = settings.habahiro ? settings.laneChangeBeats ?? [] : [];
+    const latest = beats.length > 0 ? Math.max(...beats) : null;
+    return beats
+      .filter((beat) => beat >= 0 && beat <= totalBeats + 1e-6)
+      .map((beat, index) => ({
+        key: `lane-change-${index}-${beat.toFixed(6)}`,
+        beat,
+        y: getTrackDisplayY(beat),
+        effective: beat === latest,
+      }));
+  }, [getTrackDisplayY, settings.habahiro, settings.laneChangeBeats, totalBeats]);
   const canvasSvVisualLines = useMemo(() => {
     return (visibleSvEvents ?? [])
       .filter((event: ChartSvEvent) => event.beat >= 0 && event.beat <= totalBeats + 1e-6)
@@ -5213,10 +5021,9 @@ function ChartEditorController() {
           y: getTrackDisplayY(event.beat),
           value: event.value,
           timingGroup,
-          selected: selectedSvEventIdSet.has(event.id) || selectedSvEventId === event.id,
         };
       });
-  }, [getTrackDisplayY, selectedSvEventId, selectedSvEventIdSet, visibleSvEvents, totalBeats]);
+  }, [getTrackDisplayY, visibleSvEvents, totalBeats]);
   const visibleSimultaneousSegments = useMemo(
     () => (appOptionSettings.simultaneousLineEnabled ? renderModel.simultaneousSegments : []),
     [appOptionSettings.simultaneousLineEnabled, renderModel.simultaneousSegments],
@@ -5238,9 +5045,9 @@ function ChartEditorController() {
       ?? (!isSkinReady ? "当前编辑器皮肤未准备完成，请重试资源加载。" : null) : null);
 
   const {
-    renderLaneGuides,
-    renderBpmLines,
-    renderSvLines,
+    deleteTimelineEvent,
+    describeBpmEvent,
+    describeSvEvent,
     renderSlideSegments,
     slideBuildCommittedGuideLines,
     slideBuildGuideLine,
@@ -5252,6 +5059,7 @@ function ChartEditorController() {
     totalSteps,
     beatDivision,
     beatsPerMeasure,
+    verticalZoom,
     approxEq,
     beatToY: getTrackDisplayY,
     bpmTimeline,
@@ -5259,20 +5067,9 @@ function ChartEditorController() {
     bpmEvents,
     svEvents: visibleSvEvents,
     BASE_BPM_LINE_ID,
-    selectionMovePreview,
-    selectedBpmEventIdSet,
-    selectedBpmEventId,
-    selectedSvEventIdSet,
-    selectedSvEventId,
     isTimingGroupModeActive,
     selectedTimingGroupId,
-    setSelectedSvEventIds,
-    setSelectedSvEventId,
-    selectedBpmEvents,
-    setSelectedBpmEventId,
-    clearSelectedNotes,
-    clearSelectedBpmEvents,
-    setIsToolArmed,
+    clearSelection,
     showDialog,
     isToolArmed,
     tool,
@@ -5294,28 +5091,25 @@ function ChartEditorController() {
     getSlideAnchorLane,
     laneToColumn,
     simultaneousSegments: visibleSimultaneousSegments,
-    selectedLongLineSegmentId,
-    setSelectedLongLineSegmentId,
+    selectedSlideSegmentIds,
+    selectSlideSegment,
+    slideSegmentEndNoteIds,
+    deleteRightClickedNotes,
     settings,
-    clearAllSelections,
     connectionSegments: renderModel.connectionSegments,
     skinAssets,
     slideBuildState,
     slideBuildCursor,
     noteVisualScale,
     isSimultaneousLineEnabled: appOptionSettings.simultaneousLineEnabled,
-    setSelectedBpmEventIds,
-    onLongLineContextAction: (segmentGroupId: string) =>
-      splitLongLineSegment(segmentGroupId, { deleteMiddle: !isExGarupaEnabled }),
-    onSlideToolLongLineClick: insertSingleNodeOnLongLine,
+    onMiddleToolConnectionClick: insertSingleNodeOnConnection,
+    onCurveToolConnectionClick: applyCurveToolOnConnection,
   });
   useCanvasPlayfieldBackend({
     enabled: isSkinReady && isCanvasResourceReady,
     trackCanvasRef: playfieldTrackCanvasRef,
     noteCanvasRef: playfieldNoteCanvasRef,
-    playbackCanvasRef: playfieldPlaybackCanvasRef,
     playfieldRef,
-    playfieldBoardRef,
     boardWidth,
     boardHeight: scrollContentHeight,
     laneValues,
@@ -5327,11 +5121,12 @@ function ChartEditorController() {
     beatToY: getTrackDisplayY,
     yToBeat,
     yToTime,
-    timeToY,
+    timeToY: trackTimeToY,
     totalDurationSec,
     bpmVisualLines: canvasBpmVisualLines,
     svVisualLines: canvasSvVisualLines,
-    selectedLongLineSegmentId,
+    laneChangeVisualLines: canvasLaneChangeVisualLines,
+    selectedSlideSegmentIds,
     simultaneousSegments: visibleSimultaneousSegments,
     connectionSegments: renderModel.connectionSegments,
     noteVisuals: canvasNoteVisuals,
@@ -5340,13 +5135,12 @@ function ChartEditorController() {
     slideBuildCommittedGuideLines,
     slideBuildGuideLine,
     selectionDrag,
-    playbackLineVisible: isPlaybackPlaying,
-    playbackCanvasLineEnabled: false,
-    playbackLineMode,
-    playbackLinePositionPercent: viewportPlaybackPositionPercent,
-    getPlaybackNowTimeSec,
     useFullGridScan: isSvPreviewEnabled,
+    verticalZoom,
+    bubbleEdgeInset: EDITOR_EDGE_SOFTNESS * uiScale,
+    bubbleScale: uiScale,
     resourcesVersion: canvasResourceVersion,
+    eventBubbleHitsRef,
   });
 
   const staticRenderResourceMap = useMemo(
@@ -5784,22 +5578,6 @@ function ChartEditorController() {
     showDialog,
   ]);
 
-  const canApplyLongLineSettings = hasLongLineSelection && showSlideSegmentSetting;
-  const applyCurrentLongLineSettings = () => {
-    if (!selectedLongLineSegmentId) {
-      return;
-    }
-    const applied = applyLongLineSettings(selectedLongLineSegmentId, {
-      shape: slideShape,
-      curveType: slideCurveType,
-      precision: slidePrecision,
-      division: slideDivision,
-      vibration: slideVibration,
-    });
-    if (!applied) {
-    }
-  };
-
   const layoutVm = useStableEvents({
         settingsResourcesReady,
         workspaceReady: settingsResourcesReady && !isSkinApplying && isSkinReady && isCanvasResourceReady && startupMediaReady,
@@ -5815,7 +5593,6 @@ function ChartEditorController() {
         openSimulatorWindow,
         garupaChartJsonText,
         projectFiles,
-        openOverlayDialog,
         isImportJsonModalOpen,
         importJsonModalLevel,
         importJsonText,
@@ -5870,8 +5647,18 @@ function ChartEditorController() {
         isToolArmed,
         tool,
         applyToolFromPalette,
+        applyLongToolFromPalette,
+        applyMiddleToolFromPalette,
+        curveToolSettings,
+        saveCurveToolSettings,
+        cancelCurveTool,
         applyBpmToolFromPalette,
         applySvToolFromPalette,
+        toolSvValue,
+        toolSvTimingGroup,
+        applySvToolSetting,
+        updateSvEvent,
+        isExGarupaEnabled,
         applyCopyToolFromPalette,
         applyPasteToolFromPalette,
         onTogglePlayTool,
@@ -5901,7 +5688,7 @@ function ChartEditorController() {
         isTimingGroupModeActive,
         setIsTimingGroupModeEnabled,
         createTimingGroup,
-        renameTimingGroup,
+        addTimingGroup,
         deleteTimingGroup,
         showTimingGroupSetting,
         isTimingGroupSettingLocked,
@@ -5916,14 +5703,20 @@ function ChartEditorController() {
         renderSpriteStack,
         setTool,
         setIsToolArmed,
-        clearAllSelections,
+        clearSelection,
         showDialog,
         undoLastNote,
         redoLastNote,
-        canUndoLastOperation,
+        copyCurrentSelectionByShortcut,
+        togglePlaybackFromCurrentPosition,
+        getPlaybackClockSec,
+        activeBpmValue: toolBpmValue,
+        updateActiveBpm,
+        setBpmEventValue,
+            canUndoLastOperation,
         canRedoLastOperation,
-        mirrorSelectedNotes,
-        canMirrorSelection,
+        canMirror,
+        mirrorSelectionAlong,
         clearAllNotes,
         notes,
         slideChains,
@@ -5969,35 +5762,14 @@ function ChartEditorController() {
         activeDirectionalValue,
         setActiveDirectionalType,
         hideSettingsPanel,
-        showSlideSegmentSetting,
-        slideShape,
-        slideCurveType,
-        slidePrecision,
-        slideDivision,
-        slideVibration,
-        slideVibrationInputText,
-        setSlideVibrationInputText,
-        slideVibrationInputEditingRef,
-        commitSlideVibrationInput,
-        isSlideCurveTypeDisabled,
-        isSlideDivisionDisabled,
-        setSlideShape,
-        setSlideCurveType,
-        stepSlidePrecision,
-        stepSlideDivision,
-        setSlideVibrationValue,
-        stepSlideVibration,
-        canStepSlidePrecisionDown,
-        canStepSlidePrecisionUp,
-        canStepSlideDivisionDown,
-        canStepSlideDivisionUp,
         canDeleteSelection,
-        canApplyLongLineSettings,
-        applyCurrentLongLineSettings,
-        deleteCurrentSelection,
+        deleteSelectedNotes,
         settings,
         applySettingsPatch,
         minimapNotes,
+        minimapWidth,
+        trackZoneShiftX,
+        trackZoneWidth: trackWidth,
         minimapSegments,
         minimapDuration,
         minimapGetImage: getCanvasResourceImage,
@@ -6007,6 +5779,7 @@ function ChartEditorController() {
         attachViewport,
         setBeatDivision: (value: number) => setSettings(previous => ({ ...previous, timeSignatureDenominator: value })),
         setPlaybackBottomInsetRatio,
+        playbackLinePositionPercent,
         playfieldRef,
         handlePlayfieldScroll,
         selectionDrag,
@@ -6017,21 +5790,21 @@ function ChartEditorController() {
         handleBoardContextMenu,
         boardHeight,
         scrollContentHeight,
-        renderBpmLines,
-        renderSvLines,
+        deleteTimelineEvent,
+        describeBpmEvent,
+        describeSvEvent,
+        eventBubbleHitsRef,
         cursorPreview,
         cursorPreviewRef: canvasCursorPreviewRef,
         resolveDirectionalWidenPreviewAt,
         resolveNoteReplacePreviewAt,
-        beatToY,
+        beatToY: getTrackDisplayY,
         getNoteDisplayY,
         playfieldTrackCanvasRef,
         playfieldNoteCanvasRef,
-        playfieldPlaybackCanvasRef,
         playfieldBoardRef,
         boardWidth,
         handleBoardClick,
-        renderLaneGuides,
         renderSlideSegments,
         NOTE_SPECS,
         resolvePlacedNoteLayers,
@@ -6043,6 +5816,13 @@ function ChartEditorController() {
         formatBeat,
         selectedNoteIdSet,
         slideBuildSelectedIdSet,
+        selectionFrame,
+        canResizeSelection,
+        selectionWidthDrag: selectionWidthPreview && { edge: selectionWidthPreview.edge, delta: selectionWidthPreview.delta },
+        previewSelectionWidth,
+        endSelectionWidth,
+        cancelSelectionWidth,
+        renderNotes: displayNotes,
         slideBuildRef,
         appendSlideBuildNote,
         setSlideBuildMode,
@@ -6050,13 +5830,10 @@ function ChartEditorController() {
         beginSelectedNotesMove,
         suppressNextNoteClickRef,
         toggleSelectedNote,
-        clearSelectedBpmEvents,
-        setSelectedBpmEventId,
         applyToolToPlacedNote,
         finalizeSlideBuild,
         cancelSlideBuild,
-        deleteSelectedNotes,
-        deleteNote,
+        deleteRightClickedNotes,
         toolDirectionalWidth,
         toolRhythmWidth,
         normalizeDirectionalWidth,
@@ -6099,6 +5876,10 @@ function ChartEditorController() {
         skinAssets,
         applyWindowPresetById,
         applyAppOptionSettings,
+        editorMode,
+        setEditorMode,
+        setHabahiroMode,
+        setLaneCount,
         setMusicSelectionSource: (musicSelectionSource: EditorOptionSettings["musicSelectionSource"]) =>
           setAppOptionSettings(value => ({ ...value, musicSelectionSource })),
         setOfficialMusicSelection: (officialMusicSelection: EditorOptionSettings["officialMusicSelection"]) =>

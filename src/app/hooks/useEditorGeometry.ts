@@ -1,9 +1,20 @@
 import { editorNoteHeight, editorDirectionalSegmentWidth } from "../editorNoteMetrics";
 import { useCallback, useEffect, useMemo, useRef, type UIEvent } from "react";
-import type { ChartNote, NoteType } from "../../chartCore";
+import { toolPreviewNoteType, type ChartNote, type NoteType } from "../../chartCore";
 import { buildSelectionMoveOffsetMap } from "../slideHiddenMoveOffsets";
 
 const ZERO_BEAT_RENDER_OFFSET_PX = 4;
+
+/** Distance (window px) from the viewport bottom up to the playback anchor: judge limit, raised by the playback position. */
+function playbackAnchorFromBottom(playfield: HTMLElement, positionPercent: number): number {
+  const anchor = document.querySelector<HTMLElement>(".editor-judge-anchor");
+  const workspace = anchor?.closest(".editor-viewport-region")?.parentElement ?? null;
+  if (!anchor || !workspace) return 0;
+  const judgeBottom = anchor.getBoundingClientRect().bottom;
+  const workspaceTop = workspace.getBoundingClientRect().top;
+  const ratio = Math.min(1, Math.max(0, positionPercent / 100));
+  return playfield.getBoundingClientRect().bottom - judgeBottom + ratio * (judgeBottom - workspaceTop);
+}
 
 export function useEditorGeometry(params: any) {
   const {
@@ -47,16 +58,11 @@ export function useEditorGeometry(params: any) {
     playfieldBoardRef,
     bpmEvents,
     svEvents,
-    clearAllSelections,
+    clearSelection,
     showDialog,
     setMultiSelectedNotes,
     setToolLane,
     setUseToolLaneOverride,
-    clearSelectedNotes,
-    setSelectedBpmEventIds,
-    setSelectedBpmEventId,
-    setSelectedSvEventIds,
-    setSelectedSvEventId,
     NOTE_SPECS,
     setSelectionDrag,
     selectionMoveRef,
@@ -161,6 +167,8 @@ export function useEditorGeometry(params: any) {
     }
   }, []);
 
+  // Playback anchor relative to the viewport bottom: the judge limit element, moved up by the playback position.
+  const anchorTimeSecRef = useRef(0);
   useEffect(() => {
     if (!isSkinReady) {
       return;
@@ -171,18 +179,20 @@ export function useEditorGeometry(params: any) {
       return;
     }
 
-    const effectiveScrollHeight = Math.max(boardHeight, Number(displayAxis?.contentHeight) || 0);
-    const maxScrollTop = Math.max(0, effectiveScrollHeight - playfield.clientHeight);
+    // The DOM scroll range includes the editor bleed below Beat 0, so clamp to it rather than to the board height.
+    const maxScrollTop = Math.max(0, playfield.scrollHeight - playfield.clientHeight);
 
     if (!didInitTimelineScrollRef.current) {
       previousPlaybackPositionRef.current = playbackLinePositionPercent;
+      const zeroBeatAnchorFromBottom = playbackAnchorFromBottom(playfield, playbackLinePositionPercent);
       const zeroBeatScrollTop = clamp(
-        timeToY(beatToSec(0)) - playfield.clientHeight * (1 - playbackLinePositionPercent / 100),
+        timeToY(beatToSec(0)) - (playfield.clientHeight - zeroBeatAnchorFromBottom),
         0,
         maxScrollTop,
       );
       playfield.scrollTop = zeroBeatScrollTop;
-      viewBottomTimeSecRef.current = -playfield.clientHeight * playbackLinePositionPercent / 100 / timelinePixelsPerSecond;
+      anchorTimeSecRef.current = 0;
+      viewBottomTimeSecRef.current = -zeroBeatAnchorFromBottom / timelinePixelsPerSecond;
       syncSvPreviewTimeFromViewport(0);
       didInitTimelineScrollRef.current = true;
       return;
@@ -190,22 +200,25 @@ export function useEditorGeometry(params: any) {
 
     const positionDelta = playbackLinePositionPercent - previousPlaybackPositionRef.current;
     previousPlaybackPositionRef.current = playbackLinePositionPercent;
-    const targetBottomTime = (Number.isFinite(viewBottomTimeSecRef.current) ? viewBottomTimeSecRef.current : 0)
-      - playfield.clientHeight * positionDelta / 100 / timelinePixelsPerSecond;
-    const nextBottomY = timeToY(targetBottomTime);
-    const nextScrollTop = clamp(nextBottomY - playfield.clientHeight, 0, maxScrollTop);
+    // Keep the playback anchor on the same time while the layout (scale, zoom, scroll extent) changes.
+    const anchorFromBottom = playbackAnchorFromBottom(playfield, playbackLinePositionPercent);
+    const targetAnchorTime = anchorTimeSecRef.current - playfield.clientHeight * positionDelta / 100 / timelinePixelsPerSecond;
+    const nextScrollTop = clamp(timeToY(targetAnchorTime) - (playfield.clientHeight - anchorFromBottom), 0, maxScrollTop);
     playfield.scrollTop = nextScrollTop;
-    // Preserve the requested anchor while the scroll extent catches up with layout changes.
-    viewBottomTimeSecRef.current = targetBottomTime;
-    syncSvPreviewTimeFromViewport(viewBottomTimeSecRef.current);
+    anchorTimeSecRef.current = targetAnchorTime;
+    const bottomTimeSec = (displayAxis?.viewportTimeAtY ?? yToTime)(playfield.scrollTop + playfield.clientHeight);
+    viewBottomTimeSecRef.current = bottomTimeSec;
+    syncSvPreviewTimeFromViewport(bottomTimeSec);
   }, [timelinePixelsPerSecond, playbackLinePositionPercent, beatToSec, boardHeight, clamp, didInitTimelineScrollRef, displayAxis, isSkinReady, playfieldRef, syncSvPreviewTimeFromViewport, timeToY, totalDurationSec, viewBottomTimeSecRef, yToTime]);
 
   const handlePlayfieldScroll = useCallback((event: UIEvent<HTMLDivElement>) => {
     const playfield = event.currentTarget;
+    const anchorFromBottom = playbackAnchorFromBottom(playfield, playbackLinePositionPercent);
+    anchorTimeSecRef.current = (displayAxis?.viewportTimeAtY ?? yToTime)(playfield.scrollTop + playfield.clientHeight - anchorFromBottom);
     const bottomTimeSec = (displayAxis?.viewportTimeAtY ?? yToTime)(playfield.scrollTop + playfield.clientHeight);
     viewBottomTimeSecRef.current = bottomTimeSec;
     syncSvPreviewTimeFromViewport(bottomTimeSec);
-  }, [boardHeight, displayAxis, syncSvPreviewTimeFromViewport, viewBottomTimeSecRef, yToTime]);
+  }, [boardHeight, displayAxis, playbackLinePositionPercent, syncSvPreviewTimeFromViewport, viewBottomTimeSecRef, yToTime]);
 
   const getNoteSpanLanes = useCallback((note: Pick<ChartNote, "type" | "lane" | "width">): number => {
     if (isDirectionalNoteType(note.type)) {
@@ -285,7 +298,7 @@ export function useEditorGeometry(params: any) {
     }
     return buildSelectionMoveOffsetMap({
       notes,
-      slideChains: slideChains as Array<{ noteIds: string[] }>,
+      slideChains: slideChains as Array<{ noteIds: string[]; long?: true }>,
       selectedNoteIds: selectedNoteIdSet,
       laneDelta: selectionMovePreview.laneDelta,
       beatDelta: selectionMovePreview.beatDelta,
@@ -360,7 +373,8 @@ export function useEditorGeometry(params: any) {
     [LANE_WIDTH, getNoteCenterAt, getNoteHitboxWidth, noteVisualScale, notes],
   );
 
-  const isPlacementBlocked = useCallback((
+  /** Notes a note placed here would cover: the visible notes on its beat whose lane spans meet its span. */
+  const findPlacementOverlaps = useCallback((
     lane: number,
     beat: number,
     options?: {
@@ -368,19 +382,19 @@ export function useEditorGeometry(params: any) {
       directionalWidth?: number;
       rhythmWidth?: number;
     },
-  ): boolean => {
-    if (tool === "bpm" || tool === "copy" || tool === "paste") {
-      return false;
+  ): ChartNote[] => {
+    if (!options?.type && (tool === "bpm" || tool === "copy" || tool === "paste")) {
+      return [];
     }
 
-    const previewType = options?.type ?? tool;
+    const previewType = options?.type ?? (toolPreviewNoteType(tool) ?? tool);
     const previewSpanLanes = resolvePreviewSpanLanes(previewType, {
       directionalWidth: options?.directionalWidth,
       rhythmWidth: options?.rhythmWidth,
     });
     const previewBounds = getLaneSpanBounds(previewType, lane, previewSpanLanes);
 
-    return notes.some((note: ChartNote) => {
+    return notes.filter((note: ChartNote) => {
       if (note.type === "hidden") {
         return false;
       }
@@ -415,7 +429,7 @@ export function useEditorGeometry(params: any) {
     const snapType = options?.type ?? (
       tool === "bpm" || tool === "copy" || tool === "paste"
         ? null
-        : tool
+        : toolPreviewNoteType(tool) ?? tool
     );
     const snapSpan = snapType
       ? resolvePreviewSpanLanes(snapType, {
@@ -500,8 +514,8 @@ export function useEditorGeometry(params: any) {
       const bottom = Math.max(finalizedDrag.startY, finalizedDrag.currentY);
       const centerX = (left + right) / 2;
       const centerY = (top + bottom) / 2;
-      const includeBpm = left <= 0 && right >= boardWidth;
-      const includeSv = includeBpm;
+      // Events are never selected; a full-width drag still hands them to the copy tool.
+      const includeEvents = left <= 0 && right >= boardWidth;
 
       const hitNotes: ChartNote[] = [];
       let picked: ChartNote | null = null;
@@ -537,7 +551,7 @@ export function useEditorGeometry(params: any) {
         }
       }
 
-      const hitBpmIds = includeBpm
+      const hitBpmIds = includeEvents
         ? bpmEvents
             .filter((event: any) => {
               const y = beatToY(event.beat);
@@ -545,7 +559,7 @@ export function useEditorGeometry(params: any) {
             })
             .map((event: any) => event.id)
         : [];
-      const hitSvIds = includeSv
+      const hitSvIds = includeEvents
         ? (svEvents ?? [])
             .filter((event: any) => {
               const y = beatToY(event.beat);
@@ -555,7 +569,7 @@ export function useEditorGeometry(params: any) {
         : [];
 
       if (hitNotes.length === 0 && hitBpmIds.length === 0 && hitSvIds.length === 0) {
-        clearAllSelections();
+        clearSelection();
         return;
       }
 
@@ -567,73 +581,7 @@ export function useEditorGeometry(params: any) {
         setToolLane(picked.lane);
         setUseToolLaneOverride(false);
       } else {
-        clearSelectedNotes();
-      }
-
-      setSelectedBpmEventIds(hitBpmIds);
-      setSelectedSvEventIds(hitSvIds);
-      const bpmById = new Map<string, { beat: number }>();
-      for (const event of bpmEvents as any[]) {
-        if (!event || typeof event.id !== "string") {
-          continue;
-        }
-        const beat = Number(event.beat);
-        if (!Number.isFinite(beat)) {
-          continue;
-        }
-        bpmById.set(event.id, { beat });
-      }
-      const primaryBpmId = hitBpmIds.reduce((selectedId: string | null, id: string) => {
-        if (selectedId === null) {
-          return id;
-        }
-        const selectedEvent = bpmById.get(selectedId);
-        const currentEvent = bpmById.get(id);
-        if (!selectedEvent) {
-          return id;
-        }
-        if (!currentEvent) {
-          return selectedId;
-        }
-        if (currentEvent.beat > selectedEvent.beat) {
-          return id;
-        }
-        return selectedId;
-      }, null);
-      setSelectedBpmEventId(primaryBpmId);
-      const svById = new Map<string, { beat: number }>();
-      for (const event of svEvents ?? []) {
-        if (!event || typeof event.id !== "string") {
-          continue;
-        }
-        const beat = Number(event.beat);
-        if (!Number.isFinite(beat)) {
-          continue;
-        }
-        svById.set(event.id, { beat });
-      }
-      const primarySvId = hitSvIds.reduce((selectedId: string | null, id: string) => {
-        if (selectedId === null) {
-          return id;
-        }
-        const selectedEvent = svById.get(selectedId);
-        const currentEvent = svById.get(id);
-        if (!selectedEvent) {
-          return id;
-        }
-        if (!currentEvent) {
-          return selectedId;
-        }
-        if (currentEvent.beat > selectedEvent.beat) {
-          return id;
-        }
-        return selectedId;
-      }, null);
-      setSelectedSvEventId(primarySvId);
-
-      if (hitNotes.length > 0 && (hitBpmIds.length > 0 || hitSvIds.length > 0)) {
-      } else if (hitNotes.length > 0 && picked) {
-      } else {
+        clearSelection();
       }
 
       if (typeof onSelectionDragCompleted === "function") {
@@ -652,8 +600,7 @@ export function useEditorGeometry(params: any) {
       boardWidth,
       bpmEvents,
       svEvents,
-      clearAllSelections,
-      clearSelectedNotes,
+      clearSelection,
       getNoteHitboxWidth,
       laneToColumn,
       noteVisualScale,
@@ -661,10 +608,6 @@ export function useEditorGeometry(params: any) {
       playfieldBoardRef,
       selectionDragRef,
       setMultiSelectedNotes,
-      setSelectedBpmEventId,
-      setSelectedBpmEventIds,
-      setSelectedSvEventId,
-      setSelectedSvEventIds,
       setSelectionDrag,
       showDialog,
       setToolLane,
@@ -729,7 +672,7 @@ export function useEditorGeometry(params: any) {
     getNoteCenterAt,
     getNoteHitboxWidth,
     findNoteAtBoardPoint,
-    isPlacementBlocked,
+    findPlacementOverlaps,
     resolveBoardPlacement,
     finishSelectionDrag,
     calcSelectionMoveDelta,

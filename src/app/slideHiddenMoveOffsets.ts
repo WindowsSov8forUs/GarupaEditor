@@ -1,19 +1,10 @@
 import type { ChartNote } from "../chartCore";
 
-type SlideChainLike = { noteIds: string[] };
+type SlideChainLike = { noteIds: string[]; long?: true };
 
 type NoteOffset = {
   lane: number;
   beat: number;
-};
-
-type BuildSelectionMirrorOffsetMapArgs = {
-  notes: ChartNote[];
-  slideChains: SlideChainLike[];
-  selectedNoteIds: Set<string>;
-  selectedOffsetById: Map<string, NoteOffset>;
-  resolveMirrorLaneDelta: (note: ChartNote) => number;
-  epsilon?: number;
 };
 
 type BuildSlideHiddenOffsetMapArgs = {
@@ -24,6 +15,39 @@ type BuildSlideHiddenOffsetMapArgs = {
   beatDelta: number;
   epsilon?: number;
 };
+
+
+/**
+ * Long（Hold）链的头尾始终同轨：只选中其一端横向移动时，另一端跟随同样的轨道偏移，
+ * 节拍保持不变（纵向移动仍只作用于被选中的一端）。
+ */
+function applyLongChainLaneCoupling(
+  slideChains: SlideChainLike[],
+  selectedNoteIds: Set<string>,
+  offsetById: Map<string, NoteOffset>,
+  epsilon: number,
+): void {
+  for (const chain of slideChains) {
+    if (chain.long !== true || chain.noteIds.length < 2) {
+      continue;
+    }
+    const headId = chain.noteIds[0];
+    const tailId = chain.noteIds[chain.noteIds.length - 1];
+    const headSelected = selectedNoteIds.has(headId);
+    const tailSelected = selectedNoteIds.has(tailId);
+    if (headSelected === tailSelected) {
+      continue;
+    }
+    const sourceId = headSelected ? headId : tailId;
+    const followerId = headSelected ? tailId : headId;
+    const laneDelta = offsetById.get(sourceId)?.lane ?? 0;
+    if (Math.abs(laneDelta) <= epsilon) {
+      continue;
+    }
+    const previous = offsetById.get(followerId);
+    offsetById.set(followerId, { lane: laneDelta, beat: previous?.beat ?? 0 });
+  }
+}
 
 function buildSlideHiddenOffsetMap(args: BuildSlideHiddenOffsetMapArgs): Map<string, NoteOffset> {
   const {
@@ -184,175 +208,7 @@ export function buildSelectionMoveOffsetMap(args: BuildSlideHiddenOffsetMapArgs)
       offsetById.set(id, offset);
     }
   });
-
-  return offsetById;
-}
-
-export function buildSelectionMirrorOffsetMap(args: BuildSelectionMirrorOffsetMapArgs): Map<string, NoteOffset> {
-  const {
-    notes,
-    slideChains,
-    selectedNoteIds,
-    selectedOffsetById,
-    resolveMirrorLaneDelta,
-    epsilon = 1e-6,
-  } = args;
-
-  const toFixed6 = (value: number): number => Number(value.toFixed(6));
-  const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
-  const noteMap = new Map(notes.map((note) => [note.id, note] as const));
-  const offsetById = new Map<string, NoteOffset>();
-
-  const setOffsetByMagnitude = (noteId: string, laneDeltaRaw: number, beatDeltaRaw = 0) => {
-    const laneDelta = toFixed6(laneDeltaRaw);
-    const beatDelta = toFixed6(beatDeltaRaw);
-    if (Math.abs(laneDelta) <= epsilon && Math.abs(beatDelta) <= epsilon) {
-      return;
-    }
-    const previous = offsetById.get(noteId);
-    if (!previous) {
-      offsetById.set(noteId, { lane: laneDelta, beat: beatDelta });
-      return;
-    }
-    const previousMagnitude = Math.abs(previous.lane) + Math.abs(previous.beat);
-    const nextMagnitude = Math.abs(laneDelta) + Math.abs(beatDelta);
-    if (nextMagnitude > previousMagnitude) {
-      offsetById.set(noteId, { lane: laneDelta, beat: beatDelta });
-    }
-  };
-
-  selectedOffsetById.forEach((offset, noteId) => {
-    if (!selectedNoteIds.has(noteId)) {
-      return;
-    }
-    offsetById.set(noteId, {
-      lane: toFixed6(offset.lane),
-      beat: toFixed6(offset.beat),
-    });
-  });
-
-  const applyHiddenMirrorRange = (
-    chainNotes: ChartNote[],
-    startIndexInclusive: number,
-    endIndexExclusive: number,
-  ) => {
-    for (let index = startIndexInclusive; index < endIndexExclusive; index += 1) {
-      const note = chainNotes[index];
-      if (note.type !== "hidden" || selectedNoteIds.has(note.id)) {
-        continue;
-      }
-      setOffsetByMagnitude(note.id, resolveMirrorLaneDelta(note), 0);
-    }
-  };
-
-  const applyWholeChainHiddenMirror = (chainNotes: ChartNote[]) => {
-    applyHiddenMirrorRange(chainNotes, 0, chainNotes.length);
-  };
-
-  for (const chain of slideChains) {
-    const chainNotes = chain.noteIds
-      .map((id) => noteMap.get(id))
-      .filter((note): note is ChartNote => note !== undefined);
-    if (chainNotes.length === 0) {
-      continue;
-    }
-
-    const visibleIndices: number[] = [];
-    for (let index = 0; index < chainNotes.length; index += 1) {
-      if (chainNotes[index].type !== "hidden") {
-        visibleIndices.push(index);
-      }
-    }
-    if (visibleIndices.length === 0) {
-      continue;
-    }
-
-    const headNote = chainNotes[0];
-    const tailNote = chainNotes[chainNotes.length - 1];
-    const headVisible = headNote.type !== "hidden";
-    const tailVisible = tailNote.type !== "hidden";
-    const headSelected = headVisible && selectedNoteIds.has(headNote.id);
-    const tailSelected = tailVisible && selectedNoteIds.has(tailNote.id);
-    const isSingleVisibleEndpointSelected =
-      (headVisible && !tailVisible && headSelected) ||
-      (!headVisible && tailVisible && tailSelected);
-    if (isSingleVisibleEndpointSelected) {
-      applyWholeChainHiddenMirror(chainNotes);
-      continue;
-    }
-
-    if (visibleIndices.length === 1) {
-      const onlyVisible = chainNotes[visibleIndices[0]];
-      if (!selectedNoteIds.has(onlyVisible.id)) {
-        continue;
-      }
-      applyWholeChainHiddenMirror(chainNotes);
-      continue;
-    }
-
-    const firstVisibleIndex = visibleIndices[0];
-    const lastVisibleIndex = visibleIndices[visibleIndices.length - 1];
-    const firstVisibleNote = chainNotes[firstVisibleIndex];
-    const lastVisibleNote = chainNotes[lastVisibleIndex];
-
-    if (selectedNoteIds.has(firstVisibleNote.id) && firstVisibleIndex > 0) {
-      applyHiddenMirrorRange(chainNotes, 0, firstVisibleIndex);
-    }
-
-    if (selectedNoteIds.has(lastVisibleNote.id) && lastVisibleIndex < chainNotes.length - 1) {
-      applyHiddenMirrorRange(chainNotes, lastVisibleIndex + 1, chainNotes.length);
-    }
-
-    for (let pairIndex = 0; pairIndex < visibleIndices.length - 1; pairIndex += 1) {
-      const leftIndex = visibleIndices[pairIndex];
-      const rightIndex = visibleIndices[pairIndex + 1];
-      if (rightIndex - leftIndex <= 1) {
-        continue;
-      }
-
-      const leftNote = chainNotes[leftIndex];
-      const rightNote = chainNotes[rightIndex];
-      const leftSelected = selectedNoteIds.has(leftNote.id);
-      const rightSelected = selectedNoteIds.has(rightNote.id);
-      if (!leftSelected && !rightSelected) {
-        continue;
-      }
-
-      const middleCount = rightIndex - leftIndex - 1;
-      const beatSpan = rightNote.beat - leftNote.beat;
-      const hasBeatSpan = Math.abs(beatSpan) > epsilon;
-      const leftLaneDelta = leftSelected
-        ? (selectedOffsetById.get(leftNote.id)?.lane ?? 0)
-        : 0;
-      const rightLaneDelta = rightSelected
-        ? (selectedOffsetById.get(rightNote.id)?.lane ?? 0)
-        : 0;
-
-      for (let middleIndex = 1; middleIndex <= middleCount; middleIndex += 1) {
-        const noteIndex = leftIndex + middleIndex;
-        const note = chainNotes[noteIndex];
-        if (note.type !== "hidden" || selectedNoteIds.has(note.id)) {
-          continue;
-        }
-
-        if (leftSelected && rightSelected) {
-          setOffsetByMagnitude(note.id, resolveMirrorLaneDelta(note), 0);
-          continue;
-        }
-
-        let ratio = hasBeatSpan
-          ? (note.beat - leftNote.beat) / beatSpan
-          : middleIndex / (middleCount + 1);
-        if (!Number.isFinite(ratio)) {
-          ratio = middleIndex / (middleCount + 1);
-        }
-        ratio = clamp01(ratio);
-
-        const laneDelta = leftLaneDelta * (1 - ratio) + rightLaneDelta * ratio;
-        setOffsetByMagnitude(note.id, laneDelta, 0);
-      }
-    }
-  }
+  applyLongChainLaneCoupling(slideChains, selectedNoteIds, offsetById, epsilon ?? 1e-6);
 
   return offsetById;
 }

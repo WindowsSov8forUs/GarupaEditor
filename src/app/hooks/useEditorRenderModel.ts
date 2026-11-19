@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import type { ChartNote } from "../../chartCore";
+import { slideSegmentId, slideSegmentRanges } from "../slideSegments";
 
 type RenderTimingSegment = {
   index: number;
@@ -19,9 +20,8 @@ type RenderBpmLine = {
 export type RenderConnectionSegment = {
   chainId: string;
   index: number;
-  groupId: string;
-  groupStart: boolean;
-  groupEnd: boolean;
+  /** The Slide segment this connection segment is part of (see slideSegments.ts). */
+  slideSegmentId: string;
   isPreviewChain: boolean;
   /** The wider end's lanes (for bounds); the line is fromSpanLanes wide at its from end, toSpanLanes at its to end. */
   spanLanes: number;
@@ -284,40 +284,12 @@ export function useEditorRenderModel(params: any) {
       const textureKind: "long" | "curveSlide" = hasHiddenNote ? "curveSlide" : "long";
       const opacity = (isAllHiddenChain ? 0.5 : 1) * longLineOpacityScale;
       const muted = Boolean(isSlideChainMuted?.(chain));
-      const segmentGroupByIndex = new Map<number, string>();
-      const segmentGroupRangeById = new Map<string, { start: number; end: number }>();
-      const visibleIndices = chainNotes
-        .map((note: ChartNote, index: number) => ({ note, index }))
-        .filter(({ note }: { note: ChartNote }) => note.type !== "hidden")
-        .map(({ index }: { index: number }) => index);
-      const lastIndex = chainNotes.length - 1;
-      const ranges: Array<{ start: number; end: number }> = [];
-      if (visibleIndices.length === 0) {
-        ranges.push({ start: 0, end: lastIndex });
-      } else {
-        const firstVisible = visibleIndices[0];
-        const lastVisible = visibleIndices[visibleIndices.length - 1];
-        if (firstVisible > 0) {
-          ranges.push({ start: 0, end: firstVisible });
-        }
-        for (let visibleIndex = 0; visibleIndex < visibleIndices.length - 1; visibleIndex += 1) {
-          ranges.push({
-            start: visibleIndices[visibleIndex],
-            end: visibleIndices[visibleIndex + 1],
-          });
-        }
-        if (lastVisible < lastIndex) {
-          ranges.push({ start: lastVisible, end: lastIndex });
-        }
-      }
-      for (const range of ranges) {
-        if (range.end <= range.start) {
-          continue;
-        }
-        const groupId = `${chain.id}|${range.start}|${range.end}`;
-        segmentGroupRangeById.set(groupId, { start: range.start, end: range.end });
+      // Each connection segment (between adjacent chain nodes) carries the id of the Slide segment it is part of.
+      const slideSegmentIdByIndex = new Map<number, string>();
+      for (const range of slideSegmentRanges(chainNotes)) {
+        const segmentId = slideSegmentId(chain.id, range);
         for (let index = range.start; index < range.end; index += 1) {
-          segmentGroupByIndex.set(index, groupId);
+          slideSegmentIdByIndex.set(index, segmentId);
         }
       }
       const chainNodeAnchors = chainNotes.map((note: ChartNote) => {
@@ -361,16 +333,11 @@ export function useEditorRenderModel(params: any) {
         }
         const minY = normalizeCoord(Math.min(fromY, toY));
         const maxY = normalizeCoord(Math.max(fromY, toY));
-        const groupId = segmentGroupByIndex.get(index) ?? `${chain.id}|${index}|${index + 1}`;
-        const segmentGroupRange = segmentGroupRangeById.get(groupId);
-        const groupStart = segmentGroupRange ? index === segmentGroupRange.start : true;
-        const groupEnd = segmentGroupRange ? index === segmentGroupRange.end - 1 : true;
+        const segmentId = slideSegmentIdByIndex.get(index) ?? slideSegmentId(chain.id, { start: index, end: index + 1 });
         segments.push({
           chainId: chain.id,
           index,
-          groupId,
-          groupStart,
-          groupEnd,
+          slideSegmentId: segmentId,
           isPreviewChain,
           spanLanes,
           fromSpanLanes,

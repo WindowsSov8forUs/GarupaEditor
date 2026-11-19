@@ -855,6 +855,26 @@
       "path": "game/portable/skins/cn/light/source.bundle",
       "byteLength": 2356,
       "sha256": "1C860AC08186E559AC8D31016462A2FD73D16D75E6D61E7694EA947BDC2237DC"
+    },
+    {
+      "path": "icons/clipboard.svg",
+      "byteLength": 306,
+      "sha256": "3D06C6BE3F9E6862D8FEAF707F886D5F8970B453367E741717244DEBDD5BB730"
+    },
+    {
+      "path": "icons/redo-action.svg",
+      "byteLength": 324,
+      "sha256": "88B77C79F411539A6E23AA96744C8B138B8BCB3E68F038D04DF8D6F01AE199AC"
+    },
+    {
+      "path": "icons/editor-play.svg",
+      "byteLength": 215,
+      "sha256": "207C7A3C7C049CF1697DA3A0B07C5738DF98035641CDE289ED6727F4F80EE78F"
+    },
+    {
+      "path": "icons/editor-pause.svg",
+      "byteLength": 190,
+      "sha256": "E4E2989C3D064FEAE556D40DFA1EA34EC5455154A2BCB314A036FDA0AC86B9A5"
     }
   ]
 }

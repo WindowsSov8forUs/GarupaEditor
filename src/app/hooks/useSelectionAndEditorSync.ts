@@ -1,45 +1,31 @@
 import { useCallback, useEffect } from "react";
 import {
+  createId,
   isDirectionalNoteType,
   normalizeRhythmWidth,
-  type ChartBpmEvent,
   type ChartNote,
-  type ChartSvEvent,
 } from "../../chartCore";
 import { type SlideBuildState } from "../editorHelpers";
 import { buildSelectionMoveOffsetMap } from "../slideHiddenMoveOffsets";
 import { canUseSpRhythm } from "../modeChartRegression";
-import { cleanupSlideChainsHidden } from "../slideChainCleanup";
+import { dropRemovedNotesFromChains } from "../slideChainCleanup";
+import { planNoteDeletion } from "../noteDeletion";
 
 export function useSelectionAndEditorSync(params: any) {
   const {
     setSelectedNoteIds,
-    setSelectedBpmEventIds,
-    setSelectedBpmEventId,
-    setSelectedSvEventIds,
-    setSelectedSvEventId,
-    setSelectedLongLineSegmentId,
     setSlideChains,
     normalizeSlideChains,
     normalizeNotes,
     setNotes,
-    slideRoleByNoteId,
-    noteById,
     sortNotes,
     allNotes,
-    bpmEvents,
-    svEvents,
-    metadata,
     slideChains,
     setSlideBuildState,
     slideBuildRef,
-    BASE_BPM_LINE_ID,
-    selectedBpmEventId,
     selectedNoteIds,
     selectionMoveRef,
     setSelectionMovePreview,
-    selectedBpmEventIds,
-    selectedSvEventIds,
     showBeatSetting,
     isBeatSettingLocked,
     setBeatInputText,
@@ -75,30 +61,14 @@ export function useSelectionAndEditorSync(params: any) {
     quantizeBeat,
     beatDivision,
     approxEq,
-    setBpmEvents,
-    setSvEvents,
-    sortBpmEvents,
-    sortSvEvents,
-    isLastBeatOrderedBpmNegative,
     modeOptions,
+    exGarupaEnabled,
   } = params;
 
-  const clearSelectedNotes = useCallback(() => {
+  const clearSelection = useCallback(() => {
     setSelectedNoteIds((previous: string[]) => (previous.length === 0 ? previous : []));
   }, [setSelectedNoteIds]);
 
-  const clearSelectedBpmEvents = useCallback(() => {
-    setSelectedBpmEventIds((previous: string[]) => (previous.length === 0 ? previous : []));
-  }, [setSelectedBpmEventIds]);
-
-  const clearAllSelections = useCallback(() => {
-    clearSelectedNotes();
-    clearSelectedBpmEvents();
-    setSelectedBpmEventId(null);
-    setSelectedSvEventIds((previous: string[]) => (previous.length === 0 ? previous : []));
-    setSelectedSvEventId(null);
-    setSelectedLongLineSegmentId(null);
-  }, [clearSelectedBpmEvents, clearSelectedNotes, setSelectedBpmEventId, setSelectedLongLineSegmentId, setSelectedSvEventId, setSelectedSvEventIds]);
 
   const removeNoteIdsFromSlideChains = useCallback((noteIds: string[]) => {
     if (noteIds.length === 0) {
@@ -115,122 +85,21 @@ export function useSelectionAndEditorSync(params: any) {
     );
   }, [setSlideChains]);
 
-  const deleteNotesWithSlideHiddenFallback = useCallback((noteIds: string[]) => {
-    const uniqueIds = Array.from(new Set(noteIds));
-    if (uniqueIds.length === 0) {
-      return { removedCount: 0, hiddenCount: 0 };
-    }
+  /** Deletes notes; every delete input comes here (see noteDeletion.ts for the rules). One history step. */
+  const deleteNotes = useCallback((noteIds: string[]) => {
+    const plan = planNoteDeletion({
+      notes: allNotes,
+      slideChains,
+      noteIds,
+      spRhythm: canUseSpRhythm(modeOptions),
+      exGarupa: exGarupaEnabled === true,
+      createId,
+    });
+    if (!plan) return;
+    setNotes(sortNotes(plan.notes));
+    setSlideChains(plan.slideChains);
+  }, [allNotes, exGarupaEnabled, modeOptions, setNotes, setSlideChains, slideChains, sortNotes]);
 
-    if (!canUseSpRhythm(modeOptions)) {
-      const removeSet = new Set(uniqueIds);
-      const removedCount = uniqueIds.reduce((count, id) => (noteById.has(id) ? count + 1 : count), 0);
-      if (removedCount === 0) {
-        return { removedCount: 0, hiddenCount: 0 };
-      }
-
-      setNotes((previous: ChartNote[]) =>
-        sortNotes(previous.filter((note) => !removeSet.has(note.id))),
-      );
-      setSlideChains((previous: any[]) =>
-        previous
-          .map((chain) => ({
-            ...chain,
-            noteIds: chain.noteIds.filter((id: string) => !removeSet.has(id)),
-          }))
-          .filter((chain) => chain.noteIds.length >= 2),
-      );
-
-      return {
-        removedCount,
-        hiddenCount: 0,
-      };
-    }
-
-    const toHiddenIds = uniqueIds.filter((id) => slideRoleByNoteId.has(id));
-    const toRemoveIds = uniqueIds.filter((id) => !slideRoleByNoteId.has(id));
-    const toHiddenSet = new Set(toHiddenIds);
-    const toRemoveSet = new Set(toRemoveIds);
-    const hiddenCount = toHiddenIds.reduce((count, id) => {
-      const note = noteById.get(id);
-      if (!note || note.type === "hidden") {
-        return count;
-      }
-      return count + 1;
-    }, 0);
-
-    setNotes((previous: ChartNote[]) =>
-      sortNotes(
-        previous.flatMap((note) => {
-          if (toHiddenSet.has(note.id)) {
-            if (note.type === "hidden") {
-              return [note];
-            }
-            return [
-              {
-                id: note.id,
-                type: "hidden",
-                lane: note.lane,
-                beat: note.beat,
-                width: typeof note.width === "number" && Number.isFinite(note.width) ? note.width : 1,
-              } satisfies ChartNote,
-            ];
-          }
-          if (toRemoveSet.has(note.id)) {
-            return [];
-          }
-          return [note];
-        }),
-      ),
-    );
-
-    if (toHiddenIds.length > 0) {
-      const projectedNoteById = new Map<string, ChartNote>();
-      noteById.forEach((value: any, key: string) => {
-        if (!value) {
-          return;
-        }
-        projectedNoteById.set(key, value as ChartNote);
-      });
-      for (const id of toHiddenIds) {
-        const source = projectedNoteById.get(id);
-        if (!source) {
-          continue;
-        }
-        projectedNoteById.set(id, {
-          id,
-          type: "hidden",
-          lane: source.lane,
-          beat: source.beat,
-          width: typeof source.width === "number" && Number.isFinite(source.width) ? source.width : 1,
-        } satisfies ChartNote);
-      }
-
-      setSlideChains((previous: any[]) =>
-        cleanupSlideChainsHidden({
-          chains: previous,
-          noteMap: projectedNoteById,
-          minLength: 1,
-        }),
-      );
-    }
-
-    if (toRemoveIds.length > 0) {
-      removeNoteIdsFromSlideChains(toRemoveIds);
-    }
-
-    return {
-      removedCount: toRemoveIds.length,
-      hiddenCount,
-    };
-  }, [
-    noteById,
-    removeNoteIdsFromSlideChains,
-    setNotes,
-    setSlideChains,
-    slideRoleByNoteId,
-    sortNotes,
-    modeOptions,
-  ]);
 
   const setSingleSelectedNote = useCallback((noteId: string | null) => {
     if (!noteId) {
@@ -293,35 +162,35 @@ export function useSelectionAndEditorSync(params: any) {
       }
 
       const selectedSet = new Set(selectedNoteIds);
-      setNotes((previous: ChartNote[]) => {
-        const transformedById = new Map<string, ChartNote>();
+      const transformedById = new Map<string, ChartNote>();
 
-        for (const note of previous) {
-          if (!selectedSet.has(note.id)) {
-            continue;
-          }
-          const transformed = transform(note);
-          if (!transformed) {
-            continue;
-          }
-          const normalized = normalizeNote(transformed, settings);
-          if (!normalized) {
-            continue;
-          }
-          transformedById.set(normalized.id, normalized);
+      for (const note of allNotes) {
+        if (!selectedSet.has(note.id)) {
+          continue;
         }
+        const transformed = transform(note);
+        if (!transformed) {
+          continue;
+        }
+        const normalized = normalizeNote(transformed, settings);
+        if (!normalized) {
+          continue;
+        }
+        transformedById.set(normalized.id, normalized);
+      }
 
-        const transformedNotes = Array.from(transformedById.values());
-        const remained = previous.filter(
-          (note) =>
-            !selectedSet.has(note.id) &&
-            !transformedNotes.some((transformed) => shouldNotesOverlap(note, transformed)),
-        );
+      const transformedNotes = Array.from(transformedById.values());
+      const remained = allNotes.filter(
+        (note: ChartNote) =>
+          !selectedSet.has(note.id) &&
+          !transformedNotes.some((transformed) => shouldNotesOverlap(note, transformed)),
+      );
 
-        return sortNotes([...remained, ...transformedNotes]);
-      });
+      const nextNotes = sortNotes([...remained, ...transformedNotes]);
+      setNotes(nextNotes);
+      setSlideChains((previous: any[]) => dropRemovedNotesFromChains(previous, nextNotes));
     },
-    [normalizeNote, selectedNoteIds, setNotes, settings, shouldNotesOverlap, sortNotes],
+    [allNotes, normalizeNote, selectedNoteIds, setNotes, setSlideChains, settings, shouldNotesOverlap, sortNotes],
   );
 
   const applySelectedOffset = useCallback(
@@ -330,7 +199,7 @@ export function useSelectionAndEditorSync(params: any) {
       beatDeltaRaw: number,
       options?: { quantizeBeatDelta?: boolean },
     ) => {
-      if (selectedNoteIds.length === 0 && selectedBpmEventIds.length === 0 && selectedSvEventIds.length === 0) {
+      if (selectedNoteIds.length === 0) {
         return;
       }
 
@@ -344,151 +213,75 @@ export function useSelectionAndEditorSync(params: any) {
         return;
       }
 
-      const shouldMoveSelectedBpmEvents = selectedBpmEventIds.length > 0 && !approxEq(beatDelta, 0);
-      const shouldMoveSelectedSvEvents = selectedSvEventIds.length > 0 && !approxEq(beatDelta, 0);
-      const selectedBpmSet = shouldMoveSelectedBpmEvents ? new Set(selectedBpmEventIds) : null;
-      const selectedSvSet = shouldMoveSelectedSvEvents ? new Set(selectedSvEventIds) : null;
-      const minEventBeat = Number((1 / beatDivision).toFixed(6));
-      const buildShiftedBpmEvents = (source: ChartBpmEvent[]): ChartBpmEvent[] => {
-        if (!shouldMoveSelectedBpmEvents || !selectedBpmSet) {
-          return source;
-        }
-        const shiftedById = new Map<string, ChartBpmEvent>();
-        for (const event of source) {
-          if (!selectedBpmSet.has(event.id)) {
-            continue;
-          }
-          shiftedById.set(event.id, {
-            ...event,
-            beat: Math.max(minEventBeat, Number((event.beat + beatDelta).toFixed(6))),
-          });
-        }
-        const shiftedEvents = Array.from(shiftedById.values());
-        const occupiedBeats = new Set(shiftedEvents.map((event) => event.beat.toFixed(6)));
-        const remained = source.filter(
-          (event) =>
-            !selectedBpmSet.has(event.id) &&
-            !occupiedBeats.has(event.beat.toFixed(6)),
-        );
-        return sortBpmEvents([...remained, ...shiftedEvents]);
-      };
-      const buildShiftedSvEvents = (source: ChartSvEvent[]): ChartSvEvent[] => {
-        if (!shouldMoveSelectedSvEvents || !selectedSvSet) {
-          return source;
-        }
-        const shiftedById = new Map<string, ChartSvEvent>();
-        for (const event of source) {
-          if (!selectedSvSet.has(event.id)) {
-            continue;
-          }
-          shiftedById.set(event.id, {
-            ...event,
-            beat: Math.max(0, Number((event.beat + beatDelta).toFixed(6))),
-          });
-        }
-        const shiftedEvents = Array.from(shiftedById.values());
-        const occupiedKeys = new Set(
-          shiftedEvents.map((event) => `${event.timingGroup}|${event.beat.toFixed(6)}`),
-        );
-        const remained = source.filter(
-          (event) =>
-            !selectedSvSet.has(event.id) &&
-            !occupiedKeys.has(`${event.timingGroup}|${event.beat.toFixed(6)}`),
-        );
-        return sortSvEvents([...remained, ...shiftedEvents]);
-      };
-
-      if (shouldMoveSelectedBpmEvents) {
-        const nextBpmEvents = buildShiftedBpmEvents(bpmEvents);
-        if (isLastBeatOrderedBpmNegative(metadata.bpm, nextBpmEvents)) {
-          return;
-        }
-      }
-
-      if (selectedNoteIds.length > 0) {
+      {
         const selectedSet = new Set<string>(selectedNoteIds as string[]);
         const epsilon = 1e-6;
         const toFixed6 = (value: number): number => Number(value.toFixed(6));
 
-        setNotes((previous: ChartNote[]) => {
-          const offsetById = buildSelectionMoveOffsetMap({
-            notes: previous,
-            slideChains: slideChains as Array<{ noteIds: string[] }>,
-            selectedNoteIds: selectedSet,
-            laneDelta,
-            beatDelta,
-            epsilon,
-          });
-
-          const transformedById = new Map<string, ChartNote>();
-          for (const note of previous) {
-            const offset = offsetById.get(note.id);
-            if (!offset) {
-              continue;
-            }
-            const isSelected = selectedSet.has(note.id);
-            const nextBeat = Math.max(0, toFixed6(note.beat + offset.beat));
-            const nextEndBeat = isSelected && typeof note.endBeat === "number"
-              ? Math.max(0, toFixed6(note.endBeat + beatDelta))
-              : undefined;
-            const nextEndLane = isSelected && typeof note.endLane === "number"
-              ? toFixed6(note.endLane + laneDelta)
-              : undefined;
-            const transformed = normalizeNote(
-              {
-                ...note,
-                lane: toFixed6(note.lane + offset.lane),
-                beat: nextBeat,
-                ...(typeof nextEndBeat === "number" ? { endBeat: nextEndBeat } : { endBeat: undefined }),
-                ...(typeof nextEndLane === "number" ? { endLane: nextEndLane } : { endLane: undefined }),
-              },
-              settings,
-            );
-            if (transformed) {
-              transformedById.set(transformed.id, transformed);
-            }
-          }
-
-          const transformedNotes = Array.from(transformedById.values());
-          const transformedIdSet = new Set(transformedById.keys());
-          const remained = previous.filter(
-            (note) =>
-              !transformedIdSet.has(note.id) &&
-              !transformedNotes.some((transformed) => shouldNotesOverlap(note, transformed)),
-          );
-
-          return sortNotes([...remained, ...transformedNotes]);
+        const offsetById = buildSelectionMoveOffsetMap({
+          notes: allNotes,
+          slideChains: slideChains as Array<{ noteIds: string[]; long?: true }>,
+          selectedNoteIds: selectedSet,
+          laneDelta,
+          beatDelta,
+          epsilon,
         });
-      }
 
-      if (shouldMoveSelectedBpmEvents) {
-        setBpmEvents((previous: ChartBpmEvent[]) => buildShiftedBpmEvents(previous));
-      }
-      if (shouldMoveSelectedSvEvents) {
-        setSvEvents((previous: ChartSvEvent[]) => buildShiftedSvEvents(previous));
+        const transformedById = new Map<string, ChartNote>();
+        for (const note of allNotes) {
+          const offset = offsetById.get(note.id);
+          if (!offset) {
+            continue;
+          }
+          const isSelected = selectedSet.has(note.id);
+          const nextBeat = Math.max(0, toFixed6(note.beat + offset.beat));
+          const nextEndBeat = isSelected && typeof note.endBeat === "number"
+            ? Math.max(0, toFixed6(note.endBeat + beatDelta))
+            : undefined;
+          const nextEndLane = isSelected && typeof note.endLane === "number"
+            ? toFixed6(note.endLane + laneDelta)
+            : undefined;
+          const transformed = normalizeNote(
+            {
+              ...note,
+              lane: toFixed6(note.lane + offset.lane),
+              beat: nextBeat,
+              ...(typeof nextEndBeat === "number" ? { endBeat: nextEndBeat } : { endBeat: undefined }),
+              ...(typeof nextEndLane === "number" ? { endLane: nextEndLane } : { endLane: undefined }),
+            },
+            settings,
+          );
+          if (transformed) {
+            transformedById.set(transformed.id, transformed);
+          }
+        }
+
+        const transformedNotes = Array.from(transformedById.values());
+        const transformedIdSet = new Set(transformedById.keys());
+        const remained = allNotes.filter(
+          (note: ChartNote) =>
+            !transformedIdSet.has(note.id) &&
+            !transformedNotes.some((transformed) => shouldNotesOverlap(note, transformed)),
+        );
+
+        const nextNotes = sortNotes([...remained, ...transformedNotes]);
+        setNotes(nextNotes);
+        setSlideChains((previous: any[]) => dropRemovedNotesFromChains(previous, nextNotes));
       }
     },
     [
+      allNotes,
       approxEq,
-      bpmEvents,
       beatDivision,
-      isLastBeatOrderedBpmNegative,
-      metadata.bpm,
       normalizeNote,
       quantizeBeat,
-      selectedBpmEventIds,
-      selectedSvEventIds,
       selectedNoteIds,
       setNotes,
-      setBpmEvents,
-      setSvEvents,
+      setSlideChains,
       settings,
       shouldNotesOverlap,
       slideChains,
-      sortBpmEvents,
-      sortSvEvents,
       sortNotes,
-      svEvents,
       toFinite,
     ],
   );
@@ -506,20 +299,6 @@ export function useSelectionAndEditorSync(params: any) {
       return next;
     });
   }, [allNotes, setSelectedNoteIds]);
-
-  useEffect(() => {
-    setSelectedBpmEventIds((previous: string[]) => {
-      if (previous.length === 0) {
-        return previous;
-      }
-      const existing = new Set(bpmEvents.map((event: ChartBpmEvent) => event.id));
-      const next = previous.filter((id) => existing.has(id));
-      if (next.length === previous.length && next.every((id, index) => id === previous[index])) {
-        return previous;
-      }
-      return next;
-    });
-  }, [bpmEvents, setSelectedBpmEventIds]);
 
   useEffect(() => {
     const existing = new Set(allNotes.map((note: ChartNote) => note.id));
@@ -588,27 +367,12 @@ export function useSelectionAndEditorSync(params: any) {
   }, [normalizeNotes, slideChains]);
 
   useEffect(() => {
-    if (!selectedBpmEventId || selectedBpmEventId === BASE_BPM_LINE_ID) {
-      return;
-    }
-    if (!bpmEvents.some((event: ChartBpmEvent) => event.id === selectedBpmEventId)) {
-      setSelectedBpmEventId(null);
-    }
-  }, [BASE_BPM_LINE_ID, bpmEvents, selectedBpmEventId, setSelectedBpmEventId]);
-
-  useEffect(() => {
     if (selectedNoteIds.length > 0) {
       return;
     }
     selectionMoveRef.current = null;
     setSelectionMovePreview(null);
   }, [selectedNoteIds.length, selectionMoveRef, setSelectionMovePreview]);
-
-  useEffect(() => {
-    if (selectedNoteIds.length > 0 || selectedBpmEventIds.length > 0 || selectedBpmEventId !== null) {
-      setSelectedLongLineSegmentId(null);
-    }
-  }, [selectedBpmEventId, selectedBpmEventIds.length, selectedNoteIds.length, setSelectedLongLineSegmentId]);
 
   useEffect(() => {
     if (!showBeatSetting || isBeatSettingLocked) {
@@ -678,11 +442,9 @@ export function useSelectionAndEditorSync(params: any) {
   }, [setSlideBuildCursor, slideBuildState]);
 
   return {
-    clearSelectedNotes,
-    clearSelectedBpmEvents,
-    clearAllSelections,
+    clearSelection,
     removeNoteIdsFromSlideChains,
-    deleteNotesWithSlideHiddenFallback,
+    deleteNotes,
     setSingleSelectedNote,
     setMultiSelectedNotes,
     toggleSelectedNote,

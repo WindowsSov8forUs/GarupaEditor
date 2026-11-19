@@ -1,4 +1,4 @@
-.editor-minimap-column { position: relative; flex: 0 0 auto; min-height: 0; }
+.editor-minimap-column { position: relative; flex: 0 0 auto; min-height: 0; align-self: stretch; }
 .editor-minimap { position: absolute; bottom: 0; left: 0; right: 0; overflow: hidden; touch-action: none; cursor: grab; }
 .editor-minimap:active { cursor: grabbing; }
 .editor-minimap canvas { display: block; pointer-events: none; }

@@ -78,3 +78,21 @@ export function editorSimultaneousLineWidth(laneWidth: number, noteScale: number
 export function editorDirectionalBackLineWidth(laneWidth: number, noteScale: number): number {
   return laneWidth * DIRECTIONAL_BACK_LINE_WIDTH_LANES * noteScale;
 }
+
+/** The selection frame encloses the selected buttons (or line segments) grown by this many design px on each side. */
+export const SELECTION_FRAME_MARGIN = 10;
+/** Border of the selection frame and of the marquee rectangle, in screen px (as wide as the event line). */
+export const SELECTION_FRAME_BORDER_PX = 2;
+/** Brightness filter of selected notes and line segments, setting them apart from the rest. */
+export const SELECTED_HIGHLIGHT_FILTER = "brightness(1.4)";
+/**
+ * Width handles on the selection frame's left and right edges, in design px. The grip is the original slider thumb
+ * (button_slidegauge, the music filter's level DualSlider), drawn at SELECTION_RESIZE_GRIP_SCALE of a box that is as
+ * wide as the frame margin on both sides of the edge (so it never covers the note inside) and as tall as the frame
+ * less its margin above and below, up to the thumb's original 72. The strip that takes the drag is centred on the
+ * edge and wider than the grip.
+ */
+export const SELECTION_RESIZE_GRIP_SCALE = 0.7;
+export const SELECTION_RESIZE_GRIP_WIDTH = 2 * SELECTION_FRAME_MARGIN * SELECTION_RESIZE_GRIP_SCALE;
+export const SELECTION_RESIZE_GRIP_MAX_HEIGHT = 72 * SELECTION_RESIZE_GRIP_SCALE;
+export const SELECTION_RESIZE_HIT_WIDTH = 24;

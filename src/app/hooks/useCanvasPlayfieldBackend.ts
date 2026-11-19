@@ -1,4 +1,4 @@
-import { editorGridWindow } from "../editorGridWindow";
+import { editorGridWindow, isSubdivisionLineHidden, type GridLineKind } from "../editorGridWindow";
 import {
   editorDirectionalBackLineWidth,
   editorDirectionalHeadGeometry,
@@ -8,28 +8,159 @@ import {
   editorNoteTokenWidth,
   editorSimultaneousLineWidth,
   editorSlideLineWidth,
+  SELECTED_HIGHLIGHT_FILTER,
 } from "../editorNoteMetrics";
-import { useMemo, useRef, type RefObject } from "react";
+import { useMemo, useRef, type MutableRefObject, type RefObject } from "react";
 import {
   projectCanvasRenderResourceRuntimeAssets,
   type CanvasRenderResourceRuntimeAssets,
   type SkinAssets,
 } from "../../skinLoader";
+import { svEventBubbleLines } from "../../chartCore";
 import { useEditorMainLoop, type EditorMainLoopFrame } from "./useEditorMainLoop";
 import type { RenderConnectionSegment, RenderSimultaneousSegment } from "./useEditorRenderModel";
 
-const GRID_COLOR = "rgb(26, 51, 59)";
-const GRID_BEAT_COLOR = "rgb(0, 166, 166)";
-const GRID_MEASURE_COLOR = "rgb(0, 166, 166)";
+const GRID_COLOR = "rgb(125, 125, 125)";
+const GRID_BEAT_COLOR = "rgb(190, 190, 190)";
+const GRID_MEASURE_COLOR = "rgb(255, 255, 255)";
+const GRID_SPAN_LANES = 7;
+const GRID_KIND_COLOR: Record<GridLineKind, string> = {
+  measure: GRID_MEASURE_COLOR,
+  beat: GRID_BEAT_COLOR,
+  subdivision: GRID_COLOR,
+};
+const SV_LINE_COLOR = "rgb(255, 59, 114)";
+const LANE_CHANGE_INEFFECTIVE_COLOR = "rgb(160, 160, 160)";
+/** Beats closer than 1e-6 are the same beat value (float noise from the beat grid). */
+const EVENT_BEAT_KEY_SCALE = 1e6;
+/** Event bubble geometry in design px; drawn times the UI scale, like the editor region and its masks around it. */
+const EVENT_BUBBLE_FONT_SIZE = 12;
+const EVENT_BUBBLE_FONT_FAMILY = "'ChartUI', 'TTShinGoM', sans-serif";
+const EVENT_BUBBLE_TAIL = 8;
+const EVENT_BUBBLE_TAIL_HALF_HEIGHT = 5;
+const EVENT_BUBBLE_PADDING_X = 6;
+const EVENT_BUBBLE_PADDING_Y = 4;
+const EVENT_BUBBLE_LINE_HEIGHT = 14;
+const EVENT_BUBBLE_RADIUS = 6;
+const EVENT_BUBBLE_BORDER = 2;
+const EVENT_BUBBLE_RULE = 1;
+/** Space taken by the rule between two events in a shared bubble, padding included. */
+const EVENT_BUBBLE_SEPARATOR_GAP = EVENT_BUBBLE_PADDING_Y * 2;
+
+/** One event's text in a bubble, drawn in that event's colour. */
+/** The event a bubble section stands for: a BPM line ("base" for Beat 0, else its event id), an SV event or a lane change. */
+export type TimelineEventTarget = { kind: "bpm" | "sv" | "laneChange"; key: string };
+type EventBubbleSection = { lines: string[]; color: string; target: TimelineEventTarget };
+/**
+ * One bubble section's box in the track canvas (CSS px), as last drawn; bubbles are the events' only hit areas.
+ * `bubble` lists every event of the bubble the section belongs to.
+ */
+export type EventBubbleHit = {
+  left: number; right: number; top: number; bottom: number;
+  target: TimelineEventTarget; bubble: TimelineEventTarget[];
+};
+
+/** The bubble section under a client point, from the hits of the last frame drawn on `canvas`. */
+export function hitTestEventBubble(
+  hits: readonly EventBubbleHit[],
+  canvas: HTMLCanvasElement | null,
+  clientX: number,
+  clientY: number,
+): EventBubbleHit | null {
+  if (!canvas || hits.length === 0) {
+    return null;
+  }
+  const rect = canvas.getBoundingClientRect();
+  const cssWidth = parseFloat(canvas.style.width) || rect.width;
+  const cssHeight = parseFloat(canvas.style.height) || rect.height;
+  if (rect.width <= 0 || rect.height <= 0) {
+    return null;
+  }
+  const x = (clientX - rect.left) * cssWidth / rect.width;
+  const y = (clientY - rect.top) * cssHeight / rect.height;
+  // Later bubbles are drawn on top, so the last match wins.
+  for (let index = hits.length - 1; index >= 0; index -= 1) {
+    const hit = hits[index]!;
+    if (x >= hit.left && x <= hit.right && y >= hit.top && y <= hit.bottom) {
+      return hit;
+    }
+  }
+  return null;
+}
+
+/**
+ * Original-style speech bubble: white body, coloured border, tail pointing right at the event line.
+ * Events on the same beat share one bubble; their sections are stacked top to bottom with a rule between them.
+ */
+function drawEventBubble(context: CanvasRenderingContext2D, tipX: number, centerY: number, sections: EventBubbleSection[], borderColor: string, leftLimit: number, scale: number): EventBubbleHit[] {
+  const tail = EVENT_BUBBLE_TAIL * scale, tailHalf = EVENT_BUBBLE_TAIL_HALF_HEIGHT * scale;
+  const paddingX = EVENT_BUBBLE_PADDING_X * scale, paddingY = EVENT_BUBBLE_PADDING_Y * scale;
+  const lineHeight = EVENT_BUBBLE_LINE_HEIGHT * scale, separatorGap = EVENT_BUBBLE_SEPARATOR_GAP * scale;
+  context.save();
+  context.font = `${EVENT_BUBBLE_FONT_SIZE * scale}px ${EVENT_BUBBLE_FONT_FAMILY}`;
+  const bodyRight = tipX - tail;
+  const textWidth = Math.max(...sections.flatMap(section => section.lines.map(line => context.measureText(line).width)));
+  // Widen toward the editor edge (the left limit is the fully opaque edge of the mask), but never narrower than the text.
+  const bodyLeft = Math.min(leftLimit, bodyRight - Math.ceil(textWidth) - paddingX * 2);
+  const lineCount = sections.reduce((count, section) => count + section.lines.length, 0);
+  const height = paddingY * 2 + lineHeight * lineCount + separatorGap * (sections.length - 1);
+  // The tail points at the vertical centre of the box.
+  const top = centerY - height / 2;
+  const bottom = top + height;
+  const r = EVENT_BUBBLE_RADIUS * scale;
+  context.beginPath();
+  context.moveTo(bodyLeft + r, top);
+  context.lineTo(bodyRight - r, top);
+  context.arcTo(bodyRight, top, bodyRight, top + r, r);
+  context.lineTo(bodyRight, centerY - tailHalf);
+  context.lineTo(tipX, centerY);
+  context.lineTo(bodyRight, centerY + tailHalf);
+  context.lineTo(bodyRight, bottom - r);
+  context.arcTo(bodyRight, bottom, bodyRight - r, bottom, r);
+  context.lineTo(bodyLeft + r, bottom);
+  context.arcTo(bodyLeft, bottom, bodyLeft, bottom - r, r);
+  context.lineTo(bodyLeft, top + r);
+  context.arcTo(bodyLeft, top, bodyLeft + r, top, r);
+  context.closePath();
+  context.fillStyle = "#FFFFFF";
+  context.fill();
+  context.lineWidth = EVENT_BUBBLE_BORDER * scale;
+  context.strokeStyle = borderColor;
+  context.stroke();
+  context.textAlign = "left";
+  context.textBaseline = "middle";
+  let y = top + paddingY;
+  // Each section's hit box runs from the rule above it (or the bubble top) to the rule below it (or the bottom).
+  const hits: EventBubbleHit[] = [];
+  const bubble = sections.map(section => section.target);
+  let sectionTop = top;
+  sections.forEach((section, index) => {
+    if (index > 0) {
+      const ruleY = y + separatorGap / 2;
+      hits[hits.length - 1]!.bottom = ruleY;
+      sectionTop = ruleY;
+      context.beginPath();
+      context.moveTo(bodyLeft + 1, ruleY);
+      context.lineTo(bodyRight - 1, ruleY);
+      context.lineWidth = EVENT_BUBBLE_RULE * scale;
+      context.strokeStyle = borderColor;
+      context.stroke();
+      y += separatorGap;
+    }
+    hits.push({ left: bodyLeft, right: tipX, top: sectionTop, bottom, target: section.target, bubble });
+    context.fillStyle = section.color;
+    for (const line of section.lines) {
+      context.fillText(line, bodyLeft + paddingX, y + lineHeight / 2);
+      y += lineHeight;
+    }
+  });
+  context.restore();
+  return hits;
+}
 const BOARD_OVERSCAN_PX = 280;
 const BOARD_HORIZONTAL_OVERSCAN_PX = 160;
-const PLAYBACK_BOARD_OVERSCAN_PX = 160;
-const PLAYBACK_BOARD_HORIZONTAL_OVERSCAN_PX = 96;
 const RENDER_WINDOW_SNAP_PX = 96;
-const PLAYBACK_RENDER_DPR_CAP = 1;
 const MAX_RENDER_DPR = 2;
-const PLAYBACK_LINE_CLEAR_HALF_BAND_PX = 4;
-const PLAYBACK_VIEWPORT_EDGE_TOLERANCE_PX = 8;
 const CONNECTION_SEGMENT_X_CONTINUITY_TOLERANCE_PX = 1;
 
 type SegmentGeometry = {
@@ -68,7 +199,6 @@ type CanvasBpmVisual = {
   beat: number;
   y?: number;
   bpm: number;
-  selected: boolean;
 };
 
 type CanvasSvVisual = {
@@ -77,7 +207,14 @@ type CanvasSvVisual = {
   y?: number;
   value: number;
   timingGroup: string;
-  selected: boolean;
+};
+
+/** A `#LANE_CHANGE` command; `effective` is the latest one, the only one the original applies. */
+type CanvasLaneChangeVisual = {
+  key: string;
+  beat: number;
+  y?: number;
+  effective: boolean;
 };
 
 function formatTimeLabel(seconds: number): string {
@@ -231,6 +368,8 @@ export function drawNoteVisual(
 
   context.save();
   context.globalAlpha *= alpha;
+  // A selected note is drawn brighter than the rest.
+  if (note.selected) context.filter = SELECTED_HIGHLIGHT_FILTER;
   context.imageSmoothingEnabled = true;
   context.imageSmoothingQuality = "high";
 
@@ -288,9 +427,7 @@ export function useCanvasPlayfieldBackend(params: {
   enabled: boolean;
   trackCanvasRef: RefObject<HTMLCanvasElement | null>;
   noteCanvasRef: RefObject<HTMLCanvasElement | null>;
-  playbackCanvasRef: RefObject<HTMLCanvasElement | null>;
   playfieldRef: RefObject<HTMLDivElement | null>;
-  playfieldBoardRef: RefObject<HTMLDivElement | null>;
   boardWidth: number;
   boardHeight: number;
   laneValues: number[];
@@ -306,7 +443,8 @@ export function useCanvasPlayfieldBackend(params: {
   totalDurationSec: number;
   bpmVisualLines: CanvasBpmVisual[];
   svVisualLines: CanvasSvVisual[];
-  selectedLongLineSegmentId: string | null;
+  laneChangeVisualLines: CanvasLaneChangeVisual[];
+  selectedSlideSegmentIds: ReadonlySet<string>;
   simultaneousSegments: RenderSimultaneousSegment[];
   connectionSegments: RenderConnectionSegment[];
   noteVisuals: CanvasNoteVisual[];
@@ -315,21 +453,20 @@ export function useCanvasPlayfieldBackend(params: {
   slideBuildCommittedGuideLines: Array<{ x1: number; y1: number; x2: number; y2: number; key: string }>;
   slideBuildGuideLine: { x1: number; y1: number; x2: number; y2: number } | null;
   selectionDrag: { isDragging: boolean; startX: number; startY: number; currentX: number; currentY: number } | null;
-  playbackLineVisible: boolean;
-  playbackCanvasLineEnabled: boolean;
-  playbackLineMode: "follow" | "free";
-  playbackLinePositionPercent: number;
-  getPlaybackNowTimeSec: () => number;
   useFullGridScan: boolean;
+  verticalZoom: number;
+  bubbleEdgeInset: number;
+  /** UI scale: event bubbles are sized in design px. */
+  bubbleScale: number;
   resourcesVersion: number;
+  /** Receives the bubble sections' hit boxes after each track frame. */
+  eventBubbleHitsRef: MutableRefObject<EventBubbleHit[]>;
 }) {
   const {
     enabled,
     trackCanvasRef,
     noteCanvasRef,
-    playbackCanvasRef,
     playfieldRef,
-    playfieldBoardRef,
     boardWidth,
     boardHeight,
     laneValues,
@@ -345,7 +482,8 @@ export function useCanvasPlayfieldBackend(params: {
     totalDurationSec,
     bpmVisualLines,
     svVisualLines,
-    selectedLongLineSegmentId,
+    laneChangeVisualLines,
+    selectedSlideSegmentIds,
     simultaneousSegments,
     connectionSegments,
     noteVisuals,
@@ -354,14 +492,13 @@ export function useCanvasPlayfieldBackend(params: {
     slideBuildCommittedGuideLines,
     slideBuildGuideLine,
     selectionDrag,
-    playbackLineVisible,
-    playbackCanvasLineEnabled,
-    playbackLineMode,
-    playbackLinePositionPercent,
-    getPlaybackNowTimeSec,
     useFullGridScan,
+    verticalZoom,
+    bubbleEdgeInset,
+    bubbleScale,
     resourcesVersion,
-  } = params;
+    eventBubbleHitsRef,
+} = params;
   const runtimeSkin = useMemo<CanvasRenderResourceRuntimeAssets | null>(
     () => (skinAssets ? projectCanvasRenderResourceRuntimeAssets(skinAssets) : null),
     [skinAssets],
@@ -383,7 +520,8 @@ export function useCanvasPlayfieldBackend(params: {
     totalDurationSec: number;
     bpmVisualLines: CanvasBpmVisual[];
     svVisualLines: CanvasSvVisual[];
-    selectedLongLineSegmentId: string | null;
+    laneChangeVisualLines: CanvasLaneChangeVisual[];
+    selectedSlideSegmentIds: ReadonlySet<string>;
     simultaneousSegments: RenderSimultaneousSegment[];
     connectionSegments: RenderConnectionSegment[];
     noteVisuals: CanvasNoteVisual[];
@@ -392,12 +530,10 @@ export function useCanvasPlayfieldBackend(params: {
     slideBuildCommittedGuideLines: Array<{ x1: number; y1: number; x2: number; y2: number; key: string }>;
     slideBuildGuideLine: { x1: number; y1: number; x2: number; y2: number } | null;
     selectionDrag: { isDragging: boolean; startX: number; startY: number; currentX: number; currentY: number } | null;
-    playbackLineVisible: boolean;
-    playbackCanvasLineEnabled: boolean;
-    playbackLineMode: "follow" | "free";
-    playbackLinePositionPercent: number;
-    getPlaybackNowTimeSec: () => number;
     useFullGridScan: boolean;
+    verticalZoom: number;
+    bubbleEdgeInset: number;
+    bubbleScale: number;
     resourcesVersion: number;
   } | null>(null);
   const trackRenderMemoRef = useRef<{
@@ -419,7 +555,13 @@ export function useCanvasPlayfieldBackend(params: {
     beatsPerMeasure: number;
     beatToYRef: (beat: number) => number;
     useFullGridScan: boolean;
+    hideSubdivisionLines: boolean;
+    bubbleLeftLimit: number;
+    bubbleScale: number;
     yToBeatRef: (y: number) => number;
+    bpmVisualLinesRef: CanvasBpmVisual[];
+    svVisualLinesRef: CanvasSvVisual[];
+    laneChangeVisualLinesRef: CanvasLaneChangeVisual[];
   } | null>(null);
   const noteRenderMemoRef = useRef<{
     viewportTop: number;
@@ -436,9 +578,7 @@ export function useCanvasPlayfieldBackend(params: {
     resourcesVersion: number;
     laneWidth: number;
     noteVisualScale: number;
-    bpmVisualLinesRef: CanvasBpmVisual[];
-    svVisualLinesRef: CanvasSvVisual[];
-    selectedLongLineSegmentId: string | null;
+    selectedSlideSegmentIds: ReadonlySet<string>;
     simultaneousSegmentsRef: RenderSimultaneousSegment[];
     connectionSegmentsRef: RenderConnectionSegment[];
     noteVisualsRef: CanvasNoteVisual[];
@@ -447,26 +587,7 @@ export function useCanvasPlayfieldBackend(params: {
     slideBuildGuideLineRef: { x1: number; y1: number; x2: number; y2: number } | null;
     selectionDragRef: { isDragging: boolean; startX: number; startY: number; currentX: number; currentY: number } | null;
   } | null>(null);
-  const playbackRenderMemoRef = useRef<{
-    viewportTop: number;
-    viewportHeight: number;
-    viewportWidth: number;
-    windowTop: number;
-    windowBottom: number;
-    windowHeight: number;
-    width: number;
-    boardXOffset: number;
-    logicalBoardWidth: number;
-    boardHeight: number;
-    renderDpr: number;
-    playbackRenderDpr: number;
-    playbackLineVisible: boolean;
-    playbackLineMode: "follow" | "free";
-    playbackLinePositionPercent: number;
-    playbackLineTimeSec: number;
-  } | null>(null);
-  const playbackLastLineYRef = useRef<number | null>(null);
-  const sortedConnectionSegmentsRef = useRef<{
+    const sortedConnectionSegmentsRef = useRef<{
     source: RenderConnectionSegment[] | null;
     sorted: RenderConnectionSegment[];
   }>({
@@ -490,7 +611,8 @@ export function useCanvasPlayfieldBackend(params: {
     totalDurationSec,
     bpmVisualLines,
     svVisualLines,
-    selectedLongLineSegmentId,
+    laneChangeVisualLines,
+    selectedSlideSegmentIds,
     simultaneousSegments,
     connectionSegments,
     noteVisuals,
@@ -499,12 +621,10 @@ export function useCanvasPlayfieldBackend(params: {
     slideBuildCommittedGuideLines,
     slideBuildGuideLine,
     selectionDrag,
-    playbackLineVisible,
-    playbackCanvasLineEnabled,
-    playbackLineMode,
-    playbackLinePositionPercent,
-    getPlaybackNowTimeSec,
     useFullGridScan,
+    verticalZoom,
+    bubbleEdgeInset,
+    bubbleScale,
     resourcesVersion,
   };
 
@@ -513,31 +633,24 @@ export function useCanvasPlayfieldBackend(params: {
       const snapshot = snapshotRef.current;
       const trackCanvas = trackCanvasRef.current;
       const noteCanvas = noteCanvasRef.current;
-      const playbackCanvas = playbackCanvasRef.current;
-      if (!enabled || !snapshot || !trackCanvas || !noteCanvas || !playbackCanvas) {
+      if (!enabled || !snapshot || !trackCanvas || !noteCanvas) {
         return;
       }
 
       const logicalBoardWidth = Math.max(1, Math.round(snapshot.boardWidth));
       const height = Math.max(1, Math.round(snapshot.boardHeight));
-      const renderDprCap = snapshot.playbackLineVisible ? PLAYBACK_RENDER_DPR_CAP : MAX_RENDER_DPR;
+      const renderDprCap = MAX_RENDER_DPR;
       const renderDpr = Math.min(
         renderDprCap,
         Math.max(1, typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1),
       );
-      const playbackRenderDpr = Math.min(
-        MAX_RENDER_DPR,
-        Math.max(1, typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1),
-      );
-      const playfield = playfieldRef.current;
+            const playfield = playfieldRef.current;
       const viewportTop = playfield ? playfield.scrollTop : 0;
       const viewportHeight = playfield ? playfield.clientHeight : height;
       const viewportBottom = viewportTop + viewportHeight;
       const viewportWidth = playfield ? playfield.clientWidth : logicalBoardWidth;
-      const verticalOverscan = snapshot.playbackLineVisible ? PLAYBACK_BOARD_OVERSCAN_PX : BOARD_OVERSCAN_PX;
-      const horizontalOverscan = snapshot.playbackLineVisible
-        ? PLAYBACK_BOARD_HORIZONTAL_OVERSCAN_PX
-        : BOARD_HORIZONTAL_OVERSCAN_PX;
+      const verticalOverscan = BOARD_OVERSCAN_PX;
+      const horizontalOverscan = BOARD_HORIZONTAL_OVERSCAN_PX;
       const sidePad = Math.max(
         horizontalOverscan,
         Math.ceil((viewportWidth - logicalBoardWidth) / 2) + horizontalOverscan,
@@ -545,20 +658,30 @@ export function useCanvasPlayfieldBackend(params: {
       const width = Math.max(1, logicalBoardWidth + sidePad * 2);
       const boardXOffset = sidePad;
       const rawWindowTop = Math.max(0, viewportTop - verticalOverscan);
-      const rawWindowBottom = Math.min(height, viewportBottom + verticalOverscan);
+      // Event bubbles at Beat 0 extend below the board bottom, so the window may overscan past it.
+      const rawWindowBottom = Math.min(height + verticalOverscan, viewportBottom + verticalOverscan);
       const windowTop = Math.max(
         0,
         Math.floor(rawWindowTop / RENDER_WINDOW_SNAP_PX) * RENDER_WINDOW_SNAP_PX,
       );
       const windowBottom = Math.max(
-        Math.min(height, Math.ceil(rawWindowBottom / RENDER_WINDOW_SNAP_PX) * RENDER_WINDOW_SNAP_PX),
+        Math.min(height + verticalOverscan, Math.ceil(rawWindowBottom / RENDER_WINDOW_SNAP_PX) * RENDER_WINDOW_SNAP_PX),
         windowTop + 1,
       );
       const windowHeight = Math.max(1, windowBottom - windowTop);
       const pixelWidth = Math.max(1, Math.round(width * renderDpr));
       const pixelHeight = Math.max(1, Math.round(windowHeight * renderDpr));
-      const playbackPixelWidth = Math.max(1, Math.round(width * playbackRenderDpr));
-      const playbackPixelHeight = Math.max(1, Math.round(viewportHeight * playbackRenderDpr));
+      // Drawing coordinates start at the canvas's left edge, which sits left of the editor region; the bubble may
+      // only widen to the region edge plus the mask's solid inset, otherwise the region clips it.
+      // Measured against where this frame puts the canvas (left = -sidePad), not where the last frame left it:
+      // a board width change moves the canvas, and a stale position would misplace the bubbles for one frame.
+      const canvasRect = trackCanvas.getBoundingClientRect();
+      const styledLeft = Number.parseFloat(trackCanvas.style.left) || 0;
+      const styledWidth = Number.parseFloat(trackCanvas.style.width) || 0;
+      const canvasScale = styledWidth > 0 && canvasRect.width > 0 ? canvasRect.width / styledWidth : 1;
+      const canvasLeft = canvasRect.left + (-sidePad - styledLeft) * canvasScale;
+      const regionLeftInCanvas = ((playfieldRef.current?.getBoundingClientRect().left ?? 0) - canvasLeft) / canvasScale;
+      const bubbleLeftLimit = regionLeftInCanvas + snapshot.bubbleEdgeInset;
       const trackMemo = {
         viewportTop,
         viewportHeight,
@@ -578,7 +701,13 @@ export function useCanvasPlayfieldBackend(params: {
         beatsPerMeasure: snapshot.beatsPerMeasure,
         beatToYRef: snapshot.beatToY,
         useFullGridScan: snapshot.useFullGridScan,
+        hideSubdivisionLines: isSubdivisionLineHidden(snapshot.verticalZoom),
+        bubbleLeftLimit,
+        bubbleScale: snapshot.bubbleScale,
         yToBeatRef: snapshot.yToBeat,
+        bpmVisualLinesRef: snapshot.bpmVisualLines,
+        svVisualLinesRef: snapshot.svVisualLines,
+        laneChangeVisualLinesRef: snapshot.laneChangeVisualLines,
       };
       const previousTrackMemo = trackRenderMemoRef.current;
       const shouldDrawTrack =
@@ -599,7 +728,13 @@ export function useCanvasPlayfieldBackend(params: {
         || previousTrackMemo.beatsPerMeasure !== trackMemo.beatsPerMeasure
         || previousTrackMemo.beatToYRef !== trackMemo.beatToYRef
         || previousTrackMemo.useFullGridScan !== trackMemo.useFullGridScan
-        || previousTrackMemo.yToBeatRef !== trackMemo.yToBeatRef;
+        || previousTrackMemo.hideSubdivisionLines !== trackMemo.hideSubdivisionLines
+        || previousTrackMemo.bubbleLeftLimit !== trackMemo.bubbleLeftLimit
+        || previousTrackMemo.bubbleScale !== trackMemo.bubbleScale
+        || previousTrackMemo.yToBeatRef !== trackMemo.yToBeatRef
+        || previousTrackMemo.bpmVisualLinesRef !== trackMemo.bpmVisualLinesRef
+        || previousTrackMemo.svVisualLinesRef !== trackMemo.svVisualLinesRef
+        || previousTrackMemo.laneChangeVisualLinesRef !== trackMemo.laneChangeVisualLinesRef;
 
       const noteMemo = {
         viewportTop,
@@ -616,9 +751,7 @@ export function useCanvasPlayfieldBackend(params: {
         resourcesVersion: snapshot.resourcesVersion,
         laneWidth: snapshot.laneWidth,
         noteVisualScale: snapshot.noteVisualScale,
-        bpmVisualLinesRef: snapshot.bpmVisualLines,
-        svVisualLinesRef: snapshot.svVisualLines,
-        selectedLongLineSegmentId: snapshot.selectedLongLineSegmentId,
+        selectedSlideSegmentIds: snapshot.selectedSlideSegmentIds,
         simultaneousSegmentsRef: snapshot.simultaneousSegments,
         connectionSegmentsRef: snapshot.connectionSegments,
         noteVisualsRef: snapshot.noteVisuals,
@@ -627,27 +760,7 @@ export function useCanvasPlayfieldBackend(params: {
         slideBuildGuideLineRef: snapshot.slideBuildGuideLine,
         selectionDragRef: snapshot.selectionDrag,
       };
-      const canvasPlaybackLineVisible = snapshot.playbackLineVisible && snapshot.playbackCanvasLineEnabled;
-      const playbackMemo = {
-        viewportTop,
-        viewportHeight,
-        viewportWidth,
-        windowTop,
-        windowBottom,
-        windowHeight,
-        width,
-        boardXOffset,
-        logicalBoardWidth,
-        boardHeight: height,
-        renderDpr,
-        playbackRenderDpr,
-        playbackLineVisible: canvasPlaybackLineVisible,
-        playbackLineMode: snapshot.playbackLineMode,
-        playbackLinePositionPercent: snapshot.playbackLinePositionPercent,
-        playbackLineTimeSec: snapshot.getPlaybackNowTimeSec(),
-      };
       const previousNoteMemo = noteRenderMemoRef.current;
-      const previousPlaybackMemo = playbackRenderMemoRef.current;
       const shouldDrawNote =
         !previousNoteMemo
         || previousNoteMemo.viewportWidth !== noteMemo.viewportWidth
@@ -662,9 +775,7 @@ export function useCanvasPlayfieldBackend(params: {
         || previousNoteMemo.resourcesVersion !== noteMemo.resourcesVersion
         || previousNoteMemo.laneWidth !== noteMemo.laneWidth
         || previousNoteMemo.noteVisualScale !== noteMemo.noteVisualScale
-        || previousNoteMemo.bpmVisualLinesRef !== noteMemo.bpmVisualLinesRef
-        || previousNoteMemo.svVisualLinesRef !== noteMemo.svVisualLinesRef
-        || previousNoteMemo.selectedLongLineSegmentId !== noteMemo.selectedLongLineSegmentId
+        || previousNoteMemo.selectedSlideSegmentIds !== noteMemo.selectedSlideSegmentIds
         || previousNoteMemo.simultaneousSegmentsRef !== noteMemo.simultaneousSegmentsRef
         || previousNoteMemo.connectionSegmentsRef !== noteMemo.connectionSegmentsRef
         || previousNoteMemo.noteVisualsRef !== noteMemo.noteVisualsRef
@@ -672,33 +783,6 @@ export function useCanvasPlayfieldBackend(params: {
         || previousNoteMemo.slideBuildCommittedGuideLinesRef !== noteMemo.slideBuildCommittedGuideLinesRef
         || previousNoteMemo.slideBuildGuideLineRef !== noteMemo.slideBuildGuideLineRef
         || previousNoteMemo.selectionDragRef !== noteMemo.selectionDragRef;
-      const shouldDrawPlayback =
-        !previousPlaybackMemo
-        || previousPlaybackMemo.viewportHeight !== playbackMemo.viewportHeight
-        || previousPlaybackMemo.viewportWidth !== playbackMemo.viewportWidth
-        || previousPlaybackMemo.width !== playbackMemo.width
-        || previousPlaybackMemo.boardXOffset !== playbackMemo.boardXOffset
-        || previousPlaybackMemo.logicalBoardWidth !== playbackMemo.logicalBoardWidth
-        || previousPlaybackMemo.boardHeight !== playbackMemo.boardHeight
-        || previousPlaybackMemo.renderDpr !== playbackMemo.renderDpr
-        || previousPlaybackMemo.playbackRenderDpr !== playbackMemo.playbackRenderDpr
-        || previousPlaybackMemo.playbackLineVisible !== playbackMemo.playbackLineVisible
-        || previousPlaybackMemo.playbackLineMode !== playbackMemo.playbackLineMode
-        || previousPlaybackMemo.playbackLinePositionPercent !== playbackMemo.playbackLinePositionPercent
-        || (playbackMemo.playbackLineVisible
-          && previousPlaybackMemo.playbackLineTimeSec !== playbackMemo.playbackLineTimeSec);
-      const playbackGeometryChanged =
-        !previousPlaybackMemo
-        || previousPlaybackMemo.viewportHeight !== playbackMemo.viewportHeight
-        || previousPlaybackMemo.viewportWidth !== playbackMemo.viewportWidth
-        || previousPlaybackMemo.width !== playbackMemo.width
-        || previousPlaybackMemo.boardXOffset !== playbackMemo.boardXOffset
-        || previousPlaybackMemo.logicalBoardWidth !== playbackMemo.logicalBoardWidth
-        || previousPlaybackMemo.boardHeight !== playbackMemo.boardHeight
-        || previousPlaybackMemo.playbackRenderDpr !== playbackMemo.playbackRenderDpr
-        || previousPlaybackMemo.playbackLineVisible !== playbackMemo.playbackLineVisible
-        || previousPlaybackMemo.playbackLineMode !== playbackMemo.playbackLineMode
-        || previousPlaybackMemo.playbackLinePositionPercent !== playbackMemo.playbackLinePositionPercent;
 
       const prepareCanvas = (canvas: HTMLCanvasElement): CanvasRenderingContext2D | null => {
         if (canvas.width !== pixelWidth) {
@@ -743,80 +827,94 @@ export function useCanvasPlayfieldBackend(params: {
         context.imageSmoothingQuality = "high";
         return context;
       };
-      const preparePlaybackCanvas = (fullClear: boolean): CanvasRenderingContext2D | null => {
-        const styleLeft = `${-sidePad}px`;
-        const styleTop = `${viewportTop}px`;
-        const styleWidth = `${width}px`;
-        const styleHeight = `${viewportHeight}px`;
-        const sizeChanged =
-          playbackCanvas.width !== playbackPixelWidth
-          || playbackCanvas.height !== playbackPixelHeight;
-        if (sizeChanged) {
-          playbackCanvas.width = playbackPixelWidth;
-          playbackCanvas.height = playbackPixelHeight;
-        }
-        if (playbackCanvas.style.left !== styleLeft) {
-          playbackCanvas.style.left = styleLeft;
-        }
-        if (playbackCanvas.style.top !== styleTop) {
-          playbackCanvas.style.top = styleTop;
-        }
-        if (playbackCanvas.style.right !== "auto") {
-          playbackCanvas.style.right = "auto";
-        }
-        if (playbackCanvas.style.bottom !== "auto") {
-          playbackCanvas.style.bottom = "auto";
-        }
-        if (playbackCanvas.style.width !== styleWidth) {
-          playbackCanvas.style.width = styleWidth;
-        }
-        if (playbackCanvas.style.height !== styleHeight) {
-          playbackCanvas.style.height = styleHeight;
-        }
-        const context = playbackCanvas.getContext("2d");
-        if (!context) {
-          return null;
-        }
-        context.save();
-        context.setTransform(1, 0, 0, 1, 0, 0);
-        if (fullClear || sizeChanged) {
-          context.clearRect(0, 0, playbackPixelWidth, playbackPixelHeight);
-        }
-        context.restore();
-        context.save();
-        context.setTransform(playbackRenderDpr, 0, 0, playbackRenderDpr, 0, 0);
-        context.imageSmoothingEnabled = true;
-        context.imageSmoothingQuality = "high";
-        return context;
-      };
 
       if (shouldDrawTrack) {
         const context = prepareCanvas(trackCanvas);
+        const gridLeft = boardXOffset + (logicalBoardWidth - GRID_SPAN_LANES * snapshot.laneWidth) / 2;
+        const gridRight = gridLeft + GRID_SPAN_LANES * snapshot.laneWidth;
         if (!context) {
           return;
         }
         trackRenderMemoRef.current = trackMemo;
+        // Only in-track targets (grid, horizontal lines, notes) stop at the board bottom (Beat 0); bubbles are not clipped.
+        context.save();
+        context.beginPath();
+        context.rect(0, 0, width, height - windowTop + 1);
+        context.clip();
 
-        for (const { step, y: yWorld } of editorGridWindow({ top: windowTop, bottom: windowBottom,
-          totalSteps: snapshot.totalSteps, beatDivision: snapshot.beatDivision,
+        for (const { y: yWorld, kind } of editorGridWindow({ top: windowTop, bottom: windowBottom,
+          totalSteps: snapshot.totalSteps, beatDivision: snapshot.beatDivision, beatsPerMeasure: snapshot.beatsPerMeasure,
+          verticalZoom: snapshot.verticalZoom,
           beatToY: snapshot.beatToY, yToBeat: snapshot.yToBeat, fullScan: snapshot.useFullGridScan })) {
-          const beat = step / snapshot.beatDivision;
           const y = yWorld - windowTop;
-          const roundedBeat = Math.round(beat);
-          const isWholeBeat = Math.abs(beat - roundedBeat) < 1e-6;
-          const isMeasureStart = isWholeBeat && roundedBeat % snapshot.beatsPerMeasure === 0;
-          context.strokeStyle = isMeasureStart
-            ? GRID_MEASURE_COLOR
-            : isWholeBeat
-              ? GRID_BEAT_COLOR
-              : GRID_COLOR;
-          context.lineWidth = 1;
+          context.strokeStyle = GRID_KIND_COLOR[kind];
+          context.lineWidth = 2;
           context.beginPath();
-          context.moveTo(boardXOffset, y);
-          context.lineTo(boardXOffset + logicalBoardWidth, y);
+          context.moveTo(gridLeft, y);
+          context.lineTo(gridRight, y);
           context.stroke();
         }
 
+        // Event lines span the track zone, which the board always fills.
+        const eventLineWidth = logicalBoardWidth;
+        const eventLineLeft = (width - eventLineWidth) / 2;
+        // Events are collected first, then merged per beat value (not per time: equal times at different beats stay
+        // apart). Each beat gets one line and one bubble listing its events in BPM, SV, lane-change order.
+        // Colour priority for the shared line and border: normal, then inactive.
+        type EditorEvent = { beat: number; y: number; section: EventBubbleSection; rank: number };
+        const events: EditorEvent[] = [];
+        const visibleY = (line: { y?: number; beat: number }) => {
+          const yWorld = Number.isFinite(line.y) ? Number(line.y) : snapshot.beatToY(line.beat);
+          return yWorld < windowTop - 24 || yWorld > windowBottom + 24 ? null : yWorld - windowTop;
+        };
+        for (const line of snapshot.bpmVisualLines) {
+          const y = visibleY(line);
+          if (y === null) continue;
+          events.push({ beat: line.beat, y, rank: 1,
+            section: { lines: ["BPM", String(Number(line.bpm.toFixed(2)))],
+              color: SV_LINE_COLOR, target: { kind: "bpm", key: line.key } } });
+        }
+        for (const line of snapshot.svVisualLines) {
+          const y = visibleY(line);
+          if (y === null) continue;
+          events.push({ beat: line.beat, y, rank: 1,
+            section: { lines: svEventBubbleLines(line.timingGroup, line.value), color: SV_LINE_COLOR,
+              target: { kind: "sv", key: line.key } } });
+        }
+        for (const line of snapshot.laneChangeVisualLines) {
+          const y = visibleY(line);
+          if (y === null) continue;
+          // Only the latest command changes the lanes; earlier ones are drawn but muted.
+          events.push({ beat: line.beat, y, rank: line.effective ? 1 : 0,
+            section: { lines: ["LANE CHANGE"], color: line.effective ? SV_LINE_COLOR : LANE_CHANGE_INEFFECTIVE_COLOR,
+              target: { kind: "laneChange", key: line.key } } });
+        }
+        const groups = new Map<number, EditorEvent[]>();
+        for (const event of events) {
+          const key = Math.round(event.beat * EVENT_BEAT_KEY_SCALE);
+          const group = groups.get(key);
+          if (group) group.push(event); else groups.set(key, [event]);
+        }
+        const eventBubbles: Array<{ y: number; sections: EventBubbleSection[]; color: string }> = [];
+        context.save();
+        context.lineWidth = 2;
+        for (const group of groups.values()) {
+          const lead = group.reduce((best, event) => event.rank > best.rank ? event : best);
+          const y = group[0]!.y;
+          context.strokeStyle = lead.section.color;
+          context.beginPath();
+          context.moveTo(eventLineLeft, y);
+          context.lineTo(eventLineLeft + eventLineWidth, y);
+          context.stroke();
+          eventBubbles.push({ y, sections: group.map(event => event.section), color: lead.section.color });
+        }
+        context.restore();
+        context.restore();
+        const bubbleHits: EventBubbleHit[] = [];
+        for (const bubble of eventBubbles) {
+          bubbleHits.push(...drawEventBubble(context, eventLineLeft, bubble.y, bubble.sections, bubble.color, trackMemo.bubbleLeftLimit, trackMemo.bubbleScale));
+        }
+        eventBubbleHitsRef.current = bubbleHits;
         context.restore();
       }
 
@@ -926,38 +1024,15 @@ export function useCanvasPlayfieldBackend(params: {
           continue;
         }
         const lineWidthAt = (lanes: number) => editorSlideLineWidth(lanes, snapshot.laneWidth, snapshot.noteVisualScale);
-        const longLineWidth = lineWidthAt(segment.spanLanes);
+        // The selected line segment group is drawn brighter; the selection frame encloses it.
+        const highlighted = !segment.isPreviewChain && snapshot.selectedSlideSegmentIds.has(segment.slideSegmentId);
+        if (highlighted) {
+          context.save();
+          context.filter = SELECTED_HIGHLIGHT_FILTER;
+        }
         drawConnectionSegment(context, segment, geometry, lineWidthAt(segment.fromSpanLanes),
           lineWidthAt(segment.toSpanLanes), texture);
-
-        if (
-          snapshot.selectedLongLineSegmentId
-          && !segment.isPreviewChain
-          && segment.groupId === snapshot.selectedLongLineSegmentId
-        ) {
-          context.save();
-          context.translate(geometry.topX, geometry.topY);
-          context.transform(1, 0, geometry.shearX, 1, 0, 0);
-          const left = -longLineWidth * 0.5 - 2;
-          const right = longLineWidth * 0.5 + 2;
-          context.strokeStyle = "rgba(255, 89, 145, 0.46)";
-          context.lineWidth = 3;
-          context.beginPath();
-          context.moveTo(left, 0);
-          context.lineTo(left, geometry.height);
-          context.moveTo(right, 0);
-          context.lineTo(right, geometry.height);
-          if (segment.groupStart) {
-            context.moveTo(left, geometry.height);
-            context.lineTo(right, geometry.height);
-          }
-          if (segment.groupEnd) {
-            context.moveTo(left, 0);
-            context.lineTo(right, 0);
-          }
-          context.stroke();
-          context.restore();
-        }
+        if (highlighted) context.restore();
       }
 
       const hasSlideGuide =
@@ -1007,80 +1082,6 @@ export function useCanvasPlayfieldBackend(params: {
         );
       }
 
-      context.save();
-      context.strokeStyle = "rgb(217, 13, 35)";
-      context.fillStyle = "rgb(217, 13, 35)";
-      context.lineWidth = 1;
-      context.font = "12px 'ChartUI', 'TTShinGoM', sans-serif";
-      context.textAlign = "left";
-      context.textBaseline = "alphabetic";
-      const boardElement = playfieldBoardRef.current;
-      let timelineLabelX = 8;
-      if (playfield && boardElement) {
-        const playfieldRect = playfield.getBoundingClientRect();
-        const boardRect = boardElement.getBoundingClientRect();
-        const boardScale = boardRect.width > 0 ? logicalBoardWidth / boardRect.width : 1;
-        const viewportLeftInBoard = (playfieldRect.left - boardRect.left) * boardScale;
-        timelineLabelX = 8 + Math.min(0, viewportLeftInBoard);
-      }
-      const bpmLabelX = boardXOffset + timelineLabelX;
-      for (const line of snapshot.bpmVisualLines) {
-        const yWorld = Number.isFinite(line.y) ? Number(line.y) : snapshot.beatToY(line.beat);
-        if (yWorld < windowTop - 24 || yWorld > windowBottom + 24) {
-          continue;
-        }
-        const y = yWorld - windowTop;
-        context.beginPath();
-        context.moveTo(0, y);
-        context.lineTo(width, y);
-        context.stroke();
-        context.fillText(`BPM ${line.bpm.toFixed(2)}`, bpmLabelX, y - 6);
-      }
-      context.restore();
-
-      context.save();
-      context.strokeStyle = "rgb(42, 188, 116)";
-      context.fillStyle = "rgb(42, 188, 116)";
-      context.lineWidth = 1;
-      context.font = "12px 'ChartUI', 'TTShinGoM', sans-serif";
-      context.textAlign = "left";
-      context.textBaseline = "alphabetic";
-      for (const line of snapshot.svVisualLines) {
-        const yWorld = Number.isFinite(line.y) ? Number(line.y) : snapshot.beatToY(line.beat);
-        if (yWorld < windowTop - 24 || yWorld > windowBottom + 24) {
-          continue;
-        }
-        const y = yWorld - windowTop;
-        const isNonGlobal = line.timingGroup !== "#Global";
-        if (line.selected) {
-          context.strokeStyle = isNonGlobal ? "rgb(123, 180, 255)" : "rgb(45, 225, 145)";
-          context.fillStyle = isNonGlobal ? "rgb(123, 180, 255)" : "rgb(45, 225, 145)";
-        } else {
-          context.strokeStyle = isNonGlobal ? "rgb(87, 150, 255)" : "rgb(42, 188, 116)";
-          context.fillStyle = isNonGlobal ? "rgb(87, 150, 255)" : "rgb(42, 188, 116)";
-        }
-        context.beginPath();
-        context.moveTo(0, y);
-        context.lineTo(width, y);
-        context.stroke();
-        context.fillText(`×${line.value.toFixed(2)}`, bpmLabelX, y + 13);
-      }
-      context.restore();
-
-      if (snapshot.selectionDrag?.isDragging) {
-        const left = Math.min(snapshot.selectionDrag.startX, snapshot.selectionDrag.currentX) + boardXOffset;
-        const top = Math.min(snapshot.selectionDrag.startY, snapshot.selectionDrag.currentY) - windowTop;
-        const widthRect = Math.abs(snapshot.selectionDrag.currentX - snapshot.selectionDrag.startX);
-        const heightRect = Math.abs(snapshot.selectionDrag.currentY - snapshot.selectionDrag.startY);
-        context.save();
-        context.strokeStyle = "rgba(255, 115, 166, 0.92)";
-        context.lineWidth = 2;
-        context.fillStyle = "rgba(255, 115, 166, 0.16)";
-        context.fillRect(left, top, widthRect, heightRect);
-        context.strokeRect(left, top, widthRect, heightRect);
-        context.restore();
-      }
-
       const minTime = snapshot.yToTime(windowBottom);
       const maxTime = snapshot.yToTime(windowTop);
       const firstSecond = Math.max(0, Math.floor(minTime));
@@ -1100,74 +1101,8 @@ export function useCanvasPlayfieldBackend(params: {
         context.restore();
       }
 
-      if (!shouldDrawPlayback) {
-        return;
-      }
-      const playbackContext = preparePlaybackCanvas(playbackGeometryChanged);
-      if (!playbackContext) {
-        return;
-      }
-      playbackRenderMemoRef.current = playbackMemo;
-      const clearPlaybackBand = (y: number) => {
-        const bandTop = y - PLAYBACK_LINE_CLEAR_HALF_BAND_PX;
-        const bandHeight = PLAYBACK_LINE_CLEAR_HALF_BAND_PX * 2 + 1;
-        playbackContext.clearRect(0, bandTop, width, bandHeight);
-      };
-      if (!playbackMemo.playbackLineVisible) {
-        playbackLastLineYRef.current = null;
-        playbackContext.restore();
-        return;
-      }
-      const playbackNowTimeSec = playbackMemo.playbackLineTimeSec;
-      const playbackWorldY = snapshot.timeToY(playbackNowTimeSec);
-      let localY = 0;
-      if (snapshot.playbackLineMode === "follow") {
-        const ratioFromBottom = Math.max(0, Math.min(1, snapshot.playbackLinePositionPercent / 100));
-        const anchorInViewport = viewportHeight * (1 - ratioFromBottom);
-        const yInViewport = playbackWorldY - viewportTop;
-        const maxScrollTop = Math.max(0, height - viewportHeight);
-        const isViewportPinnedAtTop = viewportTop <= PLAYBACK_VIEWPORT_EDGE_TOLERANCE_PX;
-        const isViewportPinnedAtBottom =
-          viewportTop >= maxScrollTop - PLAYBACK_VIEWPORT_EDGE_TOLERANCE_PX;
-        // Keep edge transition (from bottom toward anchor) when viewport is clamped at edges.
-        const effectiveYInViewport = (isViewportPinnedAtTop || isViewportPinnedAtBottom)
-          ? Math.max(anchorInViewport, yInViewport)
-          : anchorInViewport;
-        localY = effectiveYInViewport;
-      } else {
-        localY = playbackWorldY - viewportTop;
-      }
-      localY = snapToDevicePixel(localY, playbackRenderDpr);
-      if (!playbackGeometryChanged) {
-        const previousLineY = playbackLastLineYRef.current;
-        if (previousLineY !== null) {
-          clearPlaybackBand(previousLineY);
-        }
-      } else {
-        playbackLastLineYRef.current = null;
-      }
-      if (localY >= -4 && localY <= viewportHeight + 4) {
-        playbackContext.save();
-        playbackContext.strokeStyle = "rgba(79, 213, 255, 0.32)";
-        playbackContext.lineWidth = 3;
-        playbackContext.beginPath();
-        playbackContext.moveTo(0, localY);
-        playbackContext.lineTo(width, localY);
-        playbackContext.stroke();
-        playbackContext.strokeStyle = "rgba(79, 213, 255, 0.98)";
-        playbackContext.lineWidth = 1;
-        playbackContext.beginPath();
-        playbackContext.moveTo(0, localY);
-        playbackContext.lineTo(width, localY);
-        playbackContext.stroke();
-        playbackContext.restore();
-        playbackLastLineYRef.current = localY;
-      } else {
-        playbackLastLineYRef.current = null;
-      }
-      playbackContext.restore();
     };
-  }, [enabled, noteCanvasRef, playbackCanvasRef, playfieldRef, trackCanvasRef]);
+  }, [enabled, noteCanvasRef, playfieldRef, trackCanvasRef]);
 
   useEditorMainLoop({
     enabled,

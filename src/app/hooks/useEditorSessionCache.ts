@@ -16,9 +16,10 @@ import {
   EditorOptionSettings,
   ChartSettings,
   WindowPreset,
+  renumberTimingGroups,
 } from "../../chartCore";
 import type { SlideChain } from "../editorHelpers";
-import { applyHabahiroSlideWidths } from "../habahiroSlideWidth";
+import { applyHabahiroLongWidths } from "../habahiroLongWidth";
 import { useApplicationResourceManager } from "../../resources/applicationResourceContext";
 import { createResourceRef, type ResourceRef } from "../../resources/contracts";
 import type { ChartMediaResources } from "../../resources/selections";
@@ -187,7 +188,6 @@ export function useEditorSessionCache(params: any) {
     setSlideChains,
     setBpmEvents,
     setTimingGroups,
-    setToolBpmValue,
     setAudioFileName,
     setAudioDurationSec,
     setUploadCommunityPostContent,
@@ -200,7 +200,7 @@ export function useEditorSessionCache(params: any) {
     setPlaybackAllPerfectStatusDisplayMode,
     applyWindowPresetById,
     applyBestdoriSkinSelection,
-    clearAllSelections,
+    clearSelection,
     showDialog,
   } = params;
   const resourceManager = useApplicationResourceManager();
@@ -474,7 +474,7 @@ export function useEditorSessionCache(params: any) {
             : buildTimingGroupsFromSvEvents(sortedNormalizedSvEvents);
 
           const restoredNotes = nextSettings.habahiro === true
-            ? applyHabahiroSlideWidths(nextNotes, nextSlideChains)
+            ? applyHabahiroLongWidths(nextNotes, nextSlideChains)
             : nextNotes;
 
           const restoredAudioDuration = Number(snapshot.audioDurationSec);
@@ -553,11 +553,14 @@ export function useEditorSessionCache(params: any) {
           }
           setSettings(nextSettings);
           setMetadata(nextMetadata);
-          setNotes(restoredNotes);
-          setSlideChains(nextSlideChains);
+          // Timing groups are #0 (global) and #1, #2, …; caches from before that scheme are renumbered.
+          const numbered = renumberTimingGroups({
+            notes: restoredNotes, slideChains: nextSlideChains, timingGroups: restoredTimingGroups,
+          });
+          setNotes(numbered.notes);
+          setSlideChains(numbered.slideChains);
           setBpmEvents(sortedNormalizedBpmEvents);
-          setTimingGroups(restoredTimingGroups);
-          setToolBpmValue(nextMetadata.bpm);
+          setTimingGroups(numbered.timingGroups);
           setAudioDurationSec(safeAudioDuration);
           setAudioFileName(restoredAudioFileName);
           setChartMediaResources(restoredMedia);
@@ -579,7 +582,7 @@ export function useEditorSessionCache(params: any) {
         }
 
         if (restoredChart) {
-          clearAllSelections();
+          clearSelection();
           const ignoredMessages = [
             ignoredBaseBpmCount > 0 ? `忽略 ${ignoredBaseBpmCount} 条非法基础 BPM（需 > 0）` : "",
             ignoredEventZeroCount > 0 ? `忽略 ${ignoredEventZeroCount} 条 BPM=0 事件` : "",

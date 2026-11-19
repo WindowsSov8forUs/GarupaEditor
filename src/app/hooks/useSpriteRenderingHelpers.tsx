@@ -340,12 +340,14 @@ export function useNotePaletteSpriteRendering(params: any) {
     [DEFAULT_SPRITE_ASPECT_RATIO, setSpriteAspectRatios, spriteAspectRatios],
   );
 
+  /** Palette icons: width 1 and no overlays, unless the caller asks otherwise (e.g. the Middle tool's base image). */
   const getPaletteSpriteLayers = useCallback(
-    (type: NoteType): SpriteLayers =>
+    (type: NoteType, options?: SpriteLayerOptions): SpriteLayers =>
       getSpriteLayers(type, {
         includeDirectionalOverlay: false,
         includeFlickOverlay: false,
         width: 1,
+        ...options,
       }),
     [getSpriteLayers],
   );

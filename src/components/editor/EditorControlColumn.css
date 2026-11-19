@@ -1,0 +1,75 @@
+.editor-control-column {
+  flex: 0 0 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.editor-control-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.editor-control-row > * {
+  flex: 0 0 auto;
+}
+
+/* The play button and speed sit around the column's vertical middle. */
+.editor-control-play {
+  justify-content: flex-start;
+  margin: auto 0;
+}
+
+.editor-control-icon {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.editor-rehearsal-time {
+  display: block;
+  flex: 0 0 auto;
+}
+
+.editor-info-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 6px 4px;
+  font-size: 13px;
+  white-space: nowrap;
+  border: 0;
+  border-radius: 6px;
+  background: rgb(255 255 255 / 85%);
+  color: #333;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+
+.editor-control-tool-cell {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.editor-control-tool-scale {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+}
+
+/* Undo, redo and clipboard in one row above the play action of the left column (design px). */
+.editor-history-tools {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: row;
+  align-items: center;
+}
