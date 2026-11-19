@@ -371,6 +371,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   // The two confirmations: starting a new project from the home page, and dropping it on 创建工程.
   const [confirmingCreate, setConfirmingCreate] = useState(false);
   const [confirmingCancelCreate, setConfirmingCancelCreate] = useState(false);
+  // 新建工程 (menu) over a project in progress: it is replaced once the new one is saved.
+  const [confirmingReplaceProject, setConfirmingReplaceProject] = useState(false);
   // 发布到测试服 asks first: it publishes the chart as it is.
   const [confirmingTestServer, setConfirmingTestServer] = useState(false);
   const openSongEdit = (creating: boolean, open: (stack: PageStack) => PageStack) => {
@@ -379,6 +381,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   // 创建工程 over the page it is opened on (cancelling it returns there); opened again on itself, a new draft.
   const openSongCreate = () => openSongEdit(true, stack =>
     topPage(stack) === "songEdit" && songEditCreating ? stack : [...stack, "songEdit"]);
+  // The menu's 新建工程: warns when a project is in progress, otherwise opens 创建工程 at once.
+  const startNewProject = () => { if (vm.hasProjectContent) setConfirmingReplaceProject(true); else openSongCreate(); };
   // 创建工程 leaves through its confirmation; 编辑信息 to the page it came from.
   const leaveSongEdit = () => { if (songEditCreating) setConfirmingCancelCreate(true); else setPageStack(popPage); };
   // Cancelling 创建工程 returns to the page it was opened on (编辑信息 included, as a new draft).
@@ -1974,11 +1978,9 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
 
       <AppSettingsModal
         onReturnToTitle={returnToTitle ? handleReturnToTitle : undefined}
-        onSongInformation={() => { setIsAppSettingsOpen(false); setPageStack(stack => openDetailPage(stack, "song")); }}
-        onLivePreparation={() => { setIsAppSettingsOpen(false); setPageStack(stack => openDetailPage(stack, "live")); }}
+        onNewProject={startNewProject}
         optionsOpen={preparationSettingsOpen} onOptionsClose={() => setPreparationSettingsOpen(false)}
         resourcesReady={vm.settingsResourcesReady}
-        onImport={openImportJsonModal} onExport={downloadJson} onPreview={openStaticRenderWindow}
         onSettingsError={message => vm.showDialog(`设置操作失败：${message}`, "error")}
         onSimulator={openSimulatorWindow} onSkinLibrary={openSkinSettings} onAccount={openBestdoriLoginModal}
         open={isAppSettingsOpen}
@@ -2026,6 +2028,12 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         onClose={() => setConfirmingCancelCreate(false)} choices={[
           { label: "返回", action: () => setConfirmingCancelCreate(false) },
           { label: "确定", tone: "pink", action: () => { setConfirmingCancelCreate(false); cancelSongCreate(); } },
+        ]} />
+      <OriginalChoiceDialog open={confirmingReplaceProject} title="新建工程"
+        message="已有一个进行中的谱面，继续将会删除之前的工程。是否继续？"
+        onClose={() => setConfirmingReplaceProject(false)} choices={[
+          { label: "取消", action: () => setConfirmingReplaceProject(false) },
+          { label: "确定", tone: "pink", action: () => { setConfirmingReplaceProject(false); openSongCreate(); } },
         ]} />
       <SkinSettingsModal
         open={isSkinSettingsOpen}

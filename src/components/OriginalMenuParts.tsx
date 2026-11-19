@@ -21,7 +21,9 @@ export function OriginalHeaderMenuButton({ open, onClick }: { open: boolean; onC
       <OriginalPrefabView model={model} bindings={{ buttons: { 200: open ? undefined : { label: originalUiText("メニュー"), action: onClick } } }} />
   </UiAuthoredSurface>;
 }
-export interface OriginalMenuItem { key: string; label: string; action?: () => void; icon?: string; image?: string }
+export interface OriginalMenuItem { key: string; label: string; action?: () => void; icon?: string; image?: string;
+  /** The image's size in the icon's box (1: filling it), centred. */
+  imageScale?: number }
 export const ORIGINAL_MENU_ITEMS = content.items.filter(item => item.key === "menuList_option_button")
   .map(item => ({ key: item.key, icon: item.icon, label: (ORIGINAL_WORDING[item.key] ?? item.label).replace(/\\n/g, "\n") }));
 const titleItem = content.items.find(item => item.key === "menuList_title_button")!;
@@ -54,6 +56,8 @@ export function OriginalMenuCell({ item, large }: { item: OriginalMenuItem; larg
     <OriginalPrefabView model={model} bindings={{ omit: item.icon ? undefined : new Set([iconId]),
       buttons: { [button.id]: { label: item.label, action: item.action } } }} />
     {item.image && !item.icon && <img src={item.image} alt="" aria-hidden="true" style={{ position: "absolute",
-      left: box.x, top: box.y, width: box.width, height: box.height, pointerEvents: "none", zIndex: icon.data.mDepth }} />}
+      left: box.x + box.width * (1 - (item.imageScale ?? 1)) / 2, top: box.y + box.height * (1 - (item.imageScale ?? 1)) / 2,
+      width: box.width * (item.imageScale ?? 1), height: box.height * (item.imageScale ?? 1), pointerEvents: "none",
+      zIndex: icon.data.mDepth }} />}
   </>;
 }

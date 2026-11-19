@@ -4,54 +4,83 @@ import { OriginalGameSettingsModal } from "./OriginalGameSettingsModal";
 import { OriginalAuthoredDialog } from "./OriginalAuthoredDialog";
 import { OriginalMenuCell, originalMenuPositions, ORIGINAL_MENU_ITEMS, ORIGINAL_TITLE_MENU_ITEM, type OriginalMenuItem } from "./OriginalMenuParts";
 import { OriginalPrefabModel, ORIGINAL_PREFABS } from "./originalPrefabModel";
-import { useApplicationResourceUrl } from "../resources/applicationResourceContext";
+import content from "../data/originalMenuContent.json";
+import { useApplicationResourceManager } from "../resources/applicationResourceContext";
 
 type AppSettingsModalProps = EditorSettingsModalProps & {
   resourcesReady: boolean;
-  onSongInformation: () => void;
-  onLivePreparation: () => void;
   onReturnToTitle?: () => void;
+  /** 新建工程: called once the menu has closed. */
+  onNewProject?: () => void;
   optionsOpen?: boolean; onOptionsClose?: () => void;
-  onImport: () => void; onExport: () => void; onPreview: () => void;
   onSimulator: () => void; onSkinLibrary: () => void; onAccount: () => void;
   onSettingsError?: (message: string) => void;
 };
 const source = new OriginalPrefabModel(ORIGINAL_PREFABS.menulistdialog!);
-const model = new OriginalPrefabModel(source.prefab, { nodes: {
-  [source.nodeAt("ScrollWindow/ScrollBar").id]: { active: false },
-} });
-const cellsRoot = model.transform([...model.nodes.values()].find(node => node.transformId === 25)!.id);
+/**
+ * One row of cells (选项, 新建工程, Bestdori 账号, 返回标题), the window shortened to it: the header stays as far under the
+ * window's top and 关闭 as far above its bottom as in the source, the row as far under the header, and 关闭's top as
+ * far under the row as the row under the header's bottom. The window shrinks by twice the shift that takes the header
+ * and the row down and 关闭 up.
+ */
+const windowNode = source.nodeAt("Window"), headerNode = source.nodeAt("Header"), closeNode = source.nodeAt("ButtonClose");
+const scrollNode = source.nodeAt("ScrollWindow"), scrollerNode = source.nodeAt("ScrollWindow/scroller");
+const gridNode = [...source.nodes.values()].find(node => node.transformId === 25)!;
+const windowSprite = source.componentAt(windowNode.id, "UISprite")!;
+const headerHeight = source.componentAt(headerNode.id, "UISprite")!.data.mHeight as number;
+const closeHeight = source.componentAt(closeNode.id, "UISprite")!.data.mHeight as number;
+const scroller = source.componentAt(scrollerNode.id, "UIWidget")!;
+const headerY = source.transform(headerNode.id).y, closeY = source.transform(closeNode.id).y;
+const rowY = source.transform(gridNode.id).y + content.layout.startY;
+const shift = (headerY - closeY - 2 * (headerY - rowY) - (closeHeight - headerHeight) / 2) / 2;
+const model = new OriginalPrefabModel(source.prefab, {
+  nodes: {
+    [source.nodeAt("ScrollWindow/ScrollBar").id]: { active: false },
+    [headerNode.id]: { y: headerNode.position.y - shift },
+    [closeNode.id]: { y: closeNode.position.y + shift },
+    [scrollNode.id]: { y: scrollNode.position.y - shift },
+    [scrollerNode.id]: { y: scrollerNode.position.y + shift },
+  },
+  components: {
+    [windowSprite.id]: { mHeight: (windowSprite.data.mHeight as number) - 2 * shift },
+    [scroller.id]: { mHeight: (scroller.data.mHeight as number) - 2 * shift },
+  },
+});
+const cellsRoot = model.transform(gridNode.id);
 
 export function AppSettingsModal(props: AppSettingsModalProps) {
-  const [pendingPage, setPendingPage] = useState<"song" | "live" | "title" | null>(null);
+  // Returning to the title waits for the menu to close.
+  const [pendingTitle, setPendingTitle] = useState(false);
+  const [pendingNewProject, setPendingNewProject] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const previewIcon = useApplicationResourceUrl("ui.icon.preview");
-  const liveIcon = useApplicationResourceUrl("ui.icon.simulator-play");
-  const importIcon = useApplicationResourceUrl("ui.icon.json-import");
-  const exportIcon = useApplicationResourceUrl("ui.icon.json-export");
+  const bestdoriIcon = useApplicationResourceManager().resolveBuiltinSlotUrl("ui.icon.bestdori");
+  if (bestdoriIcon.status === "rejected") throw new Error(`${bestdoriIcon.failure.capability}: ${bestdoriIcon.failure.boundary}`);
   useEffect(() => { if (!props.open) setSettingsOpen(false); }, [props.open]);
   const items: OriginalMenuItem[] = [
-    { key: "editor-import", label: "导入谱面", image: importIcon, action: props.onImport },
-    { key: "editor-export", label: "导出谱面", image: exportIcon, action: props.onExport },
     ...ORIGINAL_MENU_ITEMS.map(item => ({ ...item,
       action: () => setSettingsOpen(true),
     })),
-    { key: "editor-song", label: "歌曲信息", icon: "button_bandtop_music", action: () => { setPendingPage("song"); props.onClose(); } },
-    { key: "editor-live", label: "演出", image: liveIcon, action: () => { setPendingPage("live"); props.onClose(); } },
-    { key: "editor-preview", label: "谱面预览", image: previewIcon, action: props.onPreview },
-    { key: "editor-account", label: "Bestdori 账号", icon: "icon_data_take_over", action: props.onAccount },
+    ...(props.onNewProject ? [{ key: "editor-new-project", label: "新建工程", icon: "icon_terms_of_service",
+      action: () => { setPendingNewProject(true); props.onClose(); } }] : []),
+    // Bestdori's icon fills its square; drawn as large as the original icon it replaces (icon_data_take_over shows
+    // about 46×44 of its 53×52 box).
+    { key: "editor-account", label: "Bestdori 账号", image: bestdoriIcon.value, imageScale: 0.86, action: props.onAccount },
     ...(props.onReturnToTitle ? [{ ...ORIGINAL_TITLE_MENU_ITEM,
-      action: () => { setPendingPage("title"); props.onClose(); } }] : []),
+      action: () => { setPendingTitle(true); props.onClose(); } }] : []),
   ];
   const positions = originalMenuPositions(items);
+  // The row centred across the window: the source's columns hold fewer cells.
+  const rowOffsetX = Math.max(0, content.layout.columns - items.length) * content.layout.columnWidth / 2;
   return <>
     <OriginalAuthoredDialog open={props.open} model={model} onClose={props.onClose}
-      onClosed={() => { if (pendingPage) { setPendingPage(null); if (pendingPage === "song") props.onSongInformation();
-        else if (pendingPage === "title") props.onReturnToTitle?.(); else props.onLivePreparation(); } }}
+      onClosed={() => {
+        if (pendingTitle) { setPendingTitle(false); props.onReturnToTitle?.(); }
+        if (pendingNewProject) { setPendingNewProject(false); props.onNewProject?.(); }
+      }}
       bindings={{ buttons: { 54: { action: props.onClose, label: model.text(model.components.get(51)!) } } }}>
       {items.map((item, index) => <div key={item.key} className="original-prefab-origin"
         data-original-menu-key={item.key}
-        style={{ left: cellsRoot.x + positions[index]!.x, top: -cellsRoot.y - positions[index]!.y }}>
+        style={{ left: cellsRoot.x + rowOffsetX + positions[index]!.x, top: -cellsRoot.y - positions[index]!.y }}>
         <OriginalMenuCell item={item} large={positions[index]!.large} />
       </div>)}
     </OriginalAuthoredDialog>
