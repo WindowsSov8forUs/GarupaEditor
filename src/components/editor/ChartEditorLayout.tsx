@@ -1,8 +1,20 @@
+import type { SlideFitSettings } from "../../app/slideFitShapes";
+import profile from "../../data/originalSongDetailProfile.json";
+import { OriginalPrefabModel, type OriginalPrefab } from "../originalPrefabModel";
 import { flushSync } from "react-dom";
 import { EditorMinimap } from "./EditorMinimap";
-import { EditorBeatDivision } from "./EditorBeatDivision";
 import { ORIGINAL_HEADER_MENU_BOUNDS } from "../OriginalPageHeader";
-import { editorDirectionalBackLineWidth, editorDirectionalHeadGeometry, editorDirectionalSegmentWidth, editorFlickArrowGeometry, editorNoteHeight, editorNoteTokenWidth } from "../../app/editorNoteMetrics";
+import { EDITOR_EDGE_SOFTNESS } from "../../app/editorEdgeMask";
+import { hitTestEventBubble, type EventBubbleHit, type TimelineEventTarget } from "../../app/hooks/useCanvasPlayfieldBackend";
+import type { EventBubbleHandlers } from "../../app/hooks/usePlayfieldRenderers";
+import { EditorBpmDialog } from "./EditorBpmDialog";
+import { EditorSvDialog } from "./EditorSvDialog";
+import { GLOBAL_TIMING_GROUP_ID, toolPreviewNoteType } from "../../chartCore";
+import { EditorBeatDivisionButton } from "./EditorBeatDivision";
+import { EDITOR_HISTORY_TRAILING_WIDTH, EditorControlColumn, EditorHistoryTools, EditorMirrorTools } from "./EditorControlColumn";
+import { useApplicationResourceUrl } from "../../resources/applicationResourceContext";
+import { editorDirectionalBackLineWidth, editorDirectionalHeadGeometry, editorFlickArrowGeometry, editorNoteHeight, editorDirectionalSegmentWidth, editorNoteTokenWidth, SELECTION_FRAME_MARGIN, SELECTION_RESIZE_GRIP_MAX_HEIGHT, SELECTION_RESIZE_GRIP_SCALE, SELECTION_RESIZE_GRIP_WIDTH, SELECTION_RESIZE_HIT_WIDTH } from "../../app/editorNoteMetrics";
+import { EditorSelectionOverlay, type EditorSelectionOverlayHandle } from "./EditorSelectionOverlay";
 import { OriginalMenuBackground } from "../OriginalMenuBackground";
 import { useApplicationPresentation, useReturnToTitle } from "../../app/titleNavigation";
 import { useStartupReadiness } from "../../app/startupReadiness";
@@ -10,7 +22,7 @@ import { EDITOR_STACK, HOME_STACK, leaveLivePreparation, openDetailPage, popPage
 import { AppSettingsModal } from "../AppSettingsModal";
 import { OriginalUiSoundProvider } from "../OriginalUiSound";
 import { BestdoriLoginModal } from "../BestdoriLoginModal";
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent as ReactMouseEvent } from "react";
+import { useLayoutEffect,  useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
 import { ExportJsonModal } from "../ExportJsonModal";
 import { ImportJsonModal } from "../ImportJsonModal";
 import { SongInformationPage } from "../SongInformationPage";
@@ -32,13 +44,36 @@ import { musicPlaySelection, type MusicPlaySelection } from "../musicSelectionDa
 import { DownloadProgressModal } from "../DownloadProgressModal";
 import { OverlayDialogModal } from "../OverlayDialogModal";
 import { SkinSettingsModal } from "../SkinSettingsModal";
-import { BESTDORI_SESSION_EXPIRED_MESSAGE, bestdoriCheckSession, bestdoriLogin, bestdoriLogout,
+import { bestdoriCheckSession, bestdoriLogin, bestdoriLogout,
   onBestdoriSessionExpired } from "../../services/bestdori/api";
 import { appLog } from "../../logging/applicationLogger";
 import { isMobileRuntime } from "../../app/mobileRuntime";
 import { SidebarPanel } from "./SidebarPanel";
+import { projectPlayfieldLineRuntimeAssets } from "../../skinLoader";
 import { useUiViewport } from "../useUiViewport";
 import type { useEditorIoAndShortcuts } from "../../app/hooks/useEditorIoAndShortcuts";
+import { useOriginalSkinPreviewResources } from "../useOriginalSkinPreviewResources";
+import { FIELD_WIDTH_LANES, loadPreviewLaneImage, unprojectFieldRows } from "./previewLaneStrip";
+import { resolveOriginalPreviewSkin } from "../../simulator/public/settings";
+
+/** Standard lanes; lane counts above it add lanes evenly on both sides (an ExGarupa feature). */
+const STANDARD_LANE_COUNT = 7;
+
+/**
+ * Extended lane counts: white dashed lines at the track zone's edges, and faint ones between the outer lanes
+ * (the extra lanes beyond one per side). Static like the track: the chart scrolls over them.
+ */
+function EditorLaneRangeGuides({ laneCount, left, width }: { laneCount: number; left: string; width: number }) {
+  const lane = width / laneCount;
+  const extra = (laneCount - STANDARD_LANE_COUNT) / 2;
+  const inner: number[] = [];
+  for (let index = 1; index < extra; index += 1) inner.push(index * lane, width - index * lane);
+  return <div className="editor-lane-range-guides" style={{ left, width }}>
+    <span className="editor-lane-range-edge" style={{ left: 0 }} />
+    <span className="editor-lane-range-edge" style={{ left: width }} />
+    {inner.map(x => <span key={x} className="editor-lane-range-inner" style={{ left: x }} />)}
+  </div>;
+}
 
 type ChartEditorLayoutProps = {
   vm: Record<string, any> & Pick<ReturnType<typeof useEditorIoAndShortcuts>, "loadOfficialChart">;
@@ -60,10 +95,100 @@ function isHalfBeatAligned(value: number): boolean {
   return Math.abs(snapped - value) <= 1e-6;
 }
 
+/** Design-pixel Y of the song information page's lower box bottom edge (page centre = 0, down = positive): the Beat 0 limit. */
+const JUDGE_LIMIT_DESIGN_Y = (() => {
+  const model = new OriginalPrefabModel(profile.prefabs.profileInformation as unknown as OriginalPrefab);
+  const box = model.rect(model.components.get(859)!);
+  return box.y + box.height;
+})();
+
+
+/** A function identity that never changes while always running the latest closure, so memoized children are not re-rendered by it. */
+function useStableEvent<A extends unknown[], R>(handler: (...args: A) => R): (...args: A) => R {
+  const latest = useRef(handler);
+  latest.current = handler;
+  return useCallback((...args: A) => latest.current(...args), []);
+}
+
+/** Playfield scroll position as a tiny external store: scrolling re-renders only the overlays that read it, not the whole layout. */
+const playfieldScroll = {
+  value: 0,
+  listeners: new Set<() => void>(),
+  get: () => playfieldScroll.value,
+  set(next: number) {
+    if (next === playfieldScroll.value) return;
+    playfieldScroll.value = next;
+    playfieldScroll.listeners.forEach(listener => listener());
+  },
+  subscribe(listener: () => void) {
+    playfieldScroll.listeners.add(listener);
+    return () => { playfieldScroll.listeners.delete(listener); };
+  },
+};
+
+/** Canvas interaction window (scroll range with overscan): external store, so snapping the window re-renders only its readers. */
+const interactionWindow = {
+  value: { top: 0, bottom: 0 },
+  listeners: new Set<() => void>(),
+  get: () => interactionWindow.value,
+  set(next: { top: number; bottom: number }) {
+    const previous = interactionWindow.value;
+    if (Math.abs(previous.top - next.top) < 1e-6 && Math.abs(previous.bottom - next.bottom) < 1e-6) return;
+    interactionWindow.value = next;
+    interactionWindow.listeners.forEach(listener => listener());
+  },
+  subscribe(listener: () => void) {
+    interactionWindow.listeners.add(listener);
+    return () => { interactionWindow.listeners.delete(listener); };
+  },
+};
+
+/** Hides a note's hitbox when it lies outside the canvas interaction window. */
+function NoteWindowCull({ y, children }: { y: number; children: ReactNode }) {
+  const window = useSyncExternalStore(interactionWindow.subscribe, interactionWindow.get);
+  if (y < window.top - 48 || y > window.bottom + 48) return null;
+  return <>{children}</>;
+}
+
+function SlideSegmentsLayer({ render }: { render: (window: { top: number; bottom: number }) => ReactNode }) {
+  const window = useSyncExternalStore(interactionWindow.subscribe, interactionWindow.get);
+  return <>{render(window)}</>;
+}
+
 export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   const returnToTitle = useReturnToTitle();
   const presentation = useApplicationPresentation();
   const uiViewport = useUiViewport();
+  const sidebarPlay = useStableEvent(() => { setIsAppSettingsOpen(false); setPageStack(stack => openDetailPage(stack, "live")); });
+  const sidebarPreview = useStableEvent(() => { void openStaticRenderWindow(); });
+  const sidebarUndo = useStableEvent(() => vm.undoLastNote());
+  const sidebarRedo = useStableEvent(() => vm.redoLastNote());
+  const curveSave = useStableEvent((settings: SlideFitSettings) => vm.saveCurveToolSettings(settings));
+  const curveCancel = useStableEvent(() => vm.cancelCurveTool());
+
+  const sidebarCopy = useStableEvent(() => vm.copyCurrentSelectionByShortcut());
+  const sidebarPaste = useStableEvent(() => vm.applyPasteToolFromPalette());
+  // Beat 0 limit in window pixels: the page is centred in the window, so the edge sits JUDGE_LIMIT_DESIGN_Y * scale below the centre.
+  const judgeBottomY = uiViewport.height / 2 + JUDGE_LIMIT_DESIGN_Y * uiViewport.scale;
+  const judgeInsetBottom = uiViewport.height - judgeBottomY;
+  // The editor region spans the whole window height: bleed it past the page body (header above, bottom bar below).
+  const editorRegionRef = useRef<HTMLElement | null>(null);
+  const selectionOverlayRef = useRef<EditorSelectionOverlayHandle>(null);
+  const [editorRegionBleed, setEditorRegionBleed] = useState({ top: 0, bottom: 0, height: 0 });
+  useLayoutEffect(() => {
+    const parent = editorRegionRef.current?.parentElement;
+    if (!parent) return;
+    const measure = () => {
+      const rect = parent.getBoundingClientRect();
+      const next = { top: rect.top, bottom: window.innerHeight - rect.bottom, height: rect.height };
+      setEditorRegionBleed(prev => (prev.top === next.top && prev.bottom === next.bottom && prev.height === next.height ? prev : next));
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(parent);
+    window.addEventListener("resize", measure);
+    return () => { observer.disconnect(); window.removeEventListener("resize", measure); };
+  }, []);
   const {
     jsonImportRef,
     bestdoriV2ImportRef,
@@ -126,8 +251,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     getSpriteLayers,
     getSpriteAspectRatio,
     renderSpriteStack,
-    clearAllSelections,
-    setStatusMessage,
+    clearSelection,
+    showDialog,
     notes,
     noteById,
     isSvPreviewEnabled,
@@ -141,8 +266,10 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     handleBoardContextMenu,
     boardHeight,
     scrollContentHeight,
-    renderBpmLines,
-    renderSvLines,
+    deleteTimelineEvent,
+    describeBpmEvent,
+    describeSvEvent,
+    eventBubbleHitsRef,
     cursorPreview,
     cursorPreviewRef,
     resolveDirectionalWidenPreviewAt,
@@ -150,11 +277,9 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     beatToY,
     playfieldTrackCanvasRef,
     playfieldNoteCanvasRef,
-    playfieldPlaybackCanvasRef,
     playfieldBoardRef,
     boardWidth,
     handleBoardClick,
-    renderLaneGuides,
     renderSlideSegments,
     NOTE_SPECS,
     resolvePlacedNoteLayers,
@@ -167,6 +292,13 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     formatBeat,
     selectedNoteIdSet,
     slideBuildSelectedIdSet,
+    selectionFrame,
+    canResizeSelection,
+    selectionWidthDrag,
+    previewSelectionWidth,
+    endSelectionWidth,
+    cancelSelectionWidth,
+    renderNotes,
     slideBuildRef,
     appendSlideBuildNote,
     setSlideBuildMode,
@@ -174,13 +306,10 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     beginSelectedNotesMove,
     suppressNextNoteClickRef,
     toggleSelectedNote,
-    clearSelectedBpmEvents,
-    setSelectedBpmEventId,
     applyToolToPlacedNote,
     finalizeSlideBuild,
     cancelSlideBuild,
-    deleteSelectedNotes,
-    deleteNote,
+    deleteRightClickedNotes,
     toolDirectionalWidth,
     toolRhythmWidth,
     normalizeDirectionalWidth,
@@ -225,13 +354,53 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     copiedChartPayload,
   } = vm;
   const mobileRuntime = isMobileRuntime();
+  const clipboardIcon = useApplicationResourceUrl("ui.icon.clipboard");
+  // Memoized: SidebarPanel is memoized and must not re-render for an identical row.
+  const historyTools = useMemo(() => <EditorHistoryTools canUndo={vm.canUndoLastOperation} canRedo={vm.canRedoLastOperation}
+    onUndo={sidebarUndo} onRedo={sidebarRedo} onCopy={sidebarCopy} onPaste={sidebarPaste}
+    undoIcon={vm.undoActionIcon} clipboardIcon={clipboardIcon}
+    trailing={<EditorBeatDivisionButton value={vm.settings.timeSignatureDenominator} onSave={vm.setBeatDivision}
+      width={EDITOR_HISTORY_TRAILING_WIDTH} />} />,
+  [vm.canUndoLastOperation, vm.canRedoLastOperation, vm.undoActionIcon, clipboardIcon, sidebarUndo, sidebarRedo, sidebarCopy, sidebarPaste,
+    vm.settings.timeSignatureDenominator, vm.setBeatDivision]);
+  // deleteSelectedNotes changes with the selection; a stable handler keeps the memoized row unchanged.
+  const deleteSelectionRef = useRef(vm.deleteSelectedNotes);
+  deleteSelectionRef.current = vm.deleteSelectedNotes;
+  const deleteSelection = useCallback(() => deleteSelectionRef.current(), []);
+  const mirrorTools = useMemo(() => <EditorMirrorTools enabled={vm.canMirror} onMirror={vm.mirrorSelectionAlong}
+    mirrorIcon={vm.mirrorActionIcon} canDelete={vm.canDeleteSelection} onDelete={deleteSelection}
+    deleteIcon={vm.clearActionIcon} />,
+  [vm.canMirror, vm.mirrorSelectionAlong, vm.mirrorActionIcon, vm.canDeleteSelection, deleteSelection, vm.clearActionIcon]);
+  const longBodyTexture = useMemo(() => vm.skinAssets ? projectPlayfieldLineRuntimeAssets(vm.skinAssets).longLine : undefined, [vm.skinAssets]);
+  const curveSlideLineTexture = useMemo(() => vm.skinAssets ? projectPlayfieldLineRuntimeAssets(vm.skinAssets).curveSlideLine : undefined, [vm.skinAssets]);
   const [viewportTop, setViewportTop] = useState(0);
+  // Workspace top: overlay controls sit in the workspace, not in the editor region (which now bleeds to the window top).
+  const [workspaceTop, setWorkspaceTop] = useState(0);
+  /** Gap between the header menu button's bottom and the workspace top, in design px. */
+  const headerToWorkspaceGap = Math.max(0, (workspaceTop - uiViewport.safeInsets.top) / uiViewport.scale
+    - ORIGINAL_HEADER_MENU_BOUNDS.top - ORIGINAL_HEADER_MENU_BOUNDS.height);
+  const editorTrackRecipe = useMemo(() => resolveOriginalPreviewSkin(appOptionSettings.simulatorSettings.skin),
+    [appOptionSettings.simulatorSettings.skin]);
+  const editorTrackPreview = useOriginalSkinPreviewResources(editorTrackRecipe,
+    message => vm.showDialog(`轨道贴图失败：${message}`, "error"));
+  const [flatTrackLane, setFlatTrackLane] = useState<string | null>(null);
+  useEffect(() => {
+    const url = editorTrackPreview.lane;
+    setFlatTrackLane(null);
+    if (!url) return;
+    let cancelled = false;
+    loadPreviewLaneImage(url)
+      .then(image => { if (!cancelled) setFlatTrackLane(unprojectFieldRows(image).toDataURL("image/png")); })
+      .catch(cause => console.error("Flat track lane failed", cause));
+    return () => { cancelled = true; };
+  }, [editorTrackPreview.lane]);
+  const sidebarCurve = useMemo(() => ({ settings: vm.curveToolSettings, onSave: curveSave, onCancel: curveCancel,
+    trackLane: flatTrackLane, boardLaneWidth: LANE_WIDTH }), [vm.curveToolSettings, curveSave, curveCancel, flatTrackLane, LANE_WIDTH]);
   const [viewportRight, setViewportRight] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(window.innerHeight);
-  const [playfieldScrollTop, setPlayfieldScrollTop] = useState(0);
+  void viewportRight;
   const [timelineLabelX, setTimelineLabelX] = useState(8);
   const rhythmSkinTypes = bestdoriSkinCatalogOptions?.rhythm ?? [];
-  const habahiroRhythmSkinTypes = bestdoriSkinCatalogOptions?.habahiroRhythm ?? [];
   const directionalSkinTypes = bestdoriSkinCatalogOptions?.directional ?? [];
   const rhythmSeSkinTypes = bestdoriSkinCatalogOptions?.rhythmSe ?? [];
   const directionalSeSkinTypes = bestdoriSkinCatalogOptions?.directionalSe ?? [];
@@ -269,7 +438,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   useEffect(() => { if (!livePreparationOpen) setPreviewStopped(false); }, [livePreparationOpen]);
   const samplePlayer = useMusicPreview(musicSelectionOpen && !previewStopped ? preview.request : null,
     appOptionSettings.simulatorSettings.systemBgmVolumePercent * appOptionSettings.simulatorSettings.masterVolumePercent / 10000,
-    preview.paused, message => vm.setStatusMessage(message));
+    preview.paused, message => vm.showDialog(message, "error"));
   const answerMvDownload = (confirmed: boolean) => { mvDownloadAnswer?.(confirmed); setMvDownloadAnswer(null); };
   useEffect(() => {
     if (musicSelectionOpen) return;
@@ -359,8 +528,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     bestdoriAuthRevision.current += 1;
     setBestdoriUsernameDisplay("");
     setBestdoriNicknameDisplay("");
-    setStatusMessage(BESTDORI_SESSION_EXPIRED_MESSAGE);
-  }), [setStatusMessage]);
+    showDialog("Bestdori 登录已失效，\n请重新登录。");
+  }), [showDialog]);
   useEffect(() => {
     let disposed = false;
     const revision = bestdoriAuthRevision.current;
@@ -419,15 +588,14 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       setBestdoriNicknameDisplay(resolvedNickname);
       setIsBestdoriLoginOpen(false);
       setBestdoriLoginPasswordInput("");
-      setStatusMessage("Bestdori 登录成功。");
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      setStatusMessage(`Bestdori 登录失败：${message}`);
+      showDialog(`Bestdori 登录失败：${message}`, "error");
     } finally {
       bestdoriAuthBusy.current = false;
       setBestdoriLoginSubmitting(false);
     }
-  }, [bestdoriLoginPasswordInput, bestdoriLoginSubmitting, bestdoriLoginUsernameInput, setStatusMessage]);
+  }, [bestdoriLoginPasswordInput, bestdoriLoginSubmitting, bestdoriLoginUsernameInput, showDialog]);
 
   const logoutBestdori = useCallback(async () => {
     if (bestdoriAuthBusy.current) return;
@@ -440,16 +608,59 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       setBestdoriUsernameDisplay("");
       setBestdoriNicknameDisplay("");
       setBestdoriLoginPasswordInput("");
-      setStatusMessage("已退出 Bestdori 账号。");
     } catch (error) {
-      setStatusMessage(`Bestdori 退出登录失败：${error instanceof Error ? error.message : String(error)}`);
+      showDialog(`Bestdori 退出登录失败：${error instanceof Error ? error.message : String(error)}`, "error");
     } finally {
       bestdoriAuthBusy.current = false;
       setBestdoriLoginSubmitting(false);
     }
-  }, [setStatusMessage]);
+  }, [showDialog]);
 
   const isColorAssistEnabled = appOptionSettings?.colorAssistEnabled === true;
+  /** The event bubble section under the pointer, or null. */
+  const eventBubbleHitAt = (event: { clientX: number; clientY: number }) =>
+    hitTestEventBubble(eventBubbleHitsRef.current, playfieldTrackCanvasRef.current, event.clientX, event.clientY);
+  // With the BPM tool armed, a bubble holding a BPM event opens that event's editor.
+  // The target stays set while the dialog closes, so its value does not change during the close animation.
+  const [bpmEditTarget, setBpmEditTarget] = useState<{ key: string; selectionId: string; bpm: number; isBase: boolean } | null>(null);
+  const [bpmEditOpen, setBpmEditOpen] = useState(false);
+  // With the SV tool armed, a bubble holding an SV event opens that event's editor.
+  const [svEditTarget, setSvEditTarget] = useState<{ id: string; value: number; timingGroup: string } | null>(null);
+  const [svEditOpen, setSvEditOpen] = useState(false);
+  /**
+   * Event lines are never selected: a bubble only reaches its event through the armed BPM or SV tool. The BPM tool
+   * takes the bubble's BPM event; the SV tool the SV section that was pressed, else the bubble's first SV event.
+   */
+  const toolEventTarget = (hit: Pick<EventBubbleHit, "target" | "bubble">): TimelineEventTarget | null => {
+    if (!isToolArmed) return null;
+    if (tool === "bpm") return hit.bubble.find(target => target.kind === "bpm") ?? null;
+    if (tool === "sv") return hit.target.kind === "sv" ? hit.target : hit.bubble.find(target => target.kind === "sv") ?? null;
+    return null;
+  };
+  const eventBubbleHandlers: EventBubbleHandlers = {
+    // A press opens the tool's editor for that event.
+    press(hit) {
+      const target = toolEventTarget(hit);
+      if (target?.kind === "bpm") {
+        const described = describeBpmEvent(target);
+        if (described) {
+          setBpmEditTarget({ key: target.key, ...described });
+          setBpmEditOpen(true);
+        }
+      } else if (target?.kind === "sv") {
+        const described = describeSvEvent(target);
+        if (described) {
+          setSvEditTarget(described);
+          setSvEditOpen(true);
+        }
+      }
+    },
+    // A right-click deletes that event.
+    remove(hit) {
+      const target = toolEventTarget(hit);
+      if (target) deleteTimelineEvent(target);
+    },
+  };
   const effectiveScrollContentHeight = Math.max(boardHeight, Number(scrollContentHeight) || 0);
   const canvasBpmCursorPreviewRef = useRef<HTMLDivElement | null>(null);
   const canvasBpmSnapPreviewRef = useRef<HTMLDivElement | null>(null);
@@ -460,9 +671,14 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   const canvasNoteReplacePreviewRef = useRef<HTMLDivElement | null>(null);
   const canvasDirectionalWidenPreviewRef = useRef<HTMLDivElement | null>(null);
 
-  const isPlacementNoteTool = isToolArmed && tool !== "bpm" && tool !== "sv" && tool !== "copy" && tool !== "paste";
+  // The Middle tool places on blank board only in ExGarupa (elsewhere it only inserts into Slides), so it previews only there.
+  const isPlacementNoteTool = isToolArmed && tool !== "bpm" && tool !== "sv" && tool !== "copy" && tool !== "paste"
+    && tool !== "curve"
+    && !(tool === "middle" && !vm.isExGarupaEnabled);
   const isPasteToolSelected = isToolArmed && tool === "paste";
-  const canvasPreviewType = isPlacementNoteTool ? tool : null;
+  // The Long tool previews its head (the slide sprite); the Middle tool its node (the slide middle-node sprite).
+  const isMiddlePreview = tool === "middle";
+  const canvasPreviewType = isPlacementNoteTool ? toolPreviewNoteType(tool) : null;
   const canvasPreviewRhythmWidth = canvasPreviewType && isHabahiroEnabled && isRhythmWidthEditableType(canvasPreviewType)
     ? normalizeRhythmWidth(toolRhythmWidth)
     : 1;
@@ -471,10 +687,11 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     if (!canvasPreviewType) {
       return null;
     }
-    return getSpriteLayers(canvasPreviewType, { width: canvasPreviewRhythmWidth });
-  }, [canvasPreviewRhythmWidth, canvasPreviewType, getSpriteLayers]);
+    return getSpriteLayers(canvasPreviewType, { width: canvasPreviewRhythmWidth,
+      ...(isMiddlePreview ? { baseImageType: "slide_among" as const } : {}) });
+  }, [canvasPreviewRhythmWidth, canvasPreviewType, getSpriteLayers, isMiddlePreview]);
   const canvasPreviewSingleAssistLayers = useMemo(() => {
-    if (canvasPreviewType !== "single" || !isColorAssistEnabled) {
+    if (canvasPreviewType !== "single" || isMiddlePreview || !isColorAssistEnabled) {
       return null;
     }
     return getSpriteLayers("single", {
@@ -529,6 +746,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
 
     const updatePlayfieldMeasurements = () => {
       setViewportTop(playfield.parentElement!.getBoundingClientRect().top);
+      setWorkspaceTop(playfield.parentElement!.parentElement!.getBoundingClientRect().top);
       setViewportHeight(window.innerHeight);
       setViewportRight(window.innerWidth - playfield.parentElement!.parentElement!.getBoundingClientRect().right);
       const bottom = playfield.parentElement!.getBoundingClientRect().bottom;
@@ -569,7 +787,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   }, [boardWidth, isSkinReady, playfieldBoardRef, playfieldRef]);
   const scaledBoardWidth = boardWidth;
   const scaledScrollContentHeight = effectiveScrollContentHeight;
-  const viewportTimelineScale = 1;
   const canvasPreviewTokenStyle: CSSProperties = useMemo(
     () => ({
       left: -9999,
@@ -736,10 +953,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     laneToColumn,
     normalizeRhythmWidth,
   ]);
-  const [canvasInteractionWindow, setCanvasInteractionWindow] = useState(() => ({
-    top: 0,
-    bottom: effectiveScrollContentHeight,
-  }));
   const updateCanvasInteractionWindow = useCallback((scrollTop: number, clientHeight: number) => {
     const rawTop = Math.max(0, scrollTop - CANVAS_INTERACTION_OVERSCAN_PX);
     const rawBottom = Math.min(effectiveScrollContentHeight, scrollTop + clientHeight + CANVAS_INTERACTION_OVERSCAN_PX);
@@ -748,12 +961,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       top + 1,
       Math.min(effectiveScrollContentHeight, Math.ceil(rawBottom / CANVAS_INTERACTION_SNAP_PX) * CANVAS_INTERACTION_SNAP_PX),
     );
-    setCanvasInteractionWindow((previous) => {
-      if (Math.abs(previous.top - top) < 1e-6 && Math.abs(previous.bottom - bottom) < 1e-6) {
-        return previous;
-      }
-      return { top, bottom };
-    });
+    interactionWindow.set({ top, bottom });
   }, [effectiveScrollContentHeight]);
   useEffect(() => {
     const playfield = playfieldRef?.current;
@@ -763,9 +971,10 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     updateCanvasInteractionWindow(playfield.scrollTop, playfield.clientHeight);
   }, [effectiveScrollContentHeight, playfieldRef, updateCanvasInteractionWindow]);
   const handlePlayfieldScrollInternal = useCallback((event: any) => {
-    setPlayfieldScrollTop(event.currentTarget.scrollTop);
+    playfieldScroll.set(event.currentTarget.scrollTop);
     handlePlayfieldScroll(event);
     updateCanvasInteractionWindow(event.currentTarget.scrollTop, event.currentTarget.clientHeight);
+    selectionOverlayRef.current?.sync();
   }, [handlePlayfieldScroll, updateCanvasInteractionWindow]);
 
   useEffect(() => {
@@ -966,24 +1175,49 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     slideBuildRef,
     appendSlideBuildNote,
     setSlideBuildMode,
-    setStatusMessage,
+    showDialog,
     startSlideBuildFromSeedNote,
     beginSelectedNotesMove,
     suppressNextNoteClickRef,
     toggleSelectedNote,
-    clearSelectedBpmEvents,
-    setSelectedBpmEventId,
     applyToolToPlacedNote,
     finalizeSlideBuild,
     cancelSlideBuild,
-    selectedNoteIdSet,
-    deleteSelectedNotes,
-    clearAllSelections,
-    deleteNote,
+    clearSelection,
+    deleteRightClickedNotes,
     isSvPreviewEnabled,
     isNoteOutsideActiveTimingGroup,
   };
 
+  // The hover frame is the selection frame around the hovered note's button. A button that goes away (the note was
+  // deleted or became Hidden) fires no mouseleave, so the frame is placed again from the button after every render.
+  const hoverMarginRef = useRef(0);
+  hoverMarginRef.current = SELECTION_FRAME_MARGIN * uiViewport.scale;
+  const hoveredNoteIdRef = useRef<string | null>(null);
+  const placeHoverFrame = useCallback(() => {
+    const board = playfieldBoardRef.current, id = hoveredNoteIdRef.current;
+    const button = id && board ? (board as HTMLElement).querySelector<HTMLElement>(`.note-token.note-hitbox[data-note-id="${CSS.escape(id)}"]`) : null;
+    if (!board || !button) {
+      hoveredNoteIdRef.current = null;
+      selectionOverlayRef.current?.setHoverFrame(null);
+      return;
+    }
+    const boardRect = board.getBoundingClientRect(), rect = button.getBoundingClientRect();
+    const margin = hoverMarginRef.current;
+    selectionOverlayRef.current?.setHoverFrame({ left: rect.left - boardRect.left - margin, top: rect.top - boardRect.top - margin,
+      width: rect.width + 2 * margin, height: rect.height + 2 * margin });
+  }, [playfieldBoardRef]);
+  const handleSharedNoteMouseEnter = useCallback((event: ReactMouseEvent<HTMLButtonElement>) => {
+    hoveredNoteIdRef.current = event.currentTarget.dataset.noteId ?? null;
+    placeHoverFrame();
+  }, [placeHoverFrame]);
+  const handleSharedNoteMouseLeave = useCallback(() => {
+    hoveredNoteIdRef.current = null;
+    selectionOverlayRef.current?.setHoverFrame(null);
+  }, []);
+  useLayoutEffect(() => {
+    if (hoveredNoteIdRef.current) placeHoverFrame();
+  });
   const handleSharedNoteMouseDown = useCallback((event: ReactMouseEvent<HTMLButtonElement>) => {
     const runtime = noteInteractionRef.current;
     const noteId = event.currentTarget.dataset.noteId;
@@ -1013,20 +1247,17 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         if (activeSlideBuild.mode === "append") {
           const result = runtime.appendSlideBuildNote(note.id);
           if (result.blocked) {
-            runtime.setStatusMessage("仅可连接到其他 Slide 序列的头部。");
+            runtime.showDialog("Long 不能添加中间节点。");
             return;
           }
           if (result.appended) {
             runtime.setSlideBuildMode("drag");
-            runtime.setStatusMessage(
-              result.merged
-                ? "已合并序列并切换到拖动连接，可继续从新序列尾部连接。"
-                : "Slide 拖动连接中：移动经过音符即可追加，松开左键返回追加模式，右键完成。",
-            );
           }
           return;
         }
-        runtime.appendSlideBuildNote(note.id);
+        if (runtime.appendSlideBuildNote(note.id).blocked) {
+          runtime.showDialog("Long 不能添加中间节点。");
+        }
         return;
       }
       runtime.startSlideBuildFromSeedNote(note);
@@ -1052,14 +1283,12 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     }
     if (runtime.isSvPreviewEnabled) {
       event.stopPropagation();
-      runtime.setStatusMessage("SV 预览为只读模式，请关闭后再编辑。");
+      runtime.showDialog("SV 预览为只读模式，请关闭后再编辑。");
       if (event.metaKey || event.ctrlKey) {
         runtime.toggleSelectedNote(note.id);
-        runtime.clearSelectedBpmEvents();
-        runtime.setSelectedBpmEventId(null);
         return;
       }
-      runtime.clearAllSelections();
+      runtime.clearSelection();
       runtime.toggleSelectedNote(note.id);
       return;
     }
@@ -1076,8 +1305,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     }
     if (!runtime.isToolArmed && (event.metaKey || event.ctrlKey)) {
       runtime.toggleSelectedNote(note.id);
-      runtime.clearSelectedBpmEvents();
-      runtime.setSelectedBpmEventId(null);
       return;
     }
     runtime.applyToolToPlacedNote(note);
@@ -1101,24 +1328,18 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     const activeSlideBuild = runtime.slideBuildRef.current;
     if (activeSlideBuild) {
       if (activeSlideBuild.persistUntilRightClick) {
-        runtime.finalizeSlideBuild({ disarmTool: true, statusMessage: "已完成 Slide 创建。" });
+        runtime.finalizeSlideBuild({ disarmTool: true });
       } else {
-        runtime.cancelSlideBuild("已取消 Slide 创建并取消 Slide 工具。");
+        runtime.cancelSlideBuild();
       }
       return;
     }
-    if (runtime.selectedNoteIdSet.has(note.id)) {
-      runtime.deleteSelectedNotes();
-      return;
-    }
-    runtime.clearAllSelections();
-    runtime.deleteNote(note.id);
-    runtime.setStatusMessage("已删除目标音符。");
+    runtime.deleteRightClickedNotes([note.id]);
   }, []);
 
   const renderedNoteButtons = useMemo(
     () =>
-      notes.map((note: any) => {
+      renderNotes.map((note: any) => {
         if (note.type === "hidden") {
           return null;
         }
@@ -1127,9 +1348,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         const spanLanes = getNoteSpanLanes(note);
         const { lane: renderLane, beat: renderBeat } = getRenderedNotePlacement(note);
         const renderY = getNoteDisplayY?.(note, renderBeat) ?? beatToY(renderBeat);
-        if (renderY < canvasInteractionWindow.top - 48 || renderY > canvasInteractionWindow.bottom + 48) {
-          return null;
-        }
         const directionalStartLane =
           note.type === "directional_flick_left"
             ? renderLane - spanLanes + 1
@@ -1140,11 +1358,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         }
         const spriteLayers = resolved.layers;
         const spriteAspectRatio = getSpriteAspectRatio(resolved.layers);
-        const scaledHitboxCoreWidth = editorNoteTokenWidth(spanLanes, false, LANE_WIDTH, noteVisualScale);
-        const scaledHitboxCoreHeight = editorNoteHeight(LANE_WIDTH, noteVisualScale);
-        const tokenWidth = isDirectional
-          ? spanLanes * LANE_WIDTH
-          : scaledHitboxCoreWidth;
+        const noteHeight = editorNoteHeight(LANE_WIDTH, noteVisualScale);
+        const tokenWidth = editorNoteTokenWidth(spanLanes, isDirectional, LANE_WIDTH, noteVisualScale);
         const style: CSSProperties = {
           left: (laneToColumn(directionalStartLane) + spanLanes / 2) * LANE_WIDTH,
           top: renderY,
@@ -1152,10 +1367,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
           "--lane-width": `${LANE_WIDTH}px`,
           "--directional-base-width": `${directionalBaseWidthPx}px`,
           "--note-visual-scale": `${noteVisualScale}`,
-          "--note-sprite-height": `${scaledHitboxCoreHeight}px`,
+          "--note-sprite-height": `${noteHeight}px`,
           "--sprite-aspect-ratio": `${spriteAspectRatio}`,
-          "--note-hitbox-core-width": `${scaledHitboxCoreWidth}px`,
-          "--note-hitbox-core-height": `${scaledHitboxCoreHeight}px`,
         } as CSSProperties;
         const widthHint = isDirectionalNoteType(note.type)
           ? ` | Width ${note.width ?? 1}`
@@ -1166,6 +1379,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         const noteTokenClassName = `note-token note-hitbox has-sprite ${spriteLayers.overlay ? "composite" : ""} ${isNoteSelected ? "selected" : ""} ${isDirectional ? "directional" : ""} ${isTimingGroupMuted ? "timing-group-muted" : ""}`;
 
         return (
+          <NoteWindowCull key={note.id} y={renderY}>
           <button
             key={note.id}
             type="button"
@@ -1174,18 +1388,19 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
             style={style}
             title={`${spec.label} | Lane ${note.lane} | Beat ${formatBeat(note.beat)}${widthHint}`}
             onMouseDown={handleSharedNoteMouseDown}
+            onMouseEnter={handleSharedNoteMouseEnter}
+            onMouseLeave={handleSharedNoteMouseLeave}
             onClick={handleSharedNoteClick}
             onContextMenu={handleSharedNoteContextMenu}
           >
           </button>
+          </NoteWindowCull>
         );
       }),
     [
       LANE_WIDTH,
       NOTE_SPECS,
       beatToY,
-      canvasInteractionWindow.bottom,
-      canvasInteractionWindow.top,
       formatBeat,
       getNoteSpanLanes,
       getRenderedNotePlacement,
@@ -1194,13 +1409,15 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       handleSharedNoteClick,
       handleSharedNoteContextMenu,
       handleSharedNoteMouseDown,
+      handleSharedNoteMouseEnter,
+      handleSharedNoteMouseLeave,
       isDirectionalNoteType,
       isNoteOutsideActiveTimingGroup,
       isSlideBuilding,
       laneToColumn,
       noteVisualScale,
       directionalBaseWidthPx,
-      notes,
+      renderNotes,
       renderDirectionalSprite,
       renderSpriteStack,
       resolvePlacedNoteLayers,
@@ -1211,9 +1428,9 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
 
   return (
     <OriginalUiSoundProvider volumePercent={appOptionSettings.simulatorSettings.systemSeVolumePercent}
-      masterPercent={appOptionSettings.simulatorSettings.masterVolumePercent} onError={message => vm.setStatusMessage(`界面音效失败：${message}`)}>
+      masterPercent={appOptionSettings.simulatorSettings.masterVolumePercent} onError={message => vm.showDialog(`界面音效失败：${message}`, "error")}>
     <OriginalMenuBackground type={backgroundPage === "live" ? (preparationMode.sessionMode === "rehearsal" ? 2 : 1)
-      : backgroundPage === "search" ? 1 : backgroundPage === "song" ? 257 : backgroundPage === "entrance" ? "home" : "editor"} onError={vm.setStatusMessage} />
+      : backgroundPage === "search" ? 1 : backgroundPage === "song" ? 257 : backgroundPage === "entrance" ? "home" : "editor"} onError={message => vm.showDialog(message, "error")} />
     <main className={`app-shell ${mobileRuntime ? "is-mobile-runtime" : ""}`}
       data-ui-layout={uiViewport.stacked ? "stacked" : "columns"}
       >
@@ -1266,7 +1483,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         resourcesReady={vm.settingsResourcesReady} onStart={startLive} /> : page === "search" ?
       <MusicSelectionPage source={appOptionSettings.musicSelectionSource} onSourceChange={vm.setMusicSelectionSource}
         persisted={appOptionSettings.officialMusicSelection} onPersist={vm.setOfficialMusicSelection}
-        onResourceWarning={vm.setStatusMessage} onPreview={(request, paused) => setPreview(current => current.request?.key === request?.key && current.paused === paused ? current : { request, paused })} onLoad={(source, id, progress, _destination, difficulty) => {
+        onResourceWarning={message => vm.showDialog(message, "error")} onPreview={(request, paused) => setPreview(current => current.request?.key === request?.key && current.paused === paused ? current : { request, paused })} onLoad={(source, id, progress, _destination, difficulty) => {
           vm.endPlaySession(); loadedPlay.current = null;
           return source === "official"
             ? vm.loadOfficialChart({ id, difficulty: difficulty!, preserveForPlay: false, progress }).then(Boolean) : source === "bestdori"
@@ -1302,21 +1519,42 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
 
       <section className={`workspace ${mobileRuntime ? "is-mobile-workspace" : ""}`}
         style={{ position: "relative", gap: SONG_INFORMATION_CONTENT_BOUNDS.columnGap * uiViewport.scale }}>
-        <EditorBeatDivision value={vm.settings.timeSignatureDenominator} onSave={vm.setBeatDivision}
-          scale={uiViewport.scale} top={uiViewport.safeInsets.top - viewportTop}
-          right={uiViewport.safeInsets.right - viewportRight} />
+        <EditorBpmDialog open={bpmEditOpen} title="BPM 编辑" value={bpmEditTarget?.bpm ?? 0}
+          onClose={() => setBpmEditOpen(false)}
+          onConfirm={value => { if (bpmEditTarget) vm.setBpmEventValue(bpmEditTarget.selectionId, value); }}
+          onDelete={() => { if (bpmEditTarget) deleteTimelineEvent({ kind: "bpm", key: bpmEditTarget.key }); }}
+          deleteDisabled={bpmEditTarget?.isBase ?? false} />
+        <EditorSvDialog open={svEditOpen} title="SV 编辑" value={svEditTarget?.value ?? 1}
+          timingGroup={svEditTarget?.timingGroup ?? GLOBAL_TIMING_GROUP_ID} timingGroups={vm.timingGroupIds}
+          onClose={() => setSvEditOpen(false)} onAddTimingGroup={vm.addTimingGroup}
+          onConfirm={(value, timingGroup) => { if (svEditTarget) vm.updateSvEvent(svEditTarget.id, value, timingGroup); }}
+          onDelete={() => { if (svEditTarget) deleteTimelineEvent({ kind: "sv", key: svEditTarget.id }); }} />
         <SidebarPanel isSkinReady={isSkinReady} isToolArmed={isToolArmed} tool={tool}
-          onPlay={() => { setIsAppSettingsOpen(false); setPageStack(stack => openDetailPage(stack, "live")); }}
-          onPreview={() => { void openStaticRenderWindow(); }}
-          applyToolFromPalette={applyToolFromPalette} getSpriteLayers={getPaletteSpriteLayers}
-          getSpriteAspectRatio={getPaletteSpriteAspectRatio} renderSpriteStack={renderPaletteSpriteStack} />
-        <section className="editor-viewport-region">
+          onPlay={sidebarPlay}
+          onPreview={sidebarPreview}
+          applyToolFromPalette={applyToolFromPalette} bpm={vm.activeBpmValue} onApplyBpm={vm.updateActiveBpm}
+          onArmBpmTool={vm.applyBpmToolFromPalette} onArmLongTool={vm.applyLongToolFromPalette} onArmMiddleTool={vm.applyMiddleToolFromPalette} getSpriteLayers={getPaletteSpriteLayers}
+          getSpriteAspectRatio={getPaletteSpriteAspectRatio} renderSpriteStack={renderPaletteSpriteStack}
+          historyTools={historyTools} mirrorTools={mirrorTools} directionalEnabled={vm.editorMode !== "basic"} longBodyTexture={longBodyTexture} curveSlideLineTexture={curveSlideLineTexture}
+          curve={sidebarCurve}
+          sv={vm.isExGarupaEnabled ? { value: vm.toolSvValue, timingGroup: vm.toolSvTimingGroup, timingGroups: vm.timingGroupIds,
+            onArm: vm.applySvToolFromPalette, onApply: vm.applySvToolSetting, onAddTimingGroup: vm.addTimingGroup } : undefined} />
+        <section ref={editorRegionRef} className="editor-viewport-region"
+          style={{ "--editor-edge-softness": `${EDITOR_EDGE_SOFTNESS * uiViewport.scale}px`,
+            marginTop: -editorRegionBleed.top, marginBottom: -editorRegionBleed.bottom } as CSSProperties}>
+          <div className="editor-judge-anchor" aria-hidden="true" style={{ bottom: judgeInsetBottom }} />
           {isSkinReady && <div className="editor-track-viewport" aria-hidden="true"
             style={{ top: -viewportTop, height: viewportHeight }}>
-            <div className="editor-track-guides" style={{ width: boardWidth }}>
-              {renderLaneGuides()}
+            <div className="editor-track-zone-background" style={{ left: `calc(50% - ${vm.trackZoneWidth / 2}px + ${vm.trackZoneShiftX}px)`,
+              width: vm.trackZoneWidth }} />
+            {vm.settings.laneCount > 7 && <EditorLaneRangeGuides laneCount={vm.settings.laneCount}
+              left={`calc(50% - ${vm.trackZoneWidth / 2}px + ${vm.trackZoneShiftX}px)`} width={vm.trackZoneWidth} />}
+            <div className="editor-track-guides" style={{ width: boardWidth, left: vm.trackZoneShiftX }}>
+              {flatTrackLane && <div className="editor-track-lane-tile" style={{ backgroundImage: `url("${flatTrackLane}")`, width: FIELD_WIDTH_LANES * LANE_WIDTH }} />}
             </div>
           </div>}
+          {isPlaybackPlaying && <div className="playback-line" style={{ bottom: judgeInsetBottom + vm.playbackLinePositionPercent / 100 * (judgeBottomY - editorRegionBleed.top),
+            left: `calc(50% - ${vm.trackZoneWidth / 2}px + ${vm.trackZoneShiftX}px)`, width: vm.trackZoneWidth }} />}
           {isSkinReady ? (
             <div
               className={`playfield-scroll ${selectionDrag?.isDragging ? "is-marquee-selecting" : ""} ${isToolArmed ? "is-tool-armed" : ""}`}
@@ -1330,22 +1568,43 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
             >
               <div
                 className={`playfield-host ${selectionDrag?.isDragging ? "is-marquee-selecting" : ""} ${isSlideBuilding ? "is-slide-building" : ""} ${isToolArmed ? "is-tool-armed" : ""} canvas-render-backend`}
-                style={{ height: scaledScrollContentHeight }}
+                style={{ height: scaledScrollContentHeight + judgeInsetBottom }}
                 onMouseDown={handleBoardMouseDown}
                 onMouseMove={handleBoardMouseMove}
                 onMouseLeave={handleBoardMouseLeave}
                 onContextMenu={handleBoardContextMenu}
+                // Event bubbles drawn on the canvas are the events' hit areas; only the BPM and SV tools act on them.
+                onMouseDownCapture={(event) => {
+                  const hit = eventBubbleHitAt(event);
+                  if (!hit) return;
+                  event.preventDefault();
+                  event.stopPropagation();
+                  if (event.button === 0) eventBubbleHandlers.press(hit);
+                }}
+                onClickCapture={(event) => {
+                  if (eventBubbleHitAt(event)) event.stopPropagation();
+                }}
+                onContextMenuCapture={(event) => {
+                  const hit = eventBubbleHitAt(event);
+                  if (!hit) return;
+                  event.preventDefault();
+                  event.stopPropagation();
+                  eventBubbleHandlers.remove(hit);
+                }}
+                onMouseMoveCapture={(event) => {
+                  const hovering = eventBubbleHitAt(event) !== null;
+                  if (event.currentTarget.classList.contains("is-over-event-bubble") !== hovering) {
+                    event.currentTarget.classList.toggle("is-over-event-bubble", hovering);
+                  }
+                }}
               >
-                                  <div className="bpm-viewport-hitbox-layer" style={{ top: playfieldScrollTop }}>
-                    {renderBpmLines({ viewportHitbox: true, scrollTop: playfieldScrollTop, scale: viewportTimelineScale })}
-                    {renderSvLines?.({ viewportHitbox: true, scrollTop: playfieldScrollTop, scale: viewportTimelineScale })}
-                  </div>
-                
                 <div
                   className="playfield-board-scale-layer"
                   style={{
                     width: scaledBoardWidth,
                     height: scaledScrollContentHeight,
+                    // The host centres this layer with its margin, so twice the shift moves the board by the shift.
+                    marginLeft: 2 * vm.trackZoneShiftX,
                   } as CSSProperties}
                 >
                   <div
@@ -1451,19 +1710,11 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                         height={1}
                         aria-hidden="true"
                       />
-                      <canvas
-                        ref={playfieldPlaybackCanvasRef}
-                        className="playfield-canvas-layer playfield-canvas-playback-layer"
-                        width={1}
-                        height={1}
-                        aria-hidden="true"
-                      />
-                    </>
+                                          </>
                   
-                  <div className="judge-line" style={{ top: beatToY(0), bottom: "auto" }} />
-
+                  
                   <div className="slide-chain-layer">
-                    {renderSlideSegments(canvasInteractionWindow)}
+                    <SlideSegmentsLayer render={renderSlideSegments} />
                   </div>
 
 
@@ -1638,11 +1889,38 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
           )}
 
         </section>
+        <EditorSelectionOverlay ref={selectionOverlayRef} scrollRef={playfieldRef} boardRef={playfieldBoardRef}
+          frame={selectionFrame}
+          resize={canResizeSelection ? {
+            hitWidth: SELECTION_RESIZE_HIT_WIDTH * uiViewport.scale,
+            gripWidth: SELECTION_RESIZE_GRIP_WIDTH * uiViewport.scale,
+            gripMaxHeight: SELECTION_RESIZE_GRIP_MAX_HEIGHT * uiViewport.scale,
+            gripScale: SELECTION_RESIZE_GRIP_SCALE,
+            gripInset: SELECTION_FRAME_MARGIN * uiViewport.scale,
+            draggingEdge: selectionWidthDrag?.edge ?? null,
+            // The notes are drawn at the dragged width as it changes; release commits it.
+            onDrag(edge, deltaX) { previewSelectionWidth(edge, Math.round(deltaX / LANE_WIDTH)); },
+            onEnd() { endSelectionWidth(); },
+            onCancel() { cancelSelectionWidth(); },
+          } : null}
+          marquee={selectionDrag?.isDragging ? {
+            left: Math.min(selectionDrag.startX, selectionDrag.currentX),
+            top: Math.min(selectionDrag.startY, selectionDrag.currentY),
+            width: Math.abs(selectionDrag.currentX - selectionDrag.startX),
+            height: Math.abs(selectionDrag.currentY - selectionDrag.startY),
+          } : null} />
         <EditorMinimap notes={vm.minimapNotes} segments={vm.minimapSegments} duration={vm.minimapDuration}
           laneCount={vm.settings.laneCount} axis={vm.minimapAxis} viewport={playfieldRef}
           getImage={vm.minimapGetImage} skinAssets={vm.minimapSkinAssets} resourcesVersion={vm.minimapResourceVersion}
-          noteScale={noteVisualScale} width={ORIGINAL_HEADER_MENU_BOUNDS.width * uiViewport.scale}
-          top={uiViewport.safeInsets.top + (ORIGINAL_HEADER_MENU_BOUNDS.top + ORIGINAL_HEADER_MENU_BOUNDS.height + 12) * uiViewport.scale - viewportTop} />
+          noteScale={noteVisualScale} width={vm.minimapWidth} top={0} />
+        <EditorControlColumn width={ORIGINAL_HEADER_MENU_BOUNDS.width * uiViewport.scale}
+          isPlaying={isPlaybackPlaying} onTogglePlayback={vm.togglePlaybackFromCurrentPosition}
+          speed={{ label: vm.playbackSpeedLabel, canSlower: vm.canStepPlaybackSpeedDown,
+            canFaster: vm.canStepPlaybackSpeedUp, step: vm.stepPlaybackSpeed }}
+          // Half the gap between the header menu button's bottom and the workspace top; the play button sits that
+          // whole gap higher, opening the space above the speed stepper.
+          speedGap={headerToWorkspaceGap / 2} playRaise={headerToWorkspaceGap}
+ />
       </section>
 
       </OriginalPageSwitch>
@@ -1673,8 +1951,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         onLivePreparation={() => { setIsAppSettingsOpen(false); setPageStack(stack => openDetailPage(stack, "live")); }}
         optionsOpen={preparationSettingsOpen} onOptionsClose={() => setPreparationSettingsOpen(false)}
         resourcesReady={vm.settingsResourcesReady}
-        onSettingsError={message => vm.setStatusMessage(`设置操作失败：${message}`)}
         onImport={openImportJsonModal} onExport={downloadJson} onPreview={openStaticRenderWindow}
+        onSettingsError={message => vm.showDialog(`设置操作失败：${message}`, "error")}
         onSimulator={openSimulatorWindow} onSkinLibrary={openSkinSettings} onAccount={openBestdoriLoginModal}
         open={isAppSettingsOpen}
         onClose={() => setIsAppSettingsOpen(false)}
@@ -1781,7 +2059,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
             });
           })
         }
-        rhythmSkinTypes={appOptionSettings.habahiro ? habahiroRhythmSkinTypes : rhythmSkinTypes}
+        // HABAHIRO locks the note skin to the HABAHIRO skin the mode applied.
+        rhythmSkinTypes={isHabahiroEnabled ? [pendingSkinSelection.rhythmType] : rhythmSkinTypes}
         directionalSkinTypes={directionalSkinTypes}
         rhythmSeSkinTypes={rhythmSeSkinTypes}
         directionalSeSkinTypes={directionalSeSkinTypes}

@@ -8,16 +8,20 @@ import {
   type NoteType,
 } from "../../chartCore";
 import { isLastBeatOrderedBpmNegative } from "../editorHelpers";
-import { applyHabahiroSlideWidthToNoteIds } from "../habahiroSlideWidth";
+import { applyHabahiroLongWidthToNoteIds } from "../habahiroLongWidth";
+import { dropNoteIdsFromChains } from "../slideChainCleanup";
 import { canUseHabahiro, canUseSpRhythm, canUseSv, normalizeSlideBuildForMode } from "../modeChartRegression";
 import { cleanupSlideChainsHidden } from "../slideChainCleanup";
+
+/** Length of the Long the Long tool places, in beats. */
+const LONG_TOOL_LENGTH_BEATS = 0.5;
 
 export function useBoardInteractionActions(params: any) {
   const {
     setTool,
     setIsToolArmed,
-    clearAllSelections,
-    setStatusMessage,
+    clearSelection,
+    showDialog,
     NOTE_SPECS,
     useToolLaneOverride,
     quantizeBeat,
@@ -42,8 +46,6 @@ export function useBoardInteractionActions(params: any) {
     setToolLane,
     setUseToolLaneOverride,
     setSingleSelectedNote,
-    clearSelectedBpmEvents,
-    setSelectedBpmEventId,
     tool,
     noteById,
     slideBuildRef,
@@ -66,31 +68,22 @@ export function useBoardInteractionActions(params: any) {
     setBpmEvents,
     setSvEvents,
     bpmEvents,
-    BASE_BPM_LINE_ID,
-    setSelectedBpmEventIds,
-    setSelectedSvEventIds,
-    setSelectedSvEventId,
     toolSvValue,
     toolTimingGroup,
+    toolSvTimingGroup,
     selectedNoteIds,
-    selectedBpmEventIds,
-    selectedBpmEventId,
-    selectedSvEventIds,
-    selectedSvEventId,
-    selectedLongLineSegmentId,
     playfieldBoardRef,
     selectionMoveRef,
     cursorPreview,
     findNoteAtBoardPoint,
     resolveBoardPlacement,
-    isPlacementBlocked,
+    findPlacementOverlaps,
     selectionDragRef,
     isToolArmed,
     setSelectionDrag,
     selectedNoteIdSet,
     notes,
     setSelectionMovePreview,
-    clearSelectedNotes,
     selectedNotes,
     commitSelectedNoteTransform,
     toolLaneShift,
@@ -109,11 +102,7 @@ export function useBoardInteractionActions(params: any) {
   }, []);
 
   const switchToolState = useCallback((nextTool: EditorTool) => {
-    const hasAnySelection =
-      selectedNoteIds.length > 0 ||
-      selectedBpmEventIds.length > 0 ||
-      selectedBpmEventId !== null ||
-      selectedLongLineSegmentId !== null;
+    const hasAnySelection = selectedNoteIds.length > 0;
     const toolChanged = tool !== nextTool || !isToolArmed;
     if (!toolChanged && !hasAnySelection) {
       return;
@@ -133,17 +122,14 @@ export function useBoardInteractionActions(params: any) {
     scheduleAfterFrame(() => {
       startTransition(() => {
         if (shouldClear) {
-          clearAllSelections();
+          clearSelection();
         }
       });
     });
   }, [
-    clearAllSelections,
+    clearSelection,
     isToolArmed,
     scheduleAfterFrame,
-    selectedBpmEventId,
-    selectedBpmEventIds.length,
-    selectedLongLineSegmentId,
     selectedNoteIds.length,
     setIsToolArmed,
     setTool,
@@ -152,11 +138,23 @@ export function useBoardInteractionActions(params: any) {
 
   const applyToolFromPalette = useCallback((nextType: NoteType) => {
     if (isDirectionalNoteType(nextType) && !canUseSpRhythm(modeOptions)) {
-      setStatusMessage("SP rhythm mode is off; Directional Flick is unavailable.");
+      showDialog("SP 音符模式关闭时不可使用 Directional Flick。");
       return;
     }
     switchToolState(nextType);
-  }, [isDirectionalNoteType, modeOptions, setStatusMessage, switchToolState]);
+  }, [isDirectionalNoteType, modeOptions, showDialog, switchToolState]);
+
+  const applyLongToolFromPalette = useCallback(() => {
+    switchToolState("long");
+  }, [switchToolState]);
+
+  const applyMiddleToolFromPalette = useCallback(() => {
+    switchToolState("middle");
+  }, [switchToolState]);
+
+  const applyCurveToolFromPalette = useCallback(() => {
+    switchToolState("curve");
+  }, [switchToolState]);
 
   const applyBpmToolFromPalette = useCallback(() => {
     switchToolState("bpm");
@@ -164,11 +162,11 @@ export function useBoardInteractionActions(params: any) {
 
   const applySvToolFromPalette = useCallback(() => {
     if (!canUseSv(modeOptions)) {
-      setStatusMessage("ExGarupa is off; SV is unavailable.");
+      showDialog("ExGarupa 模式关闭时不可使用 SV。");
       return;
     }
     switchToolState("sv");
-  }, [modeOptions, setStatusMessage, switchToolState]);
+  }, [modeOptions, showDialog, switchToolState]);
 
   const applyCopyToolFromPalette = useCallback(() => {
     switchToolState("copy");
@@ -182,7 +180,7 @@ export function useBoardInteractionActions(params: any) {
     noteTool: NoteType,
     lane: number,
     beat: number,
-    options?: { silent?: boolean; preserveToolLaneOverride?: boolean; selectPlaced?: boolean },
+    options?: { preserveToolLaneOverride?: boolean; selectPlaced?: boolean },
   ): ChartNote | null => {
     const useLaneOverride = noteTool !== "slide" && useToolLaneOverride;
     const quantizedBeat = quantizeBeat(beat, beatDivision);
@@ -220,14 +218,21 @@ export function useBoardInteractionActions(params: any) {
       return null;
     }
 
-    setNotes((previous: ChartNote[]) => {
-      const filtered = previous.filter(
-        (note) =>
-          note.type === "hidden" ||
-          !(note.lane === normalized.lane && approxEq(note.beat, normalized.beat)),
-      );
-      return sortNotes([...filtered, normalized]);
-    });
+    // A placement overwrites what it covers; an overwritten slide node leaves its chain.
+    const overwrittenIds = new Set<string>(
+      findPlacementOverlaps(normalized.lane, normalized.beat, {
+        type: noteTool,
+        ...(typeof normalized.width === "number"
+          ? (isDirectionalNoteType(noteTool) ? { directionalWidth: normalized.width } : { rhythmWidth: normalized.width })
+          : {}),
+      }).map((note: ChartNote) => note.id),
+    );
+    setNotes((previous: ChartNote[]) =>
+      sortNotes([...previous.filter((note) => !overwrittenIds.has(note.id)), normalized]));
+    if (overwrittenIds.size > 0) {
+      const remainingNotes = notes.filter((note: ChartNote) => !overwrittenIds.has(note.id));
+      setSlideChains((previous: any[]) => dropNoteIdsFromChains(previous, overwrittenIds, remainingNotes));
+    }
 
     if (!(options?.preserveToolLaneOverride ?? false)) {
       setToolLane(normalized.lane);
@@ -235,20 +240,63 @@ export function useBoardInteractionActions(params: any) {
     }
     if (options?.selectPlaced ?? false) {
       setSingleSelectedNote(normalized.id);
-      clearSelectedBpmEvents();
-      setSelectedBpmEventId(null);
-    }
-    if (!(options?.silent ?? false)) {
-      setStatusMessage("状态已更新。");
     }
     return normalized;
   };
 
   const placeNote = (lane: number, beat: number) => {
-    if (tool === "bpm" || tool === "sv" || tool === "copy" || tool === "paste") {
+    if (tool === "long" || tool === "middle" || tool === "curve" || tool === "bpm" || tool === "sv" || tool === "copy"
+      || tool === "paste") {
       return null;
     }
     return placeNoteWithType(tool, lane, beat);
+  };
+
+  /** Long tool: a head and a tail on one lane, half a beat apart, chained as a Long. */
+  const placeLongNote = (lane: number, beat: number) => {
+    const headBeat = quantizeBeat(beat, beatDivision);
+    const headLane = Number(toFinite(useToolLaneOverride ? toolLane : lane, lane).toFixed(6));
+    const tailBeat = Number((headBeat + LONG_TOOL_LENGTH_BEATS).toFixed(6));
+    const head = placeNoteWithType("single", headLane, headBeat);
+    if (!head) {
+      return;
+    }
+    const tail = placeNoteWithType("single", head.lane, tailBeat);
+    if (!tail) {
+      setNotes((previous: ChartNote[]) => previous.filter((note) => note.id !== head.id));
+      return;
+    }
+    const noteIds = [head.id, tail.id];
+    setSlideChains((previous: any[]) => [
+      ...previous,
+      { id: createId(), noteIds, timingGroup: head.timingGroup, long: true as const },
+    ]);
+    if (canUseHabahiro(modeOptions)) {
+      setNotes((previous: ChartNote[]) => applyHabahiroLongWidthToNoteIds(previous, noteIds));
+    }
+  };
+
+  /**
+   * Middle tool on blank board (ExGarupa): a lone middle node, chained as [hidden, single, hidden] on one beat and lane,
+   * so it is a Slide's middle node with no connection line drawn.
+   */
+  const placeLoneMiddleNode = (lane: number, beat: number) => {
+    const node = placeNoteWithType("single", lane, beat);
+    if (!node) {
+      return;
+    }
+    const hidden = (): ChartNote | null => normalizeNote({
+      id: createId(), type: "hidden", lane: node.lane, beat: node.beat, width: node.width ?? 1, timingGroup: node.timingGroup,
+    }, settings);
+    const head = hidden(), tail = hidden();
+    if (!head || !tail) {
+      return;
+    }
+    setNotes((previous: ChartNote[]) => sortNotes([...previous, head, tail]));
+    setSlideChains((previous: any[]) => [
+      ...previous,
+      { id: createId(), noteIds: [head.id, node.id, tail.id], timingGroup: node.timingGroup },
+    ]);
   };
 
   const beginSlideBuild = useCallback(
@@ -283,11 +331,10 @@ export function useBoardInteractionActions(params: any) {
       slideBuildRef.current = next;
       setSlideBuildState(next);
       setSlideBuildCursor(null);
-      clearAllSelections();
+      clearSelection();
       setCursorPreview(null);
-      setStatusMessage("状态已更新。");
     },
-    [clearAllSelections, noteById, setCursorPreview, setSlideBuildCursor, setSlideBuildState, setStatusMessage, slideBuildRef],
+    [clearSelection, noteById, setCursorPreview, setSlideBuildCursor, setSlideBuildState, showDialog, slideBuildRef],
   );
 
   const setSlideBuildMode = useCallback((mode: "drag" | "append") => {
@@ -323,6 +370,10 @@ export function useBoardInteractionActions(params: any) {
 
   const startSlideBuildFromSeedNote = useCallback((seedNote: ChartNote) => {
     const committedRole = committedSlideRoleByNoteId.get(seedNote.id);
+    if (committedRole && committedSlideChainById.get(committedRole.chainId)?.long === true) {
+      showDialog("Long 不能添加中间节点。");
+      return;
+    }
     if (committedRole && committedRole.index > 0 && committedRole.index < committedRole.length - 1) {
       const chain = committedSlideChainById.get(committedRole.chainId);
       if (chain && chain.noteIds.length > 0) {
@@ -344,7 +395,6 @@ export function useBoardInteractionActions(params: any) {
           mode: "drag",
           initialNoteIds: prefixIds,
         });
-        setStatusMessage("状态已更新。");
         return;
       }
     }
@@ -356,12 +406,11 @@ export function useBoardInteractionActions(params: any) {
           mode: "drag",
           initialNoteIds: chain.noteIds,
         });
-        setStatusMessage("状态已更新。");
         return;
       }
     }
     beginSlideBuild(seedNote.id, null, { persistUntilRightClick: false, mode: "drag" });
-  }, [beginSlideBuild, committedSlideChainById, committedSlideRoleByNoteId, createId, replaceCommittedSlideChainSegments, setStatusMessage]);
+  }, [beginSlideBuild, committedSlideChainById, committedSlideRoleByNoteId, createId, replaceCommittedSlideChainSegments, showDialog]);
 
   const appendSlideBuildNote = useCallback((noteId: string): { appended: boolean; merged: boolean; blocked: boolean } => {
     const previous = slideBuildRef.current;
@@ -382,7 +431,9 @@ export function useBoardInteractionActions(params: any) {
 
     if (existingRole) {
       const existingChain = committedSlideChainById.get(existingRole.chainId);
-      if (existingChain && existingRole.index === 0) {
+      if (existingChain?.long === true) {
+        blocked = true;
+      } else if (existingChain && existingRole.index === 0) {
         for (const id of existingChain.noteIds) {
           if (!nextIds.includes(id)) {
             nextIds.push(id);
@@ -430,23 +481,18 @@ export function useBoardInteractionActions(params: any) {
     };
     slideBuildRef.current = next;
     setSlideBuildState(next);
-    if (canUseHabahiro(modeOptions)) {
-      setNotes((currentNotes: ChartNote[]) => applyHabahiroSlideWidthToNoteIds(currentNotes, nextIds));
-    }
     return { appended: true, merged, blocked: false };
   }, [
     committedSlideChainById,
     committedSlideRoleByNoteId,
     createId,
-    modeOptions,
     replaceCommittedSlideChainSegments,
-    setNotes,
     setSlideBuildState,
     slideBuildRef,
   ]);
 
   const cancelSlideBuild = useCallback(
-    (message = "已取消 Slide 创建。") => {
+    () => {
       const current = slideBuildRef.current;
       if (!current) {
         return;
@@ -460,14 +506,13 @@ export function useBoardInteractionActions(params: any) {
         setNotes((previous: ChartNote[]) => previous.filter((note) => note.id !== current.createdHeadId));
         removeNoteIdsFromSlideChains([current.createdHeadId]);
       }
-      clearAllSelections();
+      clearSelection();
       setIsToolArmed(false);
-      setStatusMessage(message);
     },
-    [clearAllSelections, removeNoteIdsFromSlideChains, setIsToolArmed, setNotes, setSlideBuildCursor, setSlideBuildState, setStatusMessage, slideBuildRef, suppressNextBoardClickRef, suppressNextNoteClickRef],
+    [clearSelection, removeNoteIdsFromSlideChains, setIsToolArmed, setNotes, setSlideBuildCursor, setSlideBuildState, showDialog, slideBuildRef, suppressNextBoardClickRef, suppressNextNoteClickRef],
   );
 
-  const finalizeSlideBuild = useCallback((options?: { disarmTool?: boolean; statusMessage?: string }) => {
+  const finalizeSlideBuild = useCallback((options?: { disarmTool?: boolean }) => {
     const current = slideBuildRef.current;
     if (!current) {
       return;
@@ -480,7 +525,6 @@ export function useBoardInteractionActions(params: any) {
 
     const noteIds = Array.from(new Set(current.noteIds)) as string[];
     if (noteIds.length === 0) {
-      setStatusMessage("状态已更新。");
       return;
     }
 
@@ -530,14 +574,9 @@ export function useBoardInteractionActions(params: any) {
     const normalizedNoteById = new Map(normalizedBuild.notes.map((note) => [note.id, note] as const));
     const normalizedNoteIds = normalizedBuild.chain?.noteIds ?? [];
 
-    const applyNextNotes = (previous: ChartNote[]) => {
-      const nextNotes = sortNotes(
-        previous.map((note) => normalizedNoteById.get(note.id) ?? note),
-      );
-      return canUseHabahiro(modeOptions)
-        ? applyHabahiroSlideWidthToNoteIds(nextNotes, normalizedNoteIds)
-        : nextNotes;
-    };
+    const applyNextNotes = (previous: ChartNote[]) => sortNotes(
+      previous.map((note) => normalizedNoteById.get(note.id) ?? note),
+    );
 
     setSlideChains((previous: any[]) => {
       return buildNextChains(previous, normalizedBuild.chain);
@@ -552,29 +591,23 @@ export function useBoardInteractionActions(params: any) {
       .find((id) => (normalizedNoteById.get(id) ?? noteById.get(id))?.type !== "hidden")
       ?? (selectionNoteIds[selectionNoteIds.length - 1] ?? selectionNoteIds[0]);
     setSingleSelectedNote(tailId);
-    clearSelectedBpmEvents();
-    setSelectedBpmEventId(null);
-    setStatusMessage("状态已更新。");
     if (options?.disarmTool) {
       setIsToolArmed(false);
     }
   }, [
-    clearSelectedBpmEvents,
     committedSlideChainById,
     committedSlideRoleByNoteId,
     createId,
-    modeOptions,
     exGarupaEnabled,
     noteById,
     notes,
     setIsToolArmed,
     setNotes,
-    setSelectedBpmEventId,
     setSingleSelectedNote,
     setSlideBuildCursor,
     setSlideBuildState,
     setSlideChains,
-    setStatusMessage,
+    showDialog,
     slideBuildRef,
     sortNotes,
     suppressNextBoardClickRef,
@@ -589,25 +622,20 @@ export function useBoardInteractionActions(params: any) {
     if (approxEq(quantizedBeat, 0)) {
       const bpm = normalizeBaseBpmForWrite(toolBpmValue, metadata.bpm);
       if (bpm === null) {
-        setStatusMessage("基础 BPM 必须大于 0。");
         return;
       }
       if (isLastBeatOrderedBpmNegative(bpm, bpmEvents)) {
-        setStatusMessage("已阻止：按 Beat 顺序最后一个 BPM 不能为负数。");
+        showDialog("谱面不合法：\n末尾 BPM 不可为负数", "error");
         return;
       }
       setMetadata((current: any) => ({ ...current, bpm }));
       setBpmEvents((previous: any[]) => previous.filter((event) => !approxEq(event.beat, 0)));
-      setSelectedBpmEventId(BASE_BPM_LINE_ID);
-      clearSelectedNotes();
-      clearSelectedBpmEvents();
-      setStatusMessage("状态已更新。");
+      clearSelection();
       return;
     }
 
     const bpm = normalizeEventBpmForWrite(toolBpmValue, metadata.bpm);
     if (bpm === null) {
-      setStatusMessage("非基础 BPM 不能为 0。");
       return;
     }
     const nextEvents = [
@@ -615,7 +643,7 @@ export function useBoardInteractionActions(params: any) {
       { beat: quantizedBeat, bpm },
     ];
     if (isLastBeatOrderedBpmNegative(metadata.bpm, nextEvents)) {
-      setStatusMessage("已阻止：按 Beat 顺序最后一个 BPM 不能为负数。");
+      showDialog("谱面不合法：\n末尾 BPM 不可为负数", "error");
       return;
     }
 
@@ -628,18 +656,16 @@ export function useBoardInteractionActions(params: any) {
       const filtered = previous.filter((event) => !approxEq(event.beat, created.beat));
       return params.sortBpmEvents([...filtered, created]);
     });
-    setSelectedBpmEventId(created.id);
-    clearSelectedNotes();
-    setSelectedBpmEventIds([created.id]);
-    setStatusMessage("状态已更新。");
+    clearSelection();
   };
 
   const placeSvEvent = (beat: number) => {
     const quantizedBeat = quantizeBeat(beat, beatDivision);
-    const timingGroup = normalizeTimingGroup(toolTimingGroup, GLOBAL_TIMING_GROUP_ID);
+    // The SV tool places into its own timing group (#0 unless chosen in its setting).
+    const timingGroup = normalizeTimingGroup(toolSvTimingGroup, GLOBAL_TIMING_GROUP_ID);
     const value = Number(toFinite(toolSvValue, 1).toFixed(6));
     if (!Number.isFinite(value)) {
-      setStatusMessage("SV 值必须为有限数字。");
+      showDialog("SV 值必须为有限数字。");
       return;
     }
     const created = normalizeSvEvent({ beat: quantizedBeat, value, timingGroup }, beatDivision, 1);
@@ -652,12 +678,7 @@ export function useBoardInteractionActions(params: any) {
       );
       return params.sortSvEvents([...filtered, created]);
     });
-    clearSelectedNotes();
-    clearSelectedBpmEvents();
-    setSelectedBpmEventId(null);
-    setSelectedSvEventId(created.id);
-    setSelectedSvEventIds([created.id]);
-    setStatusMessage("状态已更新。");
+    clearSelection();
   };
 
   const applyToolToPlacedNote = (target: ChartNote) => {
@@ -665,9 +686,6 @@ export function useBoardInteractionActions(params: any) {
       setToolLane(target.lane);
       setUseToolLaneOverride(false);
       setSingleSelectedNote(target.id);
-      clearSelectedBpmEvents();
-      setSelectedBpmEventId(null);
-      setStatusMessage("状态已更新。");
       return;
     }
 
@@ -678,10 +696,20 @@ export function useBoardInteractionActions(params: any) {
 
     if (tool === "sv") {
       if (!canUseSv(modeOptions)) {
-        setStatusMessage("ExGarupa is off; SV is unavailable.");
+        showDialog("ExGarupa 模式关闭时不可使用 SV。");
         return;
       }
       placeSvEvent(target.beat);
+      return;
+    }
+
+    if (tool === "long") {
+      placeLongNote(target.lane, target.beat);
+      return;
+    }
+
+    // The Middle tool works on Slide lines and blank board, the curve tool on Slide lines; neither on placed notes.
+    if (tool === "middle" || tool === "curve") {
       return;
     }
 
@@ -695,7 +723,7 @@ export function useBoardInteractionActions(params: any) {
     if (isBatchTarget) {
       if (isDirectionalNoteType(nextType) && selectedNotes.every((note: ChartNote) => note.type === nextType)) {
         const nextWidth = normalizeDirectionalWidth((target.width ?? 1) + 1);
-        commitSelectedNoteTransform((note: ChartNote) => ({ ...note, width: nextWidth }), "状态已更新。");
+        commitSelectedNoteTransform((note: ChartNote) => ({ ...note, width: nextWidth }));
         return;
       }
 
@@ -730,7 +758,7 @@ export function useBoardInteractionActions(params: any) {
             : {}),
         };
         return normalizeNote(replacementDraft, settings);
-      }, "状态已更新。");
+      });
       return;
     }
 
@@ -749,9 +777,6 @@ export function useBoardInteractionActions(params: any) {
       setToolLane(target.lane);
       setUseToolLaneOverride(false);
       setSingleSelectedNote(target.id);
-      clearSelectedBpmEvents();
-      setSelectedBpmEventId(null);
-      setStatusMessage("状态已更新。");
       return;
     }
 
@@ -805,9 +830,6 @@ export function useBoardInteractionActions(params: any) {
     setToolLane(replacement.lane);
     setUseToolLaneOverride(false);
     setSingleSelectedNote(replacement.id);
-    clearSelectedBpmEvents();
-    setSelectedBpmEventId(null);
-    setStatusMessage("状态已更新。");
   };
 
   const handleBoardContextMenu = (event: MouseEvent<HTMLDivElement>) => {
@@ -815,9 +837,9 @@ export function useBoardInteractionActions(params: any) {
     if (activeSlideBuild) {
       event.preventDefault();
       if (activeSlideBuild.persistUntilRightClick) {
-        finalizeSlideBuild({ disarmTool: true, statusMessage: "已完成 Slide 创建。" });
+        finalizeSlideBuild({ disarmTool: true });
       } else {
-        cancelSlideBuild("已取消 Slide 创建并取消 Slide 工具。");
+        cancelSlideBuild();
       }
       return;
     }
@@ -825,13 +847,7 @@ export function useBoardInteractionActions(params: any) {
       return;
     }
     event.preventDefault();
-    const hadSelection =
-      selectedNoteIds.length > 0 ||
-      selectedBpmEventIds.length > 0 ||
-      selectedBpmEventId !== null ||
-      selectedSvEventIds.length > 0 ||
-      selectedSvEventId !== null ||
-      selectedLongLineSegmentId !== null;
+    const hadSelection = selectedNoteIds.length > 0;
     const hadToolArmed = isToolArmed;
     if (!hadSelection && !hadToolArmed) {
       return;
@@ -844,9 +860,8 @@ export function useBoardInteractionActions(params: any) {
     scheduleAfterFrame(() => {
       startTransition(() => {
         if (hadSelection) {
-          clearAllSelections();
+          clearSelection();
         }
-        setStatusMessage("状态已更新。");
       });
     });
   };
@@ -881,9 +896,7 @@ export function useBoardInteractionActions(params: any) {
 
       if (activeSlideBuild.persistUntilRightClick && activeSlideBuild.mode === "append") {
         const placement = resolveBoardPlacement(x, y, { type: "single" });
-        const canPreviewSnap =
-          placement !== null &&
-          !isPlacementBlocked(placement.lane, placement.beat, { type: "single" });
+        const canPreviewSnap = placement !== null;
         setCursorPreview({
           x,
           y,
@@ -956,7 +969,7 @@ export function useBoardInteractionActions(params: any) {
 
     const isBpmTool = tool === "bpm";
     const placement = resolveBoardPlacement(x, y, { ignoreLane: isBpmTool });
-    const canPreviewSnap = placement !== null && (isBpmTool || !isPlacementBlocked(placement.lane, placement.beat));
+    const canPreviewSnap = placement !== null;
 
     setCursorPreview({
       x,
@@ -976,7 +989,7 @@ export function useBoardInteractionActions(params: any) {
   const handleBoardClick = (event: MouseEvent<HTMLDivElement>) => {
     if (isSvPreviewEnabled) {
       event.preventDefault();
-      setStatusMessage("SV 预览为只读模式，请关闭后再编辑。");
+      showDialog("SV 预览为只读模式，请关闭后再编辑。");
       return;
     }
     if (suppressNextBoardClickRef.current) {
@@ -984,13 +997,16 @@ export function useBoardInteractionActions(params: any) {
       return;
     }
 
+    // Without a tool, a click on blank board drops every selection. Notes and line segments stop their own
+    // clicks, and the click that ends a marquee or a drag is suppressed above.
+    if (!isToolArmed) {
+      clearSelection();
+      return;
+    }
+
     const rect = event.currentTarget.getBoundingClientRect();
     const clickX = event.clientX - rect.left;
     const clickY = event.clientY - rect.top;
-
-    if (!isToolArmed) {
-      return;
-    }
 
     if (tool === "copy") {
       return;
@@ -998,7 +1014,6 @@ export function useBoardInteractionActions(params: any) {
 
     if (tool === "paste") {
       if (!isPasteToolReady) {
-        setStatusMessage("暂无可粘贴内容，请先复制。");
         return;
       }
       const placement = resolveBoardPlacement(clickX, clickY, {
@@ -1024,7 +1039,7 @@ export function useBoardInteractionActions(params: any) {
 
     if (tool === "sv") {
       if (!canUseSv(modeOptions)) {
-        setStatusMessage("ExGarupa is off; SV is unavailable.");
+        showDialog("ExGarupa 模式关闭时不可使用 SV。");
         return;
       }
       placeSvEvent(placement.beat);
@@ -1035,7 +1050,16 @@ export function useBoardInteractionActions(params: any) {
       return;
     }
 
-    if (isPlacementBlocked(placement.lane, placement.beat)) {
+    if (tool === "long") {
+      placeLongNote(placement.lane, placement.beat);
+      return;
+    }
+
+    if (tool === "middle") {
+      // Lone middle nodes are an ExGarupa structure (hidden head and tail); elsewhere the tool only inserts into Slides.
+      if (exGarupaEnabled) {
+        placeLoneMiddleNode(placement.lane, placement.beat);
+      }
       return;
     }
 
@@ -1074,9 +1098,9 @@ export function useBoardInteractionActions(params: any) {
   const handleBoardMouseDown = (event: MouseEvent<HTMLDivElement>) => {
     if (isSvPreviewEnabled) {
       const targetElement = event.target as HTMLElement | null;
-      if (!targetElement?.closest(".note-token, .bpm-line-button")) {
+      if (!targetElement?.closest(".note-token")) {
         event.preventDefault();
-        setStatusMessage("SV 预览为只读模式，请关闭后再编辑。");
+        showDialog("SV 预览为只读模式，请关闭后再编辑。");
         return;
       }
     }
@@ -1086,11 +1110,7 @@ export function useBoardInteractionActions(params: any) {
 
     const targetElement = event.target as HTMLElement | null;
     const isNoteTarget = Boolean(targetElement?.closest(".note-token"));
-    const isBpmTarget = Boolean(targetElement?.closest(".bpm-line-button"));
-    if (
-      (isBpmTarget && !isToolArmed) ||
-      (isNoteTarget && !(isToolArmed && tool === "slide"))
-    ) {
+    if (isNoteTarget && !(isToolArmed && tool === "slide")) {
       return;
     }
 
@@ -1117,22 +1137,20 @@ export function useBoardInteractionActions(params: any) {
           if (hitNote) {
             const result = appendSlideBuildNote(hitNote.id);
             if (result.blocked) {
-              setStatusMessage("状态已更新。");
+              showDialog("Long 不能添加中间节点。");
               return;
             }
             if (result.appended) {
               setSlideBuildMode("drag");
-              setStatusMessage("状态已更新。");
             }
             return;
           }
 
           const placement = resolveBoardPlacement(boardX, boardY, { type: "single" });
-          if (!placement || isPlacementBlocked(placement.lane, placement.beat, { type: "single" })) {
+          if (!placement) {
             return;
           }
           const created = placeNoteWithType("single", placement.lane, placement.beat, {
-            silent: true,
             selectPlaced: false,
             preserveToolLaneOverride: true,
           });
@@ -1140,12 +1158,11 @@ export function useBoardInteractionActions(params: any) {
             return;
           }
           appendSlideBuildNote(created.id);
-          setStatusMessage("状态已更新。");
           return;
         }
 
-        if (hitNote) {
-          appendSlideBuildNote(hitNote.id);
+        if (hitNote && appendSlideBuildNote(hitNote.id).blocked) {
+          showDialog("Long 不能添加中间节点。");
         }
         return;
       }
@@ -1155,11 +1172,10 @@ export function useBoardInteractionActions(params: any) {
         return;
       }
       const placement = resolveBoardPlacement(boardX, boardY, { type: "single" });
-      if (!placement || isPlacementBlocked(placement.lane, placement.beat, { type: "single" })) {
+      if (!placement) {
         return;
       }
       const created = placeNoteWithType("single", placement.lane, placement.beat, {
-        silent: true,
         selectPlaced: false,
         preserveToolLaneOverride: true,
       });
@@ -1186,6 +1202,9 @@ export function useBoardInteractionActions(params: any) {
 
   return {
     applyToolFromPalette,
+    applyLongToolFromPalette,
+    applyMiddleToolFromPalette,
+    applyCurveToolFromPalette,
     applyBpmToolFromPalette,
     applySvToolFromPalette,
     applyCopyToolFromPalette,

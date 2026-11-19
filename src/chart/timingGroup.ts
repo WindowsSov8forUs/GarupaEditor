@@ -26,7 +26,7 @@ const EPSILON = 1e-9;
 export function normalizeTimingGroupId(value: unknown): string {
   if (typeof value === "string") {
     const trimmed = value.trim();
-    if (trimmed.length === 0 || trimmed === "#Global") return "#Global";
+    if (trimmed.length === 0 || trimmed === "#Global" || trimmed === "#0") return "#Global";
     return /^#[A-Za-z0-9 -]+$/.test(trimmed) ? trimmed : "#Global";
   }
   const numeric = Number(value);

@@ -18,13 +18,22 @@ function resolveLaneWidth(zoom: number = DEFAULT_PLAYFIELD_ZOOM): number {
 export const LANE_WIDTH = resolveLaneWidth(DEFAULT_PLAYFIELD_ZOOM);
 export const BEAT_HEIGHT = 500;
 
-export const LANE_COUNT_OPTIONS = [7, 9, 11] as const;
+export const LANE_COUNT_OPTIONS = [7, 9, 11, 13] as const;
 export const DIFFICULTY_OPTIONS = ["EASY", "NORMAL", "HARD", "EXPERT", "SPECIAL"] as const;
 
 type LaneCount = (typeof LANE_COUNT_OPTIONS)[number];
 type Difficulty = (typeof DIFFICULTY_OPTIONS)[number];
-export type EditorTool = NoteType | "bpm" | "sv" | "copy" | "paste";
+/**
+ * Editor tools. Note types place that note; "slide" builds a Slide node by node; "long" places a Long (head and tail
+ * on one lane, half a beat apart); "middle" inserts a node into a Slide's connection line, and in ExGarupa places a
+ * lone middle node (a hidden head, the node and a hidden tail on one beat and lane); "curve" applies the curve tool's
+ * shape preset to a pressed Slide segment. Long and Slide both draw the green long-note sprite; Middle draws the slide
+ * middle-node sprite.
+ */
+export type EditorTool = NoteType | "long" | "middle" | "curve" | "bpm" | "sv" | "copy" | "paste";
 export const GLOBAL_TIMING_GROUP_ID = "#Global";
+/** The global timing group's name in the editor; the chart formats also read "#0" and 0 as the global group. */
+export const GLOBAL_TIMING_GROUP_DISPLAY_NAME = "#0";
 export type ChartTimingGroupId = string;
 
 export type NoteType =
@@ -306,7 +315,10 @@ export function normalizeLaneCount(value: number): LaneCount {
   if (value <= 9) {
     return 9;
   }
-  return 11;
+  if (value <= 11) {
+    return 11;
+  }
+  return 13;
 }
 
 function normalizeDifficulty(value: unknown): Difficulty {
@@ -333,7 +345,7 @@ export function normalizePositiveInt(value: unknown, fallback: number): number {
 export function normalizeTimingGroup(value: unknown, fallback: ChartTimingGroupId = GLOBAL_TIMING_GROUP_ID): ChartTimingGroupId {
   if (typeof value === "string") {
     const trimmed = value.trim();
-    if (trimmed.length === 0 || trimmed === GLOBAL_TIMING_GROUP_ID) {
+    if (trimmed.length === 0 || trimmed === GLOBAL_TIMING_GROUP_ID || trimmed === GLOBAL_TIMING_GROUP_DISPLAY_NAME) {
       return GLOBAL_TIMING_GROUP_ID;
     }
     if (/^#[A-Za-z0-9 -]+$/.test(trimmed)) {
@@ -346,6 +358,95 @@ export function normalizeTimingGroup(value: unknown, fallback: ChartTimingGroupI
     return normalized === 0 ? GLOBAL_TIMING_GROUP_ID : `#${normalized}`;
   }
   return fallback;
+}
+
+/**
+ * Timing groups are numbered: the global group is #0 (stored as GLOBAL_TIMING_GROUP_ID, as the chart formats and the
+ * simulator expect) and the others are #1, #2, …. A new group takes the smallest free number, filling gaps.
+ */
+const NUMBERED_TIMING_GROUP_PATTERN = /^#[1-9]\d*$/;
+
+/** The name a timing group is shown under: #0 for the global group, its own #n otherwise. */
+export function timingGroupDisplayName(id: ChartTimingGroupId): string {
+  return id === GLOBAL_TIMING_GROUP_ID ? GLOBAL_TIMING_GROUP_DISPLAY_NAME : id;
+}
+
+/** An SV event's bubble text: its timing group ("SV #n", #0 for the global group) over its value ("× v"). */
+export function svEventBubbleLines(timingGroup: unknown, value: number): [string, string] {
+  return [`SV ${timingGroupDisplayName(normalizeTimingGroup(timingGroup, GLOBAL_TIMING_GROUP_ID))}`,
+    `× ${Number(value.toFixed(2))}`];
+}
+
+/** The smallest #n (n ≥ 1) not among `used`. */
+export function nextTimingGroupId(used: Iterable<ChartTimingGroupId>): ChartTimingGroupId {
+  const taken = new Set(used);
+  let index = 1;
+  while (taken.has(`#${index}`)) {
+    index += 1;
+  }
+  return `#${index}`;
+}
+
+/** Timing group ids in display order: #0 first, then #1, #2, … by number. */
+export function sortTimingGroupIds(ids: Iterable<ChartTimingGroupId>): ChartTimingGroupId[] {
+  const order = (id: ChartTimingGroupId) => id === GLOBAL_TIMING_GROUP_ID ? 0 : Number(id.slice(1)) || Number.MAX_SAFE_INTEGER;
+  return [...new Set(ids)].sort((left, right) => order(left) - order(right) || left.localeCompare(right));
+}
+
+/**
+ * Brings loaded chart data to the numbered scheme: a timing group named anything but #0 / #n is renamed to the
+ * smallest free number, in order of first use (group map, SV events, notes, slide chains). Data already numbered is
+ * returned unchanged. Works on whichever of `svEvents` / `timingGroups` the data carries.
+ */
+export function renumberTimingGroups<T extends {
+  notes: Array<{ timingGroup?: string }>;
+  slideChains: Array<{ timingGroup?: string }>;
+  svEvents?: Array<{ timingGroup?: string }>;
+  timingGroups?: ChartTimingGroupMap;
+}>(input: T): T {
+  const seen: ChartTimingGroupId[] = [];
+  const see = (value: unknown) => {
+    const id = normalizeTimingGroup(value, GLOBAL_TIMING_GROUP_ID);
+    if (!seen.includes(id)) seen.push(id);
+  };
+  Object.keys(input.timingGroups ?? {}).forEach(see);
+  input.svEvents?.forEach((item) => see(item.timingGroup));
+  input.notes.forEach((item) => see(item.timingGroup));
+  input.slideChains.forEach((item) => see(item.timingGroup));
+  const isNumbered = (id: ChartTimingGroupId) => id === GLOBAL_TIMING_GROUP_ID || NUMBERED_TIMING_GROUP_PATTERN.test(id);
+  const named = seen.filter((id) => !isNumbered(id));
+  if (named.length === 0) {
+    return input;
+  }
+  const used = seen.filter(isNumbered);
+  const rename = new Map<ChartTimingGroupId, ChartTimingGroupId>();
+  for (const id of named) {
+    const next = nextTimingGroupId(used);
+    used.push(next);
+    rename.set(id, next);
+  }
+  const mapId = (value: unknown) => {
+    const id = normalizeTimingGroup(value, GLOBAL_TIMING_GROUP_ID);
+    return rename.get(id) ?? id;
+  };
+  const retag = <I extends { timingGroup?: string }>(item: I): I => {
+    if (item.timingGroup === undefined) return item;
+    const target = mapId(item.timingGroup);
+    return target === item.timingGroup ? item : { ...item, timingGroup: target };
+  };
+  const result = { ...input, notes: input.notes.map(retag), slideChains: input.slideChains.map(retag) };
+  if (input.svEvents) {
+    result.svEvents = input.svEvents.map(retag);
+  }
+  if (input.timingGroups) {
+    const timingGroups: ChartTimingGroupMap = {};
+    for (const [id, group] of Object.entries(input.timingGroups)) {
+      const target = mapId(id);
+      timingGroups[target] = { sv: group.sv.map((event) => ({ ...event, timingGroup: target })) };
+    }
+    result.timingGroups = timingGroups;
+  }
+  return result;
 }
 
 export function normalizeNoteTimingGroup(value: unknown): ChartTimingGroupId | undefined {
@@ -381,17 +482,77 @@ export function ensureTimingGroups(value: unknown): ChartTimingGroupMap {
   return groups;
 }
 
+const flattenedTimingGroups = new WeakMap<ChartTimingGroupMap, ChartSvEvent[]>();
+
+/**
+ * All SV events of an editor timing group map (already normalized), sorted. The same map always gives the same
+ * array, and events keep their identity, so an edit can tell untouched events and groups apart.
+ */
 export function flattenTimingGroups(timingGroups: ChartTimingGroupMap): ChartSvEvent[] {
+  const cached = flattenedTimingGroups.get(timingGroups);
+  if (cached) {
+    return cached;
+  }
   const events: ChartSvEvent[] = [];
-  const groups = ensureTimingGroups(timingGroups);
-  for (const [groupId, group] of Object.entries(groups)) {
-    for (const event of group.sv ?? []) {
-      events.push({ ...event, timingGroup: normalizeTimingGroup(groupId, GLOBAL_TIMING_GROUP_ID) });
+  for (const [groupId, group] of Object.entries(timingGroups)) {
+    for (const event of group.sv) {
+      events.push(event.timingGroup === groupId ? event : { ...event, timingGroup: groupId });
     }
   }
-  return sortSvEvents(events);
+  const sorted = sortSvEvents(events);
+  flattenedTimingGroups.set(timingGroups, sorted);
+  return sorted;
 }
 
+/**
+ * The timing groups after an SV edit, given the edited list of all SV events. A group whose events are unchanged
+ * keeps its object. A group that loses its last SV event is removed unless `keepEmptied(id)` (the global group always
+ * stays); groups that were already empty are left alone. Returns `previous` itself when nothing changed.
+ */
+export function applySvEventsToTimingGroups(
+  previous: ChartTimingGroupMap,
+  events: readonly ChartSvEvent[],
+  keepEmptied: (id: ChartTimingGroupId) => boolean,
+): ChartTimingGroupMap {
+  const grouped = new Map<ChartTimingGroupId, ChartSvEvent[]>();
+  for (const event of events) {
+    const id = normalizeTimingGroup(event.timingGroup, GLOBAL_TIMING_GROUP_ID);
+    const list = grouped.get(id) ?? [];
+    list.push(event.timingGroup === id ? event : { ...event, timingGroup: id });
+    grouped.set(id, list);
+  }
+  let changed = false;
+  const next: ChartTimingGroupMap = {};
+  for (const [id, group] of Object.entries(previous)) {
+    const list = grouped.get(id);
+    grouped.delete(id);
+    if (!list) {
+      if (group.sv.length === 0) {
+        next[id] = group;
+        continue;
+      }
+      changed = true;
+      if (id === GLOBAL_TIMING_GROUP_ID || keepEmptied(id)) {
+        next[id] = { sv: [] };
+      }
+      continue;
+    }
+    const sorted = sortSvEvents(list);
+    if (sorted.length === group.sv.length && sorted.every((event, index) => event === group.sv[index])) {
+      next[id] = group;
+    } else {
+      next[id] = { sv: sorted };
+      changed = true;
+    }
+  }
+  for (const [id, list] of grouped) {
+    next[id] = { sv: sortSvEvents(list) };
+    changed = true;
+  }
+  return changed ? next : previous;
+}
+
+/** A timing group map from a flat SV list (legacy caches); every group with events gets an entry, #0 always. */
 export function buildTimingGroupsFromSvEvents(events: readonly ChartSvEvent[]): ChartTimingGroupMap {
   const groups: ChartTimingGroupMap = {
     [GLOBAL_TIMING_GROUP_ID]: { sv: [] },
@@ -431,7 +592,18 @@ export function isDirectionalNoteType(type: NoteType): boolean {
 }
 
 export function isNoteTool(tool: EditorTool): tool is NoteType {
-  return tool !== "bpm" && tool !== "sv" && tool !== "copy" && tool !== "paste";
+  return tool !== "long" && tool !== "middle" && tool !== "curve" && tool !== "bpm" && tool !== "sv" && tool !== "copy"
+    && tool !== "paste";
+}
+
+/**
+ * The note type a tool previews and snaps as: the Long tool shows its head, which is the slide sprite; the Middle tool
+ * places a single (drawn with the middle-node sprite).
+ */
+export function toolPreviewNoteType(tool: EditorTool): NoteType | null {
+  if (tool === "long") return "slide";
+  if (tool === "middle") return "single";
+  return isNoteTool(tool) ? tool : null;
 }
 
 function normalizeIncomingNoteType(raw: unknown): NoteType {

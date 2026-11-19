@@ -168,9 +168,10 @@ export function normalizeSlideBuildForMode(
   };
 }
 
+/** SP features: directional flicks and hidden slide nodes. */
 export function isChartUsingSpRhythm(input: ChartStateLike): boolean {
   return input.notes.some(
-    (note) => isDirectionalType(note.type),
+    (note) => isDirectionalType(note.type) || note.type === "hidden",
   );
 }
 
@@ -209,10 +210,38 @@ function slideChainUsesExGarupa(chain: SlideChain, noteById: Map<string, ChartNo
   return middleNotes.some((note) => note.type !== "single" && note.type !== "hidden");
 }
 
+/** Standard charts have lanes 0–6; extended lane counts (ExGarupa) add lanes on both sides. */
+const STANDARD_LANE_MIN = 0;
+const STANDARD_LANE_MAX = 6;
+
+/** Lanes a note covers: from its lane rightward, or leftward from its root for a left directional flick. */
+function noteLaneSpan(note: ChartNote): [number, number] {
+  const width = normalizeNoteWidth(note.width);
+  return note.type === "directional_flick_left"
+    ? [note.lane - width + 1, note.lane]
+    : [note.lane, note.lane + width - 1];
+}
+
+function noteOutsideStandardLanes(note: ChartNote): boolean {
+  const [low, high] = noteLaneSpan(note);
+  return low < STANDARD_LANE_MIN - 1e-6 || high > STANDARD_LANE_MAX + 1e-6;
+}
+
+/** Moves a note that reaches outside lanes 0–6 back inside, keeping its width (at most 7 lanes). */
+function clampNoteToStandardLanes(note: ChartNote): ChartNote {
+  if (!noteOutsideStandardLanes(note)) return note;
+  const width = Math.min(STANDARD_LANE_MAX - STANDARD_LANE_MIN + 1, normalizeNoteWidth(note.width));
+  const sized = { ...note, width };
+  const [low, high] = noteLaneSpan(sized);
+  const shift = low < STANDARD_LANE_MIN ? STANDARD_LANE_MIN - low : high > STANDARD_LANE_MAX ? STANDARD_LANE_MAX - high : 0;
+  return { ...sized, lane: Number((note.lane + shift).toFixed(6)) };
+}
+
 export function isChartUsingExGarupa(input: ChartStateLike): boolean {
   const noteById = new Map(input.notes.map((note) => [note.id, note] as const));
   return (
     (input.svEvents?.length ?? 0) > 0 ||
+    input.notes.some(noteOutsideStandardLanes) ||
     input.notes.some(noteUsesNonGlobalTimingGroup) ||
     input.slideChains.some(chainUsesNonGlobalTimingGroup) ||
     (input.svEvents ?? []).some(eventUsesNonGlobalTimingGroup) ||
@@ -229,14 +258,22 @@ export function isChartUsingHabahiro(input: ChartStateLike): boolean {
 /**
  * Regress SP-only chart features back to a standard chart:
  * 1) Directional flick -> flick
+ * 2) Hidden slide nodes are removed; a slide left with fewer than two nodes is dissolved and its
+ *    remaining node stays as an ordinary note.
  */
 export function regressChartWithoutSpRhythm(input: ChartStateLike): ChartStateLike {
-  const nextNotes = input.notes.map(degradeDirectionalToFlick);
+  const hiddenIds = new Set(input.notes.filter((note) => note.type === "hidden").map((note) => note.id));
+  const nextNotes = input.notes
+    .filter((note) => !hiddenIds.has(note.id))
+    .map(degradeDirectionalToFlick);
+  const slideChains = input.slideChains
+    .map((chain) => ({ ...chain, noteIds: chain.noteIds.filter((id) => !hiddenIds.has(id)) }))
+    .filter((chain) => chain.noteIds.length >= 2);
 
   return {
     ...input,
     notes: nextNotes,
-    slideChains: input.slideChains,
+    slideChains,
   };
 }
 
@@ -321,7 +358,8 @@ export function regressChartWithoutExGarupa(input: ChartStateLike): ChartStateLi
     ...input,
     notes: input.notes
       .map((note) => nextNoteById.get(note.id))
-      .filter((note): note is ChartNote => note !== undefined),
+      .filter((note): note is ChartNote => note !== undefined)
+      .map(clampNoteToStandardLanes),
     slideChains: keptSlideChains,
     svEvents: [],
     timingGroups: {

@@ -241,6 +241,8 @@ interface NotePaletteRuntimeAssets {
   flick: string;
   skill: string;
   slide: string;
+  /** The slide middle node, for the Middle tool. */
+  slideAmong: string;
   directionalFlickLeft: string;
   directionalFlickRight: string;
   flickTop: string;
@@ -410,6 +412,7 @@ export function projectNotePaletteRuntimeAssets<
     flick: rhythmSample.NoteFlick3,
     skill: rhythmSample.NoteSkill3,
     slide: rhythmSample.NoteLong3,
+    slideAmong: rhythmSample.NoteSlideAmong,
     directionalFlickLeft: directionalSample.NoteFlickL3,
     directionalFlickRight: directionalSample.NoteFlickR3,
     flickTop: rhythmSample.NoteFlickTop,

@@ -7,14 +7,12 @@ export function useEditorSelectionActions(params: any) {
     setSettings,
     setNotes,
     setBpmEvents,
-    setSvEvents,
     normalizeSettings,
     normalizeNote,
     normalizeBpmEvent,
     isLastBeatOrderedBpmNegative,
     sortNotes,
     sortBpmEvents,
-    selectedBpmEventId,
     BASE_BPM_LINE_ID,
     bpmEvents,
     normalizeEditorBpm,
@@ -22,13 +20,9 @@ export function useEditorSelectionActions(params: any) {
     normalizeEventBpmForWrite,
     toFinite,
     approxEq,
-    hasBeatEditableSelection,
     applySelectedOffset,
     commitSelectedNoteTransform,
     minSelectedBeat,
-    isEditingPlacedBpm,
-    selectedBpmEvent,
-    isBaseBpmSelected,
     activeBeatValue,
     activeBpmValue,
     activeLaneValue,
@@ -56,30 +50,15 @@ export function useEditorSelectionActions(params: any) {
     parseNumericExpression,
     bpmInputText,
     setBpmInputText,
-    isEditingPlacedSv,
-    selectedSvEvent,
-    normalizeTimingGroup,
-    sortSvEvents,
     isLaneSettingLocked,
     laneInputText,
     setLaneInputText,
     widthInputText,
     setWidthInputText,
-    deleteNotesWithSlideHiddenFallback,
-    clearSelectedNotes,
+    deleteNotes,
+    clearSelection,
     selectedNoteIds,
-    setStatusMessage,
-    selectedBpmEventIds,
-    selectedSvEventIds,
-    selectedSvEventId,
-    setSelectedNoteIds,
-    setSelectedBpmEventIds,
-    setSelectedBpmEventId,
-    setSelectedSvEventIds,
-    setSelectedSvEventId,
-    selectedLongLineSegmentId,
-    deleteSelectedLongLineSegment,
-    setSelectedLongLineSegmentId,
+    showDialog,
   } = params;
 
   const applySettingsPatch = (patch: any) => {
@@ -103,20 +82,16 @@ export function useEditorSelectionActions(params: any) {
     });
   };
 
-  const updateSelectedBpmEvent = (patch: any) => {
-    if (!selectedBpmEventId) {
-      return;
-    }
-
-    if (selectedBpmEventId === BASE_BPM_LINE_ID) {
+  /** Writes `patch` (beat, bpm) to one BPM event; BASE_BPM_LINE_ID is the Beat 0 base BPM, whose beat is fixed. */
+  const updateBpmEvent = (selectionId: string, patch: any) => {
+    if (selectionId === BASE_BPM_LINE_ID) {
       if (typeof patch.bpm !== "undefined") {
         const nextBpm = normalizeBaseBpmForWrite(patch.bpm, metadata.bpm);
         if (nextBpm === null) {
-          setStatusMessage("基础 BPM 必须大于 0。");
           return;
         }
         if (isLastBeatOrderedBpmNegative(nextBpm, bpmEvents)) {
-          setStatusMessage("已阻止：按 Beat 顺序最后一个 BPM 不能为负数。");
+          showDialog("谱面不合法：\n末尾 BPM 不可为负数", "error");
           return;
         }
         setMetadata((current: any) => ({ ...current, bpm: nextBpm }));
@@ -125,7 +100,7 @@ export function useEditorSelectionActions(params: any) {
     }
 
     setBpmEvents((previous: any[]) => {
-      const current = previous.find((event) => event.id === selectedBpmEventId);
+      const current = previous.find((event) => event.id === selectionId);
       if (!current) {
         return previous;
       }
@@ -135,13 +110,11 @@ export function useEditorSelectionActions(params: any) {
           ? current.beat
           : Math.max(0, Number(toFinite(patch.beat, current.beat).toFixed(6)));
       if (typeof patch.beat !== "undefined" && approxEq(nextBeat, 0)) {
-        setStatusMessage("非基础 BPM 的 Beat 必须大于 0。");
         return previous;
       }
       const nextBpmCandidate =
         typeof patch.bpm === "undefined" ? current.bpm : normalizeEventBpmForWrite(patch.bpm, current.bpm);
       if (typeof patch.bpm !== "undefined" && nextBpmCandidate === null) {
-        setStatusMessage("非基础 BPM 不能为 0。");
         return previous;
       }
       const nextBpm = nextBpmCandidate ?? current.bpm;
@@ -157,7 +130,7 @@ export function useEditorSelectionActions(params: any) {
       );
       const nextEvents = filtered.map((event) => (event.id === normalized.id ? normalized : event));
       if (isLastBeatOrderedBpmNegative(metadata.bpm, nextEvents)) {
-        setStatusMessage("已阻止：按 Beat 顺序最后一个 BPM 不能为负数。");
+        showDialog("谱面不合法：\n末尾 BPM 不可为负数", "error");
         return previous;
       }
       return sortBpmEvents(nextEvents);
@@ -166,72 +139,44 @@ export function useEditorSelectionActions(params: any) {
 
   const updateActiveBeat = (raw: unknown) => {
     const nextBeat = Math.max(0, Number(toFinite(raw, activeBeatValue).toFixed(6)));
-    if (hasBeatEditableSelection) {
-      applySelectedOffset(0, nextBeat - minSelectedBeat, "已更新选中对象 Beat。", {
+    if (hasNoteSelection) {
+      applySelectedOffset(0, nextBeat - minSelectedBeat, {
         quantizeBeatDelta: false,
       });
-      return;
-    }
-
-    if (isEditingPlacedBpm && selectedBpmEvent) {
-      if (isBaseBpmSelected) {
-        return;
-      }
-      updateSelectedBpmEvent({ beat: nextBeat });
-      setSelectedBpmEventId(selectedBpmEvent.id);
-      return;
-    }
-
-    if (isEditingPlacedSv && selectedSvEvent) {
-      setSvEvents((previous: any[]) => {
-        const selectedTimingGroup = normalizeTimingGroup(selectedSvEvent.timingGroup, "#Global");
-        const filtered = previous.filter((event) =>
-          event.id === selectedSvEvent.id ||
-          !(
-            normalizeTimingGroup(event.timingGroup, "#Global") === selectedTimingGroup &&
-            approxEq(event.beat, nextBeat)
-          ),
-        );
-        return sortSvEvents(filtered.map((event) =>
-          event.id === selectedSvEvent.id ? { ...event, beat: nextBeat } : event,
-        ));
-      });
-      setSelectedSvEventId(selectedSvEvent.id);
     }
   };
 
   const updateActiveLane = (raw: unknown) => {
     const nextLane = Number(toFinite(raw, activeLaneValue).toFixed(6));
     if (hasNoteSelection) {
-      applySelectedOffset(nextLane - minSelectedLane, 0, "已更新选中音符轨道。");
+      applySelectedOffset(nextLane - minSelectedLane, 0);
       return;
     }
     setToolLane(nextLane);
     setUseToolLaneOverride(true);
   };
 
-  const updateActiveBpm = (raw: unknown) => {
-    const nextBpm = normalizeEditorBpm(raw, activeBpmValue);
-    if (isEditingPlacedBpm && selectedBpmEvent) {
-      if (isBaseBpmSelected) {
-        const allowedBaseBpm = normalizeBaseBpmForWrite(nextBpm, selectedBpmEvent.bpm);
-        if (allowedBaseBpm === null) {
-          setStatusMessage("基础 BPM 必须大于 0。");
-          return false;
-        }
-        updateSelectedBpmEvent({ bpm: allowedBaseBpm });
-        return true;
-      }
-
-      const allowedEventBpm = normalizeEventBpmForWrite(nextBpm, selectedBpmEvent.bpm);
-      if (allowedEventBpm === null) {
-        setStatusMessage("非基础 BPM 不能为 0。");
-        return false;
-      }
-      updateSelectedBpmEvent({ bpm: allowedEventBpm });
-      return true;
+  /** Sets one BPM event's value, as the BPM editor opened from its bubble does. */
+  const setBpmEventValue = (selectionId: string, raw: unknown) => {
+    const current = selectionId === BASE_BPM_LINE_ID
+      ? metadata.bpm
+      : bpmEvents.find((event: any) => event.id === selectionId)?.bpm;
+    if (typeof current !== "number") {
+      return false;
     }
-    setToolBpmValue(nextBpm);
+    const nextBpm = normalizeEditorBpm(raw, current);
+    const allowed = selectionId === BASE_BPM_LINE_ID
+      ? normalizeBaseBpmForWrite(nextBpm, current)
+      : normalizeEventBpmForWrite(nextBpm, current);
+    if (allowed === null) {
+      return false;
+    }
+    updateBpmEvent(selectionId, { bpm: allowed });
+    return true;
+  };
+
+  const updateActiveBpm = (raw: unknown) => {
+    setToolBpmValue(normalizeEditorBpm(raw, activeBpmValue));
     return true;
   };
 
@@ -253,13 +198,11 @@ export function useEditorSelectionActions(params: any) {
               width: nextWidth,
             };
           },
-          `已更新选中 DirectionalFlick 宽度为 ${nextWidth}。`,
         );
         return;
       }
 
       setToolDirectionalWidth(nextWidth);
-      setStatusMessage(`已设置 DirectionalFlick 默认宽度为 ${nextWidth}。`);
       return;
     }
 
@@ -276,13 +219,11 @@ export function useEditorSelectionActions(params: any) {
               width: nextWidth,
             };
           },
-          `已更新选中音符宽度为 ${nextWidth}。`,
         );
         return;
       }
 
       setToolRhythmWidth(nextWidth);
-      setStatusMessage(`已设置默认宽度为 ${nextWidth}。`);
       return;
     }
   };
@@ -312,13 +253,11 @@ export function useEditorSelectionActions(params: any) {
             width: normalizeDirectionalWidth(note.width),
           };
         },
-        `已更新选中 DirectionalFlick 方向为${direction === "left" ? "左" : "右"}。`,
       );
       return;
     }
 
     setTool(nextType);
-    setStatusMessage(`已设置 DirectionalFlick 默认方向为${direction === "left" ? "左" : "右"}。`);
   };
 
   const commitBeatInput = useCallback(() => {
@@ -344,9 +283,6 @@ export function useEditorSelectionActions(params: any) {
     isBeatSettingLocked,
     parseNumericExpression,
     setBeatInputText,
-    setSelectedSvEventId,
-    setSvEvents,
-    sortSvEvents,
     toFinite,
   ]);
 
@@ -417,130 +353,27 @@ export function useEditorSelectionActions(params: any) {
     widthInputText,
   ]);
 
+  /** The delete button and the Delete key: deletes the selected notes. */
   const deleteSelectedNotes = useCallback(() => {
     if (selectedNoteIds.length === 0) {
       return;
     }
+    deleteNotes(selectedNoteIds);
+    clearSelection();
+  }, [clearSelection, deleteNotes, selectedNoteIds]);
 
-    const { removedCount, hiddenCount } = deleteNotesWithSlideHiddenFallback(selectedNoteIds);
-    clearSelectedNotes();
-
-    if (removedCount > 0 && hiddenCount > 0) {
-      setStatusMessage(`已删除 ${removedCount} 个音符，并将 ${hiddenCount} 个 Slide 节点设为 Hidden。`);
+  /**
+   * A right-click on a note or on a Slide segment; `noteIds` are the note, or the segment's end notes. When they are
+   * all selected it deletes the selection, otherwise just them. The selection is cleared either way.
+   */
+  const deleteRightClickedNotes = useCallback((noteIds: string[]) => {
+    if (noteIds.length === 0) {
       return;
     }
-    if (hiddenCount > 0) {
-      setStatusMessage(
-        hiddenCount > 1
-          ? `已将 ${hiddenCount} 个 Slide 节点设为 Hidden。`
-          : "已将选中 Slide 节点设为 Hidden。",
-      );
-      return;
-    }
-
-    setStatusMessage(removedCount > 1 ? `已删除 ${removedCount} 个选中音符。` : "已删除选中音符。");
-  }, [clearSelectedNotes, deleteNotesWithSlideHiddenFallback, selectedNoteIds, setStatusMessage]);
-
-  const deleteCurrentSelection = () => {
-    if (selectedLongLineSegmentId) {
-      const deleted = deleteSelectedLongLineSegment(selectedLongLineSegmentId);
-      if (deleted) {
-        setSelectedLongLineSegmentId(null);
-        return;
-      }
-      setStatusMessage("选中的 longLine 已失效，请重新选择后重试。");
-      return;
-    }
-
-    const noteIdsToDelete = selectedNoteIds;
-    const bpmIdsToDelete = selectedBpmEventIds;
-    const svIdsToDelete = selectedSvEventIds;
-    let removedNoteCount = noteIdsToDelete.length;
-    let hiddenNoteCount = 0;
-    let removedBpmCount = bpmIdsToDelete.length;
-    let removedSvCount = svIdsToDelete.length;
-
-    if (removedNoteCount === 0 && removedBpmCount === 0 && removedSvCount === 0) {
-      if (selectedBpmEventId && selectedBpmEventId !== BASE_BPM_LINE_ID) {
-        setBpmEvents((previous: any[]) => previous.filter((event) => event.id !== selectedBpmEventId));
-        setSelectedBpmEventId(null);
-        setStatusMessage("已删除 BPM 线。");
-      } else if (selectedBpmEventId === BASE_BPM_LINE_ID) {
-        setStatusMessage("Beat 0 的基础 BPM 线不可删除。");
-      } else if (selectedSvEventId) {
-        setSvEvents((previous: any[]) => previous.filter((event) => event.id !== selectedSvEventId));
-        setSelectedSvEventId(null);
-        setStatusMessage("已删除 SV 线。");
-      }
-      return;
-    }
-
-    if (removedNoteCount > 0) {
-      const noteDeleteResult = deleteNotesWithSlideHiddenFallback(noteIdsToDelete);
-      removedNoteCount = noteDeleteResult.removedCount;
-      hiddenNoteCount = noteDeleteResult.hiddenCount;
-      setSelectedNoteIds([]);
-    }
-
-    if (removedBpmCount > 0) {
-      const selectedBpmSet = new Set(bpmIdsToDelete);
-      setBpmEvents((previous: any[]) => previous.filter((event) => !selectedBpmSet.has(event.id)));
-      setSelectedBpmEventIds([]);
-      if (selectedBpmEventId && selectedBpmSet.has(selectedBpmEventId)) {
-        setSelectedBpmEventId(null);
-      }
-    }
-
-    if (removedSvCount > 0) {
-      const selectedSvSet = new Set(svIdsToDelete);
-      setSvEvents((previous: any[]) => previous.filter((event) => !selectedSvSet.has(event.id)));
-      setSelectedSvEventIds([]);
-      if (selectedSvEventId && selectedSvSet.has(selectedSvEventId)) {
-        setSelectedSvEventId(null);
-      }
-    }
-
-    if (removedNoteCount > 0 && hiddenNoteCount > 0 && removedBpmCount > 0) {
-      setStatusMessage(`已删除 ${removedNoteCount} 个音符、${removedBpmCount} 条 BPM 线，并将 ${hiddenNoteCount} 个 Slide 节点设为 Hidden。`);
-      return;
-    }
-    if (removedNoteCount > 0 && removedBpmCount > 0) {
-      setStatusMessage(`已删除 ${removedNoteCount} 个音符、${removedBpmCount} 条 BPM 线。`);
-      return;
-    }
-    if (hiddenNoteCount > 0 && removedBpmCount > 0) {
-      setStatusMessage(`已删除 ${removedBpmCount} 条 BPM 线，并将 ${hiddenNoteCount} 个 Slide 节点设为 Hidden。`);
-      return;
-    }
-    if (removedNoteCount > 0 && hiddenNoteCount > 0) {
-      setStatusMessage(`已删除 ${removedNoteCount} 个音符，并将 ${hiddenNoteCount} 个 Slide 节点设为 Hidden。`);
-      return;
-    }
-    if (removedNoteCount > 0) {
-      setStatusMessage(removedNoteCount > 1 ? `已删除 ${removedNoteCount} 个选中音符。` : "已删除选中音符。");
-      return;
-    }
-    if (hiddenNoteCount > 0) {
-      setStatusMessage(
-        hiddenNoteCount > 1
-          ? `已将 ${hiddenNoteCount} 个 Slide 节点设为 Hidden。`
-          : "已将选中 Slide 节点设为 Hidden。",
-      );
-      return;
-    }
-    if (removedBpmCount > 0) {
-      setStatusMessage(removedBpmCount > 1 ? `已删除 ${removedBpmCount} 条 BPM 线。` : "已删除 BPM 线。");
-      return;
-    }
-    if (removedSvCount > 0) {
-      setStatusMessage(removedSvCount > 1 ? `已删除 ${removedSvCount} 条 SV 线。` : "已删除 SV 线。");
-    }
-  };
-
-  const deleteNote = (noteId: string) => {
-    deleteNotesWithSlideHiddenFallback([noteId]);
-    setSelectedNoteIds((previous: string[]) => previous.filter((id) => id !== noteId));
-  };
+    const selected = new Set(selectedNoteIds);
+    deleteNotes(noteIds.every((id) => selected.has(id)) ? selectedNoteIds : noteIds);
+    clearSelection();
+  }, [clearSelection, deleteNotes, selectedNoteIds]);
 
   return {
     applySettingsPatch,
@@ -549,10 +382,11 @@ export function useEditorSelectionActions(params: any) {
     setActiveDirectionalType,
     commitBeatInput,
     commitBpmInput,
+    updateActiveBpm,
+    setBpmEventValue,
     commitLaneInput,
     commitWidthInput,
     deleteSelectedNotes,
-    deleteCurrentSelection,
-    deleteNote,
+    deleteRightClickedNotes,
   };
 }

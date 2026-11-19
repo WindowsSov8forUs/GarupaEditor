@@ -1,34 +1,25 @@
 ﻿import { editorSlideLineWidth } from "../editorNoteMetrics";
 import { useMemo, type ReactNode } from "react";
 import { projectPlayfieldLineRuntimeAssets } from "../../skinLoader";
+import type { EventBubbleHit, TimelineEventTarget } from "./useCanvasPlayfieldBackend";
+
+/** What a press and a right-click on an event bubble do. */
+export type EventBubbleHandlers = {
+  press(hit: Pick<EventBubbleHit, "target" | "bubble">): void;
+  remove(hit: Pick<EventBubbleHit, "target" | "bubble">): void;
+};
 
 export function usePlayfieldRenderers(params: any) {
   const {
-    laneValues,
     LANE_WIDTH,
     approxEq,
     beatToY,
-    trackBeatToY,
     bpmTimeline,
-    totalBeats,
     bpmEvents,
     svEvents,
     BASE_BPM_LINE_ID,
-    selectionMovePreview,
-    selectedBpmEventIdSet,
-    selectedBpmEventId,
-    selectedSvEventIdSet,
-    selectedSvEventId,
     isTimingGroupModeActive,
     selectedTimingGroupId,
-    setSelectedSvEventIds,
-    setSelectedSvEventId,
-    setSelectedBpmEventIds,
-    setSelectedBpmEventId,
-    clearSelectedNotes,
-    clearSelectedBpmEvents,
-    setStatusMessage,
-    setIsToolArmed,
     isToolArmed,
     setBpmEvents,
     setSvEvents,
@@ -40,242 +31,85 @@ export function usePlayfieldRenderers(params: any) {
     getRenderedNotePlacement,
     getSlideAnchorLane,
     laneToColumn,
-    selectedLongLineSegmentId,
-    setSelectedLongLineSegmentId,
+    selectedSlideSegmentIds,
+    selectSlideSegment,
+    slideSegmentEndNoteIds,
+    deleteRightClickedNotes,
     connectionSegments,
     skinAssets,
     slideBuildState,
     slideBuildCursor,
-    onLongLineContextAction,
-    onSlideToolLongLineClick,
+    onMiddleToolConnectionClick,
+    onCurveToolConnectionClick,
     noteVisualScale,
   } = params;
-  const isPlacementNoteTool = isToolArmed && tool !== "bpm" && tool !== "sv" && tool !== "copy" && tool !== "paste";
+  const isPlacementNoteTool = isToolArmed && tool !== "bpm" && tool !== "sv" && tool !== "copy" && tool !== "paste"
+    && tool !== "curve";
   const isPasteToolSelected = isToolArmed && tool === "paste";
-  const shouldBypassLongLineLeftClick = isPlacementNoteTool || isPasteToolSelected;
-  const beatToTrackY = typeof trackBeatToY === "function" ? trackBeatToY : beatToY;
+  const shouldBypassConnectionLeftClick = isPlacementNoteTool || isPasteToolSelected;
   const runtimeLineAssets = useMemo(
     () => (skinAssets ? projectPlayfieldLineRuntimeAssets(skinAssets) : null),
     [skinAssets],
   );
-  const resolveTimelineLineY = (
-    lineY: number,
-    options?: { viewportHitbox?: boolean; scrollTop?: number; scale?: number },
-  ) => {
-    if (!options?.viewportHitbox) {
-      return lineY;
-    }
-    const scale = Number.isFinite(options.scale) ? Number(options.scale) : 1;
-    const scrollTop = Number.isFinite(options.scrollTop) ? Number(options.scrollTop) : 0;
-    return lineY * scale - scrollTop;
+
+
+  // Event lines carry no interaction and are never selected. A canvas bubble only
+  // reaches its event through the BPM or SV tool: the editor opens on a press, and a right-click deletes it.
+  const isSvEventMuted = (event: any) => {
+    const timingGroup = typeof event.timingGroup === "string" && event.timingGroup.trim().length > 0
+      ? event.timingGroup.trim()
+      : "#Global";
+    return isTimingGroupModeActive && timingGroup !== selectedTimingGroupId;
   };
 
-  const renderLaneGuides = () => {
-    const guides: ReactNode[] = [];
-
-    for (let column = 1; column < laneValues.length; column += 1) {
-      guides.push(
-        <div
-          key={`lane-guide-${column}`}
-          className="lane-guide"
-          style={{ left: column * LANE_WIDTH }}
-          aria-hidden="true"
-        />,
-      );
+  /** A bubble's BPM event: its selection id (BASE_BPM_LINE_ID for Beat 0) and current value; null if it has none. */
+  const describeBpmEvent = (target: TimelineEventTarget): { selectionId: string; bpm: number; isBase: boolean } | null => {
+    if (target.kind !== "bpm") {
+      return null;
     }
-
-    return guides;
+    if (target.key === "base") {
+      const base = bpmTimeline.find((node: any) => approxEq(node.beat, 0));
+      return base ? { selectionId: BASE_BPM_LINE_ID, bpm: base.bpm, isBase: true } : null;
+    }
+    const event = bpmEvents.find((item: any) => item.id === target.key);
+    return event ? { selectionId: event.id, bpm: event.bpm, isBase: false } : null;
   };
-
-
-  const renderBpmLines = (options?: { viewportHitbox?: boolean; scrollTop?: number; scale?: number }) => {
-    const lines: ReactNode[] = [];
-
-    for (let nodeIndex = 0; nodeIndex < bpmTimeline.length; nodeIndex += 1) {
-      const node = bpmTimeline[nodeIndex];
-      if (node.beat < 0 || node.beat > totalBeats + 1e-6) {
-        continue;
+  /** A bubble's SV event: its id, value and timing group; null if it has none or the event is muted. */
+  const describeSvEvent = (target: TimelineEventTarget): { id: string; value: number; timingGroup: string } | null => {
+    if (target.kind !== "sv") {
+      return null;
+    }
+    const event = (svEvents ?? []).find((item: any) => item.id === target.key);
+    return event && !isSvEventMuted(event)
+      ? { id: event.id, value: event.value, timingGroup: typeof event.timingGroup === "string" ? event.timingGroup : "#Global" }
+      : null;
+  };
+  /** Deletes a bubble's event; false when it cannot be deleted (the Beat 0 base BPM, a muted SV, a missing event). */
+  const deleteTimelineEvent = (target: TimelineEventTarget): boolean => {
+    if (target.kind === "bpm") {
+      if (!bpmEvents.some((event: any) => event.id === target.key)) {
+        return false;
       }
-
-      const isBaseLine = approxEq(node.beat, 0);
-      const sourceEvent = isBaseLine
-        ? null
-        : (bpmEvents.find((event: any) => approxEq(event.beat, node.beat)) ?? null);
-      const selectionId = isBaseLine ? BASE_BPM_LINE_ID : sourceEvent?.id ?? null;
-      const bpmPreviewOffset =
-        selectionMovePreview?.isDragging &&
-        selectionId !== null &&
-        selectionId !== BASE_BPM_LINE_ID &&
-        selectedBpmEventIdSet.has(selectionId)
-          ? selectionMovePreview.beatDelta
-          : 0;
-      const lineY = resolveTimelineLineY(
-        beatToTrackY(Math.max(0, node.beat + bpmPreviewOffset)),
-        options,
-      );
-      const lineKey = isBaseLine
-        ? "base"
-        : (sourceEvent?.id ?? `beat-${node.beat.toFixed(6)}-bpm-${node.bpm.toFixed(6)}`);
-      const isSelected = selectionId === BASE_BPM_LINE_ID
-        ? selectedBpmEventId === BASE_BPM_LINE_ID
-        : selectionId !== null
-          ? selectedBpmEventIdSet.has(selectionId)
-          : false;
-      const shouldHandleBpmLineEvent = () => !isToolArmed;
-      const handleBpmSelect = (event: any) => {
-        if (!shouldHandleBpmLineEvent()) {
-          return;
-        }
-        event.stopPropagation();
-        setSelectedLongLineSegmentId(null);
-        clearSelectedNotes();
-        if (selectionId === BASE_BPM_LINE_ID) {
-          clearSelectedBpmEvents();
-          setSelectedBpmEventId(BASE_BPM_LINE_ID);
-        } else if (selectionId) {
-          setSelectedBpmEventId(selectionId);
-          setSelectedBpmEventIds([selectionId]);
-        }
-        setIsToolArmed(false);
-        setStatusMessage(`已选中 BPM 线：Beat ${node.beat.toFixed(3)} / BPM ${node.bpm.toFixed(3)}。`);
-      };
-      const handleBpmContextMenu = (event: any) => {
-        if (!shouldHandleBpmLineEvent()) {
-          return;
-        }
-        event.preventDefault();
-        event.stopPropagation();
-        if (selectionId === BASE_BPM_LINE_ID) {
-          setSelectedLongLineSegmentId(null);
-          clearSelectedNotes();
-          clearSelectedBpmEvents();
-          setSelectedBpmEventId(BASE_BPM_LINE_ID);
-          setStatusMessage("Beat 0 的基础 BPM 线不可删除。");
-          return;
-        }
-
-        const activeSlideBuild = slideBuildRef.current;
-        if (activeSlideBuild) {
-          if (activeSlideBuild.persistUntilRightClick) {
-            finalizeSlideBuild({ disarmTool: true, statusMessage: "已完成 Slide 创建。" });
-          } else {
-            cancelSlideBuild("已取消 Slide 创建并取消 Slide 工具。");
-          }
-          return;
-        }
-
-        if (!sourceEvent?.id) {
-          return;
-        }
-
-        setBpmEvents((previous: any[]) => previous.filter((event) => event.id !== sourceEvent.id));
-        setSelectedBpmEventId(null);
-        clearSelectedBpmEvents();
-        setStatusMessage("已删除 BPM 线。");
-      };
-
-      lines.push(
-        <div
-          key={`bpm-line-${lineKey}`}
-          className={`bpm-marker ${isSelected ? "selected" : ""} canvas-hitbox`}
-          style={{ top: lineY, zIndex: nodeIndex + 1 }}
-        >
-          <button
-            type="button"
-            className={`bpm-line-button ${isSelected ? "selected" : ""} canvas-hitbox`}
-            onMouseDown={(event) => {
-              if (shouldHandleBpmLineEvent()) {
-                event.stopPropagation();
-              }
-            }}
-            onClick={handleBpmSelect}
-            onContextMenu={handleBpmContextMenu}
-            title={`BPM ${node.bpm.toFixed(3)} @ Beat ${node.beat.toFixed(3)}`}
-          >
-            <div className="bpm-line" />
-          </button>
-          <span className={`bpm-label-button ${isSelected ? "selected" : ""} canvas-hitbox`}>
-            BPM {node.bpm.toFixed(2)}
-          </span>
-        </div>,
-      );
+      setBpmEvents((previous: any[]) => previous.filter((event) => event.id !== target.key));
+      return true;
     }
-
-    return lines;
-  };
-
-
-
-
-
-  const renderSvLines = (options?: { viewportHitbox?: boolean; scrollTop?: number; scale?: number }) => {
-    const lines: ReactNode[] = [];
-    for (const event of svEvents ?? []) {
-      if (event.beat < 0 || event.beat > totalBeats + 1e-6) {
-        continue;
+    if (target.kind === "sv") {
+      const event = (svEvents ?? []).find((item: any) => item.id === target.key);
+      if (!event || isSvEventMuted(event)) {
+        return false;
       }
-      const isSelected = selectedSvEventIdSet?.has(event.id) || selectedSvEventId === event.id;
-      const eventTimingGroup = typeof event.timingGroup === "string" && event.timingGroup.trim().length > 0
-        ? event.timingGroup.trim()
-        : "#Global";
-      const isSvInteractionDisabled =
-        isTimingGroupModeActive && eventTimingGroup !== selectedTimingGroupId;
-      const lineY = resolveTimelineLineY(beatToTrackY(event.beat), options);
-      const shouldHandleSvLineEvent = () => !isToolArmed && !isSvInteractionDisabled;
-      const handleSvSelect = (mouseEvent: any) => {
-        if (!shouldHandleSvLineEvent()) {
-          return;
-        }
-        mouseEvent.stopPropagation();
-        setSelectedLongLineSegmentId(null);
-        clearSelectedNotes();
-        clearSelectedBpmEvents();
-        setSelectedBpmEventId(null);
-        setSelectedSvEventId(event.id);
-        setSelectedSvEventIds([event.id]);
-        setIsToolArmed(false);
-        setStatusMessage(`已选中 SV：Beat ${event.beat.toFixed(3)} / ×${event.value.toFixed(3)}。`);
-      };
-      const handleSvContextMenu = (mouseEvent: any) => {
-        if (!shouldHandleSvLineEvent()) {
-          return;
-        }
-        mouseEvent.preventDefault();
-        mouseEvent.stopPropagation();
-        setSvEvents((previous: any[]) => previous.filter((item) => item.id !== event.id));
-        setSelectedSvEventId(null);
-        setSelectedSvEventIds([]);
-        setStatusMessage("已删除 SV 线。");
-      };
-      lines.push(
-        <div
-          key={`sv-line-${event.id}`}
-          className={`bpm-marker sv-marker ${eventTimingGroup !== "#Global" ? "non-global" : ""} ${isSelected ? "selected" : ""} ${isSvInteractionDisabled ? "timing-group-muted" : ""} canvas-hitbox`}
-          style={{ top: lineY }}
-        >
-          <button
-            type="button"
-            className={`bpm-line-button sv-line-button ${isSelected ? "selected" : ""} canvas-hitbox`}
-            disabled={isSvInteractionDisabled}
-            onMouseDown={(mouseEvent) => {
-              if (shouldHandleSvLineEvent()) {
-                mouseEvent.stopPropagation();
-              }
-            }}
-            onClick={handleSvSelect}
-            onContextMenu={handleSvContextMenu}
-            title={`×${event.value.toFixed(3)} @ Beat ${event.beat.toFixed(3)}`}
-          >
-            <div className="bpm-line sv-line" />
-          </button>
-          <span className={`bpm-label-button sv-label-button ${isSelected ? "selected" : ""} canvas-hitbox`}>
-            ×{event.value.toFixed(2)}
-          </span>
-        </div>,
-      );
+      setSvEvents((previous: any[]) => previous.filter((item) => item.id !== target.key));
+      return true;
     }
-    return lines;
+    return false;
   };
+
+
+
+
+
+
+
 
   /** The Slide and Long line segments' hit areas over the interaction window (the canvas draws the lines). */
   const renderSlideSegments = (visibleWindow: { top: number; bottom: number }) => {
@@ -312,15 +146,13 @@ export function usePlayfieldRenderers(params: any) {
       const clipPath = topInset > 1e-3 || bottomInset > 1e-3
         ? `polygon(${topInset}px 0, ${lineWidth - topInset}px 0, ${lineWidth - bottomInset}px 100%, ${bottomInset}px 100%)`
         : undefined;
-      const segmentGroupId = segment.groupId;
-      const isGroupStart = segment.groupStart;
-      const isGroupEnd = segment.groupEnd;
+      const slideSegmentId = segment.slideSegmentId;
       const isMuted = Boolean(segment.muted);
-      const isSelectedGroup = !isPreviewChain && selectedLongLineSegmentId === segmentGroupId;
+      const isSelectedSegment = !isPreviewChain && selectedSlideSegmentIds.has(slideSegmentId);
       segments.push(
         <div
           key={`slide-segment-${segment.chainId}-${segment.index}`}
-          className={`slide-segment ${isPreviewChain || isMuted ? "" : "selectable"} ${isSelectedGroup ? "selected" : ""} ${isGroupStart ? "group-start" : ""} ${isGroupEnd ? "group-end" : ""} ${isMuted ? "timing-group-muted" : ""} hitbox-only`}
+          className={`slide-segment ${isPreviewChain || isMuted ? "" : "selectable"} ${isSelectedSegment ? "selected" : ""} ${isMuted ? "timing-group-muted" : ""} hitbox-only`}
           style={{
             left: topX - lineWidth * 0.5,
             top: topY,
@@ -333,12 +165,12 @@ export function usePlayfieldRenderers(params: any) {
             if (isPreviewChain) {
               return;
             }
-            if (isToolArmed && tool === "slide") {
+            if (isToolArmed && (tool === "slide" || tool === "middle" || tool === "curve")) {
               event.preventDefault();
               event.stopPropagation();
               return;
             }
-            if (shouldBypassLongLineLeftClick) {
+            if (shouldBypassConnectionLeftClick) {
               return;
             }
             if (isMuted) {
@@ -353,18 +185,30 @@ export function usePlayfieldRenderers(params: any) {
             if (isPreviewChain) {
               return;
             }
-            if (isToolArmed && tool === "slide") {
+            // The Middle tool inserts a node where a Slide's line is pressed; the Slide tool leaves lines alone.
+            if (isToolArmed && tool === "middle") {
               event.preventDefault();
               event.stopPropagation();
-              if (slideBuildRef.current) {
-                return;
-              }
-              if (typeof onSlideToolLongLineClick === "function") {
-                onSlideToolLongLineClick(segment, event);
+              if (!slideBuildRef.current && typeof onMiddleToolConnectionClick === "function") {
+                onMiddleToolConnectionClick(segment, event);
               }
               return;
             }
-            if (shouldBypassLongLineLeftClick) {
+            // The curve tool applies its shape preset to the pressed segment.
+            if (isToolArmed && tool === "curve") {
+              event.preventDefault();
+              event.stopPropagation();
+              if (!slideBuildRef.current && typeof onCurveToolConnectionClick === "function") {
+                onCurveToolConnectionClick(segment);
+              }
+              return;
+            }
+            if (isToolArmed && tool === "slide") {
+              event.preventDefault();
+              event.stopPropagation();
+              return;
+            }
+            if (shouldBypassConnectionLeftClick) {
               return;
             }
             if (isMuted) {
@@ -377,11 +221,7 @@ export function usePlayfieldRenderers(params: any) {
             if (slideBuildRef.current) {
               return;
             }
-            setSelectedLongLineSegmentId(segmentGroupId);
-            clearSelectedNotes();
-            clearSelectedBpmEvents();
-            setSelectedBpmEventId(null);
-            setStatusMessage("已选中 Slide 连接段。");
+            selectSlideSegment(slideSegmentId, event.ctrlKey || event.metaKey);
           }}
           onContextMenu={(event) => {
             if (isPreviewChain) {
@@ -397,23 +237,13 @@ export function usePlayfieldRenderers(params: any) {
             const activeSlideBuild = slideBuildRef.current;
             if (activeSlideBuild) {
               if (activeSlideBuild.persistUntilRightClick) {
-                finalizeSlideBuild({ disarmTool: true, statusMessage: "已完成 Slide 创建。" });
+                finalizeSlideBuild({ disarmTool: true });
               } else {
-                cancelSlideBuild("已取消 Slide 创建并取消 Slide 工具。");
+                cancelSlideBuild();
               }
               return;
             }
-            const handled = typeof onLongLineContextAction === "function"
-              ? onLongLineContextAction(segmentGroupId)
-              : false;
-            if (handled) {
-              return;
-            }
-            setSelectedLongLineSegmentId(segmentGroupId);
-            clearSelectedNotes();
-            clearSelectedBpmEvents();
-            setSelectedBpmEventId(null);
-            setStatusMessage("已选中 Slide 连接段。");
+            deleteRightClickedNotes(slideSegmentEndNoteIds(slideSegmentId));
           }}
           aria-hidden={isPreviewChain}
         >
@@ -478,9 +308,9 @@ export function usePlayfieldRenderers(params: any) {
   }, [LANE_WIDTH, beatToY, getRenderedNotePlacement, getSlideAnchorLane, laneToColumn, noteById, slideBuildCursor, slideBuildState]);
 
   return {
-    renderLaneGuides,
-    renderBpmLines,
-    renderSvLines,
+    deleteTimelineEvent,
+    describeBpmEvent,
+    describeSvEvent,
     renderSlideSegments,
     slideBuildCommittedGuideLines,
     slideBuildGuideLine,

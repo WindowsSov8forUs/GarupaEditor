@@ -16,9 +16,10 @@ import {
   EditorOptionSettings,
   ChartSettings,
   WindowPreset,
+  renumberTimingGroups,
 } from "../../chartCore";
 import type { SlideChain } from "../editorHelpers";
-import { applyHabahiroSlideWidths } from "../habahiroSlideWidth";
+import { applyHabahiroLongWidths } from "../habahiroLongWidth";
 import { useApplicationResourceManager } from "../../resources/applicationResourceContext";
 import { createResourceRef, type ResourceRef } from "../../resources/contracts";
 import type { ChartMediaResources } from "../../resources/selections";
@@ -187,7 +188,6 @@ export function useEditorSessionCache(params: any) {
     setSlideChains,
     setBpmEvents,
     setTimingGroups,
-    setToolBpmValue,
     setAudioFileName,
     setAudioDurationSec,
     setUploadCommunityPostContent,
@@ -200,8 +200,8 @@ export function useEditorSessionCache(params: any) {
     setPlaybackAllPerfectStatusDisplayMode,
     applyWindowPresetById,
     applyBestdoriSkinSelection,
-    clearAllSelections,
-    setStatusMessage,
+    clearSelection,
+    showDialog,
   } = params;
   const resourceManager = useApplicationResourceManager();
 
@@ -232,7 +232,6 @@ export function useEditorSessionCache(params: any) {
         }
 
         let restoredChart = false;
-        let restoredSettings = false;
         let ignoredBaseBpmCount = 0;
         let ignoredEventZeroCount = 0;
         let restoredAppOptionSettings = normalizeEditorOptionSettings({});
@@ -339,7 +338,6 @@ export function useEditorSessionCache(params: any) {
             uploadCommunityPostTags: nextUploadCommunityPostTags,
             skinSelection: normalizedSkinSelection,
           } as Omit<SettingsSnapshotV1, "savedAt">);
-          restoredSettings = true;
         }
 
         if (loadedChart && typeof loadedChart.chartJson === "string") {
@@ -476,7 +474,7 @@ export function useEditorSessionCache(params: any) {
             : buildTimingGroupsFromSvEvents(sortedNormalizedSvEvents);
 
           const restoredNotes = nextSettings.habahiro === true
-            ? applyHabahiroSlideWidths(nextNotes, nextSlideChains)
+            ? applyHabahiroLongWidths(nextNotes, nextSlideChains)
             : nextNotes;
 
           const restoredAudioDuration = Number(snapshot.audioDurationSec);
@@ -555,11 +553,14 @@ export function useEditorSessionCache(params: any) {
           }
           setSettings(nextSettings);
           setMetadata(nextMetadata);
-          setNotes(restoredNotes);
-          setSlideChains(nextSlideChains);
+          // Timing groups are #0 (global) and #1, #2, …; caches from before that scheme are renumbered.
+          const numbered = renumberTimingGroups({
+            notes: restoredNotes, slideChains: nextSlideChains, timingGroups: restoredTimingGroups,
+          });
+          setNotes(numbered.notes);
+          setSlideChains(numbered.slideChains);
           setBpmEvents(sortedNormalizedBpmEvents);
-          setTimingGroups(restoredTimingGroups);
-          setToolBpmValue(nextMetadata.bpm);
+          setTimingGroups(numbered.timingGroups);
           setAudioDurationSec(safeAudioDuration);
           setAudioFileName(restoredAudioFileName);
           setChartMediaResources(restoredMedia);
@@ -581,33 +582,23 @@ export function useEditorSessionCache(params: any) {
         }
 
         if (restoredChart) {
-          clearAllSelections();
+          clearSelection();
           const ignoredMessages = [
             ignoredBaseBpmCount > 0 ? `忽略 ${ignoredBaseBpmCount} 条非法基础 BPM（需 > 0）` : "",
             ignoredEventZeroCount > 0 ? `忽略 ${ignoredEventZeroCount} 条 BPM=0 事件` : "",
           ].filter((message) => message.length > 0);
-          if (restoredSettings) {
-            if (ignoredMessages.length > 0) {
-              setStatusMessage(`已恢复谱面缓存与设置缓存，并${ignoredMessages.join("，")}。`);
-            } else {
-              setStatusMessage("已恢复谱面缓存与设置缓存。");
-            }
-          } else if (ignoredMessages.length > 0) {
-            setStatusMessage(`已恢复谱面缓存，并${ignoredMessages.join("，")}。`);
-          } else {
-            setStatusMessage("已恢复谱面缓存。");
+          if (ignoredMessages.length > 0) {
+            showDialog(`已恢复上次的编辑内容，并${ignoredMessages.join("，")}。`);
           }
-        } else if (restoredSettings) {
-          setStatusMessage("已恢复设置缓存。");
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         blockedRestoreProjectIdRef.current = project.projectId;
         if (!cancelled) setStartupRestoreError(`会话缓存恢复失败：${message}`);
-        setStatusMessage(`会话缓存恢复失败：${message}。原缓存已保留，打开或导入项目后恢复自动保存。`);
+        showDialog(`会话缓存恢复失败：\n${message}。原缓存已保留，打开或导入项目后恢复自动保存。`, "error");
       } finally {
         if (!cancelled) {
-          await applyBestdoriSkinSelection(initialSkinSelection, persistInitialSkin, false);
+          await applyBestdoriSkinSelection(initialSkinSelection, persistInitialSkin);
           if (cancelled) return;
           setDidRestoreAttemptFinish(true);
         }
@@ -651,13 +642,13 @@ export function useEditorSessionCache(params: any) {
             legacyMediaFinalizedRef.current = true;
             migratedLegacyMediaRefsRef.current = Object.freeze([]);
             if (!finalized.value.completed) {
-              setStatusMessage(`旧媒体迁移有 ${finalized.value.blockedCount} 项无法安全归档，已保留原记录。`);
+              showDialog(`旧媒体迁移有 ${finalized.value.blockedCount} 项无法安全归档，已保留原记录。`);
             }
           }
           lastSavedChartFingerprintRef.current = fingerprint;
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
-          setStatusMessage(`谱面缓存保存失败：${message}`);
+          showDialog(`谱面缓存保存失败：${message}`, "error");
         }
       });
     }, SESSION_AUTOSAVE_DELAY_MS);
@@ -676,7 +667,7 @@ export function useEditorSessionCache(params: any) {
     didRestoreAttemptFinish,
     metadata,
     notes,
-    setStatusMessage,
+    showDialog,
     settings,
     slideChains,
   ]);
@@ -732,7 +723,7 @@ export function useEditorSessionCache(params: any) {
           lastSavedSettingsFingerprintRef.current = fingerprint;
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
-          setStatusMessage(`设置缓存保存失败：${message}`);
+          showDialog(`设置缓存保存失败：${message}`, "error");
         }
       })();
     }, SESSION_AUTOSAVE_DELAY_MS);
@@ -753,7 +744,7 @@ export function useEditorSessionCache(params: any) {
     uploadCommunityPostTags,
     skinSelection,
     normalizeSkinSelection,
-    setStatusMessage,
+    showDialog,
   ]);
   return didRestoreAttemptFinish;
 }

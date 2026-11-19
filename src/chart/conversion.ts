@@ -65,7 +65,8 @@ function parseTimingGroup(value: unknown, label: string): string | undefined {
   }
   if (typeof value === "string") {
     const trimmed = value.trim();
-    if (trimmed.length === 0 || trimmed === "#Global") {
+    // "#0" names the global group, as the number 0 does.
+    if (trimmed.length === 0 || trimmed === "#Global" || trimmed === "#0") {
       return undefined;
     }
     if (/^#[A-Za-z0-9 -]+$/.test(trimmed)) {
