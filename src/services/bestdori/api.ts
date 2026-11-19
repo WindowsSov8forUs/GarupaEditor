@@ -15,7 +15,7 @@ import {
   type BestdoriSongIndex, type BestdoriSongInfo, type BestdoriSongMusicVideo,
 } from "./songParsing";
 import { parseAyachanUploadResponse, parseNotGarupaUploadFailure, parseNotGarupaUploadSuccess, parseSonolusItemDetails,
-  parseSonolusItemList, parseSonolusLevelItem, type SonolusLevelItem } from "./sonolusParsing";
+  parseSonolusItemList, parseSonolusLevelItem, type NotGarupaUploadFailure, type SonolusLevelItem } from "./sonolusParsing";
 export type * from "./postParsing";
 export { isBestdoriChartPost } from "./postParsing";
 export type * from "./songParsing";
@@ -1054,14 +1054,27 @@ export async function uploadNotGarupaLevel(params: NotGarupaUploadLevelParams): 
   });
   // Both published and pending (waiting for review) levels have their uid.
   if (response.status === 200) return parseNotGarupaUploadSuccess(response.body).uid;
-  throw new Error(describeNotGarupaUploadFailure(response.status, parseNotGarupaUploadFailure(response.body), response.retryAfter));
+  const failure = parseNotGarupaUploadFailure(response.body);
+  // The server found the Bestdori login expired: check it here too, which clears it and tells
+  // the account UI, as any expired login does.
+  if (failure?.code === "login_expired") void bestdoriCheckSession().catch(() => {});
+  throw new Error(describeNotGarupaUploadFailure(response.status, failure, response.retryAfter));
 }
 
-function describeNotGarupaUploadFailure(status: number, body: { error: string } | null, retryAfter: number | null): string {
+/**
+ * Codes whose server text is the message to show (sonolus-notgarupa-server docs/UPLOAD.md):
+ * the account, the client version, the signature, a ban and the rate limits.
+ */
+const NOTGARUPA_UPLOAD_MESSAGE_CODES = new Set(["login_required", "login_expired", "bestdori_unavailable",
+  "client_outdated", "invalid_signature", "account_banned", "rate_limited", "uploads_unavailable"]);
+
+function describeNotGarupaUploadFailure(status: number, body: NotGarupaUploadFailure | null, retryAfter: number | null): string {
+  if (body?.code && NOTGARUPA_UPLOAD_MESSAGE_CODES.has(body.code) && body.error.trim()) return body.error.trim();
   const detail = body?.error.trim() ? `（${body.error.trim()}）` : "";
   switch (status) {
     case 400: return `服务器拒绝了上传的内容${detail}`;
-    case 401: return `服务器未接受此 GarupaEditor 的签名，请使用正式发布的版本并检查系统时间${detail}`;
+    case 401: return `上传请求校验失败，请使用正式发布的版本并检查系统时间${detail}`;
+    case 426: return `GarupaEditor 版本过低，请更新到最新版本${detail}`;
     case 408: return `上传超时，请检查网络后重试${detail}`;
     case 413: return `上传的文件总大小超过服务器上限${detail}`;
     case 429: return retryAfter !== null

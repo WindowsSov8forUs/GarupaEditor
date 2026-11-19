@@ -253,7 +253,8 @@ export function parseAyachanUploadResponse(value: unknown): string {
 /**
  * NotGarupa upload (sonolus-notgarupa-server docs/UPLOAD.md): 200 answers {uid, status}, uid the
  * level's 8-character name and status published, or pending while it waits for review. A failure
- * answers {error}; a body that is not JSON (a proxy's page) reaches here as null.
+ * answers {error, code}: error is text to show, code tells the reason (login_required, …); a body
+ * that is not JSON (a proxy's page) reaches here as null.
  */
 export type NotGarupaUploadBody = { uid: string; status: "published" | "pending" };
 export function parseNotGarupaUploadSuccess(value: unknown): NotGarupaUploadBody {
@@ -263,6 +264,9 @@ export function parseNotGarupaUploadSuccess(value: unknown): NotGarupaUploadBody
   if (!/^[a-z2-7]{8}$/.test(uid)) throw new ResponseShapeError("response.uid", "8 个字符的关卡 ID");
   return { uid, status: oneOf(body.status, "response.status", ["published", "pending"]) };
 }
-export function parseNotGarupaUploadFailure(value: unknown): { error: string } | null {
-  return value === null ? null : { error: string(record(value, "response").error, "response.error") };
+export type NotGarupaUploadFailure = { error: string; code: string | null };
+export function parseNotGarupaUploadFailure(value: unknown): NotGarupaUploadFailure | null {
+  if (value === null) return null;
+  const body = record(value, "response");
+  return { error: string(body.error, "response.error"), code: typeof body.code === "string" ? body.code : null };
 }
