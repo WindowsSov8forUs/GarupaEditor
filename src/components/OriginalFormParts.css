@@ -66,3 +66,6 @@
 .original-form-note { width: 100%; }
 .transfer-authored-content .upload-tag-chip { width: 100%; }
 .transfer-authored-content .upload-tag-chip > .original-form-input { flex: 1; width: auto; }
+
+/* 谱面代码编辑: the code field takes the page's height the rest leaves. */
+.chart-code-edit-field { flex-shrink: 0; }

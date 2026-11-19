@@ -9,7 +9,6 @@ import { ResourceFailureError } from "../../resources/contracts";
 import { appLog, startOperation } from "../../logging/applicationLogger";
 import { loggedInvoke as invoke } from "../../logging/applicationLogger";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
-import { writeText as writeClipboardText } from "@tauri-apps/plugin-clipboard-manager";
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import {
   GLOBAL_TIMING_GROUP_ID,
@@ -162,6 +161,16 @@ function requireBestdoriRef(
   return reference.value;
 }
 
+/** The chart's code for editing: one item a line (an array's items; anything else as it is). */
+function formatChartCode(jsonText: string): string {
+  try {
+    const parsed: unknown = JSON.parse(jsonText);
+    return Array.isArray(parsed) ? `[\n${parsed.map(item => JSON.stringify(item)).join(",\n")}\n]` : jsonText;
+  } catch {
+    return jsonText;
+  }
+}
+
 export function useEditorIoAndShortcuts(params: any) {
   const {
     project,
@@ -176,7 +185,6 @@ export function useEditorIoAndShortcuts(params: any) {
     sortBpmEvents,
     sortSvEvents,
     sortNotes,
-    openOverlayDialog,
     clearSelection,
     showDialog,
     setNotes,
@@ -811,37 +819,31 @@ export function useEditorIoAndShortcuts(params: any) {
     }
   };
 
-  const exportBestdoriV2ToClipboard = async () => {
-    appLog("info", "editor.action", { action: "exportBestdoriV2ToClipboard" });
-    if (rejectUnprojectableChart()) return;
+  /** 导出为 Bestdori V2: the chart as Bestdori V2 JSON, saved to a file the user picks. */
+  const exportBestdoriV2ToFile = async () => {
+    appLog("info", "editor.action", { action: "exportBestdoriV2ToFile" });
+    if (isExportJsonSaving || rejectUnprojectableChart()) return;
+    const fileName = `${sanitizeFileName(metadata.title).replace(/\.json$/i, "")}.bestdori.json`;
     try {
-      const bestdori = convertGarupaChartJsonToBestdoriV2(garupaChartJson);
-      const bestdoriJsonText = JSON.stringify(bestdori);
-
-      if (isTauriRuntimeEnvironment()) {
-        await writeClipboardText(bestdoriJsonText);
-      } else if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(bestdoriJsonText);
-      } else {
-        throw new Error("clipboard API unavailable");
+      const jsonText = JSON.stringify(convertGarupaChartJsonToBestdoriV2(garupaChartJson));
+      if (!isTauriRuntimeEnvironment()) {
+        const url = URL.createObjectURL(new Blob([jsonText], { type: "application/json;charset=utf-8" }));
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+        return;
       }
-
-      if (typeof openOverlayDialog === "function") {
-        openOverlayDialog({
-          tone: "info",
-          message: "已导出谱面为 Bestdori 格式，可直接粘贴。",
-        });
-      } else {
-      }
+      setIsExportJsonSaving(true);
+      const savedPath = await invoke<string | null>("save_chart_json_via_dialog", { defaultFileName: fileName, jsonText });
+      if (savedPath) showDialog(`已导出 Bestdori V2 谱面到 ${savedPath.replace(/\\/g, "/")}`);
     } catch (error) {
-      const message = userFacingErrorMessage(error);
-      if (typeof openOverlayDialog === "function") {
-        openOverlayDialog({
-          tone: "error",
-          message: `导出谱面为 Bestdori 格式代码失败：\n${message}`,
-        });
-      } else {
-      }
+      showDialog(`导出 Bestdori V2 谱面失败：\n${userFacingErrorMessage(error)}`, "error");
+    } finally {
+      setIsExportJsonSaving(false);
     }
   };
 
@@ -854,7 +856,7 @@ export function useEditorIoAndShortcuts(params: any) {
   };
 
   const openImportJsonModal = () => {
-    setImportJsonText(garupaChartJsonText);
+    setImportJsonText(formatChartCode(garupaChartJsonText));
     setImportJsonModalLevel("chart");
     setImportCommunityPostId("");
     setImportJsonSelectedPath("");
@@ -1855,7 +1857,7 @@ export function useEditorIoAndShortcuts(params: any) {
       const text = await file.text();
       const parsed: unknown = JSON.parse(text);
       const converted = convertBestdoriV2ToGarupaChartJson(parsed);
-      setImportJsonText(JSON.stringify(converted));
+      setImportJsonText(formatChartCode(JSON.stringify(converted)));
       setImportJsonModalLevel("chart");
     } catch (error) {
       setImportBestdoriV2SelectedPath(previousSelectedPath);
@@ -2262,7 +2264,7 @@ export function useEditorIoAndShortcuts(params: any) {
     isExportJsonModalOpen,
     closeExportJsonModal,
     saveExportJsonToSelectedPath,
-    exportBestdoriV2ToClipboard,
+    exportBestdoriV2ToFile,
     undoLastNote,
     redoLastNote,
     clearAllNotes,

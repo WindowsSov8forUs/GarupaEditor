@@ -24,7 +24,7 @@ import { OriginalUiSoundProvider } from "../OriginalUiSound";
 import { BestdoriLoginModal } from "../BestdoriLoginModal";
 import { useLayoutEffect,  useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, type MouseEvent as ReactMouseEvent, type ReactNode } from "react";
 import { ExportJsonModal } from "../ExportJsonModal";
-import { ImportJsonModal } from "../ImportJsonModal";
+import { ChartCodeEditModal } from "../ChartCodeEditModal";
 import { SongInformationEditPage } from "../SongInformationEditPage";
 import { OriginalChoiceDialog } from "../OriginalChoiceDialog";
 import { SONG_INFORMATION_CONTENT_BOUNDS } from "../OriginalSongDetailParts";
@@ -198,7 +198,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     bestdoriV2ImportRef,
     handleJsonImport,
     handleBestdoriV2Import,
-    triggerJsonImport,
     triggerBestdoriV2Import,
     openImportJsonModal,
     downloadJson,
@@ -206,24 +205,13 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     openSimulatorWindow,
     garupaChartJsonText,
     isImportJsonModalOpen,
-    importJsonModalLevel,
     importJsonText,
-    importOfficialChartId,
-    importOfficialChartDifficulty,
-    importCommunityPostId,
     uploadCommunityPostContent,
     uploadCommunityPostTags,
-    importJsonSelectedPath,
-    importBestdoriV2SelectedPath,
     setImportJsonText,
-    setImportOfficialChartId,
-    setImportOfficialChartDifficulty,
-    setImportCommunityPostId,
     setUploadCommunityPostContent,
     setUploadCommunityPostTags,
     applyImportJsonText,
-    applyImportOfficialChart,
-    applyImportCommunityChart,
     applyUploadCommunityChart,
     applyUploadNotGarupaServerChart,
     applyUploadTestServerChart,
@@ -231,7 +219,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     isExportJsonModalOpen,
     closeExportJsonModal,
     saveExportJsonToSelectedPath,
-    exportBestdoriV2ToClipboard,
+    exportBestdoriV2ToFile,
     overlayDialog,
     confirmOverlayDialog,
     cancelOverlayDialog,
@@ -2114,7 +2102,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       />
 
       <input ref={vm.projectFiles.input} type="file" accept=".gcp" hidden onChange={vm.projectFiles.open} />
-      <ExportJsonModal
+      {/* Opened from the drawer's 发布到 Bestdori: its post's description and tags, then 上传. */}
+      <ExportJsonModal only={{ tab: "upload", title: "发布到 Bestdori" }}
         onSaveProject={() => void vm.projectFiles.save()}
         projectBusy={vm.projectFiles.busy}
         open={isExportJsonModalOpen}
@@ -2123,7 +2112,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         uploadCommunityPostTags={uploadCommunityPostTags}
         onClose={closeExportJsonModal}
         onSaveAs={() => void saveExportJsonToSelectedPath()}
-        onExportBestdoriV2={() => void exportBestdoriV2ToClipboard()}
+        onExportBestdoriV2={() => void exportBestdoriV2ToFile()}
         onUploadCommunityPostContentChange={setUploadCommunityPostContent}
         onUploadCommunityPostTagsChange={setUploadCommunityPostTags}
         onApplyUploadCommunityChart={() => void applyUploadCommunityChart()}
@@ -2131,28 +2120,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         onApplyUploadTestServerChart={() => void applyUploadTestServerChart()}
       />
 
-      <ImportJsonModal
-        onOpenProject={() => vm.projectFiles.choose()}
-        projectBusy={vm.projectFiles.busy}
-        open={isImportJsonModalOpen}
-        level={importJsonModalLevel}
-        chartJsonText={importJsonText}
-        officialChartId={importOfficialChartId}
-        officialChartDifficulty={importOfficialChartDifficulty}
-        communityPostId={importCommunityPostId}
-        importJsonSelectedPath={importJsonSelectedPath}
-        importBestdoriV2SelectedPath={importBestdoriV2SelectedPath}
-        onChartJsonTextChange={setImportJsonText}
-        onOfficialChartIdChange={setImportOfficialChartId}
-        onOfficialChartDifficultyChange={setImportOfficialChartDifficulty}
-        onCommunityPostIdChange={setImportCommunityPostId}
-        onApplyChartJson={applyImportJsonText}
-        onApplyOfficialChart={() => void applyImportOfficialChart()}
-        onApplyCommunityChart={() => void applyImportCommunityChart()}
-        onImportJsonFile={triggerJsonImport}
-        onImportBestdoriV2File={triggerBestdoriV2Import}
-        onClose={closeImportJsonModal}
-      />
+      <ChartCodeEditModal open={isImportJsonModalOpen} text={importJsonText} onTextChange={setImportJsonText}
+        onImportBestdoriV2={triggerBestdoriV2Import} onApply={applyImportJsonText} onClose={closeImportJsonModal} />
 
       <OverlayDialogModal
         dialog={overlayDialog}
