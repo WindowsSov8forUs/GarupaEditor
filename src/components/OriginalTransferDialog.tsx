@@ -1,5 +1,6 @@
 import { memo, useLayoutEffect, useState, type ReactNode } from "react";
 import { OriginalAuthoredDialog } from "./OriginalAuthoredDialog";
+import { OriginalScrollBars } from "./OriginalScrollBar";
 import { OriginalPrefabModel, ORIGINAL_PREFABS, originalRef, type OriginalData, type OriginalOverrides } from "./originalPrefabModel";
 import type { OriginalButtonBinding } from "./OriginalPrefabView";
 import "./OriginalFormParts.css";
@@ -7,6 +8,9 @@ import "./OriginalFormParts.css";
 const source = new OriginalPrefabModel(ORIGINAL_PREFABS.rhythmgamesettingdialog!);
 const sourceTabs = [...source.components.values()].filter(item => item.kind === "LockableTabButton")
   .sort((a, b) => a.data.tabIndex - b.data.tabIndex);
+
+/** The window's parts that scroll. */
+const SCROLLING_PARTS = ".transfer-page, .transfer-body > .export-tag-picker-body, textarea.original-form-editor";
 
 /** Editor-owned content hosted in the existing settings window, in its original coordinate system. */
 function OriginalTransferDialogInner({ open, title, tabs, selected, onSelect, onClose, busy = false, fitContent = false, children }: {
@@ -78,7 +82,10 @@ function OriginalTransferDialogInner({ open, title, tabs, selected, onSelect, on
       style={{ zIndex: source.components.get(99)!.data.mDepth + 1, ...(compact ? {
         left: -contentSize.width / 2, top: -(contentSize.height + 138) / 2 + 104,
         width: "max-content", height: "auto",
-      } : {}) }}>{children}</div>
+      } : {}) }}>{children}
+      {/* The pages, the tag list and the text editors scroll natively; each gets the original scroll bar. */}
+      <OriginalScrollBars root={contentElement} selector={SCROLLING_PARTS} />
+    </div>
   </OriginalAuthoredDialog>;
 }
 

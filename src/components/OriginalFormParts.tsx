@@ -1,4 +1,4 @@
-import { Children, isValidElement, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type InputHTMLAttributes, type TextareaHTMLAttributes } from "react";
+import { Children, isValidElement, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode, type InputHTMLAttributes, type TextareaHTMLAttributes } from "react";
 import { OriginalPrefabView } from "./OriginalPrefabView";
 import { OriginalPrefabModel, ORIGINAL_PREFABS, type OriginalPrefab } from "./originalPrefabModel";
 import { OriginalSprite } from "./OriginalUi";
@@ -13,6 +13,8 @@ const settingsLayout = new OriginalPrefabModel(ORIGINAL_PREFABS.livesettingstabp
 const captionToSubtitle = settingsLayout.transform(settingsLayout.components.get(516)!.node).y
   - settingsLayout.transform(settingsLayout.components.get(561)!.node).y;
 const subtitleRowHeight = Math.max(44, settingsLayout.rect(settingsLayout.components.get(561)!).height);
+/** Height of the OriginalFormSubtitle row, in design px; its bar is centred in it. */
+export const ORIGINAL_FORM_SUBTITLE_HEIGHT = subtitleRowHeight;
 
 function useFormWidth() {
   const ref = useRef<HTMLDivElement>(null);
@@ -39,17 +41,52 @@ const stepperLayout = new OriginalPrefabModel(stepperPrefab);
 const stepperBody = stepperLayout.nodeAt("HiSpeed/Body");
 
 /** The authored HiSpeed row, with integer steps and bounds supplied by the editor field. */
-export function OriginalFormStepper({ title, value, minimum, maximum, onChange, editable }: {
+/** Width of the original stepper body (its buttons, value box and hit areas), whatever value it shows. */
+export const ORIGINAL_FORM_STEPPER_WIDTH = (() => {
+  const model = new OriginalPrefabModel(stepperPrefab);
+  const boxes = [...model.components.values()].filter(component => model.isActive(component.node)
+    && model.isWithin(component.node, stepperBody.id)
+    && ["UISprite", "UILabel", "BoxCollider2D"].includes(component.kind)).map(component => model.rect(component));
+  return Math.max(...boxes.map(box => box.x + box.width)) - Math.min(0, ...boxes.map(box => box.x));
+})();
+/**
+ * How far OriginalFormStepper's box reaches below its visible buttons and value box: its height takes in the hit areas
+ * and the value label's box, which reach lower. A layout that spaces from the visible stepper subtracts it.
+ */
+export const ORIGINAL_FORM_STEPPER_BOTTOM_OVERHANG = (() => {
+  const model = new OriginalPrefabModel(stepperPrefab);
+  const parts = [...model.components.values()].filter(component => model.isActive(component.node)
+    && model.isWithin(component.node, stepperBody.id));
+  const bottom = (kinds: readonly string[]) => Math.max(...parts.filter(component => kinds.includes(component.kind))
+    .map(component => { const box = model.rect(component); return box.y + box.height; }));
+  return bottom(["UISprite", "UILabel", "BoxCollider2D"]) - bottom(["UISprite"]);
+})();
+/** Horizontal padding of a transfer dialog page (`.transfer-page` in OriginalFormParts.css). */
+export const TRANSFER_PAGE_PADDING_X = 12;
+
+export function OriginalFormStepper({ title, value, minimum, maximum, onChange, editable, centered = false,
+  steps = [1, 5, 10], leading }: {
   title: string; value: number; minimum: number; maximum: number; onChange(value: number): void;
   editable?: { value: string; onChange(value: string): void };
+  /** Centres the stepper horizontally in its row; the subtitle stays at the start. */
+  centered?: boolean;
+  /** The amounts of the three button pairs, inner to outer (the original's ±1 / ±5 / ±10 by default). */
+  steps?: readonly [number, number, number];
+  /**
+   * A control set left of the stepper, sharing its subtitle: it and the stepper form one group (centred together when
+   * `centered`), and it is centred vertically on the value box.
+   */
+  leading?: { node: ReactNode; width: number; height: number; gap: number };
 }) {
   const model = new OriginalPrefabModel(stepperPrefab, { components: {
     570: { mText: String(value) },
   } });
-  const buttons = Object.fromEntries([[466, -10], [545, -5], [621, -1], [486, 1], [628, 5], [648, 10]]
+  const [small, middle, large] = steps;
+  const buttons = Object.fromEntries([[466, -large], [545, -middle], [621, -small], [486, small], [628, middle], [648, large]]
     .map(([id, amount]) => [id, { label: `${title}${amount < 0 ? "减少" : "增加"}${Math.abs(amount)}`,
       disabled: amount < 0 ? value <= minimum : value >= maximum,
-      action: () => onChange(Math.min(maximum, Math.max(minimum, value + amount))) }]));
+      // Rounded so decimal steps (0.1) do not accumulate binary error.
+      action: () => onChange(Math.min(maximum, Math.max(minimum, Number((value + amount).toFixed(6))))) }]));
   const boxes = [...model.components.values()].filter(component => model.isActive(component.node)
     && model.isWithin(component.node, stepperBody.id)
     && ["UISprite", "UILabel", "BoxCollider2D"].includes(component.kind)).map(component => model.rect(component));
@@ -58,9 +95,15 @@ export function OriginalFormStepper({ title, value, minimum, maximum, onChange, 
   const right = Math.max(...boxes.map(box => box.x + box.width)), bottom = Math.max(...boxes.map(box => box.y + box.height));
   const label = model.components.get(570)!;
   const labelRect = model.rect(label);
-  return <div style={{ position: "relative", minWidth: right - left, height: bottom - top, flexShrink: 0, alignSelf: "stretch" }}>
+  const leadingSpace = leading ? leading.width + leading.gap : 0;
+  const groupWidth = leadingSpace + right - left;
+  const groupLeft = centered ? `calc(50% - ${groupWidth / 2}px)` : "0px";
+  return <div style={{ position: "relative", minWidth: groupWidth, height: bottom - top, flexShrink: 0, alignSelf: "stretch" }}>
     <OriginalFormSubtitle text={title} />
-    <div className="original-prefab-origin" style={{ left: -left, top: -top }}>
+    {leading && <div style={{ position: "absolute", left: groupLeft, width: leading.width, height: leading.height,
+      top: labelRect.y - top + labelRect.height / 2 - leading.height / 2 }}>{leading.node}</div>}
+    <div className="original-prefab-origin"
+      style={{ left: `calc(${groupLeft} + ${leadingSpace - left}px)`, top: -top }}>
       <OriginalPrefabView model={model} root={stepperBody.id} bindings={{ buttons,
         omit: editable ? new Set([570]) : undefined }} />
       {editable && <input type="text" inputMode="numeric" aria-label={title}
@@ -71,6 +114,79 @@ export function OriginalFormStepper({ title, value, minimum, maximum, onChange, 
           letterSpacing: label.data.mSpacingX,
           color: `rgba(${label.data.mColor.r * 255},${label.data.mColor.g * 255},${label.data.mColor.b * 255},${label.data.mColor.a})`,
           zIndex: label.data.mDepth + 1 }} />}
+    </div>
+  </div>;
+}
+
+const stepperPlus = stepperLayout.nodeAt("HiSpeed/Body/SmallPlusButton");
+const stepperMinus = stepperLayout.nodeAt("HiSpeed/Body/SmallMinusButton");
+const stepperValue = stepperLayout.nodeAt("HiSpeed/Body/baseImage");
+const stepperPlusButton = stepperLayout.componentAt(stepperPlus.id, "StarUIButton")!;
+const stepperMinusButton = stepperLayout.componentAt(stepperMinus.id, "StarUIButton")!;
+const stepperPlusSurface = stepperLayout.componentAt(stepperPlus.id, "UISprite")!;
+const stepperMinusSurface = stepperLayout.componentAt(stepperMinus.id, "UISprite")!;
+const stepperValueSurface = stepperLayout.componentAt(stepperValue.id, "UISprite")!;
+const stepperValueText = stepperLayout.componentAt(stepperLayout.nodeAt("HiSpeed/Body/baseImage/valueText").id, "UILabel")!;
+
+/**
+ * The HiSpeed row's ±1 buttons and value field, stacked vertically: plus above the value, minus below.
+ * `width` resizes the sliced value field and `gap` separates the parts, both in the row's design px.
+ */
+export function OriginalVerticalStepper({ title, text, width, gap, fontSize, canIncrease, canDecrease, onIncrease, onDecrease }: {
+  title: string; text: string; width: number; gap: number;
+  /** Value text size; defaults to the row's authored size. */
+  fontSize?: number;
+  canIncrease: boolean; canDecrease: boolean; onIncrease(): void; onDecrease(): void;
+}) {
+  const valueHeight = stepperValueSurface.data.mHeight as number;
+  const offset = (height: number) => valueHeight / 2 + gap + height / 2;
+  const model = useMemo(() => new OriginalPrefabModel(stepperPrefab, {
+    nodes: {
+      [stepperValue.id]: { x: 0, y: 0 },
+      [stepperPlus.id]: { x: 0, y: offset(stepperPlusSurface.data.mHeight) },
+      [stepperMinus.id]: { x: 0, y: -offset(stepperMinusSurface.data.mHeight) },
+    },
+    components: { [stepperValueSurface.id]: { mWidth: width },
+      [stepperValueText.id]: { mText: text, mWidth: width, ...(fontSize === undefined ? {} : { mFontSize: fontSize }) } },
+  }), [text, width, gap, fontSize]);
+  const boxes = [stepperPlusSurface, stepperValueSurface, stepperMinusSurface]
+    .map(component => model.rect(model.components.get(component.id)!));
+  const left = Math.min(...boxes.map(box => box.x)), top = Math.min(...boxes.map(box => box.y));
+  const right = Math.max(...boxes.map(box => box.x + box.width)), bottom = Math.max(...boxes.map(box => box.y + box.height));
+  const bindings = { buttons: {
+    [stepperPlusButton.id]: { label: `${title}增加`, disabled: !canIncrease, action: onIncrease },
+    [stepperMinusButton.id]: { label: `${title}减少`, disabled: !canDecrease, action: onDecrease },
+  } };
+  return <div role="group" aria-label={title} style={{ position: "relative", width: right - left, height: bottom - top }}>
+    <div className="original-prefab-origin" style={{ left: -left, top: -top }}>
+      {[stepperPlus, stepperValue, stepperMinus].map(node =>
+        <OriginalPrefabView key={node.id} model={model} root={node.id} bindings={bindings} />)}
+    </div>
+  </div>;
+}
+
+/**
+ * The HiSpeed row with only its ±1 buttons and the value field, in their authored horizontal places
+ * (− [value] +). The caller decides what a step means and its bounds.
+ */
+export function OriginalStepStepper({ label, text, canIncrease, canDecrease, onIncrease, onDecrease, disabled = false }: {
+  label: string; text: string; canIncrease: boolean; canDecrease: boolean; onIncrease(): void; onDecrease(): void;
+  disabled?: boolean;
+}) {
+  const model = useMemo(() => new OriginalPrefabModel(stepperPrefab, {
+    nodes: Object.fromEntries(["SuperMinusButton", "MinusButton", "PlusButton", "SuperPlusButton", "DefaultButton"]
+      .map(name => [stepperLayout.nodeAt(`HiSpeed/Body/${name}`).id, { active: false }])),
+    components: { [stepperValueText.id]: { mText: text } },
+  }), [text]);
+  const boxes = [stepperMinusSurface, stepperValueSurface, stepperPlusSurface].map(component => model.rect(component));
+  const left = Math.min(...boxes.map(box => box.x)), top = Math.min(...boxes.map(box => box.y));
+  const right = Math.max(...boxes.map(box => box.x + box.width)), bottom = Math.max(...boxes.map(box => box.y + box.height));
+  return <div role="group" aria-label={label} style={{ position: "relative", width: right - left, height: bottom - top }}>
+    <div className="original-prefab-origin" style={{ left: -left, top: -top }}>
+      <OriginalPrefabView model={model} root={stepperBody.id} bindings={{ buttons: {
+        [stepperPlusButton.id]: { label: `${label}增加`, disabled: disabled || !canIncrease, action: onIncrease },
+        [stepperMinusButton.id]: { label: `${label}减少`, disabled: disabled || !canDecrease, action: onDecrease },
+      } }} />
     </div>
   </div>;
 }
@@ -86,13 +202,15 @@ const defaultInputSource: OriginalInputSource = {
   model: new OriginalPrefabModel(formPrefabs.takeoversettingdialog!),
   background: 134, label: 101, marker: 125, input: 114,
 };
-type FieldProps = { multiline?: boolean; source?: OriginalInputSource } & InputHTMLAttributes<HTMLInputElement> & TextareaHTMLAttributes<HTMLTextAreaElement>;
+type FieldProps = { multiline?: boolean; source?: OriginalInputSource;
+  /** A multiline field this tall in place of its rows' height (filling a measured area). */
+  fillHeight?: number } & InputHTMLAttributes<HTMLInputElement> & TextareaHTMLAttributes<HTMLTextAreaElement>;
 const inputColor = (color: { r: number; g: number; b: number; a: number }) =>
   `rgba(${color.r * 255},${color.g * 255},${color.b * 255},${color.a})`;
 /** Original sliced surface and label geometry, with host caret/selection/IME.
  * Multiline rows are editor content sizing, not a copied original UIInput mode. */
 export function OriginalFormInput({ multiline = false, rows = 6, className = "", style, source = defaultInputSource,
-  onFocus, onBlur, placeholder, ...props }: FieldProps) {
+  onFocus, onBlur, placeholder, fillHeight, ...props }: FieldProps) {
   const fieldSource = source.model;
   const fieldBackground = fieldSource.components.get(source.background)!;
   const fieldLabel = fieldSource.components.get(source.label)!;
@@ -126,7 +244,8 @@ export function OriginalFormInput({ multiline = false, rows = 6, className = "",
     // UILabel baseline calculation as OriginalPrefabView. Background stays fixed.
     setTextTop(target - marker.offsetTop);
   }, [fontRevision, multiline, label, left]);
-  const height = multiline ? Math.max(1, rows) * lineHeight + textTop + left : backgroundRect.height;
+  const height = multiline ? (fillHeight && fillHeight > 0 ? fillHeight : Math.max(1, rows) * lineHeight + textTop + left)
+    : backgroundRect.height;
   const surface = useOriginalSurface(fieldBackground.data.mSpriteName,
     Math.abs(fieldSource.transform(fieldBackground.node).scaleX), "menu", Math.max(1, width), height);
   const input = fieldSource.components.get(source.input)!.data;
@@ -189,15 +308,20 @@ export function OriginalFormSubtitle({ text }: { text: string }) {
   </div>;
 }
 
-/** Original settings description UILabel: 20px, grey, no heading background/effect. */
-export function OriginalFormNote({ text }: { text: string }) {
+/**
+ * Original settings description UILabel: 20px, grey, no heading background/effect. Its authored box is 100px tall
+ * for multi-line notes; `lines` sizes the (top-anchored) box to that many text lines instead.
+ */
+export function OriginalFormNote({ text, lines }: { text: string; lines?: number }) {
   const { ref, width } = useFormWidth();
   const source = new OriginalPrefabModel(ORIGINAL_PREFABS.systemtabpage!);
   const label = source.components.get(351)!, node = source.nodes.get(label.node)!;
+  const height = lines === undefined ? label.data.mHeight
+    : lines * (label.data.mFontSize + label.data.mSpacingY);
   const model = new OriginalPrefabModel({ resource: source.prefab.resource,
     nodes: [{ ...node, parent: null, active: true, position: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } }],
-    components: [label] }, { components: { [label.id]: { mText: text, mWidth: Math.max(1, width) } } });
-  return <div ref={ref} className="original-form-note" style={{ height: label.data.mHeight }}>
+    components: [label] }, { components: { [label.id]: { mText: text, mWidth: Math.max(1, width), mHeight: height } } });
+  return <div ref={ref} className="original-form-note" style={{ height }}>
     {width > 0 && <OriginalPrefabView model={model} />}
   </div>;
 }
@@ -271,6 +395,23 @@ export function OriginalFormTitle({ text, followedBySubtitle = false }: { text: 
 }
 
 const buttonSource = new OriginalPrefabModel(ORIGINAL_PREFABS.selectablecommondialog!);
+/** Layout width of a normal OriginalFormButton: its original hit area (SelectableCommonDialog OKButton), wider than its sprite. */
+export const ORIGINAL_FORM_BUTTON_WIDTH = (() => {
+  const node = buttonSource.components.get(45)!.node;
+  const collider = buttonSource.componentAt(node, "BoxCollider2D");
+  return Math.max(buttonSource.componentAt(node, "UISprite")!.data.mWidth, collider?.data.m_Size.x ?? 0);
+})();
+/** A normal OriginalFormButton's visible sprite width. */
+export const ORIGINAL_FORM_BUTTON_SPRITE_WIDTH = (() => {
+  const node = buttonSource.components.get(45)!.node;
+  return buttonSource.componentAt(node, "UISprite")!.data.mWidth as number;
+})();
+/** How far a normal OriginalFormButton's visible sprite is inset from its layout box on each side (its hit area is
+ * the wider). */
+export const ORIGINAL_FORM_BUTTON_SPRITE_INSET = (() => {
+  const node = buttonSource.components.get(45)!.node;
+  return (ORIGINAL_FORM_BUTTON_WIDTH - buttonSource.componentAt(node, "UISprite")!.data.mWidth) / 2;
+})();
 function labelText(children: ReactNode): string {
   return Children.toArray(children).map(child => typeof child === "string" || typeof child === "number" ? String(child)
     : isValidElement<{ children?: ReactNode }>(child) ? labelText(child.props.children) : "").join("");
@@ -278,27 +419,35 @@ function labelText(children: ReactNode): string {
 
 /** Original button subtree, including its label, hit box, template and press cover. */
 export function OriginalFormButton({ tone = "gray", size = "normal", children, onClick, disabled, className = "",
-  "aria-label": ariaLabel, title }: {
+  "aria-label": ariaLabel, title, singleLine = false }: {
   tone?: "pink" | "gray"; size?: "normal" | "small" | "icon"; children: ReactNode; onClick?: () => void; disabled?: boolean;
+  /** The label kept on one line, shrunk to fit as the source label shrinks its content (a long label). */
+  singleLine?: boolean;
   className?: string; "aria-label"?: string; title?: string; type?: "button";
 }) {
-  const buttonId = tone === "pink" ? 45 : 39, labelId = tone === "pink" ? 42 : 38;
-  const root = buttonSource.nodes.get(buttonSource.components.get(buttonId)!.node)!;
-  const nodes = buttonSource.prefab.nodes.filter(node => buttonSource.isWithin(node.id, root.id))
-    .map(node => node.id === root.id ? { ...node, parent: null, position: { x: 0, y: 0, z: 0 } } : node);
-  const model = new OriginalPrefabModel({ ...buttonSource.prefab, nodes,
-    components: buttonSource.prefab.components.filter(component => nodes.some(node => node.id === component.node))
-      .map(component => component.id === buttonId && size !== "normal" ? { ...component, data: { ...component.data,
-        initializeTemplateWidth: size === "icon" ? 8 : 4, initializeTemplateHeight: 3 } } : component) },
-    { components: { [labelId]: { mText: labelText(children), ...(size !== "normal"
-      ? { mWidth: size === "icon" ? 54 : 150, mHeight: 48, mMaxLineCount: 1 } : {}) } } });
-  const sprite = model.componentAt(root.id, "UISprite")!;
-  // Layout must reserve the original hit region as well as the visible sprite.
-  const collider = model.componentAt(root.id, "BoxCollider2D");
-  const boxes = [sprite, ...(collider ? [collider] : [])].map(component => model.rect(component));
-  const left = Math.min(...boxes.map(box => box.x)), top = Math.min(...boxes.map(box => box.y));
-  const width = Math.max(...boxes.map(box => box.x + box.width)) - left;
-  const height = Math.max(...boxes.map(box => box.y + box.height)) - top;
+  // The model and its layout depend only on tone, size and the label text; keep them across re-renders.
+  const buttonId = tone === "pink" ? 45 : 39;
+  const label = labelText(children);
+  const { model, left, top, width, height } = useMemo(() => {
+    const labelId = tone === "pink" ? 42 : 38;
+    const root = buttonSource.nodes.get(buttonSource.components.get(buttonId)!.node)!;
+    const nodes = buttonSource.prefab.nodes.filter(node => buttonSource.isWithin(node.id, root.id))
+      .map(node => node.id === root.id ? { ...node, parent: null, position: { x: 0, y: 0, z: 0 } } : node);
+    const model = new OriginalPrefabModel({ ...buttonSource.prefab, nodes,
+      components: buttonSource.prefab.components.filter(component => nodes.some(node => node.id === component.node))
+        .map(component => component.id === buttonId && size !== "normal" ? { ...component, data: { ...component.data,
+          initializeTemplateWidth: size === "icon" ? 8 : 4, initializeTemplateHeight: 3 } } : component) },
+      { components: { [labelId]: { mText: label, ...(size !== "normal"
+        ? { mWidth: size === "icon" ? 54 : 150, mHeight: 48, mMaxLineCount: 1 } : singleLine ? { mMaxLineCount: 1 } : {}) } } });
+    const sprite = model.componentAt(root.id, "UISprite")!;
+    // Layout must reserve the original hit region as well as the visible sprite.
+    const collider = model.componentAt(root.id, "BoxCollider2D");
+    const boxes = [sprite, ...(collider ? [collider] : [])].map(component => model.rect(component));
+    const left = Math.min(...boxes.map(box => box.x)), top = Math.min(...boxes.map(box => box.y));
+    const width = Math.max(...boxes.map(box => box.x + box.width)) - left;
+    const height = Math.max(...boxes.map(box => box.y + box.height)) - top;
+    return { model, left, top, width, height };
+  }, [tone, size, label, singleLine]);
   return <div className={`transfer-authored-button ${className}`} title={title}
     style={{ width, height }}>
     <div className="original-prefab-origin" style={{ left: -left, top: -top }}>
@@ -306,5 +455,6 @@ export function OriginalFormButton({ tone = "gray", size = "normal", children, o
         [buttonId]: { action: onClick, disabled, label: ariaLabel ?? labelText(children) },
       } }} />
     </div>
+    {typeof children === "string" ? null : <div className="transfer-authored-button-content">{children}</div>}
   </div>;
 }

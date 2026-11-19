@@ -17,9 +17,17 @@
   overflow: auto; min-height: 0; display: flex; flex-direction: column;
   gap: var(--transfer-section-gap); padding: 6px 12px 12px; scrollbar-width: none;
 }
-.transfer-actions { display: flex; justify-content: center; align-items: center; gap: 32px; }
+/* Original dialogs lay their bottom buttons out with the hit areas touching: SelectableCommonDialog (two, centres
+   at x = ±136) and ThreeButtonCommonDialog (three, centres 272-274 apart) both leave 24 between the 248-wide
+   surfaces of their 272-wide buttons. Prefab buttons already reserve their hit areas, so they sit with no gap;
+   a row of plain original buttons keeps the 24 between surfaces. */
+.transfer-actions { display: flex; justify-content: center; align-items: center; gap: 24px; }
+.transfer-actions:has(> .transfer-authored-button) { gap: 0; }
 .transfer-authored-content[data-fit-content="true"] > .transfer-body { height: auto; grid-template-rows: auto auto; }
+/* A fitted page that takes the width of the button row instead of widening the window (long notes wrap). */
+.transfer-page-follows-actions { width: 0; min-width: 100%; }
 .transfer-authored-button { position: relative; flex-shrink: 0; }
+.transfer-authored-button-content { position: absolute; inset: 0; z-index: 2000; display: flex; align-items: center; justify-content: center; pointer-events: none; }
 .transfer-authored-content .setting-block { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 /* The input paints its own original nine-slice background below its text. */
 .original-form-input { position: relative; isolation: isolate; width: 100%; min-width: 0; flex-shrink: 0; }
