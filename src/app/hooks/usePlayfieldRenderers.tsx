@@ -1,6 +1,7 @@
 ﻿import { editorSlideLineWidth } from "../editorNoteMetrics";
 import { useMemo, type ReactNode } from "react";
 import { projectPlayfieldLineRuntimeAssets } from "../../skinLoader";
+import { isDirectionalNoteType } from "../../chartCore";
 import type { EventBubbleHit, TimelineEventTarget } from "./useCanvasPlayfieldBackend";
 
 /** What a press and a right-click on an event bubble do. */
@@ -38,7 +39,8 @@ export function usePlayfieldRenderers(params: any) {
     connectionSegments,
     skinAssets,
     slideBuildState,
-    slideBuildCursor,
+    getNoteSpanLanes,
+    longLineOpacityScale,
     onMiddleToolConnectionClick,
     onCurveToolConnectionClick,
     noteVisualScale,
@@ -253,40 +255,10 @@ export function usePlayfieldRenderers(params: any) {
     return segments;
   };
 
-  const slideBuildCommittedGuideLines = useMemo(() => {
-    if (!slideBuildState || slideBuildState.noteIds.length < 2) {
-      return [] as Array<{ x1: number; y1: number; x2: number; y2: number; key: string }>;
-    }
-    const lines: Array<{ x1: number; y1: number; x2: number; y2: number; key: string }> = [];
-    for (let index = 0; index < slideBuildState.noteIds.length - 1; index += 1) {
-      const from = noteById.get(slideBuildState.noteIds[index]);
-      const to = noteById.get(slideBuildState.noteIds[index + 1]);
-      if (!from || !to) {
-        continue;
-      }
-      const fromPlacement = getRenderedNotePlacement(from);
-      const toPlacement = getRenderedNotePlacement(to);
-      const fromAnchorLane = getSlideAnchorLane(
-        { type: from.type, lane: fromPlacement.lane, width: from.width },
-        "outgoing",
-      );
-      const toAnchorLane = getSlideAnchorLane(
-        { type: to.type, lane: toPlacement.lane, width: to.width },
-        "incoming",
-      );
-      lines.push({
-        x1: (laneToColumn(fromAnchorLane) + 0.5) * LANE_WIDTH,
-        y1: beatToY(fromPlacement.beat),
-        x2: (laneToColumn(toAnchorLane) + 0.5) * LANE_WIDTH,
-        y2: beatToY(toPlacement.beat),
-        key: `${slideBuildState.noteIds[index]}-${slideBuildState.noteIds[index + 1]}-${index}`,
-      });
-    }
-    return lines;
-  }, [LANE_WIDTH, beatToY, getRenderedNotePlacement, getSlideAnchorLane, laneToColumn, noteById, slideBuildState]);
-
-  const slideBuildGuideLine = useMemo(() => {
-    if (!slideBuildState || !slideBuildCursor || slideBuildState.noteIds.length === 0) {
+  // The Slide build's last node, where the connection line following the pointer starts (its outgoing anchor), drawn as
+  // the build's other connection lines are; the canvas ends it at the live pointer each frame.
+  const slideBuildFollowStart = useMemo(() => {
+    if (!slideBuildState || slideBuildState.noteIds.length === 0) {
       return null;
     }
     const lastId = slideBuildState.noteIds[slideBuildState.noteIds.length - 1];
@@ -299,21 +271,23 @@ export function usePlayfieldRenderers(params: any) {
       { type: lastNote.type, lane: placement.lane, width: lastNote.width },
       "outgoing",
     );
+    const buildNotes = slideBuildState.noteIds.map((id: string) => noteById.get(id)).filter(Boolean);
     return {
-      x1: (laneToColumn(anchorLane) + 0.5) * LANE_WIDTH,
-      y1: beatToY(placement.beat),
-      x2: slideBuildCursor.x,
-      y2: slideBuildCursor.y,
+      x: (laneToColumn(anchorLane) + 0.5) * LANE_WIDTH,
+      y: beatToY(placement.beat),
+      spanLanes: isDirectionalNoteType(lastNote.type) ? 1 : Math.max(1, getNoteSpanLanes(lastNote)),
+      textureKind: buildNotes.some((note: { type: string }) => note.type === "hidden") ? "curveSlide" as const : "long" as const,
+      opacity: longLineOpacityScale,
     };
-  }, [LANE_WIDTH, beatToY, getRenderedNotePlacement, getSlideAnchorLane, laneToColumn, noteById, slideBuildCursor, slideBuildState]);
+  }, [LANE_WIDTH, beatToY, getNoteSpanLanes, getRenderedNotePlacement, getSlideAnchorLane, laneToColumn, longLineOpacityScale,
+    noteById, slideBuildState]);
 
   return {
     deleteTimelineEvent,
     describeBpmEvent,
     describeSvEvent,
     renderSlideSegments,
-    slideBuildCommittedGuideLines,
-    slideBuildGuideLine,
+    slideBuildFollowStart,
   };
 }
 
