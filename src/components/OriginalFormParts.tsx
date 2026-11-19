@@ -455,6 +455,7 @@ export function OriginalFormButton({ tone = "gray", size = "normal", children, o
         [buttonId]: { action: onClick, disabled, label: ariaLabel ?? labelText(children) },
       } }} />
     </div>
-    {typeof children === "string" ? null : <div className="transfer-authored-button-content">{children}</div>}
+    {/* Text children are the prefab label's own text; only content without text (an icon) is drawn over it. */}
+    {label !== "" ? null : <div className="transfer-authored-button-content">{children}</div>}
   </div>;
 }
