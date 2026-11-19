@@ -12,6 +12,7 @@ import { projectDraft, type ChartProject, type ChartProjectDraft } from "../proj
 import { captureChartProject, rememberProjectMedia } from "../project/projectResources";
 import { downloadBytes } from "../services/download";
 import { appLog } from "../logging/applicationLogger";
+import { stretchAudioBuffer } from "../audio/stretchAudioBuffer";
 
 import {
   useCallback,
@@ -1018,6 +1019,9 @@ function ChartEditorController() {
   const playbackBgmClockBaseSecRef = useRef(0);
   const playbackBgmClockBaseContextTimeSecRef = useRef(0);
   const playbackBgmPlaybackRateRef = useRef(1);
+  /** The decoded BGM being played; the source may hold a time-stretched copy of it. */
+  const playbackBgmOriginalBufferRef = useRef<AudioBuffer | null>(null);
+  const playbackBgmSpeedChangeSeqRef = useRef(0);
   const playbackBgmDurationSecRef = useRef(0);
   const playbackSeBufferBySrcRef = useRef<Map<string, AudioBuffer>>(new Map());
   const playbackSeDecodeTaskBySrcRef = useRef<Map<string, Promise<AudioBuffer | null>>>(new Map());
@@ -3402,8 +3406,10 @@ function ChartEditorController() {
     return playbackBgmCacheSeqRef.current === cacheSeq ? decoded : null;
   }, [decodePlaybackAudioBuffer]);
 
+  /** Plays `played` (`buffer` or its time-stretched copy at `playbackRate`) from chart time `offsetSec`. */
   const startPlaybackBgmAt = useCallback((
     buffer: AudioBuffer,
+    played: AudioBuffer,
     offsetSec: number,
     playbackRate: number,
   ): number | null => {
@@ -3415,15 +3421,18 @@ function ChartEditorController() {
     const source = context.createBufferSource();
     const safeRate = Math.max(0.01, playbackRate);
     const safeOffset = clamp(offsetSec, 0, Math.max(0, buffer.duration - 0.001));
-    source.buffer = buffer;
-    source.playbackRate.value = safeRate;
+    const stretched = played !== buffer;
+    source.buffer = played;
+    // A stretched copy already runs at the chosen speed; only the original buffer is sped up by the source.
+    source.playbackRate.value = stretched ? 1 : safeRate;
+    playbackBgmOriginalBufferRef.current = buffer;
     source.connect(playbackBgmGainRef.current ?? context.destination);
     source.onended = () => {
       if (playbackBgmSourceRef.current === source) {
         playbackBgmSourceRef.current = null;
       }
     };
-    source.start(0, safeOffset);
+    source.start(0, stretched ? safeOffset * played.duration / buffer.duration : safeOffset);
     playbackBgmSourceRef.current = source;
     playbackBgmClockBaseSecRef.current = safeOffset;
     playbackBgmClockBaseContextTimeSecRef.current = context.currentTime;
@@ -3431,6 +3440,21 @@ function ChartEditorController() {
     playbackBgmDurationSecRef.current = buffer.duration;
     return safeOffset;
   }, [clamp, ensurePlaybackSeAudioContext, stopPlaybackBgmSource]);
+
+  /** The BGM to play at `rate` with its pitch kept; the original (pitch shifted) if stretching fails. */
+  const playbackBgmForSpeed = useCallback(async (buffer: AudioBuffer, rate: number): Promise<AudioBuffer> => {
+    const context = ensurePlaybackSeAudioContext();
+    if (!context || rate === 1) return buffer;
+    const startedMs = performance.now();
+    try {
+      const stretched = await stretchAudioBuffer(context, buffer, rate);
+      appLog("info", "editor.playback.bgm-stretched", { rate, durationSec: buffer.duration, elapsedMs: Math.round(performance.now() - startedMs) });
+      return stretched;
+    } catch (error) {
+      appLog("warn", "editor.playback.bgm-stretch-failed", { rate, message: error instanceof Error ? error.message : String(error) });
+      return buffer;
+    }
+  }, [ensurePlaybackSeAudioContext]);
 
   const getPlaybackBgmTimeSec = useCallback((): number | null => {
     const context = playbackSeAudioContextRef.current;
@@ -3886,7 +3910,11 @@ function ChartEditorController() {
       }
       const shouldStartAudio = safeSeconds < buffer.duration - 1e-3;
       if (shouldStartAudio) {
-        const startedAt = startPlaybackBgmAt(buffer, safeSeconds, currentPlaybackSpeed);
+        const played = await playbackBgmForSpeed(buffer, currentPlaybackSpeed);
+        if (!isStartCurrent()) {
+          return;
+        }
+        const startedAt = startPlaybackBgmAt(buffer, played, safeSeconds, currentPlaybackSpeed);
         if (startedAt === null) {
           showDialog("音频播放失败，请重试播放。", "error");
           return;
@@ -3923,6 +3951,7 @@ function ChartEditorController() {
     resetPlaybackSoundStateAt,
     ensurePlaybackSeAudioContext,
     showDialog,
+    playbackBgmForSpeed,
     startPlaybackBgmAt,
     syncPlaybackViewport,
     hidePlaybackGuide,
@@ -4353,18 +4382,26 @@ function ChartEditorController() {
     if (audio) {
       audio.playbackRate = currentPlaybackSpeed;
     }
-    const source = playbackBgmSourceRef.current;
-    if (source) {
-      const context = playbackSeAudioContextRef.current;
-      const currentBgmTimeSec = getPlaybackBgmTimeSec();
-      if (context && currentBgmTimeSec !== null) {
-        playbackBgmClockBaseSecRef.current = currentBgmTimeSec;
-        playbackBgmClockBaseContextTimeSecRef.current = context.currentTime;
-      }
-      source.playbackRate.value = currentPlaybackSpeed;
-      playbackBgmPlaybackRateRef.current = currentPlaybackSpeed;
+    const buffer = playbackBgmOriginalBufferRef.current;
+    const seq = ++playbackBgmSpeedChangeSeqRef.current;
+    if (!buffer) {
+      return;
     }
-  }, [currentPlaybackSpeed, getPlaybackBgmTimeSec]);
+    // The current speed keeps playing until the BGM for the new speed is ready, then it continues from there.
+    // While stopped this only prepares the stretched BGM so the next start does not wait for it.
+    void playbackBgmForSpeed(buffer, currentPlaybackSpeed).then(played => {
+      if (seq !== playbackBgmSpeedChangeSeqRef.current || !playbackBgmSourceRef.current
+        || playbackBgmOriginalBufferRef.current !== buffer
+        || playbackBgmPlaybackRateRef.current === currentPlaybackSpeed) {
+        return;
+      }
+      const now = getPlaybackBgmTimeSec();
+      if (now === null || now >= buffer.duration - 1e-3) {
+        return;
+      }
+      startPlaybackBgmAt(buffer, played, now, currentPlaybackSpeed);
+    });
+  }, [currentPlaybackSpeed, getPlaybackBgmTimeSec, playbackBgmForSpeed, startPlaybackBgmAt]);
 
   useEffect(() => {
     const audio = playbackAudioRef.current;
@@ -4385,8 +4422,15 @@ function ChartEditorController() {
     void preloadPlaybackSeBuffers(appliedSkinResources?.se ?? null);
   }, [appliedSkinResources, preloadPlaybackSeBuffers]);
 
+  // Read at setup only: speed and volume changes are applied to the live audio by their own effects, and
+  // must not stop playback or drop the decoded (and time-stretched) BGM.
+  const playbackAudioSetupRef = useRef({ stopPlayback, speed: currentPlaybackSpeed, volumePercent: playbackVolumePercent });
+  playbackAudioSetupRef.current = { stopPlayback, speed: currentPlaybackSpeed, volumePercent: playbackVolumePercent };
   useEffect(() => {
+    const setup = playbackAudioSetupRef.current;
+    setup.stopPlayback();
     playbackBgmCacheSeqRef.current += 1;
+    playbackBgmOriginalBufferRef.current = null;
     playbackBgmBufferBySrcRef.current.clear();
     playbackBgmDecodeTaskBySrcRef.current.clear();
     const previous = playbackAudioRef.current;
@@ -4409,8 +4453,8 @@ function ChartEditorController() {
       setAudioDurationSec(Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : 0);
     };
     audio.onerror = () => setAudioDurationSec(0);
-    audio.playbackRate = currentPlaybackSpeed;
-    audio.volume = clamp(playbackVolumePercent / 100, 0, 1);
+    audio.playbackRate = setup.speed;
+    audio.volume = clamp(setup.volumePercent / 100, 0, 1);
     playbackAudioRef.current = audio;
     return () => {
       audio.pause();
