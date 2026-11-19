@@ -920,7 +920,7 @@ function ChartEditorController() {
     isDragging: boolean;
   } | null>(null);
   const [slideBuildState, setSlideBuildState] = useState<SlideBuildState | null>(null);
-  // The pointer during a Slide build, for its guide line: kept out of React state, as the cursor preview is, so moving
+  // The pointer during a Slide build, where its following connection line ends: kept out of React state, as the cursor preview is, so moving
   // the pointer redraws the playfield canvas without rendering the editor again.
   const slideBuildCursorRef = useRef<{ x: number; y: number } | null>(null);
   const setSlideBuildCursor = useCallback((next: { x: number; y: number } | null) => {
@@ -5105,8 +5105,7 @@ function ChartEditorController() {
     describeBpmEvent,
     describeSvEvent,
     renderSlideSegments,
-    slideBuildCommittedGuideLines,
-    slideBuildGuideAnchor,
+    slideBuildFollowStart,
   } = usePlayfieldRenderers({
     yToBeat,
     isSvPreviewEnabled,
@@ -5155,6 +5154,8 @@ function ChartEditorController() {
     connectionSegments: renderModel.connectionSegments,
     skinAssets,
     slideBuildState,
+    getNoteSpanLanes,
+    longLineOpacityScale,
     noteVisualScale,
     isSimultaneousLineEnabled: appOptionSettings.simultaneousLineEnabled,
     onMiddleToolConnectionClick: insertSingleNodeOnConnection,
@@ -5187,8 +5188,7 @@ function ChartEditorController() {
     noteVisuals: canvasNoteVisuals,
     skinAssets,
     getImage: getCanvasResourceImage,
-    slideBuildCommittedGuideLines,
-    slideBuildGuideAnchor,
+    slideBuildFollowStart,
     slideBuildCursorRef,
     selectionDrag,
     useFullGridScan: isSvPreviewEnabled,

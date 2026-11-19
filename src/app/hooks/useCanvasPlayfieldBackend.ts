@@ -450,9 +450,8 @@ export function useCanvasPlayfieldBackend(params: {
   noteVisuals: CanvasNoteVisual[];
   skinAssets: SkinAssets | null;
   getImage: (url: string | undefined | null) => HTMLImageElement | null;
-  slideBuildCommittedGuideLines: Array<{ x1: number; y1: number; x2: number; y2: number; key: string }>;
-  /** The Slide build guide line's start; it is drawn to `slideBuildCursorRef` while that holds a point. */
-  slideBuildGuideAnchor: { x1: number; y1: number } | null;
+  /** A Slide build's last node: a connection line runs from it to `slideBuildCursorRef` while that holds a point. */
+  slideBuildFollowStart: { x: number; y: number; spanLanes: number; textureKind: "long" | "curveSlide"; opacity: number } | null;
   slideBuildCursorRef: RefObject<{ x: number; y: number } | null>;
   selectionDrag: { isDragging: boolean; startX: number; startY: number; currentX: number; currentY: number } | null;
   useFullGridScan: boolean;
@@ -491,8 +490,7 @@ export function useCanvasPlayfieldBackend(params: {
     noteVisuals,
     skinAssets,
     getImage,
-    slideBuildCommittedGuideLines,
-    slideBuildGuideAnchor,
+    slideBuildFollowStart,
     slideBuildCursorRef,
     selectionDrag,
     useFullGridScan,
@@ -530,8 +528,7 @@ export function useCanvasPlayfieldBackend(params: {
     noteVisuals: CanvasNoteVisual[];
     runtimeSkin: CanvasRenderResourceRuntimeAssets | null;
     getImage: (url: string | undefined | null) => HTMLImageElement | null;
-    slideBuildCommittedGuideLines: Array<{ x1: number; y1: number; x2: number; y2: number; key: string }>;
-    slideBuildGuideAnchor: { x1: number; y1: number } | null;
+    slideBuildFollowStart: { x: number; y: number; spanLanes: number; textureKind: "long" | "curveSlide"; opacity: number } | null;
     slideBuildCursorRef: RefObject<{ x: number; y: number } | null>;
     selectionDrag: { isDragging: boolean; startX: number; startY: number; currentX: number; currentY: number } | null;
     useFullGridScan: boolean;
@@ -587,8 +584,7 @@ export function useCanvasPlayfieldBackend(params: {
     connectionSegmentsRef: RenderConnectionSegment[];
     noteVisualsRef: CanvasNoteVisual[];
     runtimeSkinRef: CanvasRenderResourceRuntimeAssets | null;
-    slideBuildCommittedGuideLinesRef: Array<{ x1: number; y1: number; x2: number; y2: number; key: string }>;
-    slideBuildGuideAnchorRef: { x1: number; y1: number } | null;
+    slideBuildFollowStartRef: { x: number; y: number; spanLanes: number; textureKind: "long" | "curveSlide"; opacity: number } | null;
     slideBuildCursorX: number | null;
     slideBuildCursorY: number | null;
     selectionDragRef: { isDragging: boolean; startX: number; startY: number; currentX: number; currentY: number } | null;
@@ -624,8 +620,7 @@ export function useCanvasPlayfieldBackend(params: {
     noteVisuals,
     runtimeSkin,
     getImage,
-    slideBuildCommittedGuideLines,
-    slideBuildGuideAnchor,
+    slideBuildFollowStart,
     slideBuildCursorRef,
     selectionDrag,
     useFullGridScan,
@@ -743,10 +738,7 @@ export function useCanvasPlayfieldBackend(params: {
         || previousTrackMemo.svVisualLinesRef !== trackMemo.svVisualLinesRef
         || previousTrackMemo.laneChangeVisualLinesRef !== trackMemo.laneChangeVisualLinesRef;
 
-      const slideBuildCursor = snapshot.slideBuildCursorRef.current;
-      const slideBuildGuideLine = snapshot.slideBuildGuideAnchor && slideBuildCursor
-        ? { ...snapshot.slideBuildGuideAnchor, x2: slideBuildCursor.x, y2: slideBuildCursor.y }
-        : null;
+      const slideBuildCursor = snapshot.slideBuildFollowStart ? snapshot.slideBuildCursorRef.current : null;
       const noteMemo = {
         viewportTop,
         viewportHeight,
@@ -767,10 +759,9 @@ export function useCanvasPlayfieldBackend(params: {
         connectionSegmentsRef: snapshot.connectionSegments,
         noteVisualsRef: snapshot.noteVisuals,
         runtimeSkinRef: snapshot.runtimeSkin,
-        slideBuildCommittedGuideLinesRef: snapshot.slideBuildCommittedGuideLines,
-        slideBuildGuideAnchorRef: snapshot.slideBuildGuideAnchor,
-        slideBuildCursorX: slideBuildGuideLine?.x2 ?? null,
-        slideBuildCursorY: slideBuildGuideLine?.y2 ?? null,
+        slideBuildFollowStartRef: snapshot.slideBuildFollowStart,
+        slideBuildCursorX: slideBuildCursor?.x ?? null,
+        slideBuildCursorY: slideBuildCursor?.y ?? null,
         selectionDragRef: snapshot.selectionDrag,
       };
       const previousNoteMemo = noteRenderMemoRef.current;
@@ -793,8 +784,7 @@ export function useCanvasPlayfieldBackend(params: {
         || previousNoteMemo.connectionSegmentsRef !== noteMemo.connectionSegmentsRef
         || previousNoteMemo.noteVisualsRef !== noteMemo.noteVisualsRef
         || previousNoteMemo.runtimeSkinRef !== noteMemo.runtimeSkinRef
-        || previousNoteMemo.slideBuildCommittedGuideLinesRef !== noteMemo.slideBuildCommittedGuideLinesRef
-        || previousNoteMemo.slideBuildGuideAnchorRef !== noteMemo.slideBuildGuideAnchorRef
+        || previousNoteMemo.slideBuildFollowStartRef !== noteMemo.slideBuildFollowStartRef
         || previousNoteMemo.slideBuildCursorX !== noteMemo.slideBuildCursorX
         || previousNoteMemo.slideBuildCursorY !== noteMemo.slideBuildCursorY
         || previousNoteMemo.selectionDragRef !== noteMemo.selectionDragRef;
@@ -1050,31 +1040,22 @@ export function useCanvasPlayfieldBackend(params: {
         if (highlighted) context.restore();
       }
 
-      const hasSlideGuide =
-        snapshot.slideBuildCommittedGuideLines.length > 0 || slideBuildGuideLine !== null;
-      if (hasSlideGuide) {
-        context.save();
-        context.strokeStyle = "rgba(83, 232, 140, 0.95)";
-        context.lineWidth = 2.5;
-        for (const line of snapshot.slideBuildCommittedGuideLines) {
-          context.beginPath();
-          context.moveTo(line.x1 + boardXOffset, line.y1 - windowTop);
-          context.lineTo(line.x2 + boardXOffset, line.y2 - windowTop);
-          context.stroke();
+      // A Slide build's connection line from its last node to the pointer, as its other connection lines are drawn.
+      const followStart = snapshot.slideBuildFollowStart;
+      if (followStart && slideBuildCursor) {
+        const texture = followStart.textureKind === "curveSlide" ? curveSlideLineTexture : longLineTexture;
+        const geometry = resolveSegmentGeometry({
+          fromX: followStart.x + boardXOffset,
+          fromY: snapToDevicePixel(followStart.y - windowTop, renderDpr),
+          toX: slideBuildCursor.x + boardXOffset,
+          toY: snapToDevicePixel(slideBuildCursor.y - windowTop, renderDpr),
+        });
+        if (texture && geometry) {
+          const lineWidthAt = (lanes: number) => editorSlideLineWidth(lanes, snapshot.laneWidth, snapshot.noteVisualScale);
+          // The pointer end is a new node's width: the Slide tool places one-lane nodes.
+          drawConnectionSegment(context, { opacity: followStart.opacity }, geometry, lineWidthAt(followStart.spanLanes),
+            lineWidthAt(1), texture);
         }
-        if (slideBuildGuideLine) {
-          context.beginPath();
-          context.moveTo(
-            slideBuildGuideLine.x1 + boardXOffset,
-            slideBuildGuideLine.y1 - windowTop,
-          );
-          context.lineTo(
-            slideBuildGuideLine.x2 + boardXOffset,
-            slideBuildGuideLine.y2 - windowTop,
-          );
-          context.stroke();
-        }
-        context.restore();
       }
 
       for (const note of snapshot.noteVisuals) {
