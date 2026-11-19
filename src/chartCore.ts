@@ -25,6 +25,8 @@ type LaneCount = (typeof LANE_COUNT_OPTIONS)[number];
 type Difficulty = (typeof DIFFICULTY_OPTIONS)[number];
 export type EditorTool = NoteType | "bpm" | "sv" | "copy" | "paste";
 export const GLOBAL_TIMING_GROUP_ID = "#Global";
+/** The global timing group's name in the editor; the chart formats also read "#0" and 0 as the global group. */
+export const GLOBAL_TIMING_GROUP_DISPLAY_NAME = "#0";
 export type ChartTimingGroupId = string;
 
 export type NoteType =
@@ -333,7 +335,7 @@ export function normalizePositiveInt(value: unknown, fallback: number): number {
 export function normalizeTimingGroup(value: unknown, fallback: ChartTimingGroupId = GLOBAL_TIMING_GROUP_ID): ChartTimingGroupId {
   if (typeof value === "string") {
     const trimmed = value.trim();
-    if (trimmed.length === 0 || trimmed === GLOBAL_TIMING_GROUP_ID) {
+    if (trimmed.length === 0 || trimmed === GLOBAL_TIMING_GROUP_ID || trimmed === GLOBAL_TIMING_GROUP_DISPLAY_NAME) {
       return GLOBAL_TIMING_GROUP_ID;
     }
     if (/^#[A-Za-z0-9 -]+$/.test(trimmed)) {
