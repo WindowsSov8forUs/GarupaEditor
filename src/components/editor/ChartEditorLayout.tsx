@@ -3,7 +3,6 @@ import profile from "../../data/originalSongDetailProfile.json";
 import { OriginalPrefabModel, type OriginalPrefab } from "../originalPrefabModel";
 import { flushSync } from "react-dom";
 import { EditorMinimap } from "./EditorMinimap";
-import { ORIGINAL_HEADER_MENU_BOUNDS } from "../OriginalPageHeader";
 import { EDITOR_EDGE_SOFTNESS } from "../../app/editorEdgeMask";
 import { hitTestEventBubble, type EventBubbleHit, type TimelineEventTarget } from "../../app/hooks/useCanvasPlayfieldBackend";
 import type { EventBubbleHandlers } from "../../app/hooks/usePlayfieldRenderers";
@@ -11,8 +10,11 @@ import { EditorBpmDialog } from "./EditorBpmDialog";
 import { EditorSvDialog } from "./EditorSvDialog";
 import { DEFAULT_METADATA, GLOBAL_TIMING_GROUP_ID, toolPreviewNoteType } from "../../chartCore";
 import { EditorBeatDivisionButton } from "./EditorBeatDivision";
-import { EDITOR_HISTORY_TRAILING_WIDTH, EditorControlColumn, EditorHistoryTools, EditorMirrorTools } from "./EditorControlColumn";
+import { EditorOptionsButton } from "./EditorOptionsButton";
+import { EditorOptionsDrawer } from "./EditorOptionsDrawer";
+import { EDITOR_HISTORY_TRAILING_WIDTH, EditorControlColumn, EditorHistoryTools, EditorMirrorTools, EditorPlaybackClock } from "./EditorControlColumn";
 import { useApplicationResourceUrl } from "../../resources/applicationResourceContext";
+import { ORIGINAL_HEADER_MENU_BOUNDS, ORIGINAL_HEADER_TITLE_BOTTOM } from "../OriginalPageHeader";
 import { editorDirectionalBackLineWidth, editorDirectionalHeadGeometry, editorFlickArrowGeometry, editorNoteHeight, editorDirectionalSegmentWidth, editorNoteTokenWidth, SELECTION_FRAME_MARGIN, SELECTION_RESIZE_GRIP_MAX_HEIGHT, SELECTION_RESIZE_GRIP_SCALE, SELECTION_RESIZE_GRIP_WIDTH, SELECTION_RESIZE_HIT_WIDTH } from "../../app/editorNoteMetrics";
 import { EditorSelectionOverlay, type EditorSelectionOverlayHandle } from "./EditorSelectionOverlay";
 import { OriginalMenuBackground } from "../OriginalMenuBackground";
@@ -362,12 +364,15 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     mirrorIcon={vm.mirrorActionIcon} canDelete={vm.canDeleteSelection} onDelete={deleteSelection}
     deleteIcon={vm.clearActionIcon} />,
   [vm.canMirror, vm.mirrorSelectionAlong, vm.mirrorActionIcon, vm.canDeleteSelection, deleteSelection, vm.clearActionIcon]);
+  const [isEditorOptionsOpen, setEditorOptionsOpen] = useState(false);
   // Each opening of 编辑信息 / 创建工程 starts a new draft.
   const [songEditSession, setSongEditSession] = useState(0);
   const [songEditCreating, setSongEditCreating] = useState(false);
   // The two confirmations: starting a new project from the home page, and dropping it on 创建工程.
   const [confirmingCreate, setConfirmingCreate] = useState(false);
   const [confirmingCancelCreate, setConfirmingCancelCreate] = useState(false);
+  // 发布到测试服 asks first: it publishes the chart as it is.
+  const [confirmingTestServer, setConfirmingTestServer] = useState(false);
   const openSongEdit = (creating: boolean, open: (stack: PageStack) => PageStack) => {
     setSongEditCreating(creating); setSongEditSession(session => session + 1); setPageStack(open);
   };
@@ -409,7 +414,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     trackLane: flatTrackLane, boardLaneWidth: LANE_WIDTH }), [vm.curveToolSettings, curveSave, curveCancel, flatTrackLane, LANE_WIDTH]);
   const [viewportRight, setViewportRight] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(window.innerHeight);
-  void viewportRight;
   const [timelineLabelX, setTimelineLabelX] = useState(8);
   const rhythmSkinTypes = bestdoriSkinCatalogOptions?.rhythm ?? [];
   const directionalSkinTypes = bestdoriSkinCatalogOptions?.directional ?? [];
@@ -1538,6 +1542,10 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
 
       <section className={`workspace ${mobileRuntime ? "is-mobile-workspace" : ""}`}
         style={{ position: "relative", gap: SONG_INFORMATION_CONTENT_BOUNDS.columnGap * uiViewport.scale }}>
+        <EditorOptionsButton onClick={() => setEditorOptionsOpen(true)} scale={uiViewport.scale}
+          top={uiViewport.safeInsets.top - workspaceTop} right={uiViewport.safeInsets.right - viewportRight}
+          leading={<EditorPlaybackClock getSeconds={vm.getPlaybackClockSec} maxSeconds={vm.audioDurationSec} />}
+          leadingBottom={ORIGINAL_HEADER_TITLE_BOTTOM} />
         <EditorBpmDialog open={bpmEditOpen} title="BPM 编辑" value={bpmEditTarget?.bpm ?? 0}
           onClose={() => setBpmEditOpen(false)}
           onConfirm={value => { if (bpmEditTarget) vm.setBpmEventValue(bpmEditTarget.selectionId, value); }}
@@ -1993,6 +2001,22 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         onApplyOptionSettings={applyAppOptionSettings}
       />
 
+      <EditorOptionsDrawer open={isEditorOptionsOpen} onClose={() => setEditorOptionsOpen(false)}
+        mode={vm.editorMode} onModeChange={mode => { void vm.setEditorMode(mode); }}
+        habahiro={isHabahiroEnabled} onHabahiroChange={value => { void vm.setHabahiroMode(value); }}
+        laneCount={vm.settings.laneCount} onLaneCountChange={vm.setLaneCount}
+        onSongInformation={() => { setEditorOptionsOpen(false); setPageStack(stack => openDetailPage(stack, "song")); }}
+        onEditSongInformation={() => { setEditorOptionsOpen(false); openSongEdit(false, stack => openDetailPage(stack, "songEdit")); }}
+        onExportProject={() => { setEditorOptionsOpen(false); void vm.projectFiles.save(); }} exportBusy={vm.projectFiles.busy}
+        onExportBestdoriV2={() => { setEditorOptionsOpen(false); void exportBestdoriV2ToFile(); }}
+        onEditCode={() => { setEditorOptionsOpen(false); openImportJsonModal(); }}
+        onPublishTestServer={() => { setEditorOptionsOpen(false); setConfirmingTestServer(true); }}
+        onPublishBestdori={() => { setEditorOptionsOpen(false); downloadJson(); }} />
+      <OriginalChoiceDialog open={confirmingTestServer} title="发布到测试服" message="是否将当前谱面发布到测试服？"
+        onClose={() => setConfirmingTestServer(false)} choices={[
+          { label: "取消", action: () => setConfirmingTestServer(false) },
+          { label: "确定", tone: "pink", action: () => { setConfirmingTestServer(false); void applyUploadTestServerChart(); } },
+        ]} />
       <OriginalChoiceDialog open={confirmingCreate} title="创建工程" message="是否创建新的谱面工程？"
         onClose={() => setConfirmingCreate(false)} choices={[
           { label: "取消", action: () => setConfirmingCreate(false) },

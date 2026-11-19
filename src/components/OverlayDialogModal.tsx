@@ -34,6 +34,8 @@ function OverlayDialogModalInner({
       value={dialog}
       title={(renderedDialog) => OVERLAY_DIALOG_TITLES[renderedDialog.tone]}
       maskClassName="overlay-dialog-mask"
+      // Confirmations may be raised from a drawer (fixed at z-index 100); keep them above it.
+      layerOffset={100}
       cardClassName="overlay-dialog-card"
       hideCloseAction
     >
