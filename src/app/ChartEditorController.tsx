@@ -920,7 +920,12 @@ function ChartEditorController() {
     isDragging: boolean;
   } | null>(null);
   const [slideBuildState, setSlideBuildState] = useState<SlideBuildState | null>(null);
-  const [slideBuildCursor, setSlideBuildCursor] = useState<{ x: number; y: number } | null>(null);
+  // The pointer during a Slide build, for its guide line: kept out of React state, as the cursor preview is, so moving
+  // the pointer redraws the playfield canvas without rendering the editor again.
+  const slideBuildCursorRef = useRef<{ x: number; y: number } | null>(null);
+  const setSlideBuildCursor = useCallback((next: { x: number; y: number } | null) => {
+    slideBuildCursorRef.current = next;
+  }, []);
   const beatInputEditingRef = useRef(false);
   const bpmInputEditingRef = useRef(false);
   const svInputEditingRef = useRef(false);
@@ -5101,7 +5106,7 @@ function ChartEditorController() {
     describeSvEvent,
     renderSlideSegments,
     slideBuildCommittedGuideLines,
-    slideBuildGuideLine,
+    slideBuildGuideAnchor,
   } = usePlayfieldRenderers({
     yToBeat,
     isSvPreviewEnabled,
@@ -5150,7 +5155,6 @@ function ChartEditorController() {
     connectionSegments: renderModel.connectionSegments,
     skinAssets,
     slideBuildState,
-    slideBuildCursor,
     noteVisualScale,
     isSimultaneousLineEnabled: appOptionSettings.simultaneousLineEnabled,
     onMiddleToolConnectionClick: insertSingleNodeOnConnection,
@@ -5184,7 +5188,8 @@ function ChartEditorController() {
     skinAssets,
     getImage: getCanvasResourceImage,
     slideBuildCommittedGuideLines,
-    slideBuildGuideLine,
+    slideBuildGuideAnchor,
+    slideBuildCursorRef,
     selectionDrag,
     useFullGridScan: isSvPreviewEnabled,
     verticalZoom,

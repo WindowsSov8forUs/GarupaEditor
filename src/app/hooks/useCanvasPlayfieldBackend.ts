@@ -451,7 +451,9 @@ export function useCanvasPlayfieldBackend(params: {
   skinAssets: SkinAssets | null;
   getImage: (url: string | undefined | null) => HTMLImageElement | null;
   slideBuildCommittedGuideLines: Array<{ x1: number; y1: number; x2: number; y2: number; key: string }>;
-  slideBuildGuideLine: { x1: number; y1: number; x2: number; y2: number } | null;
+  /** The Slide build guide line's start; it is drawn to `slideBuildCursorRef` while that holds a point. */
+  slideBuildGuideAnchor: { x1: number; y1: number } | null;
+  slideBuildCursorRef: RefObject<{ x: number; y: number } | null>;
   selectionDrag: { isDragging: boolean; startX: number; startY: number; currentX: number; currentY: number } | null;
   useFullGridScan: boolean;
   verticalZoom: number;
@@ -490,7 +492,8 @@ export function useCanvasPlayfieldBackend(params: {
     skinAssets,
     getImage,
     slideBuildCommittedGuideLines,
-    slideBuildGuideLine,
+    slideBuildGuideAnchor,
+    slideBuildCursorRef,
     selectionDrag,
     useFullGridScan,
     verticalZoom,
@@ -528,7 +531,8 @@ export function useCanvasPlayfieldBackend(params: {
     runtimeSkin: CanvasRenderResourceRuntimeAssets | null;
     getImage: (url: string | undefined | null) => HTMLImageElement | null;
     slideBuildCommittedGuideLines: Array<{ x1: number; y1: number; x2: number; y2: number; key: string }>;
-    slideBuildGuideLine: { x1: number; y1: number; x2: number; y2: number } | null;
+    slideBuildGuideAnchor: { x1: number; y1: number } | null;
+    slideBuildCursorRef: RefObject<{ x: number; y: number } | null>;
     selectionDrag: { isDragging: boolean; startX: number; startY: number; currentX: number; currentY: number } | null;
     useFullGridScan: boolean;
     verticalZoom: number;
@@ -584,7 +588,9 @@ export function useCanvasPlayfieldBackend(params: {
     noteVisualsRef: CanvasNoteVisual[];
     runtimeSkinRef: CanvasRenderResourceRuntimeAssets | null;
     slideBuildCommittedGuideLinesRef: Array<{ x1: number; y1: number; x2: number; y2: number; key: string }>;
-    slideBuildGuideLineRef: { x1: number; y1: number; x2: number; y2: number } | null;
+    slideBuildGuideAnchorRef: { x1: number; y1: number } | null;
+    slideBuildCursorX: number | null;
+    slideBuildCursorY: number | null;
     selectionDragRef: { isDragging: boolean; startX: number; startY: number; currentX: number; currentY: number } | null;
   } | null>(null);
     const sortedConnectionSegmentsRef = useRef<{
@@ -619,7 +625,8 @@ export function useCanvasPlayfieldBackend(params: {
     runtimeSkin,
     getImage,
     slideBuildCommittedGuideLines,
-    slideBuildGuideLine,
+    slideBuildGuideAnchor,
+    slideBuildCursorRef,
     selectionDrag,
     useFullGridScan,
     verticalZoom,
@@ -736,6 +743,10 @@ export function useCanvasPlayfieldBackend(params: {
         || previousTrackMemo.svVisualLinesRef !== trackMemo.svVisualLinesRef
         || previousTrackMemo.laneChangeVisualLinesRef !== trackMemo.laneChangeVisualLinesRef;
 
+      const slideBuildCursor = snapshot.slideBuildCursorRef.current;
+      const slideBuildGuideLine = snapshot.slideBuildGuideAnchor && slideBuildCursor
+        ? { ...snapshot.slideBuildGuideAnchor, x2: slideBuildCursor.x, y2: slideBuildCursor.y }
+        : null;
       const noteMemo = {
         viewportTop,
         viewportHeight,
@@ -757,7 +768,9 @@ export function useCanvasPlayfieldBackend(params: {
         noteVisualsRef: snapshot.noteVisuals,
         runtimeSkinRef: snapshot.runtimeSkin,
         slideBuildCommittedGuideLinesRef: snapshot.slideBuildCommittedGuideLines,
-        slideBuildGuideLineRef: snapshot.slideBuildGuideLine,
+        slideBuildGuideAnchorRef: snapshot.slideBuildGuideAnchor,
+        slideBuildCursorX: slideBuildGuideLine?.x2 ?? null,
+        slideBuildCursorY: slideBuildGuideLine?.y2 ?? null,
         selectionDragRef: snapshot.selectionDrag,
       };
       const previousNoteMemo = noteRenderMemoRef.current;
@@ -781,7 +794,9 @@ export function useCanvasPlayfieldBackend(params: {
         || previousNoteMemo.noteVisualsRef !== noteMemo.noteVisualsRef
         || previousNoteMemo.runtimeSkinRef !== noteMemo.runtimeSkinRef
         || previousNoteMemo.slideBuildCommittedGuideLinesRef !== noteMemo.slideBuildCommittedGuideLinesRef
-        || previousNoteMemo.slideBuildGuideLineRef !== noteMemo.slideBuildGuideLineRef
+        || previousNoteMemo.slideBuildGuideAnchorRef !== noteMemo.slideBuildGuideAnchorRef
+        || previousNoteMemo.slideBuildCursorX !== noteMemo.slideBuildCursorX
+        || previousNoteMemo.slideBuildCursorY !== noteMemo.slideBuildCursorY
         || previousNoteMemo.selectionDragRef !== noteMemo.selectionDragRef;
 
       const prepareCanvas = (canvas: HTMLCanvasElement): CanvasRenderingContext2D | null => {
@@ -1036,7 +1051,7 @@ export function useCanvasPlayfieldBackend(params: {
       }
 
       const hasSlideGuide =
-        snapshot.slideBuildCommittedGuideLines.length > 0 || snapshot.slideBuildGuideLine !== null;
+        snapshot.slideBuildCommittedGuideLines.length > 0 || slideBuildGuideLine !== null;
       if (hasSlideGuide) {
         context.save();
         context.strokeStyle = "rgba(83, 232, 140, 0.95)";
@@ -1047,15 +1062,15 @@ export function useCanvasPlayfieldBackend(params: {
           context.lineTo(line.x2 + boardXOffset, line.y2 - windowTop);
           context.stroke();
         }
-        if (snapshot.slideBuildGuideLine) {
+        if (slideBuildGuideLine) {
           context.beginPath();
           context.moveTo(
-            snapshot.slideBuildGuideLine.x1 + boardXOffset,
-            snapshot.slideBuildGuideLine.y1 - windowTop,
+            slideBuildGuideLine.x1 + boardXOffset,
+            slideBuildGuideLine.y1 - windowTop,
           );
           context.lineTo(
-            snapshot.slideBuildGuideLine.x2 + boardXOffset,
-            snapshot.slideBuildGuideLine.y2 - windowTop,
+            slideBuildGuideLine.x2 + boardXOffset,
+            slideBuildGuideLine.y2 - windowTop,
           );
           context.stroke();
         }

@@ -38,7 +38,6 @@ export function usePlayfieldRenderers(params: any) {
     connectionSegments,
     skinAssets,
     slideBuildState,
-    slideBuildCursor,
     onMiddleToolConnectionClick,
     onCurveToolConnectionClick,
     noteVisualScale,
@@ -285,8 +284,10 @@ export function usePlayfieldRenderers(params: any) {
     return lines;
   }, [LANE_WIDTH, beatToY, getRenderedNotePlacement, getSlideAnchorLane, laneToColumn, noteById, slideBuildState]);
 
-  const slideBuildGuideLine = useMemo(() => {
-    if (!slideBuildState || !slideBuildCursor || slideBuildState.noteIds.length === 0) {
+  // Where the Slide build's guide line starts (its last node's outgoing anchor); it ends at the live pointer, which the
+  // canvas reads each frame.
+  const slideBuildGuideAnchor = useMemo(() => {
+    if (!slideBuildState || slideBuildState.noteIds.length === 0) {
       return null;
     }
     const lastId = slideBuildState.noteIds[slideBuildState.noteIds.length - 1];
@@ -302,10 +303,8 @@ export function usePlayfieldRenderers(params: any) {
     return {
       x1: (laneToColumn(anchorLane) + 0.5) * LANE_WIDTH,
       y1: beatToY(placement.beat),
-      x2: slideBuildCursor.x,
-      y2: slideBuildCursor.y,
     };
-  }, [LANE_WIDTH, beatToY, getRenderedNotePlacement, getSlideAnchorLane, laneToColumn, noteById, slideBuildCursor, slideBuildState]);
+  }, [LANE_WIDTH, beatToY, getRenderedNotePlacement, getSlideAnchorLane, laneToColumn, noteById, slideBuildState]);
 
   return {
     deleteTimelineEvent,
@@ -313,7 +312,7 @@ export function usePlayfieldRenderers(params: any) {
     describeSvEvent,
     renderSlideSegments,
     slideBuildCommittedGuideLines,
-    slideBuildGuideLine,
+    slideBuildGuideAnchor,
   };
 }
 
