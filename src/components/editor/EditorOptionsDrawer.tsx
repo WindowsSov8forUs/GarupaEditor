@@ -1,7 +1,7 @@
 import { OriginalMusicFilterDialog, MusicFilterHeading, MusicFilterRadioOptions, originalMusicFilterGroupCenter,
   originalMusicFilterHeadingGap, originalMusicFilterHeadingToControl, originalMusicFilterSectionCenter, originalMusicFilterTwoRowGroupHeight,
   type MusicFilterFields } from "../OriginalMusicFilterDialog";
-import { OriginalFormButton, OriginalStepStepper } from "../OriginalFormParts";
+import { OriginalFormButton, OriginalStepStepper, ORIGINAL_FORM_BUTTON_SPRITE_HEIGHT, ORIGINAL_FORM_BUTTON_SPRITE_WIDTH } from "../OriginalFormParts";
 import { LANE_COUNT_OPTIONS } from "../../chartCore";
 import { OriginalCheckBox, ORIGINAL_CHECKBOX_HEIGHT } from "../OriginalCheckBox";
 
@@ -14,6 +14,9 @@ const HEADING_TO_OPTIONS = 47;
 const OPTION_ROW = 48;
 /** Centre to centre of the 歌曲信息 buttons side by side: as the original two-button dialogs' buttons. */
 const SONG_BUTTON_PITCH = 272;
+/** A second row of buttons under a row: as far below it as the buttons of a row are apart (the original's 24
+ * between button surfaces). */
+const BUTTON_ROW_PITCH = ORIGINAL_FORM_BUTTON_SPRITE_HEIGHT + SONG_BUTTON_PITCH - ORIGINAL_FORM_BUTTON_SPRITE_WIDTH;
 /**
  * Centre of the first check circle relative to the group centre: the difficulty group's start_pos (−282) plus the
  * 2-unit shift MusicFilterRadioOptions applies with custom typography. Option rows are centred on their top value.
@@ -32,7 +35,7 @@ const NO_BOUNDS = [0, 0] as const;
  */
 export function EditorOptionsDrawer({ open, onClose, mode, onModeChange, habahiro, onHabahiroChange, laneCount, onLaneCountChange,
   onSongInformation, onEditSongInformation, onExportProject, exportBusy, onExportBestdoriV2, onPublishTestServer, onPublishBestdori,
-  onEditCode }: {
+  onPublishNotGarupa, onEditCode }: {
   open: boolean; onClose(): void;
   /** 查看: opens the song information page. */
   onSongInformation(): void;
@@ -50,6 +53,8 @@ export function EditorOptionsDrawer({ open, onClose, mode, onModeChange, habahir
   onPublishTestServer(): void;
   /** 发布到 Bestdori: its post's description and tags first. */
   onPublishBestdori(): void;
+  /** 发布到 NotGarupa: the upload to the NotGarupa! server, its description and tags first. */
+  onPublishNotGarupa(): void;
   mode: EditorMode; onModeChange(mode: EditorMode): void;
   habahiro: boolean; onHabahiroChange(value: boolean): void;
   laneCount: number; onLaneCountChange(value: number): void;
@@ -75,8 +80,10 @@ export function EditorOptionsDrawer({ open, onClose, mode, onModeChange, habahir
   const localButtonTop = localTop + originalMusicFilterHeadingToControl;
   const publishTop = localButtonTop + originalMusicFilterHeadingToControl;
   const publishButtonTop = publishTop + originalMusicFilterHeadingToControl;
+  // 发布 has a third button, on a row of its own under the other two, centred as 代码编辑's single button.
+  const publishSecondRowTop = publishButtonTop + BUTTON_ROW_PITCH;
   // 谱面代码 follows as 谱面导出 follows 歌曲信息, its group (代码编辑) and button as 本地保存's.
-  const codeTop = publishButtonTop + originalMusicFilterHeadingToControl;
+  const codeTop = publishSecondRowTop + originalMusicFilterHeadingToControl;
   const codeEditTop = codeTop + modeTop;
   const codeButtonTop = codeEditTop + originalMusicFilterHeadingToControl;
   // A control centred under the heading bars (x from that centre), its centre at y.
@@ -122,6 +129,9 @@ export function EditorOptionsDrawer({ open, onClose, mode, onModeChange, habahir
       </div>
       <div style={centred(top + publishButtonTop, SONG_BUTTON_PITCH / 2)}>
         <OriginalFormButton singleLine onClick={onPublishBestdori}>发布到 Bestdori</OriginalFormButton>
+      </div>
+      <div style={centred(top + publishSecondRowTop)}>
+        <OriginalFormButton singleLine onClick={onPublishNotGarupa}>发布到 NotGarupa</OriginalFormButton>
       </div>
       <MusicFilterHeading text="谱面代码" top={top + codeTop} />
       <MusicFilterHeading text="代码编辑" top={top + codeEditTop} kind="difficulty" />

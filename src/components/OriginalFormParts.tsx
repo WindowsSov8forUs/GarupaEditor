@@ -406,6 +406,11 @@ export const ORIGINAL_FORM_BUTTON_SPRITE_WIDTH = (() => {
   const node = buttonSource.components.get(45)!.node;
   return buttonSource.componentAt(node, "UISprite")!.data.mWidth as number;
 })();
+/** A normal OriginalFormButton's visible sprite height. */
+export const ORIGINAL_FORM_BUTTON_SPRITE_HEIGHT = (() => {
+  const node = buttonSource.components.get(45)!.node;
+  return buttonSource.componentAt(node, "UISprite")!.data.mHeight as number;
+})();
 /** How far a normal OriginalFormButton's visible sprite is inset from its layout box on each side (its hit area is
  * the wider). */
 export const ORIGINAL_FORM_BUTTON_SPRITE_INSET = (() => {
