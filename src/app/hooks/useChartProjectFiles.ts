@@ -9,7 +9,7 @@ import { captureChartProject } from "../../project/projectResources";
 import type { ChartProject, ChartProjectDraft } from "../../project/chartProject";
 
 export function useChartProjectFiles(manager: ApplicationResourceManager, draft: ChartProjectDraft,
-  restore: (project: ChartProject) => void, status: (message: string) => void) {
+  restore: (project: ChartProject) => void, showDialog: (message: string, tone?: "info" | "error") => void) {
   const input = useRef<HTMLInputElement>(null);
   const busyRef = useRef(false);
   const afterOpen = useRef<(() => void) | undefined>(undefined);
@@ -21,24 +21,22 @@ export function useChartProjectFiles(manager: ApplicationResourceManager, draft:
     busyRef.current = true; setBusy(true);
     const finish = startOperation(`project.${kind}`, { projectId: draft.projectId });
     try { await action(); finish(); }
-    catch (error) { finish(error); status(`项目${kind === "open" ? "打开" : "保存"}失败：${userFacingErrorMessage(error)}`); }
+    catch (error) { finish(error); showDialog(`项目${kind === "open" ? "打开" : "保存"}失败：\n${userFacingErrorMessage(error)}`, "error"); }
     finally { busyRef.current = false; setBusy(false); }
   };
   const save = () => run("save", async () => {
-    status("正在准备完整谱面项目…");
     const project = await captureChartProject(manager, draft);
     const { exportProjectArchive } = await import("../../project/projectArchive");
     const bytes = await exportProjectArchive(manager, project);
     if (isTauriRuntimeEnvironment() && !isMobileRuntime()) {
       // Raw IPC avoids base64 and JSON number-array expansion for BGM/MV payloads.
       const path = await invoke<string | null>("save_chart_project_via_dialog", bytes);
-      status(path ? `项目已保存到 ${path}` : "已取消保存项目。");
+      if (path) showDialog(`项目已保存到 ${path.replace(/\\/g, "/")}`);
     } else {
       const url = URL.createObjectURL(new Blob([bytes], { type: "application/zip" }));
       const link = document.createElement("a"); link.href = url;
       link.download = `${project.metadata.title.replace(/[<>:"/\\|?*\x00-\x1f]/g, "_") || "chart"}.gcp`;
       link.click(); setTimeout(() => URL.revokeObjectURL(url), 60000);
-      status("已导出完整谱面项目。");
     }
   });
   const cancel = () => {
@@ -59,11 +57,10 @@ export function useChartProjectFiles(manager: ApplicationResourceManager, draft:
     const before = latest.current;
     void run("open", async () => {
       if (!/\.gcp$/i.test(file.name)) throw new Error("请选择 .gcp 项目文件。");
-      status("正在读取谱面项目…");
       const { importProjectArchive } = await import("../../project/projectArchive");
       const project = await importProjectArchive(manager, new Uint8Array(await file.arrayBuffer()));
       if (latest.current !== before) throw new Error("读取期间当前谱面发生了修改，已保留当前内容，请重新打开项目。");
-      restore(project); onLoaded?.(); status(`已打开项目：${project.metadata.title}`);
+      restore(project); onLoaded?.();
     });
   };
   return { input, busy, save, open, cancel, choose: (onLoaded?: () => void, onCancelled?: () => void) => {

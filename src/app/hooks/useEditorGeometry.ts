@@ -48,7 +48,7 @@ export function useEditorGeometry(params: any) {
     bpmEvents,
     svEvents,
     clearAllSelections,
-    setStatusMessage,
+    showDialog,
     setMultiSelectedNotes,
     setToolLane,
     setUseToolLaneOverride,
@@ -556,7 +556,6 @@ export function useEditorGeometry(params: any) {
 
       if (hitNotes.length === 0 && hitBpmIds.length === 0 && hitSvIds.length === 0) {
         clearAllSelections();
-        setStatusMessage("框选未命中对象。");
         return;
       }
 
@@ -633,15 +632,8 @@ export function useEditorGeometry(params: any) {
       setSelectedSvEventId(primarySvId);
 
       if (hitNotes.length > 0 && (hitBpmIds.length > 0 || hitSvIds.length > 0)) {
-        setStatusMessage(`框选选中 ${hitNotes.length} 个音符、${hitBpmIds.length} 条 BPM 线、${hitSvIds.length} 条 SV 线。`);
       } else if (hitNotes.length > 0 && picked) {
-        setStatusMessage(
-          hitNotes.length > 1
-            ? `框选选中 ${hitNotes.length} 个音符。`
-            : `框选选中 ${NOTE_SPECS[picked.type].label}。`,
-        );
       } else {
-        setStatusMessage(`框选选中 ${hitBpmIds.length} 条 BPM 线、${hitSvIds.length} 条 SV 线。`);
       }
 
       if (typeof onSelectionDragCompleted === "function") {
@@ -674,7 +666,7 @@ export function useEditorGeometry(params: any) {
       setSelectedSvEventId,
       setSelectedSvEventIds,
       setSelectionDrag,
-      setStatusMessage,
+      showDialog,
       setToolLane,
       setUseToolLaneOverride,
       suppressNextBoardClickRef,

@@ -68,7 +68,6 @@ export function useEditorSelectionActions(params: any) {
     deleteNotesWithSlideHiddenFallback,
     clearSelectedNotes,
     selectedNoteIds,
-    setStatusMessage,
     selectedBpmEventIds,
     selectedSvEventIds,
     selectedSvEventId,
@@ -80,6 +79,7 @@ export function useEditorSelectionActions(params: any) {
     selectedLongLineSegmentId,
     deleteSelectedLongLineSegment,
     setSelectedLongLineSegmentId,
+    showDialog,
   } = params;
 
   const applySettingsPatch = (patch: any) => {
@@ -112,11 +112,10 @@ export function useEditorSelectionActions(params: any) {
       if (typeof patch.bpm !== "undefined") {
         const nextBpm = normalizeBaseBpmForWrite(patch.bpm, metadata.bpm);
         if (nextBpm === null) {
-          setStatusMessage("基础 BPM 必须大于 0。");
           return;
         }
         if (isLastBeatOrderedBpmNegative(nextBpm, bpmEvents)) {
-          setStatusMessage("已阻止：按 Beat 顺序最后一个 BPM 不能为负数。");
+          showDialog("谱面不合法：\n末尾 BPM 不可为负数", "error");
           return;
         }
         setMetadata((current: any) => ({ ...current, bpm: nextBpm }));
@@ -135,13 +134,11 @@ export function useEditorSelectionActions(params: any) {
           ? current.beat
           : Math.max(0, Number(toFinite(patch.beat, current.beat).toFixed(6)));
       if (typeof patch.beat !== "undefined" && approxEq(nextBeat, 0)) {
-        setStatusMessage("非基础 BPM 的 Beat 必须大于 0。");
         return previous;
       }
       const nextBpmCandidate =
         typeof patch.bpm === "undefined" ? current.bpm : normalizeEventBpmForWrite(patch.bpm, current.bpm);
       if (typeof patch.bpm !== "undefined" && nextBpmCandidate === null) {
-        setStatusMessage("非基础 BPM 不能为 0。");
         return previous;
       }
       const nextBpm = nextBpmCandidate ?? current.bpm;
@@ -157,7 +154,7 @@ export function useEditorSelectionActions(params: any) {
       );
       const nextEvents = filtered.map((event) => (event.id === normalized.id ? normalized : event));
       if (isLastBeatOrderedBpmNegative(metadata.bpm, nextEvents)) {
-        setStatusMessage("已阻止：按 Beat 顺序最后一个 BPM 不能为负数。");
+        showDialog("谱面不合法：\n末尾 BPM 不可为负数", "error");
         return previous;
       }
       return sortBpmEvents(nextEvents);
@@ -216,7 +213,6 @@ export function useEditorSelectionActions(params: any) {
       if (isBaseBpmSelected) {
         const allowedBaseBpm = normalizeBaseBpmForWrite(nextBpm, selectedBpmEvent.bpm);
         if (allowedBaseBpm === null) {
-          setStatusMessage("基础 BPM 必须大于 0。");
           return false;
         }
         updateSelectedBpmEvent({ bpm: allowedBaseBpm });
@@ -225,7 +221,6 @@ export function useEditorSelectionActions(params: any) {
 
       const allowedEventBpm = normalizeEventBpmForWrite(nextBpm, selectedBpmEvent.bpm);
       if (allowedEventBpm === null) {
-        setStatusMessage("非基础 BPM 不能为 0。");
         return false;
       }
       updateSelectedBpmEvent({ bpm: allowedEventBpm });
@@ -259,7 +254,6 @@ export function useEditorSelectionActions(params: any) {
       }
 
       setToolDirectionalWidth(nextWidth);
-      setStatusMessage(`已设置 DirectionalFlick 默认宽度为 ${nextWidth}。`);
       return;
     }
 
@@ -282,7 +276,6 @@ export function useEditorSelectionActions(params: any) {
       }
 
       setToolRhythmWidth(nextWidth);
-      setStatusMessage(`已设置默认宽度为 ${nextWidth}。`);
       return;
     }
   };
@@ -318,7 +311,6 @@ export function useEditorSelectionActions(params: any) {
     }
 
     setTool(nextType);
-    setStatusMessage(`已设置 DirectionalFlick 默认方向为${direction === "left" ? "左" : "右"}。`);
   };
 
   const commitBeatInput = useCallback(() => {
@@ -426,20 +418,13 @@ export function useEditorSelectionActions(params: any) {
     clearSelectedNotes();
 
     if (removedCount > 0 && hiddenCount > 0) {
-      setStatusMessage(`已删除 ${removedCount} 个音符，并将 ${hiddenCount} 个 Slide 节点设为 Hidden。`);
       return;
     }
     if (hiddenCount > 0) {
-      setStatusMessage(
-        hiddenCount > 1
-          ? `已将 ${hiddenCount} 个 Slide 节点设为 Hidden。`
-          : "已将选中 Slide 节点设为 Hidden。",
-      );
       return;
     }
 
-    setStatusMessage(removedCount > 1 ? `已删除 ${removedCount} 个选中音符。` : "已删除选中音符。");
-  }, [clearSelectedNotes, deleteNotesWithSlideHiddenFallback, selectedNoteIds, setStatusMessage]);
+  }, [clearSelectedNotes, deleteNotesWithSlideHiddenFallback, selectedNoteIds]);
 
   const deleteCurrentSelection = () => {
     if (selectedLongLineSegmentId) {
@@ -448,7 +433,6 @@ export function useEditorSelectionActions(params: any) {
         setSelectedLongLineSegmentId(null);
         return;
       }
-      setStatusMessage("选中的 longLine 已失效，请重新选择后重试。");
       return;
     }
 
@@ -464,13 +448,10 @@ export function useEditorSelectionActions(params: any) {
       if (selectedBpmEventId && selectedBpmEventId !== BASE_BPM_LINE_ID) {
         setBpmEvents((previous: any[]) => previous.filter((event) => event.id !== selectedBpmEventId));
         setSelectedBpmEventId(null);
-        setStatusMessage("已删除 BPM 线。");
       } else if (selectedBpmEventId === BASE_BPM_LINE_ID) {
-        setStatusMessage("Beat 0 的基础 BPM 线不可删除。");
       } else if (selectedSvEventId) {
         setSvEvents((previous: any[]) => previous.filter((event) => event.id !== selectedSvEventId));
         setSelectedSvEventId(null);
-        setStatusMessage("已删除 SV 线。");
       }
       return;
     }
@@ -501,39 +482,27 @@ export function useEditorSelectionActions(params: any) {
     }
 
     if (removedNoteCount > 0 && hiddenNoteCount > 0 && removedBpmCount > 0) {
-      setStatusMessage(`已删除 ${removedNoteCount} 个音符、${removedBpmCount} 条 BPM 线，并将 ${hiddenNoteCount} 个 Slide 节点设为 Hidden。`);
       return;
     }
     if (removedNoteCount > 0 && removedBpmCount > 0) {
-      setStatusMessage(`已删除 ${removedNoteCount} 个音符、${removedBpmCount} 条 BPM 线。`);
       return;
     }
     if (hiddenNoteCount > 0 && removedBpmCount > 0) {
-      setStatusMessage(`已删除 ${removedBpmCount} 条 BPM 线，并将 ${hiddenNoteCount} 个 Slide 节点设为 Hidden。`);
       return;
     }
     if (removedNoteCount > 0 && hiddenNoteCount > 0) {
-      setStatusMessage(`已删除 ${removedNoteCount} 个音符，并将 ${hiddenNoteCount} 个 Slide 节点设为 Hidden。`);
       return;
     }
     if (removedNoteCount > 0) {
-      setStatusMessage(removedNoteCount > 1 ? `已删除 ${removedNoteCount} 个选中音符。` : "已删除选中音符。");
       return;
     }
     if (hiddenNoteCount > 0) {
-      setStatusMessage(
-        hiddenNoteCount > 1
-          ? `已将 ${hiddenNoteCount} 个 Slide 节点设为 Hidden。`
-          : "已将选中 Slide 节点设为 Hidden。",
-      );
       return;
     }
     if (removedBpmCount > 0) {
-      setStatusMessage(removedBpmCount > 1 ? `已删除 ${removedBpmCount} 条 BPM 线。` : "已删除 BPM 线。");
       return;
     }
     if (removedSvCount > 0) {
-      setStatusMessage(removedSvCount > 1 ? `已删除 ${removedSvCount} 条 SV 线。` : "已删除 SV 线。");
     }
   };
 

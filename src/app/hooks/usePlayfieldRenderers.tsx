@@ -27,7 +27,6 @@ export function usePlayfieldRenderers(params: any) {
     setSelectedBpmEventId,
     clearSelectedNotes,
     clearSelectedBpmEvents,
-    setStatusMessage,
     setIsToolArmed,
     isToolArmed,
     setBpmEvents,
@@ -137,7 +136,6 @@ export function usePlayfieldRenderers(params: any) {
           setSelectedBpmEventIds([selectionId]);
         }
         setIsToolArmed(false);
-        setStatusMessage(`已选中 BPM 线：Beat ${node.beat.toFixed(3)} / BPM ${node.bpm.toFixed(3)}。`);
       };
       const handleBpmContextMenu = (event: any) => {
         if (!shouldHandleBpmLineEvent()) {
@@ -150,7 +148,6 @@ export function usePlayfieldRenderers(params: any) {
           clearSelectedNotes();
           clearSelectedBpmEvents();
           setSelectedBpmEventId(BASE_BPM_LINE_ID);
-          setStatusMessage("Beat 0 的基础 BPM 线不可删除。");
           return;
         }
 
@@ -171,7 +168,6 @@ export function usePlayfieldRenderers(params: any) {
         setBpmEvents((previous: any[]) => previous.filter((event) => event.id !== sourceEvent.id));
         setSelectedBpmEventId(null);
         clearSelectedBpmEvents();
-        setStatusMessage("已删除 BPM 线。");
       };
 
       lines.push(
@@ -234,7 +230,6 @@ export function usePlayfieldRenderers(params: any) {
         setSelectedSvEventId(event.id);
         setSelectedSvEventIds([event.id]);
         setIsToolArmed(false);
-        setStatusMessage(`已选中 SV：Beat ${event.beat.toFixed(3)} / ×${event.value.toFixed(3)}。`);
       };
       const handleSvContextMenu = (mouseEvent: any) => {
         if (!shouldHandleSvLineEvent()) {
@@ -245,7 +240,6 @@ export function usePlayfieldRenderers(params: any) {
         setSvEvents((previous: any[]) => previous.filter((item) => item.id !== event.id));
         setSelectedSvEventId(null);
         setSelectedSvEventIds([]);
-        setStatusMessage("已删除 SV 线。");
       };
       lines.push(
         <div
@@ -381,7 +375,6 @@ export function usePlayfieldRenderers(params: any) {
             clearSelectedNotes();
             clearSelectedBpmEvents();
             setSelectedBpmEventId(null);
-            setStatusMessage("已选中 Slide 连接段。");
           }}
           onContextMenu={(event) => {
             if (isPreviewChain) {
@@ -397,9 +390,9 @@ export function usePlayfieldRenderers(params: any) {
             const activeSlideBuild = slideBuildRef.current;
             if (activeSlideBuild) {
               if (activeSlideBuild.persistUntilRightClick) {
-                finalizeSlideBuild({ disarmTool: true, statusMessage: "已完成 Slide 创建。" });
+                finalizeSlideBuild({ disarmTool: true });
               } else {
-                cancelSlideBuild("已取消 Slide 创建并取消 Slide 工具。");
+                cancelSlideBuild();
               }
               return;
             }
@@ -413,7 +406,6 @@ export function usePlayfieldRenderers(params: any) {
             clearSelectedNotes();
             clearSelectedBpmEvents();
             setSelectedBpmEventId(null);
-            setStatusMessage("已选中 Slide 连接段。");
           }}
           aria-hidden={isPreviewChain}
         >

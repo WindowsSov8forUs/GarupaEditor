@@ -21,10 +21,7 @@ import {
   normalizeNoteTimingGroup,
   type NoteType,
 } from "../../chartCore";
-import {
-  isHabahiroRhythmRipName,
-  type SkinSelection,
-} from "../../skinLoader";
+import { type SkinSelection } from "../../skinLoader";
 import { useApplicationResourceManager } from "../../resources/applicationResourceContext";
 import {
   bestdoriNoteskinSampleNativeId,
@@ -182,8 +179,8 @@ export function useEditorIoAndShortcuts(params: any) {
     sortSvEvents,
     sortNotes,
     clearSelectedNotes,
-    setStatusMessage,
     openOverlayDialog,
+    showDialog,
     setNotes,
     setSlideChains,
     setSettings,
@@ -218,7 +215,6 @@ export function useEditorIoAndShortcuts(params: any) {
     setSkinAssets,
     setAppliedSkinResources,
     setIsSkinApplying,
-    formatTypeLabel,
     setSkinSelection,
     approxEq,
     selectedNoteIds,
@@ -395,8 +391,7 @@ export function useEditorIoAndShortcuts(params: any) {
   const garupaChartJsonText = useMemo(() => projection.error === null ? JSON.stringify(projection.json) : "", [projection]);
   const rejectUnprojectableChart = (): boolean => {
     if (projection.error === null) return false;
-    if (typeof openOverlayDialog === "function") openOverlayDialog({ tone: "error", message: projection.error });
-    else setStatusMessage(projection.error);
+    showDialog(projection.error, "error");
     return true;
   };
   const [isImportJsonModalOpen, setIsImportJsonModalOpen] = useState(false);
@@ -627,27 +622,11 @@ export function useEditorIoAndShortcuts(params: any) {
     setSlideChains([]);
     setSvEvents([]);
     clearSelectedNotes();
-    setStatusMessage("已清空全部音符。");
-  }, [clearSelectedNotes, setNotes, setSlideChains, setStatusMessage, setSvEvents]);
+  }, [clearSelectedNotes, setNotes, setSlideChains, showDialog, setSvEvents]);
 
   const confirmClearAllNotes = useCallback(() => {
-    if (typeof openOverlayDialog === "function") {
-      openOverlayDialog(
-        {
-          tone: "warning",
-          message: "确定清空所有音符吗？此操作不可撤销。",
-        },
-        {
-          onConfirm: executeClearAllNotes,
-        },
-      );
-      return;
-    }
-    if (!window.confirm("确定清空所有音符吗？")) {
-      return;
-    }
-    executeClearAllNotes();
-  }, [executeClearAllNotes, openOverlayDialog]);
+    showDialog("确定清空所有音符吗？此操作不可撤销。", "warning", { onConfirm: executeClearAllNotes });
+  }, [executeClearAllNotes, showDialog]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -740,14 +719,12 @@ export function useEditorIoAndShortcuts(params: any) {
           setTool("bpm");
           setIsToolArmed(true);
           clearAllSelections();
-          setStatusMessage("工具切换为 BPM。");
           return;
         }
         const nextTool = NOTE_TYPES[keyNumber - 1] as NoteType;
         setTool(nextTool);
         setIsToolArmed(true);
         clearAllSelections();
-        setStatusMessage(`工具切换为 ${NOTE_SPECS[nextTool].label}。`);
       }
     };
 
@@ -764,7 +741,7 @@ export function useEditorIoAndShortcuts(params: any) {
     selectedBpmEventIds,
     selectedNoteIds,
     setIsToolArmed,
-    setStatusMessage,
+    showDialog,
     setTool,
     undoLastOperation,
     redoLastOperation,
@@ -818,7 +795,6 @@ export function useEditorIoAndShortcuts(params: any) {
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
-      setStatusMessage(`已导出 ${fileName}`);
       return;
     }
 
@@ -830,15 +806,14 @@ export function useEditorIoAndShortcuts(params: any) {
       });
 
       if (!savedPath) {
-        setStatusMessage("已取消导出。");
         return;
       }
 
-      setStatusMessage(`已导出到 ${savedPath}`);
+      showDialog(`已导出到 ${savedPath.replace(/\\/g, "/")}`);
       setIsExportJsonModalOpen(false);
     } catch (error) {
       const message = userFacingErrorMessage(error);
-      setStatusMessage(`导出失败：${message}`);
+      showDialog(`导出谱面失败：\n${message}`, "error");
     } finally {
       setIsExportJsonSaving(false);
     }
@@ -865,7 +840,6 @@ export function useEditorIoAndShortcuts(params: any) {
           message: "已导出谱面为 Bestdori 格式，可直接粘贴。",
         });
       } else {
-        setStatusMessage("已导出 Bestdori V2 到剪贴板。");
       }
     } catch (error) {
       const message = userFacingErrorMessage(error);
@@ -875,7 +849,6 @@ export function useEditorIoAndShortcuts(params: any) {
           message: `导出谱面为 Bestdori 格式代码失败：\n${message}`,
         });
       } else {
-        setStatusMessage(`导出 Bestdori V2 失败：${message}`);
       }
     }
   };
@@ -1253,8 +1226,9 @@ export function useEditorIoAndShortcuts(params: any) {
       summary.normalizedHoldWidths > 0 ? `${summary.normalizedHoldWidths} 条长押的终点宽度与起点不同，已按起点宽度处理。` : "",
       summary.demotedOffCenterLongTails > 0 ? `${summary.demotedOffCenterLongTails} 条长押的方向尾不在长押中心轨，已改为普通尾。` : "",
     ].filter((message) => message.length > 0);
-    setStatusMessage(`${label}：${summary.visibleNoteCount} 个可见音符。`
-      + (notices.length > 0 ? IMPORT_NOTICE_MARKER + notices.map((notice) => `・${notice}`).join("\n") : ""));
+    if (notices.length > 0) {
+      showDialog(notices.map((notice) => `・${notice}`).join("\n"));
+    }
   };
 
   const applyImportJsonText = () => {
@@ -1267,7 +1241,7 @@ export function useEditorIoAndShortcuts(params: any) {
       setIsImportJsonModalOpen(false);
     } catch (error) {
       const message = userFacingErrorMessage(error);
-      setStatusMessage(`应用 JSON 失败：${message}`);
+      showDialog(`导入谱面代码失败：\n${message}`, "error");
     }
   };
 
@@ -1355,12 +1329,12 @@ export function useEditorIoAndShortcuts(params: any) {
     appLog("info", "editor.action", { action: "applyImportOfficialChart" });
     const chartIdText = (requested?.id ?? importOfficialChartId).trim();
     if (!/^\d+$/.test(chartIdText)) {
-      setStatusMessage("官方谱面导入失败：ID 必须为正整数。");
+      showDialog("导入官方谱面失败：\nID 必须为正整数。", "error");
       return;
     }
     const chartId = Number.parseInt(chartIdText, 10);
     if (!Number.isFinite(chartId) || chartId < 1) {
-      setStatusMessage("官方谱面导入失败：ID 必须为正整数。");
+      showDialog("导入官方谱面失败：\nID 必须为正整数。", "error");
       return;
     }
 
@@ -1465,7 +1439,7 @@ export function useEditorIoAndShortcuts(params: any) {
       await resourceManager.reconcileCurrentChartMedia(chartMediaResources);
       const message = userFacingErrorMessage(error);
       completeDownloadProgress(`官方谱面导入失败：${message}`, 900);
-      setStatusMessage(`官方谱面导入失败：${message}`);
+      showDialog(`导入官方谱面失败：\n${message}`, "error");
       return false;
     } finally {
       if (currentDownloadOperationIdRef.current === importOperationId) {
@@ -1484,12 +1458,12 @@ export function useEditorIoAndShortcuts(params: any) {
     appLog("info", "editor.action", { action: "applyImportCommunityChart" });
     const postIdText = (requestedId ?? importCommunityPostId).trim();
     if (!/^\d+$/.test(postIdText)) {
-      setStatusMessage("社区谱面导入失败：谱面 ID 必须为正整数。");
+      showDialog("社区谱面导入失败：谱面 ID 必须为正整数。", "error");
       return false;
     }
     const postId = Number.parseInt(postIdText, 10);
     if (!Number.isSafeInteger(postId) || postId < 1) {
-      setStatusMessage("社区谱面导入失败：谱面 ID 必须为正整数。");
+      showDialog("社区谱面导入失败：谱面 ID 必须为正整数。", "error");
       return false;
     }
 
@@ -1607,7 +1581,7 @@ export function useEditorIoAndShortcuts(params: any) {
       await resourceManager.reconcileCurrentChartMedia(chartMediaResources);
       const message = userFacingErrorMessage(error);
       completeDownloadProgress(`社区谱面导入失败：${message}`, 900);
-      setStatusMessage(`社区谱面导入失败：${message}`);
+      showDialog(`社区谱面导入失败：${message}`, "error");
       return false;
     } finally {
       if (currentDownloadOperationIdRef.current === importOperationId) {
@@ -1656,7 +1630,7 @@ export function useEditorIoAndShortcuts(params: any) {
     } catch (error) {
       const message = userFacingErrorMessage(error); finish(error);
       completeDownloadProgress(`测试服谱面加载失败：${message}`, 900);
-      setStatusMessage(`测试服谱面加载失败：${message}`); return false;
+      showDialog(`测试服谱面加载失败：${message}`, "error"); return false;
     } finally {
       if (currentDownloadOperationIdRef.current === operationId) {
         downloadPreparationRef.current?.();
@@ -1712,27 +1686,13 @@ export function useEditorIoAndShortcuts(params: any) {
 
       const svWarning = result.svDropped ? "（注意：SV 不支持，已在上传前转换时忽略）" : "";
       completeDownloadProgress("社区谱面上传完成。");
-      if (typeof openOverlayDialog === "function") {
-        openOverlayDialog({
-          tone: "info",
-          message: `社区谱面上传成功。\n${result.postUrl}${svWarning ? `\n${svWarning}` : ""}`,
-        });
-      } else {
-        setStatusMessage(`社区谱面上传成功：${result.postUrl}${svWarning}`);
-      }
+      showDialog(`社区谱面上传成功。\n${result.postUrl}${svWarning ? `\n${svWarning}` : ""}`);
       setImportJsonModalLevel("chart");
       setIsImportJsonModalOpen(false);
     } catch (error) {
       const message = userFacingErrorMessage(error);
       completeDownloadProgress(`社区谱面上传失败：${message}`, 900);
-      if (typeof openOverlayDialog === "function") {
-        openOverlayDialog({
-          tone: "error",
-          message: `社区谱面上传失败：\n${message}`,
-        });
-      } else {
-        setStatusMessage(`社区谱面上传失败：${message}`);
-      }
+      showDialog(`社区谱面上传失败：\n${message}`, "error");
     } finally {
       if (currentDownloadOperationIdRef.current === uploadOperationId) {
         downloadPreparationRef.current?.();
@@ -1792,27 +1752,13 @@ export function useEditorIoAndShortcuts(params: any) {
       });
 
       completeDownloadProgress("NotGarupa 服务器谱面上传完成。");
-      if (typeof openOverlayDialog === "function") {
-        openOverlayDialog({
-          tone: "info",
-          message: `NotGarupa 服务器上传成功。\nID: ${result.uid}\n${result.levelUrl}`,
-        });
-      } else {
-        setStatusMessage(`NotGarupa 服务器上传成功：ID ${result.uid}`);
-      }
+      showDialog(`NotGarupa 服务器上传成功。\nID: ${result.uid}\n${result.levelUrl}`);
       setImportJsonModalLevel("chart");
       setIsImportJsonModalOpen(false);
     } catch (error) {
       const message = userFacingErrorMessage(error);
       completeDownloadProgress(`NotGarupa 服务器谱面上传失败：${message}`, 900);
-      if (typeof openOverlayDialog === "function") {
-        openOverlayDialog({
-          tone: "error",
-          message: `NotGarupa 服务器上传失败：\n${message}`,
-        });
-      } else {
-        setStatusMessage(`NotGarupa 服务器上传失败：${message}`);
-      }
+      showDialog(`NotGarupa 服务器上传失败：\n${message}`, "error");
     } finally {
       if (currentDownloadOperationIdRef.current === uploadOperationId) {
         downloadPreparationRef.current?.();
@@ -1863,27 +1809,13 @@ export function useEditorIoAndShortcuts(params: any) {
 
       const svWarning = result.svDropped ? "\n注意：SV 不支持，已在上传前转换时忽略。" : "";
       completeDownloadProgress("测试服谱面上传完成。");
-      if (typeof openOverlayDialog === "function") {
-        openOverlayDialog({
-          tone: "info",
-          message: `测试服上传成功。\nID: ${result.uid}${svWarning}`,
-        });
-      } else {
-        setStatusMessage(`测试服上传成功：ID ${result.uid}`);
-      }
+      showDialog(`测试服上传成功。\nID: ${result.uid}${svWarning}`);
       setImportJsonModalLevel("chart");
       setIsImportJsonModalOpen(false);
     } catch (error) {
       const message = userFacingErrorMessage(error);
       completeDownloadProgress(`测试服谱面上传失败：${message}`, 900);
-      if (typeof openOverlayDialog === "function") {
-        openOverlayDialog({
-          tone: "error",
-          message: `测试服上传失败：\n${message}`,
-        });
-      } else {
-        setStatusMessage(`测试服上传失败：${message}`);
-      }
+      showDialog(`测试服上传失败：\n${message}`, "error");
     } finally {
       if (currentDownloadOperationIdRef.current === uploadOperationId) {
         downloadPreparationRef.current?.();
@@ -1914,7 +1846,7 @@ export function useEditorIoAndShortcuts(params: any) {
     } catch (error) {
       setImportJsonSelectedPath(previousSelectedPath);
       const message = userFacingErrorMessage(error);
-      setStatusMessage(`导入失败：${message}`);
+      showDialog(`导入谱面失败：\n${message}`, "error");
     }
   };
 
@@ -1934,11 +1866,10 @@ export function useEditorIoAndShortcuts(params: any) {
       const converted = convertBestdoriV2ToGarupaChartJson(parsed);
       setImportJsonText(JSON.stringify(converted));
       setImportJsonModalLevel("chart");
-      setStatusMessage("已将 Bestdori V2 转换为Garupa 谱面 JSON，请在导入页点击“应用”。");
     } catch (error) {
       setImportBestdoriV2SelectedPath(previousSelectedPath);
       const message = userFacingErrorMessage(error);
-      setStatusMessage(`Bestdori V2 导入失败：${message}`);
+      showDialog(`Bestdori V2 导入失败：${message}`, "error");
     }
   };
 
@@ -1973,8 +1904,7 @@ export function useEditorIoAndShortcuts(params: any) {
     if (!file) return;
     void importWorkspaceMedia("cover", file).then((cover) => {
       setChartMediaResources((current: typeof chartMediaResources) => Object.freeze({ ...current, cover }));
-      setStatusMessage("封面资源已导入。");
-    }).catch((error) => setStatusMessage(`封面导入失败：${error instanceof Error ? error.message : String(error)}`));
+    }).catch((error) => showDialog(`封面导入失败：${error instanceof Error ? error.message : String(error)}`, "error"));
   };
 
   const handleAudioUpload = (event: ChangeEvent<HTMLInputElement>) => {
@@ -1985,8 +1915,7 @@ export function useEditorIoAndShortcuts(params: any) {
       setChartMediaResources((current: typeof chartMediaResources) => Object.freeze({ ...current, bgm }));
       setAudioFileName(file.name);
       setAudioDurationSec(0);
-      setStatusMessage(`音频资源已导入：${file.name}`);
-    }).catch((error) => setStatusMessage(`音频导入失败：${error instanceof Error ? error.message : String(error)}`));
+    }).catch((error) => showDialog(`音频导入失败：${error instanceof Error ? error.message : String(error)}`, "error"));
   };
 
   const handleMvUpload = (event: ChangeEvent<HTMLInputElement>) => {
@@ -1995,8 +1924,7 @@ export function useEditorIoAndShortcuts(params: any) {
     if (!file) return;
     void importWorkspaceMedia("mv", file).then((mv) => {
       setChartMediaResources((current: typeof chartMediaResources) => Object.freeze({ ...current, mv }));
-      setStatusMessage(`MV资源已导入：${file.name}`);
-    }).catch((error) => setStatusMessage(`MV导入失败：${error instanceof Error ? error.message : String(error)}`));
+    }).catch((error) => showDialog(`MV导入失败：${error instanceof Error ? error.message : String(error)}`, "error"));
   };
 
   const handleIllustBackgroundUpload = (event: ChangeEvent<HTMLInputElement>) => {
@@ -2005,13 +1933,11 @@ export function useEditorIoAndShortcuts(params: any) {
     if (!file) return;
     void importWorkspaceMedia("illust-background", file).then((illustBackground) => {
       setChartMediaResources((current: typeof chartMediaResources) => Object.freeze({ ...current, illustBackground }));
-      setStatusMessage(`自定义背景已导入：${file.name}`);
-    }).catch((error) => setStatusMessage(`自定义背景导入失败：${error instanceof Error ? error.message : String(error)}`));
+    }).catch((error) => showDialog(`自定义背景导入失败：${error instanceof Error ? error.message : String(error)}`, "error"));
   };
 
   const removeIllustBackground = () => {
     setChartMediaResources((current: typeof chartMediaResources) => Object.freeze({ ...current, illustBackground: null }));
-    setStatusMessage("自定义背景已移除。");
   };
 
   // A preset saved while the window is minimized waits for the window to be restored.
@@ -2049,7 +1975,7 @@ export function useEditorIoAndShortcuts(params: any) {
       ?? WINDOW_SIZE_PRESETS[0];
     if (!preset) {
       if (!options?.silent) {
-        setStatusMessage("未找到可用分辨率预设。");
+        showDialog("未找到可用分辨率预设。");
       }
       return;
     }
@@ -2058,7 +1984,7 @@ export function useEditorIoAndShortcuts(params: any) {
       const appWindow = getCurrentWindow();
       if (!appWindow) {
         if (!options?.silent) {
-          setStatusMessage("当前窗口不可用，无法调整分辨率。");
+          showDialog("当前窗口不可用，无法调整分辨率。");
         }
         return;
       }
@@ -2067,7 +1993,7 @@ export function useEditorIoAndShortcuts(params: any) {
       if (await appWindow.isMinimized().catch(() => false)) {
         pendingWindowPresetRef.current = { presetId, options };
         if (!options?.silent) {
-          setStatusMessage(`窗口分辨率将在窗口还原后设置为 ${preset.label}。`);
+          showDialog(`窗口分辨率将在窗口还原后设置为 ${preset.label}。`);
         }
         return;
       }
@@ -2125,7 +2051,6 @@ export function useEditorIoAndShortcuts(params: any) {
       const nextHeight = maxLogicalInnerHeight !== null
         ? Math.min(requestedHeight, maxLogicalInnerHeight)
         : requestedHeight;
-      const wasClamped = nextWidth !== requestedWidth || nextHeight !== requestedHeight;
 
       let resized = false;
       try {
@@ -2151,18 +2076,10 @@ export function useEditorIoAndShortcuts(params: any) {
       } catch {
         // ignore
       }
-
-      if (!options?.silent) {
-        if (wasClamped) {
-          setStatusMessage(`窗口分辨率已设置为 ${preset.label}（已按屏幕可用区域自动缩小）。`);
-        } else {
-          setStatusMessage(`窗口分辨率已设置为 ${preset.label}。`);
-        }
-      }
     } catch (error) {
       if (!options?.silent) {
         const message = userFacingErrorMessage(error);
-        setStatusMessage(`窗口分辨率设置失败：${message}`);
+        showDialog(`窗口分辨率设置失败：\n${message}`, "error");
       }
     }
   };
@@ -2171,7 +2088,6 @@ export function useEditorIoAndShortcuts(params: any) {
   const applyBestdoriSkinSelection = async (
     selection: SkinSelection,
     persist: boolean,
-    announceSuccess = true,
   ) => {
     let normalized = normalizeSkinSelection(selection);
     const finishSkin = startOperation("editor.skin.apply", { selection: normalized });
@@ -2181,10 +2097,6 @@ export function useEditorIoAndShortcuts(params: any) {
 
     setIsSkinApplying(true);
     startDownloadProgress(downloadOperationId, "正在准备资源快照…");
-    const rhythmCatalogKind = isHabahiroRhythmRipName(normalized.rhythmRipName) ? "habahiroRhythm" : "rhythm";
-    setStatusMessage(
-      `正在加载皮肤：节奏图示 ${formatTypeLabel(rhythmCatalogKind, normalized.rhythmType)}，方向滑键 ${formatTypeLabel("directional", normalized.directionalType)}，节奏图示SE ${formatTypeLabel("rhythmSe", normalized.rhythmSeType)}，方向滑键SE ${formatTypeLabel("directionalSe", normalized.directionalSeType)}，背景 ${formatTypeLabel("bg", normalized.bgType)}，轨道样式 ${formatTypeLabel("field", normalized.fieldType)}，判定样式 ${formatTypeLabel(null, normalized.judgeType)}。`,
-    );
 
     try {
       const catalog = await resourceManager.prepareCatalog("bestdori");
@@ -2265,12 +2177,6 @@ export function useEditorIoAndShortcuts(params: any) {
 
       finishSkin();
       completeDownloadProgress("资源下载完成。");
-
-      if (announceSuccess) {
-        setStatusMessage(
-          `皮肤已生效：节奏图示 ${formatTypeLabel(rhythmCatalogKind, normalized.rhythmType)}，方向滑键 ${formatTypeLabel("directional", normalized.directionalType)}，节奏图示SE ${formatTypeLabel("rhythmSe", normalized.rhythmSeType)}，方向滑键SE ${formatTypeLabel("directionalSe", normalized.directionalSeType)}，背景 ${formatTypeLabel("bg", normalized.bgType)}，轨道样式 ${formatTypeLabel("field", normalized.fieldType)}，判定样式 ${formatTypeLabel(null, normalized.judgeType)}。`,
-        );
-      }
     } catch (error) {
       if (skinApplySeqRef.current !== sequence) {
         finishSkin(undefined, { superseded: true });
@@ -2279,7 +2185,7 @@ export function useEditorIoAndShortcuts(params: any) {
       const message = userFacingErrorMessage(error);
       completeDownloadProgress(`下载失败：${message}`, 900);
       finishSkin(error instanceof ResourceFailureError ? error.failure : error);
-      setStatusMessage(`皮肤下载失败：${message}`);
+      showDialog(`皮肤下载失败：\n${message}`, "error");
     } finally {
       if (skinApplySeqRef.current === sequence) {
         setIsSkinApplying(false);

@@ -17,7 +17,7 @@ export function useBoardInteractionActions(params: any) {
     setTool,
     setIsToolArmed,
     clearAllSelections,
-    setStatusMessage,
+    showDialog,
     NOTE_SPECS,
     useToolLaneOverride,
     quantizeBeat,
@@ -152,11 +152,12 @@ export function useBoardInteractionActions(params: any) {
 
   const applyToolFromPalette = useCallback((nextType: NoteType) => {
     if (isDirectionalNoteType(nextType) && !canUseSpRhythm(modeOptions)) {
-      setStatusMessage("SP rhythm mode is off; Directional Flick is unavailable.");
+      showDialog("SP 音符模式关闭时不可使用 Directional Flick。");
       return;
     }
     switchToolState(nextType);
-  }, [isDirectionalNoteType, modeOptions, setStatusMessage, switchToolState]);
+  }, [isDirectionalNoteType, modeOptions, showDialog, switchToolState]);
+
 
   const applyBpmToolFromPalette = useCallback(() => {
     switchToolState("bpm");
@@ -164,11 +165,11 @@ export function useBoardInteractionActions(params: any) {
 
   const applySvToolFromPalette = useCallback(() => {
     if (!canUseSv(modeOptions)) {
-      setStatusMessage("ExGarupa is off; SV is unavailable.");
+      showDialog("ExGarupa 模式关闭时不可使用 SV。");
       return;
     }
     switchToolState("sv");
-  }, [modeOptions, setStatusMessage, switchToolState]);
+  }, [modeOptions, showDialog, switchToolState]);
 
   const applyCopyToolFromPalette = useCallback(() => {
     switchToolState("copy");
@@ -238,9 +239,6 @@ export function useBoardInteractionActions(params: any) {
       clearSelectedBpmEvents();
       setSelectedBpmEventId(null);
     }
-    if (!(options?.silent ?? false)) {
-      setStatusMessage("状态已更新。");
-    }
     return normalized;
   };
 
@@ -285,9 +283,8 @@ export function useBoardInteractionActions(params: any) {
       setSlideBuildCursor(null);
       clearAllSelections();
       setCursorPreview(null);
-      setStatusMessage("状态已更新。");
     },
-    [clearAllSelections, noteById, setCursorPreview, setSlideBuildCursor, setSlideBuildState, setStatusMessage, slideBuildRef],
+    [clearAllSelections, noteById, setCursorPreview, setSlideBuildCursor, setSlideBuildState, showDialog, slideBuildRef],
   );
 
   const setSlideBuildMode = useCallback((mode: "drag" | "append") => {
@@ -344,7 +341,6 @@ export function useBoardInteractionActions(params: any) {
           mode: "drag",
           initialNoteIds: prefixIds,
         });
-        setStatusMessage("状态已更新。");
         return;
       }
     }
@@ -356,12 +352,11 @@ export function useBoardInteractionActions(params: any) {
           mode: "drag",
           initialNoteIds: chain.noteIds,
         });
-        setStatusMessage("状态已更新。");
         return;
       }
     }
     beginSlideBuild(seedNote.id, null, { persistUntilRightClick: false, mode: "drag" });
-  }, [beginSlideBuild, committedSlideChainById, committedSlideRoleByNoteId, createId, replaceCommittedSlideChainSegments, setStatusMessage]);
+  }, [beginSlideBuild, committedSlideChainById, committedSlideRoleByNoteId, createId, replaceCommittedSlideChainSegments, showDialog]);
 
   const appendSlideBuildNote = useCallback((noteId: string): { appended: boolean; merged: boolean; blocked: boolean } => {
     const previous = slideBuildRef.current;
@@ -446,7 +441,7 @@ export function useBoardInteractionActions(params: any) {
   ]);
 
   const cancelSlideBuild = useCallback(
-    (message = "已取消 Slide 创建。") => {
+    () => {
       const current = slideBuildRef.current;
       if (!current) {
         return;
@@ -462,12 +457,11 @@ export function useBoardInteractionActions(params: any) {
       }
       clearAllSelections();
       setIsToolArmed(false);
-      setStatusMessage(message);
     },
-    [clearAllSelections, removeNoteIdsFromSlideChains, setIsToolArmed, setNotes, setSlideBuildCursor, setSlideBuildState, setStatusMessage, slideBuildRef, suppressNextBoardClickRef, suppressNextNoteClickRef],
+    [clearAllSelections, removeNoteIdsFromSlideChains, setIsToolArmed, setNotes, setSlideBuildCursor, setSlideBuildState, showDialog, slideBuildRef, suppressNextBoardClickRef, suppressNextNoteClickRef],
   );
 
-  const finalizeSlideBuild = useCallback((options?: { disarmTool?: boolean; statusMessage?: string }) => {
+  const finalizeSlideBuild = useCallback((options?: { disarmTool?: boolean }) => {
     const current = slideBuildRef.current;
     if (!current) {
       return;
@@ -480,7 +474,6 @@ export function useBoardInteractionActions(params: any) {
 
     const noteIds = Array.from(new Set(current.noteIds)) as string[];
     if (noteIds.length === 0) {
-      setStatusMessage("状态已更新。");
       return;
     }
 
@@ -554,7 +547,6 @@ export function useBoardInteractionActions(params: any) {
     setSingleSelectedNote(tailId);
     clearSelectedBpmEvents();
     setSelectedBpmEventId(null);
-    setStatusMessage("状态已更新。");
     if (options?.disarmTool) {
       setIsToolArmed(false);
     }
@@ -574,7 +566,7 @@ export function useBoardInteractionActions(params: any) {
     setSlideBuildCursor,
     setSlideBuildState,
     setSlideChains,
-    setStatusMessage,
+    showDialog,
     slideBuildRef,
     sortNotes,
     suppressNextBoardClickRef,
@@ -589,11 +581,10 @@ export function useBoardInteractionActions(params: any) {
     if (approxEq(quantizedBeat, 0)) {
       const bpm = normalizeBaseBpmForWrite(toolBpmValue, metadata.bpm);
       if (bpm === null) {
-        setStatusMessage("基础 BPM 必须大于 0。");
         return;
       }
       if (isLastBeatOrderedBpmNegative(bpm, bpmEvents)) {
-        setStatusMessage("已阻止：按 Beat 顺序最后一个 BPM 不能为负数。");
+        showDialog("谱面不合法：\n末尾 BPM 不可为负数", "error");
         return;
       }
       setMetadata((current: any) => ({ ...current, bpm }));
@@ -601,13 +592,11 @@ export function useBoardInteractionActions(params: any) {
       setSelectedBpmEventId(BASE_BPM_LINE_ID);
       clearSelectedNotes();
       clearSelectedBpmEvents();
-      setStatusMessage("状态已更新。");
       return;
     }
 
     const bpm = normalizeEventBpmForWrite(toolBpmValue, metadata.bpm);
     if (bpm === null) {
-      setStatusMessage("非基础 BPM 不能为 0。");
       return;
     }
     const nextEvents = [
@@ -615,7 +604,7 @@ export function useBoardInteractionActions(params: any) {
       { beat: quantizedBeat, bpm },
     ];
     if (isLastBeatOrderedBpmNegative(metadata.bpm, nextEvents)) {
-      setStatusMessage("已阻止：按 Beat 顺序最后一个 BPM 不能为负数。");
+      showDialog("谱面不合法：\n末尾 BPM 不可为负数", "error");
       return;
     }
 
@@ -631,7 +620,6 @@ export function useBoardInteractionActions(params: any) {
     setSelectedBpmEventId(created.id);
     clearSelectedNotes();
     setSelectedBpmEventIds([created.id]);
-    setStatusMessage("状态已更新。");
   };
 
   const placeSvEvent = (beat: number) => {
@@ -639,7 +627,7 @@ export function useBoardInteractionActions(params: any) {
     const timingGroup = normalizeTimingGroup(toolTimingGroup, GLOBAL_TIMING_GROUP_ID);
     const value = Number(toFinite(toolSvValue, 1).toFixed(6));
     if (!Number.isFinite(value)) {
-      setStatusMessage("SV 值必须为有限数字。");
+      showDialog("SV 值必须为有限数字。");
       return;
     }
     const created = normalizeSvEvent({ beat: quantizedBeat, value, timingGroup }, beatDivision, 1);
@@ -657,7 +645,6 @@ export function useBoardInteractionActions(params: any) {
     setSelectedBpmEventId(null);
     setSelectedSvEventId(created.id);
     setSelectedSvEventIds([created.id]);
-    setStatusMessage("状态已更新。");
   };
 
   const applyToolToPlacedNote = (target: ChartNote) => {
@@ -667,7 +654,6 @@ export function useBoardInteractionActions(params: any) {
       setSingleSelectedNote(target.id);
       clearSelectedBpmEvents();
       setSelectedBpmEventId(null);
-      setStatusMessage("状态已更新。");
       return;
     }
 
@@ -678,7 +664,7 @@ export function useBoardInteractionActions(params: any) {
 
     if (tool === "sv") {
       if (!canUseSv(modeOptions)) {
-        setStatusMessage("ExGarupa is off; SV is unavailable.");
+        showDialog("ExGarupa 模式关闭时不可使用 SV。");
         return;
       }
       placeSvEvent(target.beat);
@@ -695,7 +681,7 @@ export function useBoardInteractionActions(params: any) {
     if (isBatchTarget) {
       if (isDirectionalNoteType(nextType) && selectedNotes.every((note: ChartNote) => note.type === nextType)) {
         const nextWidth = normalizeDirectionalWidth((target.width ?? 1) + 1);
-        commitSelectedNoteTransform((note: ChartNote) => ({ ...note, width: nextWidth }), "状态已更新。");
+        commitSelectedNoteTransform((note: ChartNote) => ({ ...note, width: nextWidth }));
         return;
       }
 
@@ -730,7 +716,7 @@ export function useBoardInteractionActions(params: any) {
             : {}),
         };
         return normalizeNote(replacementDraft, settings);
-      }, "状态已更新。");
+      });
       return;
     }
 
@@ -751,7 +737,6 @@ export function useBoardInteractionActions(params: any) {
       setSingleSelectedNote(target.id);
       clearSelectedBpmEvents();
       setSelectedBpmEventId(null);
-      setStatusMessage("状态已更新。");
       return;
     }
 
@@ -807,7 +792,6 @@ export function useBoardInteractionActions(params: any) {
     setSingleSelectedNote(replacement.id);
     clearSelectedBpmEvents();
     setSelectedBpmEventId(null);
-    setStatusMessage("状态已更新。");
   };
 
   const handleBoardContextMenu = (event: MouseEvent<HTMLDivElement>) => {
@@ -815,9 +799,9 @@ export function useBoardInteractionActions(params: any) {
     if (activeSlideBuild) {
       event.preventDefault();
       if (activeSlideBuild.persistUntilRightClick) {
-        finalizeSlideBuild({ disarmTool: true, statusMessage: "已完成 Slide 创建。" });
+        finalizeSlideBuild({ disarmTool: true });
       } else {
-        cancelSlideBuild("已取消 Slide 创建并取消 Slide 工具。");
+        cancelSlideBuild();
       }
       return;
     }
@@ -846,7 +830,6 @@ export function useBoardInteractionActions(params: any) {
         if (hadSelection) {
           clearAllSelections();
         }
-        setStatusMessage("状态已更新。");
       });
     });
   };
@@ -976,7 +959,7 @@ export function useBoardInteractionActions(params: any) {
   const handleBoardClick = (event: MouseEvent<HTMLDivElement>) => {
     if (isSvPreviewEnabled) {
       event.preventDefault();
-      setStatusMessage("SV 预览为只读模式，请关闭后再编辑。");
+      showDialog("SV 预览为只读模式，请关闭后再编辑。");
       return;
     }
     if (suppressNextBoardClickRef.current) {
@@ -998,7 +981,6 @@ export function useBoardInteractionActions(params: any) {
 
     if (tool === "paste") {
       if (!isPasteToolReady) {
-        setStatusMessage("暂无可粘贴内容，请先复制。");
         return;
       }
       const placement = resolveBoardPlacement(clickX, clickY, {
@@ -1024,7 +1006,7 @@ export function useBoardInteractionActions(params: any) {
 
     if (tool === "sv") {
       if (!canUseSv(modeOptions)) {
-        setStatusMessage("ExGarupa is off; SV is unavailable.");
+        showDialog("ExGarupa 模式关闭时不可使用 SV。");
         return;
       }
       placeSvEvent(placement.beat);
@@ -1076,7 +1058,7 @@ export function useBoardInteractionActions(params: any) {
       const targetElement = event.target as HTMLElement | null;
       if (!targetElement?.closest(".note-token, .bpm-line-button")) {
         event.preventDefault();
-        setStatusMessage("SV 预览为只读模式，请关闭后再编辑。");
+        showDialog("SV 预览为只读模式，请关闭后再编辑。");
         return;
       }
     }
@@ -1117,12 +1099,10 @@ export function useBoardInteractionActions(params: any) {
           if (hitNote) {
             const result = appendSlideBuildNote(hitNote.id);
             if (result.blocked) {
-              setStatusMessage("状态已更新。");
               return;
             }
             if (result.appended) {
               setSlideBuildMode("drag");
-              setStatusMessage("状态已更新。");
             }
             return;
           }
@@ -1140,7 +1120,6 @@ export function useBoardInteractionActions(params: any) {
             return;
           }
           appendSlideBuildNote(created.id);
-          setStatusMessage("状态已更新。");
           return;
         }
 

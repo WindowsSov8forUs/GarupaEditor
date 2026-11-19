@@ -528,7 +528,6 @@ export function useLongLineActions(params: any) {
     setNotes,
     sortNotes,
     setSelectedLongLineSegmentId,
-    setStatusMessage,
     createId,
   } = params;
 
@@ -558,7 +557,6 @@ export function useLongLineActions(params: any) {
       if (chainNotes.every((note: ChartNote) => note.type === "hidden")) {
         setSlideChains((previous: any[]) => previous.filter((chain) => chain.id !== sourceChain.id));
         setSelectedLongLineSegmentId(null);
-        setStatusMessage("已删除全 Hidden 的 Slide 序列。");
         return true;
       }
 
@@ -595,11 +593,6 @@ export function useLongLineActions(params: any) {
         return [...filtered, ...cleanedNextChains];
       });
       setSelectedLongLineSegmentId(null);
-      setStatusMessage(
-        options?.deleteMiddle
-          ? "已分割 Slide 并删除中段 longLine。"
-          : "已按选中 longLine 分割 Slide 序列。",
-      );
       return true;
     },
     [
@@ -608,7 +601,6 @@ export function useLongLineActions(params: any) {
       setNotes,
       setSelectedLongLineSegmentId,
       setSlideChains,
-      setStatusMessage,
       slideChains,
       sortNotes,
       exGarupaEnabled,
@@ -772,7 +764,6 @@ export function useLongLineActions(params: any) {
       if (nextSegmentGroupId) {
         setSelectedLongLineSegmentId(nextSegmentGroupId);
       }
-      setStatusMessage("已应用当前 longLine 样式。");
       return true;
     },
     [
@@ -782,7 +773,6 @@ export function useLongLineActions(params: any) {
       setNotes,
       setSelectedLongLineSegmentId,
       setSlideChains,
-      setStatusMessage,
       slideChains,
       sortNotes,
     ],

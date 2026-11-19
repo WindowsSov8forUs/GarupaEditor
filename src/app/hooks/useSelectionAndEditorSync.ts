@@ -71,7 +71,6 @@ export function useSelectionAndEditorSync(params: any) {
     setSlideBuildCursor,
     settings,
     normalizeNote,
-    setStatusMessage,
     toFinite,
     quantizeBeat,
     beatDivision,
@@ -288,7 +287,6 @@ export function useSelectionAndEditorSync(params: any) {
   const commitSelectedNoteTransform = useCallback(
     (
       transform: (note: ChartNote) => ChartNote | null,
-      statusMessageText: string,
     ) => {
       if (selectedNoteIds.length === 0) {
         return;
@@ -322,16 +320,14 @@ export function useSelectionAndEditorSync(params: any) {
 
         return sortNotes([...remained, ...transformedNotes]);
       });
-      setStatusMessage(statusMessageText);
     },
-    [normalizeNote, selectedNoteIds, setNotes, setStatusMessage, settings, shouldNotesOverlap, sortNotes],
+    [normalizeNote, selectedNoteIds, setNotes, settings, shouldNotesOverlap, sortNotes],
   );
 
   const applySelectedOffset = useCallback(
     (
       laneDeltaRaw: number,
       beatDeltaRaw: number,
-      reason = "已批量移动选中音符。",
       options?: { quantizeBeatDelta?: boolean },
     ) => {
       if (selectedNoteIds.length === 0 && selectedBpmEventIds.length === 0 && selectedSvEventIds.length === 0) {
@@ -405,7 +401,6 @@ export function useSelectionAndEditorSync(params: any) {
       if (shouldMoveSelectedBpmEvents) {
         const nextBpmEvents = buildShiftedBpmEvents(bpmEvents);
         if (isLastBeatOrderedBpmNegative(metadata.bpm, nextBpmEvents)) {
-          setStatusMessage("已阻止：按 Beat 顺序最后一个 BPM 不能为负数。");
           return;
         }
       }
@@ -472,8 +467,6 @@ export function useSelectionAndEditorSync(params: any) {
       if (shouldMoveSelectedSvEvents) {
         setSvEvents((previous: ChartSvEvent[]) => buildShiftedSvEvents(previous));
       }
-
-      setStatusMessage(reason);
     },
     [
       approxEq,
@@ -489,7 +482,6 @@ export function useSelectionAndEditorSync(params: any) {
       setNotes,
       setBpmEvents,
       setSvEvents,
-      setStatusMessage,
       settings,
       shouldNotesOverlap,
       slideChains,

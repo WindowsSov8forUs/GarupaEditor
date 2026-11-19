@@ -32,7 +32,7 @@ import { musicPlaySelection, type MusicPlaySelection } from "../musicSelectionDa
 import { DownloadProgressModal } from "../DownloadProgressModal";
 import { OverlayDialogModal } from "../OverlayDialogModal";
 import { SkinSettingsModal } from "../SkinSettingsModal";
-import { BESTDORI_SESSION_EXPIRED_MESSAGE, bestdoriCheckSession, bestdoriLogin, bestdoriLogout,
+import { bestdoriCheckSession, bestdoriLogin, bestdoriLogout,
   onBestdoriSessionExpired } from "../../services/bestdori/api";
 import { appLog } from "../../logging/applicationLogger";
 import { isMobileRuntime } from "../../app/mobileRuntime";
@@ -127,7 +127,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     getSpriteAspectRatio,
     renderSpriteStack,
     clearAllSelections,
-    setStatusMessage,
+    showDialog,
     notes,
     noteById,
     isSvPreviewEnabled,
@@ -269,7 +269,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   useEffect(() => { if (!livePreparationOpen) setPreviewStopped(false); }, [livePreparationOpen]);
   const samplePlayer = useMusicPreview(musicSelectionOpen && !previewStopped ? preview.request : null,
     appOptionSettings.simulatorSettings.systemBgmVolumePercent * appOptionSettings.simulatorSettings.masterVolumePercent / 10000,
-    preview.paused, message => vm.setStatusMessage(message));
+    preview.paused, message => vm.showDialog(message, "error"));
   const answerMvDownload = (confirmed: boolean) => { mvDownloadAnswer?.(confirmed); setMvDownloadAnswer(null); };
   useEffect(() => {
     if (musicSelectionOpen) return;
@@ -359,8 +359,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     bestdoriAuthRevision.current += 1;
     setBestdoriUsernameDisplay("");
     setBestdoriNicknameDisplay("");
-    setStatusMessage(BESTDORI_SESSION_EXPIRED_MESSAGE);
-  }), [setStatusMessage]);
+    showDialog("Bestdori 登录已失效，\n请重新登录。");
+  }), [showDialog]);
   useEffect(() => {
     let disposed = false;
     const revision = bestdoriAuthRevision.current;
@@ -419,15 +419,14 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       setBestdoriNicknameDisplay(resolvedNickname);
       setIsBestdoriLoginOpen(false);
       setBestdoriLoginPasswordInput("");
-      setStatusMessage("Bestdori 登录成功。");
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      setStatusMessage(`Bestdori 登录失败：${message}`);
+      showDialog(`Bestdori 登录失败：${message}`, "error");
     } finally {
       bestdoriAuthBusy.current = false;
       setBestdoriLoginSubmitting(false);
     }
-  }, [bestdoriLoginPasswordInput, bestdoriLoginSubmitting, bestdoriLoginUsernameInput, setStatusMessage]);
+  }, [bestdoriLoginPasswordInput, bestdoriLoginSubmitting, bestdoriLoginUsernameInput, showDialog]);
 
   const logoutBestdori = useCallback(async () => {
     if (bestdoriAuthBusy.current) return;
@@ -440,14 +439,13 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       setBestdoriUsernameDisplay("");
       setBestdoriNicknameDisplay("");
       setBestdoriLoginPasswordInput("");
-      setStatusMessage("已退出 Bestdori 账号。");
     } catch (error) {
-      setStatusMessage(`Bestdori 退出登录失败：${error instanceof Error ? error.message : String(error)}`);
+      showDialog(`Bestdori 退出登录失败：${error instanceof Error ? error.message : String(error)}`, "error");
     } finally {
       bestdoriAuthBusy.current = false;
       setBestdoriLoginSubmitting(false);
     }
-  }, [setStatusMessage]);
+  }, [showDialog]);
 
   const isColorAssistEnabled = appOptionSettings?.colorAssistEnabled === true;
   const effectiveScrollContentHeight = Math.max(boardHeight, Number(scrollContentHeight) || 0);
@@ -966,7 +964,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     slideBuildRef,
     appendSlideBuildNote,
     setSlideBuildMode,
-    setStatusMessage,
+    showDialog,
     startSlideBuildFromSeedNote,
     beginSelectedNotesMove,
     suppressNextNoteClickRef,
@@ -1018,11 +1016,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
           }
           if (result.appended) {
             runtime.setSlideBuildMode("drag");
-            runtime.setStatusMessage(
-              result.merged
-                ? "已合并序列并切换到拖动连接，可继续从新序列尾部连接。"
-                : "Slide 拖动连接中：移动经过音符即可追加，松开左键返回追加模式，右键完成。",
-            );
           }
           return;
         }
@@ -1052,7 +1045,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     }
     if (runtime.isSvPreviewEnabled) {
       event.stopPropagation();
-      runtime.setStatusMessage("SV 预览为只读模式，请关闭后再编辑。");
+      runtime.showDialog("SV 预览为只读模式，请关闭后再编辑。");
       if (event.metaKey || event.ctrlKey) {
         runtime.toggleSelectedNote(note.id);
         runtime.clearSelectedBpmEvents();
@@ -1101,9 +1094,9 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     const activeSlideBuild = runtime.slideBuildRef.current;
     if (activeSlideBuild) {
       if (activeSlideBuild.persistUntilRightClick) {
-        runtime.finalizeSlideBuild({ disarmTool: true, statusMessage: "已完成 Slide 创建。" });
+        runtime.finalizeSlideBuild({ disarmTool: true });
       } else {
-        runtime.cancelSlideBuild("已取消 Slide 创建并取消 Slide 工具。");
+        runtime.cancelSlideBuild();
       }
       return;
     }
@@ -1211,9 +1204,9 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
 
   return (
     <OriginalUiSoundProvider volumePercent={appOptionSettings.simulatorSettings.systemSeVolumePercent}
-      masterPercent={appOptionSettings.simulatorSettings.masterVolumePercent} onError={message => vm.setStatusMessage(`界面音效失败：${message}`)}>
+      masterPercent={appOptionSettings.simulatorSettings.masterVolumePercent} onError={message => vm.showDialog(`界面音效失败：${message}`, "error")}>
     <OriginalMenuBackground type={backgroundPage === "live" ? (preparationMode.sessionMode === "rehearsal" ? 2 : 1)
-      : backgroundPage === "search" ? 1 : backgroundPage === "song" ? 257 : backgroundPage === "entrance" ? "home" : "editor"} onError={vm.setStatusMessage} />
+      : backgroundPage === "search" ? 1 : backgroundPage === "song" ? 257 : backgroundPage === "entrance" ? "home" : "editor"} onError={message => vm.showDialog(message, "error")} />
     <main className={`app-shell ${mobileRuntime ? "is-mobile-runtime" : ""}`}
       data-ui-layout={uiViewport.stacked ? "stacked" : "columns"}
       >
@@ -1266,7 +1259,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         resourcesReady={vm.settingsResourcesReady} onStart={startLive} /> : page === "search" ?
       <MusicSelectionPage source={appOptionSettings.musicSelectionSource} onSourceChange={vm.setMusicSelectionSource}
         persisted={appOptionSettings.officialMusicSelection} onPersist={vm.setOfficialMusicSelection}
-        onResourceWarning={vm.setStatusMessage} onPreview={(request, paused) => setPreview(current => current.request?.key === request?.key && current.paused === paused ? current : { request, paused })} onLoad={(source, id, progress, _destination, difficulty) => {
+        onResourceWarning={message => vm.showDialog(message, "error")} onPreview={(request, paused) => setPreview(current => current.request?.key === request?.key && current.paused === paused ? current : { request, paused })} onLoad={(source, id, progress, _destination, difficulty) => {
           vm.endPlaySession(); loadedPlay.current = null;
           return source === "official"
             ? vm.loadOfficialChart({ id, difficulty: difficulty!, preserveForPlay: false, progress }).then(Boolean) : source === "bestdori"
@@ -1673,8 +1666,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         onLivePreparation={() => { setIsAppSettingsOpen(false); setPageStack(stack => openDetailPage(stack, "live")); }}
         optionsOpen={preparationSettingsOpen} onOptionsClose={() => setPreparationSettingsOpen(false)}
         resourcesReady={vm.settingsResourcesReady}
-        onSettingsError={message => vm.setStatusMessage(`设置操作失败：${message}`)}
         onImport={openImportJsonModal} onExport={downloadJson} onPreview={openStaticRenderWindow}
+        onSettingsError={message => vm.showDialog(`设置操作失败：${message}`, "error")}
         onSimulator={openSimulatorWindow} onSkinLibrary={openSkinSettings} onAccount={openBestdoriLoginModal}
         open={isAppSettingsOpen}
         onClose={() => setIsAppSettingsOpen(false)}

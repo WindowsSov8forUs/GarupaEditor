@@ -42,8 +42,7 @@ import { useCanvasPlayfieldBackend } from "./hooks/useCanvasPlayfieldBackend";
 import { useCanvasRenderResources } from "./hooks/useCanvasRenderResources";
 import { useIsStartingApplication, useStartupReadiness } from "./startupReadiness";
 import { useEditorGeometry } from "./hooks/useEditorGeometry";
-import { IMPORT_NOTICE_MARKER, useEditorIoAndShortcuts } from "./hooks/useEditorIoAndShortcuts";
-import { BESTDORI_SESSION_EXPIRED_MESSAGE } from "../services/bestdori/api";
+import { useEditorIoAndShortcuts } from "./hooks/useEditorIoAndShortcuts";
 import { useEditorSessionCache } from "./hooks/useEditorSessionCache";
 import { useEditorRenderModel } from "./hooks/useEditorRenderModel";
 import { useStableEvents } from "./hooks/useStableEvents";
@@ -328,239 +327,6 @@ function sameUndoContent(a: EditorUndoSnapshot, b: EditorUndoSnapshot): boolean 
     && (a.timingGroups === b.timingGroups || JSON.stringify(a.timingGroups) === JSON.stringify(b.timingGroups));
 }
 
-type StatusMessageRoute =
-  | { channel: "ignore" }
-  | { channel: "status"; message: string }
-  | { channel: "dialog"; tone: "info" | "warning" | "error"; message: string };
-
-const STATUS_MESSAGE_IGNORE_EXACT = new Set<string>([
-  "左键放置音符，右键删除音符。数字键 1-7 切换工具，8 为 BPM。",
-  "当前选择无可复制对象。",
-  "暂无可粘贴内容，请先复制。",
-  "粘贴失败：目标位置已被占用。",
-  "当前状态暂不可粘贴。",
-  "当前位置不可粘贴。",
-  "当前没有可镜像的选中音符。",
-  "选中的音符已失效，请重新框选后重试。",
-  "已按 lane 3 轴镜像翻转选中音符。",
-  "已选中播放工具。左键可开始/停止播放。",
-  "已取消播放工具。",
-  "已切换到粘贴工具。暂无可粘贴内容，请先复制。",
-  "已应用选项设置。",
-  "当前 longLine 不可应用样式，请重新选择后重试。",
-  "状态已更新。",
-  "基础 BPM 必须大于 0。",
-  "非基础 BPM 的 Beat 必须大于 0。",
-  "非基础 BPM 不能为 0。",
-  "已取消 Slide 创建。",
-  "已取消 Slide 创建并取消 Slide 工具。",
-  "已拖拽移动选中音符。",
-  "已更新选中对象 Beat。",
-  "已更新选中音符轨道。",
-  "已将选中 Slide 节点设为 Hidden。",
-  "已删除选中音符。",
-  "已删除 BPM 线。",
-  "Beat 0 的基础 BPM 线不可删除。",
-  "已批量移动选中音符。",
-  "框选未命中对象。",
-  "Slide 创建中：左键空白追加节点，左键音符进入拖动连接，右键完成。",
-  "已选中 Slide 连接段。",
-  "已删除全 Hidden 的 Slide 序列。",
-  "已分割 Slide 并删除中段 longLine。",
-  "已按选中 longLine 分割 Slide 序列。",
-  "已应用当前 longLine 样式。",
-  "仅可连接到其他 Slide 序列的头部。",
-  "已合并序列并切换到拖动连接，可继续从新序列尾部连接。",
-  "Slide 拖动连接中：移动经过音符即可追加，松开左键返回追加模式，右键完成。",
-  "已删除目标音符。",
-  "工具切换为 BPM。",
-  "已取消导出。",
-  "已将 Bestdori V2 转换为当前谱面 JSON，请在导入页点击“应用”。",
-  "封面已更新。",
-  "预览窗口已打开。",
-]);
-
-const STATUS_MESSAGE_IGNORE_PREFIXES = [
-  "已复制 ",
-  "已粘贴 ",
-  "已导出 ",
-  "无法定位鼠标当前位置，粘贴失败。",
-  "鼠标不在可视编辑区内，粘贴失败。",
-  "已选中 BPM 线：",
-  "已将 ",
-  "已更新选中 DirectionalFlick 宽度为 ",
-  "已设置 DirectionalFlick 默认宽度为 ",
-  "已更新选中音符宽度为 ",
-  "已设置默认宽度为 ",
-  "已更新选中 DirectionalFlick 方向为",
-  "已设置 DirectionalFlick 默认方向为",
-  "已删除 ",
-  "框选选中 ",
-  "工具切换为 ",
-  "窗口分辨率已设置为 ",
-  "正在加载皮肤：",
-  "皮肤已生效：",
-  "已恢复上次关闭前的编辑缓存",
-];
-
-function stripStatusPrefix(message: string, prefix: string): string {
-  if (!message.startsWith(prefix)) {
-    return message;
-  }
-  return message.slice(prefix.length).trim();
-}
-
-function normalizeDisplayPath(value: string): string {
-  return value.replace(/\\/g, "/");
-}
-
-function routeStatusMessage(rawMessage: string): StatusMessageRoute {
-  const message = rawMessage.trim();
-  if (message.length <= 0) {
-    return { channel: "ignore" };
-  }
-  // The status line is not shown; these notices must reach the user.
-  if (message === BESTDORI_SESSION_EXPIRED_MESSAGE) {
-    return { channel: "dialog", tone: "info", message: "Bestdori 登录已失效，\n请重新登录。" };
-  }
-  // An import's notes appear together in one dialog; an import without notes shows none.
-  const importNotices = rawMessage.indexOf(IMPORT_NOTICE_MARKER);
-  if (importNotices >= 0) {
-    return { channel: "dialog", tone: "info", message: rawMessage.slice(importNotices + IMPORT_NOTICE_MARKER.length) };
-  }
-
-  if (message === "已停止播放。") {
-    return { channel: "status", message: "播放中止。" };
-  }
-  if (message.startsWith("已开始播放：")) {
-    return { channel: "status", message: "播放开始。" };
-  }
-  if (message === "已清空全部音符。") {
-    return { channel: "status", message: "谱面已清空。" };
-  }
-
-  if (
-    message === "粘贴失败：按 Beat 顺序最后一个 BPM 不能为负数。"
-    || message === "按 Beat 顺序最后一个 BPM 为负数，已阻止预览。"
-    || message === "已阻止：按 Beat 顺序最后一个 BPM 不能为负数。"
-  ) {
-    return { channel: "dialog", tone: "error", message: "谱面不合法：\n末尾 BPM 不可为负数" };
-  }
-  if (message.startsWith("音频播放失败，已切换为无音频播放：")) {
-    const detail = stripStatusPrefix(message, "音频播放失败，已切换为无音频播放：");
-    return { channel: "dialog", tone: "error", message: `音频播放失败：\n${detail}` };
-  }
-  if (message === "皮肤资源尚未就绪，无法打开预览窗口。") {
-    return { channel: "dialog", tone: "info", message: "资源未加载，请稍后再试。" };
-  }
-  if (message === "预览数据尚未准备完成，请稍后重试。") {
-    return { channel: "dialog", tone: "info", message: "数据未完成，请稍后再试。" };
-  }
-  if (message.startsWith("预览窗口数据发送失败：")) {
-    const detail = stripStatusPrefix(message, "预览窗口数据发送失败：");
-    return { channel: "dialog", tone: "error", message: `预览数据发送失败：\n${detail}` };
-  }
-  if (message.startsWith("预览窗口创建失败：")) {
-    const detail = stripStatusPrefix(message, "预览窗口创建失败：");
-    return { channel: "dialog", tone: "error", message: `预览创建失败：\n${detail}` };
-  }
-  if (message === "预览窗口握手超时，请重试。") {
-    return { channel: "dialog", tone: "error", message };
-  }
-  if (message.startsWith("预览窗口启动失败：")) {
-    const detail = stripStatusPrefix(message, "预览窗口启动失败：");
-    return { channel: "dialog", tone: "error", message: `预览启动失败：\n${detail}` };
-  }
-  if (message.startsWith("播放器窗口创建失败：")) {
-    const detail = stripStatusPrefix(message, "播放器窗口创建失败：");
-    return { channel: "dialog", tone: "error", message: `播放器窗口创建失败：\n${detail}` };
-  }
-  if (message.startsWith("播放器窗口启动失败：")) {
-    const detail = stripStatusPrefix(message, "播放器窗口启动失败：");
-    return { channel: "dialog", tone: "error", message: `播放器窗口启动失败：\n${detail}` };
-  }
-  if (message.startsWith("导出失败：")) {
-    const detail = stripStatusPrefix(message, "导出失败：");
-    return { channel: "dialog", tone: "error", message: `导出谱面失败：\n${detail}` };
-  }
-  if (message.startsWith("已导出到 ")) {
-    const path = stripStatusPrefix(message, "已导出到 ");
-    return { channel: "dialog", tone: "info", message: `已导出到 ${normalizeDisplayPath(path)}` };
-  }
-  if (message === "已导出 Bestdori V2 到剪贴板。") {
-    return { channel: "dialog", tone: "info", message: "已导出谱面为 Bestdori 格式，可直接粘贴。" };
-  }
-  if (message.startsWith("导出 Bestdori V2 失败：")) {
-    const detail = stripStatusPrefix(message, "导出 Bestdori V2 失败：");
-    return { channel: "dialog", tone: "error", message: `导出谱面为 Bestdori 格式代码失败：\n${detail}` };
-  }
-  if (message.startsWith("应用 JSON 失败：")) {
-    const detail = stripStatusPrefix(message, "应用 JSON 失败：");
-    return { channel: "dialog", tone: "error", message: `导入谱面代码失败：\n${detail}` };
-  }
-  if (message.startsWith("Bestdori V2 转换失败：")) {
-    const detail = stripStatusPrefix(message, "Bestdori V2 转换失败：");
-    return { channel: "dialog", tone: "error", message: `转换 Bestdori 格式谱面代码失败：\n${detail}` };
-  }
-  if (message.startsWith("官方谱面导入失败：")) {
-    const detail = stripStatusPrefix(message, "官方谱面导入失败：");
-    return { channel: "dialog", tone: "error", message: `导入官方谱面失败：\n${detail}` };
-  }
-  if (message.startsWith("导入失败：")) {
-    const detail = stripStatusPrefix(message, "导入失败：");
-    return { channel: "dialog", tone: "error", message: `导入谱面失败：\n${detail}` };
-  }
-  if (message === "音频读取失败，请确认格式。") {
-    return { channel: "dialog", tone: "error", message };
-  }
-  if (message === "未找到可用分辨率预设。") {
-    return { channel: "dialog", tone: "info", message };
-  }
-  if (message === "当前窗口不可用，无法调整分辨率。") {
-    return { channel: "dialog", tone: "info", message };
-  }
-  if (message.startsWith("窗口分辨率设置失败：")) {
-    const detail = stripStatusPrefix(message, "窗口分辨率设置失败：");
-    return { channel: "dialog", tone: "error", message: `窗口分辨率设置失败：\n${detail}` };
-  }
-  if (message.startsWith("皮肤下载失败：")) {
-    const detail = stripStatusPrefix(message, "皮肤下载失败：");
-    return { channel: "dialog", tone: "error", message: `皮肤下载失败：\n${detail}` };
-  }
-  if (message.startsWith("会话缓存恢复失败：")) {
-    const detail = stripStatusPrefix(message, "会话缓存恢复失败：");
-    return { channel: "dialog", tone: "error", message: `会话缓存恢复失败：\n${detail}` };
-  }
-  if (message.startsWith("音频缓存处理失败：")) {
-    const detail = stripStatusPrefix(message, "音频缓存处理失败：");
-    return { channel: "dialog", tone: "error", message: `音频缓存处理失败：\n${detail}` };
-  }
-  if (message.startsWith("会话缓存保存失败：")) {
-    const detail = stripStatusPrefix(message, "会话缓存保存失败：");
-    return { channel: "dialog", tone: "error", message: `会话缓存保存失败：\n${detail}` };
-  }
-
-  // Failures from new operations must not depend on adding another prefix above.
-  // Evaluate before success/interaction suppression so partial-success messages
-  // containing a failure are not silently discarded either.
-  if (/失败|异常|错误/.test(message)) {
-    return { channel: "dialog", tone: "error", message };
-  }
-  if (STATUS_MESSAGE_IGNORE_EXACT.has(message)) {
-    return { channel: "ignore" };
-  }
-  if (message.includes("个可见音符")) {
-    return { channel: "ignore" };
-  }
-  for (const prefix of STATUS_MESSAGE_IGNORE_PREFIXES) {
-    if (message.startsWith(prefix)) {
-      return { channel: "ignore" };
-    }
-  }
-
-  return { channel: "status", message };
-}
-
 function resolvePlaybackSeSources(runtimeSe: SeSkinAssets): ResolvedPlaybackSeSources {
   return {
     single: runtimeSe.rhythm.perfect || null,
@@ -644,7 +410,6 @@ function ChartEditorController() {
     isDragging: boolean;
   } | null>(null);
 
-  const [statusMessage, setStatusMessageState] = useState("");
   const [previewLoadingProgress, setPreviewLoadingProgress] = useState<LoadingProgressState>({
     visible: false,
     blocking: false,
@@ -690,21 +455,17 @@ function ChartEditorController() {
     onCancel?.();
   }, [closeOverlayDialog]);
 
-  const setStatusMessage = useCallback((nextMessage: string) => {
-    const routed = routeStatusMessage(nextMessage);
-    if (routed.channel === "ignore") {
-      return;
-    }
-    if (routed.channel === "dialog") {
-      appLog(routed.tone === "error" ? "error" : "info", "editor.dialog", { tone: routed.tone, message: routed.message });
-      openOverlayDialog({
-        tone: routed.tone,
-        message: routed.message,
-      });
-      return;
-    }
-    if (/失败|异常/.test(routed.message)) appLog("warn", "editor.status.failure", { message: routed.message });
-    setStatusMessageState(routed.message);
+  /**
+   * The editor's one dialog entry: every notice and confirmation goes through here and is logged.
+   * A "warning" dialog also offers Cancel; `handlers` run after the user confirms or cancels.
+   */
+  const showDialog = useCallback((
+    message: string,
+    tone: OverlayDialogState["tone"] = "info",
+    handlers?: { onConfirm?: () => void; onCancel?: () => void },
+  ) => {
+    appLog(tone === "error" ? "error" : "info", "editor.dialog", { tone, message });
+    openOverlayDialog({ tone, message }, handlers);
   }, [openOverlayDialog]);
 
   const clearPreviewLoadingHideTimer = useCallback(() => {
@@ -956,11 +717,11 @@ function ChartEditorController() {
   const toolTimingGroup = activeTimingGroupId;
   const setTimingGroupPanelOpenForMode = useCallback((value: boolean) => {
     if (value && !isExGarupaEnabled) {
-      setStatusMessage("ExGarupa 模式关闭时不可使用 Timing Group。");
+      showDialog("ExGarupa 模式关闭时不可使用 Timing Group。");
       return;
     }
     setIsTimingGroupPanelOpen(value);
-  }, [isExGarupaEnabled, setStatusMessage]);
+  }, [isExGarupaEnabled, showDialog]);
 
   const normalizeObjectTimingGroup = useCallback(
     (value: unknown): ChartTimingGroupId => normalizeTimingGroup(value, GLOBAL_TIMING_GROUP_ID),
@@ -969,7 +730,7 @@ function ChartEditorController() {
 
   const createTimingGroup = useCallback(() => {
     if (!isExGarupaEnabled) {
-      setStatusMessage("ExGarupa 模式关闭时不可使用 Timing Group。");
+      showDialog("ExGarupa 模式关闭时不可使用 Timing Group。");
       return;
     }
     setTimingGroups((previous) => {
@@ -992,7 +753,6 @@ function ChartEditorController() {
     setSelectedSvEventIds([]);
     setSelectedSvEventId(null);
     setSelectedLongLineSegmentId(null);
-    setStatusMessage("已创建 Timing Group。");
   }, [
     isExGarupaEnabled,
     setSelectedBpmEventId,
@@ -1001,23 +761,20 @@ function ChartEditorController() {
     setSelectedNoteIds,
     setSelectedSvEventId,
     setSelectedSvEventIds,
-    setStatusMessage,
+    showDialog,
     setTimingGroups,
   ]);
 
   const renameTimingGroup = useCallback((sourceId: ChartTimingGroupId, targetId: ChartTimingGroupId) => {
     if (!isExGarupaEnabled) {
-      setStatusMessage("ExGarupa 模式关闭时不可使用 Timing Group。");
       return;
     }
     const normalizedSource = normalizeObjectTimingGroup(sourceId);
     const normalizedTarget = normalizeObjectTimingGroup(targetId);
     if (normalizedSource === GLOBAL_TIMING_GROUP_ID) {
-      setStatusMessage("#Global 不能重命名。");
       return;
     }
     if (normalizedTarget === GLOBAL_TIMING_GROUP_ID || !/^#[A-Za-z0-9 -]+$/.test(targetId)) {
-      setStatusMessage("Timing Group 名称必须形如 #Name，且只能包含英文、数字、空格和 -。");
       return;
     }
     if (normalizedSource === normalizedTarget) {
@@ -1025,7 +782,6 @@ function ChartEditorController() {
     }
     const groups = ensureTimingGroups(timingGroupsRef.current);
     if (groups[normalizedTarget]) {
-      setStatusMessage("目标 Timing Group 已存在。");
       return;
     }
     setTimingGroups((previous) => {
@@ -1057,24 +813,21 @@ function ChartEditorController() {
         : chain,
     ));
     setSelectedTimingGroupId(normalizedTarget);
-    setStatusMessage("已重命名 Timing Group。");
   }, [
     isExGarupaEnabled,
     normalizeObjectTimingGroup,
     setNotes,
     setSlideChains,
-    setStatusMessage,
     setTimingGroups,
   ]);
 
   const deleteTimingGroup = useCallback((groupId: ChartTimingGroupId) => {
     if (!isExGarupaEnabled) {
-      setStatusMessage("ExGarupa 模式关闭时不可使用 Timing Group。");
+      showDialog("ExGarupa 模式关闭时不可使用 Timing Group。");
       return;
     }
     const normalized = normalizeObjectTimingGroup(groupId);
     if (normalized === GLOBAL_TIMING_GROUP_ID) {
-      setStatusMessage("#Global 不能删除。");
       return;
     }
     setTimingGroups((previous) => {
@@ -1106,7 +859,6 @@ function ChartEditorController() {
     setSelectedSvEventId(null);
     setSelectedNoteIds([]);
     setSelectedLongLineSegmentId(null);
-    setStatusMessage("已删除 Timing Group。");
   }, [
     isExGarupaEnabled,
     normalizeObjectTimingGroup,
@@ -1116,7 +868,7 @@ function ChartEditorController() {
     setSelectedSvEventId,
     setSelectedSvEventIds,
     setSlideChains,
-    setStatusMessage,
+    showDialog,
     setTimingGroups,
   ]);
 
@@ -1173,7 +925,6 @@ function ChartEditorController() {
     if (skipped > 0) appLog("info", "editor.undo-noop-steps-skipped", { skipped });
     if (!snapshot) {
       setUndoVersion((previous) => previous + 1);
-      setStatusMessage("暂无可撤回操作。");
       return false;
     }
 
@@ -1194,14 +945,13 @@ function ChartEditorController() {
     setSelectedSvEventIds([]);
     setSelectedSvEventId(null);
     setSelectedLongLineSegmentId(null);
-    setStatusMessage("已撤回上一个操作。");
     setUndoVersion((previous) => previous + 1);
 
     queueMicrotask(() => {
       isUndoRestoringRef.current = false;
     });
     return true;
-  }, [buildCurrentUndoSnapshot, setStatusMessage]);
+  }, [buildCurrentUndoSnapshot, showDialog]);
 
   const redoLastOperation = useCallback((): boolean => {
     const stack = redoStackRef.current;
@@ -1216,7 +966,6 @@ function ChartEditorController() {
     if (skipped > 0) appLog("info", "editor.redo-noop-steps-skipped", { skipped });
     if (!snapshot) {
       setUndoVersion((previous) => previous + 1);
-      setStatusMessage("暂无可重做操作。");
       return false;
     }
 
@@ -1237,14 +986,13 @@ function ChartEditorController() {
     setSelectedSvEventIds([]);
     setSelectedSvEventId(null);
     setSelectedLongLineSegmentId(null);
-    setStatusMessage("已重做上一个操作。");
     setUndoVersion((previous) => previous + 1);
 
     queueMicrotask(() => {
       isUndoRestoringRef.current = false;
     });
     return true;
-  }, [buildCurrentUndoSnapshot, setStatusMessage]);
+  }, [buildCurrentUndoSnapshot, showDialog]);
 
   const [audioFileName, setAudioFileName] = useState("");
   const [audioDurationSec, setAudioDurationSec] = useState(0);
@@ -1716,7 +1464,7 @@ function ChartEditorController() {
   }, [interactiveNotes, isTimingGroupModeActive]);
   const setSelectedObjectTimingGroupId = useCallback((nextGroup: ChartTimingGroupId) => {
     if (!isExGarupaEnabled) {
-      setStatusMessage("ExGarupa 模式关闭时不可使用 Timing Group。");
+      showDialog("ExGarupa 模式关闭时不可使用 Timing Group。");
       return;
     }
     const normalizedGroup = normalizeObjectTimingGroup(nextGroup);
@@ -1754,14 +1502,13 @@ function ChartEditorController() {
           : note,
       ),
     );
-    setStatusMessage("已更新 timing group。");
   }, [
     isExGarupaEnabled,
     normalizeObjectTimingGroup,
     selectedNoteIds,
     setNotes,
     setSlideChains,
-    setStatusMessage,
+    showDialog,
     slideChains,
     slideRoleByNoteId,
   ]);
@@ -1944,24 +1691,11 @@ function ChartEditorController() {
     (noteIds: string[], bpmIds: string[], svIds: string[] = []) => {
       const payload = buildCopiedChartPayload(noteIds, bpmIds, svIds);
       if (!payload) {
-        setStatusMessage("当前选择无可复制对象。");
         return;
       }
       setCopiedChartPayload(payload);
-
-      const visibleNoteCount = payload.notes.reduce(
-        (count, note) => (note.type === "hidden" ? count : count + 1),
-        0,
-      );
-      const hiddenNoteCount = payload.notes.length - visibleNoteCount;
-      const slideSegmentCount = payload.slideChains.length;
-      const hiddenLabel = hiddenNoteCount > 0 ? ` + ${hiddenNoteCount} Hidden` : "";
-      const slideLabel = slideSegmentCount > 0 ? `，${slideSegmentCount} 段 Slide` : "";
-      setStatusMessage(
-        `已复制 ${visibleNoteCount}${hiddenLabel} 个音符，${payload.bpmEvents.length} 条 BPM，${payload.svEvents.length} 条 SV${slideLabel}。`,
-      );
     },
-    [buildCopiedChartPayload, setStatusMessage],
+    [buildCopiedChartPayload],
   );
   const applyCopiedPayloadAtPlacement = useCallback(
     (placement: { lane: number; beat: number }) => {
@@ -2117,7 +1851,7 @@ function ChartEditorController() {
       if (pastedBpmEvents.length > 0) {
         const nextBpmEvents = [...bpmEventsRef.current, ...pastedBpmEvents];
         if (isLastBeatOrderedBpmNegative(metadata.bpm, nextBpmEvents)) {
-          setStatusMessage("粘贴失败：按 Beat 顺序最后一个 BPM 不能为负数。");
+          showDialog("谱面不合法：\n末尾 BPM 不可为负数", "error");
           return;
         }
       }
@@ -2198,13 +1932,6 @@ function ChartEditorController() {
       setSelectedSvEventIds(pastedSvEvents.map((event) => event.id));
       setSelectedSvEventId(pastedSvEvents[0]?.id ?? null);
       setSelectedLongLineSegmentId(null);
-
-      const visibleNoteCount = pastedNotes.reduce((count, note) => (note.type === "hidden" ? count : count + 1), 0);
-      const hiddenNoteCount = pastedNotes.length - visibleNoteCount;
-      const hiddenLabel = hiddenNoteCount > 0 ? ` + ${hiddenNoteCount} Hidden` : "";
-      setStatusMessage(
-        `已粘贴 ${visibleNoteCount}${hiddenLabel} 个音符，${pastedBpmEvents.length} 条 BPM，${pastedSvEvents.length} 条 SV。`,
-      );
     },
     [
       beatDivision,
@@ -2231,7 +1958,7 @@ function ChartEditorController() {
       setSelectedNoteIds,
       setSlideChains,
       setSvEvents,
-      setStatusMessage,
+      showDialog,
       settings,
       sortBpmEvents,
       sortSvEvents,
@@ -2796,11 +2523,9 @@ function ChartEditorController() {
   const canMirrorSelection = selectedNoteCount > 0;
   const mirrorSelectedNotes = useCallback(() => {
     if (selectedNoteIds.length === 0) {
-      setStatusMessage("当前没有可镜像的选中音符。");
       return;
     }
     if (!selectedNoteIds.some((id) => noteById.has(id))) {
-      setStatusMessage("选中的音符已失效，请重新框选后重试。");
       return;
     }
 
@@ -2904,7 +2629,6 @@ function ChartEditorController() {
       return sortNotes([...remained, ...transformedNotes]);
     });
 
-    setStatusMessage("已按 lane 3 轴镜像翻转选中音符。");
   }, [
     isHabahiroEnabled,
     isDirectionalNoteType,
@@ -2913,7 +2637,6 @@ function ChartEditorController() {
     noteById,
     selectedNoteIds,
     setNotes,
-    setStatusMessage,
     settings,
     slideChains,
     sortNotes,
@@ -2988,7 +2711,7 @@ function ChartEditorController() {
     setSlideBuildCursor,
     settings,
     normalizeNote,
-    setStatusMessage,
+    showDialog,
     toFinite,
     quantizeBeat,
     beatDivision,
@@ -3011,7 +2734,7 @@ function ChartEditorController() {
     setNotes,
     sortNotes,
     setSelectedLongLineSegmentId,
-    setStatusMessage,
+    showDialog,
     createId,
   });
 
@@ -3094,10 +2817,10 @@ function ChartEditorController() {
     deleteNotesWithSlideHiddenFallback,
     clearSelectedNotes,
     selectedNoteIds,
-    setStatusMessage,
     selectedBpmEventIds,
     selectedSvEventIds,
     selectedSvEventId,
+    showDialog,
     setSelectedNoteIds,
     setSelectedBpmEventIds,
     setSelectedBpmEventId,
@@ -3200,8 +2923,7 @@ function ChartEditorController() {
     sortNotes,
     removeNoteIdsFromSlideChains,
     clearSelectedNotes,
-    setStatusMessage,
-    openOverlayDialog,
+    showDialog,
     setNotes,
     setSlideChains,
     setSettings,
@@ -3263,7 +2985,7 @@ function ChartEditorController() {
   });
   const projectFiles = useChartProjectFiles(resourceManager, project, loaded => {
     restoreProject(loaded); closeImportJsonModal();
-  }, setStatusMessage);
+  }, showDialog);
   // Charts picked for play from the chart list load through the editor state; keep the
   // editor's own chart aside (and out of the session cache) until the play flow ends.
   const playSessionBackupRef = useRef<ChartProject | null>(null);
@@ -3342,7 +3064,7 @@ function ChartEditorController() {
     applyWindowPresetById,
     applyBestdoriSkinSelection,
     clearAllSelections,
-    setStatusMessage,
+    showDialog,
   });
 
   const svPreviewTimingGroups = useMemo(() => {
@@ -3480,7 +3202,7 @@ function ChartEditorController() {
     bpmEvents,
     svEvents: interactiveSvEvents,
     clearAllSelections,
-    setStatusMessage,
+    showDialog,
     setMultiSelectedNotes,
     setToolLane,
     setUseToolLaneOverride,
@@ -3562,7 +3284,6 @@ function ChartEditorController() {
     clearSelectedNotes();
     clearSelectedBpmEvents();
     setSelectedBpmEventId(null);
-    setStatusMessage("已在 Slide 连接段上添加 Single 节点。");
   }, [
     approxEq,
     beatDivision,
@@ -3575,10 +3296,9 @@ function ChartEditorController() {
     setSelectedBpmEventId,
     setSelectedLongLineSegmentId,
     setSlideChains,
-    setStatusMessage,
+    showDialog,
     settings,
     tool,
-    toolTimingGroup,
   ]);
 
   const {
@@ -3603,7 +3323,7 @@ function ChartEditorController() {
     setTool,
     setIsToolArmed,
     clearAllSelections,
-    setStatusMessage,
+    showDialog,
     NOTE_SPECS,
     useToolLaneOverride,
     quantizeBeat,
@@ -3902,7 +3622,7 @@ function ChartEditorController() {
     }
   }, []);
 
-  const stopPlayback = useCallback((message: string | null = "已停止播放。") => {
+  const stopPlayback = useCallback(() => {
     clearPlaybackTick();
     playbackStartSeqRef.current += 1;
     stopPlaybackBgmSource();
@@ -3919,14 +3639,11 @@ function ChartEditorController() {
     hidePlaybackGuide();
     hidePlaybackRuntimeLine();
     playbackNowSecRef.current = 0;
-    if (message) {
-      setStatusMessage(message);
-    }
   }, [
     clearPlaybackTick,
     hidePlaybackGuide,
     hidePlaybackRuntimeLine,
-    setStatusMessage,
+    showDialog,
     stopAllPlaybackSoundEffects,
     stopPlaybackBgmSource,
   ]);
@@ -3934,18 +3651,17 @@ function ChartEditorController() {
   const setActiveSvValue = useCallback((value: number) => {
     const nextValue = Number(toFinite(value, toolSvValue).toFixed(6));
     if (!Number.isFinite(nextValue)) {
-      setStatusMessage("SV 值必须为有限数字。");
+      showDialog("SV 值必须为有限数字。");
       return;
     }
     if (selectedSvEvent) {
       setSvEvents((previous) => sortSvEvents(previous.map((event) =>
         event.id === selectedSvEvent.id ? { ...event, value: nextValue } : event,
       )));
-      setStatusMessage("已更新 SV 值。");
       return;
     }
     setToolSvValue(nextValue);
-  }, [selectedSvEvent, setStatusMessage, setSvEvents, sortSvEvents, toFinite, toolSvValue]);
+  }, [selectedSvEvent, setSvEvents, sortSvEvents, toFinite, toolSvValue]);
 
   const commitSvInput = useCallback(() => {
     const text = svInputText.trim();
@@ -4507,7 +4223,7 @@ function ChartEditorController() {
     syncPlaybackViewport(nextTimeSec);
     updatePlaybackRuntimeLine(nextTimeSec);
     if (nextTimeSec >= safeDuration - 1e-3) {
-      stopPlayback("播放结束。");
+      stopPlayback();
       return;
     }
     playbackTickRafRef.current = requestAnimationFrame(() => playbackTickHandlerRef.current());
@@ -4527,7 +4243,7 @@ function ChartEditorController() {
     playbackTickHandlerRef.current = runPlaybackTick;
   }, [runPlaybackTick]);
 
-  const startPlaybackAt = useCallback(async (seconds: number, announce = true) => {
+  const startPlaybackAt = useCallback(async (seconds: number) => {
     const startSeq = playbackStartSeqRef.current + 1;
     playbackStartSeqRef.current = startSeq;
     const isStartCurrent = () => playbackStartSeqRef.current === startSeq;
@@ -4563,14 +4279,14 @@ function ChartEditorController() {
         return;
       }
       if (!buffer) {
-        setStatusMessage("音频解码失败，请重试播放。");
+        showDialog("音频解码失败，请重试播放。", "error");
         return;
       }
       const shouldStartAudio = safeSeconds < buffer.duration - 1e-3;
       if (shouldStartAudio) {
         const startedAt = startPlaybackBgmAt(buffer, safeSeconds, currentPlaybackSpeed);
         if (startedAt === null) {
-          setStatusMessage("音频播放失败，请重试播放。");
+          showDialog("音频播放失败，请重试播放。", "error");
           return;
         }
         safeSeconds = startedAt;
@@ -4589,9 +4305,6 @@ function ChartEditorController() {
     setIsPlaybackPlaying(true);
     hidePlaybackGuide();
     updatePlaybackRuntimeLine(safeSeconds);
-    if (announce) {
-      setStatusMessage(`已开始播放：${formatDuration(safeSeconds)} / ${playbackTotalLabel}`);
-    }
     playbackTickRafRef.current = requestAnimationFrame(() => playbackTickHandlerRef.current());
   }, [
     appliedSkinResources,
@@ -4607,7 +4320,7 @@ function ChartEditorController() {
     decodePlaybackBgmBuffer,
     resetPlaybackSoundStateAt,
     ensurePlaybackSeAudioContext,
-    setStatusMessage,
+    showDialog,
     startPlaybackBgmAt,
     syncPlaybackViewport,
     hidePlaybackGuide,
@@ -4624,18 +4337,16 @@ function ChartEditorController() {
         clearAllSelections();
         hidePlaybackGuide();
         hidePlaybackRuntimeLine();
-        setStatusMessage("已选中播放工具。左键可开始/停止播放。");
       } else {
         hidePlaybackGuide();
         hidePlaybackRuntimeLine();
         if (isPlaybackPlaying) {
-          stopPlayback(null);
+          stopPlayback();
         }
-        setStatusMessage("已取消播放工具。");
       }
       return next;
     });
-  }, [clearAllSelections, hidePlaybackGuide, hidePlaybackRuntimeLine, isPlaybackPlaying, setStatusMessage, stopPlayback]);
+  }, [clearAllSelections, hidePlaybackGuide, hidePlaybackRuntimeLine, isPlaybackPlaying, showDialog, stopPlayback]);
 
   const applyToolFromPalette = useCallback((nextType: NoteType) => {
     if (isPlayToolSelected) {
@@ -4643,7 +4354,7 @@ function ChartEditorController() {
       hidePlaybackGuide();
       hidePlaybackRuntimeLine();
       if (isPlaybackPlaying) {
-        stopPlayback(null);
+        stopPlayback();
       }
     }
     applyToolFromPaletteRaw(nextType);
@@ -4655,7 +4366,7 @@ function ChartEditorController() {
       hidePlaybackGuide();
       hidePlaybackRuntimeLine();
       if (isPlaybackPlaying) {
-        stopPlayback(null);
+        stopPlayback();
       }
     }
     applyBpmToolFromPaletteRaw();
@@ -4663,7 +4374,7 @@ function ChartEditorController() {
 
   const applySvToolFromPalette = useCallback(() => {
     if (!isExGarupaEnabled) {
-      setStatusMessage("ExGarupa 模式关闭时不可使用 SV。");
+      showDialog("ExGarupa 模式关闭时不可使用 SV。");
       return;
     }
     if (isPlayToolSelected) {
@@ -4671,11 +4382,11 @@ function ChartEditorController() {
       hidePlaybackGuide();
       hidePlaybackRuntimeLine();
       if (isPlaybackPlaying) {
-        stopPlayback(null);
+        stopPlayback();
       }
     }
     applySvToolFromPaletteRaw();
-  }, [applySvToolFromPaletteRaw, hidePlaybackGuide, hidePlaybackRuntimeLine, isExGarupaEnabled, isPlayToolSelected, isPlaybackPlaying, setStatusMessage, stopPlayback]);
+  }, [applySvToolFromPaletteRaw, hidePlaybackGuide, hidePlaybackRuntimeLine, isExGarupaEnabled, isPlayToolSelected, isPlaybackPlaying, showDialog, stopPlayback]);
 
   const applyCopyToolFromPalette = useCallback(() => {
     if (isPlayToolSelected) {
@@ -4683,7 +4394,7 @@ function ChartEditorController() {
       hidePlaybackGuide();
       hidePlaybackRuntimeLine();
       if (isPlaybackPlaying) {
-        stopPlayback(null);
+        stopPlayback();
       }
     }
     applyCopyToolFromPaletteRaw();
@@ -4695,21 +4406,17 @@ function ChartEditorController() {
       hidePlaybackGuide();
       hidePlaybackRuntimeLine();
       if (isPlaybackPlaying) {
-        stopPlayback(null);
+        stopPlayback();
       }
     }
     applyPasteToolFromPaletteRaw();
-    if (!copiedChartPayload) {
-      setStatusMessage("已切换到粘贴工具。暂无可粘贴内容，请先复制。");
-    }
   }, [
     applyPasteToolFromPaletteRaw,
-    copiedChartPayload,
     hidePlaybackGuide,
     hidePlaybackRuntimeLine,
     isPlayToolSelected,
     isPlaybackPlaying,
-    setStatusMessage,
+    showDialog,
     stopPlayback,
   ]);
 
@@ -4784,33 +4491,23 @@ function ChartEditorController() {
 
   const requestSpRhythmRegressionConfirm = useCallback(() => {
     return new Promise<boolean>((resolve) => {
-      openOverlayDialog(
-        {
-          tone: "warning",
-          message: "关闭“SP节奏图示”后将对当前谱面执行不可逆修改（普通 Directional Flick 将回退为 Flick）。是否继续应用？",
-        },
-        {
-          onConfirm: () => resolve(true),
-          onCancel: () => resolve(false),
-        },
+      showDialog(
+        "切换到“基础”模式将对当前谱面执行不可逆修改（方向滑键回退为 Flick，hidden 节点将被移除），并清空撤销与重做记录。是否继续应用？",
+        "warning",
+        { onConfirm: () => resolve(true), onCancel: () => resolve(false) },
       );
     });
-  }, [openOverlayDialog]);
+  }, [showDialog]);
 
   const requestExGarupaRegressionConfirm = useCallback(() => {
     return new Promise<boolean>((resolve) => {
-      openOverlayDialog(
-        {
-          tone: "warning",
-          message: "关闭“ExGarupa”后将对当前谱面执行不可逆修改（SV、非 Global Timing Group、无头/无尾 Slide 和扩展 Slide 节点将回退）。是否继续应用？",
-        },
-        {
-          onConfirm: () => resolve(true),
-          onCancel: () => resolve(false),
-        },
+      showDialog(
+        "关闭“ExGarupa”将对当前谱面执行不可逆修改（SV、非 Global Timing Group、无头/无尾 Slide 和扩展 Slide 节点将回退，超出 7 轨的音符移回轨道内，轨道数恢复为 7），并清空撤销与重做记录。是否继续应用？",
+        "warning",
+        { onConfirm: () => resolve(true), onCancel: () => resolve(false) },
       );
     });
-  }, [openOverlayDialog]);
+  }, [showDialog]);
 
   const applyAppOptionSettings = useCallback(async (nextDraft: EditorOptionSettings) => {
     const normalizedNext = normalizeEditorOptionSettings(nextDraft);
@@ -4863,7 +4560,6 @@ function ChartEditorController() {
     }
 
     setAppOptionSettings(normalizedNext);
-    setStatusMessage("已应用选项设置。");
     return true;
   }, [
     canUseSpRhythmMode,
@@ -4873,7 +4569,7 @@ function ChartEditorController() {
     notes,
     requestExGarupaRegressionConfirm,
     requestSpRhythmRegressionConfirm,
-    setStatusMessage,
+    showDialog,
     setNotes,
     setSlideChains,
     setSvEvents,
@@ -4895,12 +4591,12 @@ function ChartEditorController() {
       try {
         const next = buildHabahiroSkinSelection();
         syncingHabahiroSkinRef.current = true;
-        void applyBestdoriSkinSelectionRef.current(next, true, false)
+        void applyBestdoriSkinSelectionRef.current(next, true)
           .finally(() => {
             syncingHabahiroSkinRef.current = false;
           });
       } catch (error) {
-        setStatusMessage(error instanceof Error ? error.message : String(error));
+        showDialog(error instanceof Error ? error.message : String(error), "error");
       }
       return;
     }
@@ -4908,12 +4604,12 @@ function ChartEditorController() {
       try {
         const next = buildStandardRhythmSkinSelection();
         syncingHabahiroSkinRef.current = true;
-        void applyBestdoriSkinSelectionRef.current(next, true, false)
+        void applyBestdoriSkinSelectionRef.current(next, true)
           .finally(() => {
             syncingHabahiroSkinRef.current = false;
           });
       } catch (error) {
-        setStatusMessage(error instanceof Error ? error.message : String(error));
+        showDialog(error instanceof Error ? error.message : String(error), "error");
       }
     }
   }, [
@@ -4921,7 +4617,7 @@ function ChartEditorController() {
     isHabahiroEnabled,
     buildHabahiroSkinSelection,
     buildStandardRhythmSkinSelection,
-    setStatusMessage,
+    showDialog,
     skinSelection.rhythmRipName,
   ]);
 
@@ -4972,7 +4668,6 @@ function ChartEditorController() {
   }, [appliedSkinResources, preloadPlaybackSeBuffers]);
 
   useEffect(() => {
-    stopPlayback(null);
     playbackBgmCacheSeqRef.current += 1;
     playbackBgmBufferBySrcRef.current.clear();
     playbackBgmDecodeTaskBySrcRef.current.clear();
@@ -5077,7 +4772,6 @@ function ChartEditorController() {
         stopPlayback();
         return;
       }
-      void startPlaybackAt(getPlayfieldBottomTimeSec(), false);
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
@@ -5176,7 +4870,7 @@ function ChartEditorController() {
   useEditorPointerLifecycle({
     slideBuildRef,
     setSlideBuildState,
-    setStatusMessage,
+    showDialog,
     finalizeSlideBuild,
     selectionMoveRef,
     calcSelectionMoveDelta,
@@ -5578,8 +5272,8 @@ function ChartEditorController() {
     setSelectedBpmEventId,
     clearSelectedNotes,
     clearSelectedBpmEvents,
-    setStatusMessage,
     setIsToolArmed,
+    showDialog,
     isToolArmed,
     tool,
     sortBpmEvents,
@@ -5755,16 +5449,16 @@ function ChartEditorController() {
       hidePreviewLoadingProgress();
     }
     if (!isSkinReady || !isCanvasResourceReady) {
-      setStatusMessage("皮肤资源尚未就绪，无法打开预览窗口。");
+      showDialog("资源未加载，请稍后再试。");
       return;
     }
     const staticRenderPayload = buildStaticRenderPayload();
     if (!staticRenderPayload) {
-      setStatusMessage("预览数据尚未准备完成，请稍后重试。");
+      showDialog("数据未完成，请稍后再试。");
       return;
     }
     if (isLastBeatOrderedBpmNegative(metadata.bpm, bpmEvents)) {
-      setStatusMessage("按 Beat 顺序最后一个 BPM 为负数，已阻止预览。");
+      showDialog("谱面不合法：\n末尾 BPM 不可为负数", "error");
       return;
     }
     startPreviewLoadingProgress("正在准备预览数据…");
@@ -5787,7 +5481,7 @@ function ChartEditorController() {
     };
 
     try {
-      if (!isMobileRuntime()) releasePreparation = await holdAuxiliaryPreparation(requestId, message => { setStatusMessage(`预览窗口显示失败：${message}`); void renderWindow?.close(); });
+      if (!isMobileRuntime()) releasePreparation = await holdAuxiliaryPreparation(requestId, message => { showDialog(`预览窗口显示失败：${message}`, "error"); void renderWindow?.close(); });
       readyUnlisten = await listen<{ requestId?: string; label?: string }>(
         STATIC_RENDER_WINDOW_READY_EVENT,
         async (event) => {
@@ -5813,7 +5507,7 @@ function ChartEditorController() {
             hidePreviewLoadingProgress(900);
             releasePreparation?.();
             void renderWindow?.close();
-            setStatusMessage(`预览窗口数据发送失败：${message}`);
+            showDialog(`预览数据发送失败：\n${message}`, "error");
           }
         },
       );
@@ -5836,7 +5530,6 @@ function ChartEditorController() {
         }
         completePreviewLoadingProgress("预览已就绪。");
         window.location.hash = targetUrl.hash;
-        setStatusMessage("已切换到移动端预览。");
         return;
       }
 
@@ -5863,7 +5556,7 @@ function ChartEditorController() {
           : "未知错误";
         updatePreviewLoadingProgress(100, `预览窗口创建失败：${message}`, { blocking: false });
         hidePreviewLoadingProgress(900);
-        setStatusMessage(`预览窗口创建失败：${message}`);
+        showDialog(`预览创建失败：\n${message}`, "error");
       });
       renderWindow.once("tauri://destroyed", () => {
         releasePreparation?.();
@@ -5880,9 +5573,8 @@ function ChartEditorController() {
         hidePreviewLoadingProgress(900);
         releasePreparation?.();
         void renderWindow?.close();
-        setStatusMessage("预览窗口握手超时，请重试。");
+        showDialog("预览窗口握手超时，请重试。", "error");
       }, 15000);
-      setStatusMessage("预览窗口已打开。");
     } catch (error) {
       clearReadySubscription();
       const message = error instanceof Error ? error.message : String(error);
@@ -5890,7 +5582,7 @@ function ChartEditorController() {
       hidePreviewLoadingProgress(900);
       releasePreparation?.();
       void renderWindow?.close();
-      setStatusMessage(`预览窗口启动失败：${message}`);
+      showDialog(`预览启动失败：\n${message}`, "error");
     }
   }, [
     bpmEvents,
@@ -5901,7 +5593,7 @@ function ChartEditorController() {
     metadata.bpm,
     metadata.title,
     buildStaticRenderPayload,
-    setStatusMessage,
+    showDialog,
     startPreviewLoadingProgress,
     previewLoadingProgress.visible,
     updatePreviewLoadingProgress,
@@ -5918,7 +5610,7 @@ function ChartEditorController() {
     };
     const invalidChart = chartProjectionError(project);
     if (invalidChart !== null) {
-      openOverlayDialog({ tone: "error", message: invalidChart });
+      showDialog(invalidChart, "error");
       exit("blocked");
       return;
     }
@@ -5962,17 +5654,16 @@ function ChartEditorController() {
       const message = error instanceof Error ? error.message : String(error);
       // A caller that owns the exit shows its own notice; the cause belongs in the log.
       if (onExit) appLog("error", "simulator.window.launch-failed", { message });
-      else setStatusMessage(`播放器窗口启动失败：${message}`);
+      else showDialog(`播放器窗口启动失败：\n${message}`, "error");
       if (simulatorWindow !== null) void simulatorWindow.close().catch((closeError: unknown) => {
         if (onExit) appLog("error", "simulator.window.close-failed", { message, closeError: String(closeError) });
-        else setStatusMessage(`播放器窗口启动失败：${message}；关闭窗口失败：${String(closeError)}`);
+        else showDialog(`播放器窗口启动失败：\n${message}；关闭窗口失败：${String(closeError)}`, "error");
       });
     };
     const publishDescriptor = async () => {
       if (abandoned || published || readyLabel === null || descriptor === null) return;
       published = true;
       await emitTo(readyLabel, SIMULATOR_WINDOW_PAYLOAD_EVENT, { requestId: activeRequestId, descriptor });
-      if (!abandoned) setStatusMessage("播放器参数与资源快照已同步。");
     };
 
     try {
@@ -5992,7 +5683,7 @@ function ChartEditorController() {
           const capability = event.payload.capability ?? "app.simulator.action-unavailable";
           const boundary = event.payload.boundary?.trim() ?? "当前播放器动作不可用，编辑器状态未改变。";
           if (onExit) appLog("error", "simulator.window.launch-rejected", { capability, boundary });
-          else setStatusMessage(`播放器未启动或已安全结束：${capability}：${boundary}`);
+          else showDialog(`播放器未启动：\n${boundary}`, "error");
         }
       });
       if (!isMobileRuntime()) {
@@ -6021,7 +5712,6 @@ function ChartEditorController() {
         timeoutId = window.setTimeout(() => {
           if (readyLabel === null && !abandoned) fail("播放器窗口握手超时，请重试。");
         }, 15000);
-        setStatusMessage("播放器窗口正在打开。");
       }
       const prepared = await buildSimulatorLaunchDescriptor({
         sessionMode: mode.sessionMode, inputMode: mode.inputMode,
@@ -6066,7 +5756,6 @@ function ChartEditorController() {
         }
         setMobileSimulatorImmersive(true);
         window.location.hash = targetUrl.hash;
-        setStatusMessage("已切换到移动端播放器。");
         return;
       }
       await publishDescriptor();
@@ -6092,8 +5781,7 @@ function ChartEditorController() {
     playbackVolumePercent,
     playbackWindowPresetId,
     resourceManager,
-    setStatusMessage,
-    openOverlayDialog,
+    showDialog,
   ]);
 
   const canApplyLongLineSettings = hasLongLineSelection && showSlideSegmentSetting;
@@ -6109,7 +5797,6 @@ function ChartEditorController() {
       vibration: slideVibration,
     });
     if (!applied) {
-      setStatusMessage("当前 longLine 不可应用样式，请重新选择后重试。");
     }
   };
 
@@ -6230,7 +5917,7 @@ function ChartEditorController() {
         setTool,
         setIsToolArmed,
         clearAllSelections,
-        setStatusMessage,
+        showDialog,
         undoLastNote,
         redoLastNote,
         canUndoLastOperation,
@@ -6377,7 +6064,6 @@ function ChartEditorController() {
         isRhythmWidthEditableType,
         isHabahiroEnabled,
         renderDirectionalSprite,
-        statusMessage,
         isSkinApplying,
         setMetadata,
         audioObjectUrl,

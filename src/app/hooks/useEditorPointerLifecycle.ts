@@ -4,7 +4,7 @@ export function useEditorPointerLifecycle(params: any) {
   const {
     slideBuildRef,
     setSlideBuildState,
-    setStatusMessage,
+    showDialog,
     finalizeSlideBuild,
     selectionMoveRef,
     calcSelectionMoveDelta,
@@ -66,7 +66,6 @@ export function useEditorPointerLifecycle(params: any) {
               slideBuildRef.current = next;
               return next;
             });
-            setStatusMessage("Slide 创建中：左键空白追加节点，左键音符进入拖动连接，右键完成。");
           }
           return;
         }
@@ -83,7 +82,7 @@ export function useEditorPointerLifecycle(params: any) {
         if (delta?.moved) {
           suppressNextBoardClickRef.current = true;
           suppressNextNoteClickRef.current = true;
-          applySelectedOffset(delta.laneDelta, delta.beatDelta, "已拖拽移动选中音符。", {
+          applySelectedOffset(delta.laneDelta, delta.beatDelta, {
             quantizeBeatDelta: false,
           });
         }
@@ -111,6 +110,6 @@ export function useEditorPointerLifecycle(params: any) {
       window.removeEventListener("mousemove", handleWindowMouseMove);
       window.removeEventListener("mouseup", handleWindowMouseUp);
     };
-  }, [applySelectedOffset, calcSelectionMoveDelta, finalizeSlideBuild, finishSelectionDrag, selectionMoveRef, setCursorPreview, setSelectionMovePreview, setSlideBuildState, setStatusMessage, slideBuildRef, suppressNextBoardClickRef, suppressNextNoteClickRef]);
+  }, [applySelectedOffset, calcSelectionMoveDelta, finalizeSlideBuild, finishSelectionDrag, selectionMoveRef, setCursorPreview, setSelectionMovePreview, setSlideBuildState, showDialog, slideBuildRef, suppressNextBoardClickRef, suppressNextNoteClickRef]);
 }
 
