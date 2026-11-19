@@ -1,4 +1,4 @@
-import { createContext, useContext, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { memo, createContext, useContext, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { OriginalSprite } from "./OriginalUi";
 import { originalSurfaceRow } from "./useOriginalSurface";
 import { originalSpriteDrawingRect, originalUiRound, ORIGINAL_PROGRESS_HIDE_THRESHOLD } from "./originalSpriteGeometry";
@@ -48,7 +48,7 @@ const rectStyle = (model: OriginalPrefabModel, component: OriginalComponent): CS
     zIndex: component.data.mDepth ?? 0, boxSizing: "border-box" };
 };
 
-function SpriteView({ model, component, tint }: { model: OriginalPrefabModel; component: OriginalComponent; tint?: OriginalData }) {
+function SpriteViewInner({ model, component, tint }: { model: OriginalPrefabModel; component: OriginalComponent; tint?: OriginalData }) {
   const filterId = `original-sprite-${useId().replace(/:/g, "")}`;
   const data = component.data, box = model.rect(component), rgba = tint ?? data.mColor;
   if (!data.mSpriteName || !originalRef(data.mAtlas) || box.width === 0 || box.height === 0) return null;
@@ -91,7 +91,7 @@ function richText(text: string, initial: string): ReactNode {
 }
 let labelMetricsContext: CanvasRenderingContext2D | null = null;
 
-function LabelView({ model, component, fontRevision, onMeasured, naturalSize, horizontalScroll = false }: { model: OriginalPrefabModel;
+function LabelViewInner({ model, component, fontRevision, onMeasured, naturalSize, horizontalScroll = false }: { model: OriginalPrefabModel;
   component: OriginalComponent; fontRevision: number; onMeasured?: (width: number) => void;
   naturalSize?: { width: boolean; height: boolean }; horizontalScroll?: boolean }) {
   const label = useRef<HTMLSpanElement>(null);
@@ -181,7 +181,7 @@ function LabelView({ model, component, fontRevision, onMeasured, naturalSize, ho
       <span aria-hidden="true" style={{ display: "inline-block", width: 0, height: 0, padding: 0, margin: 0, verticalAlign: "baseline" }} />
       {data.mEncoding ? richText(text, textColor) : text}</span></span>;
 }
-function ButtonView({ model, component, binding, beforeClick }: { model: OriginalPrefabModel;
+function ButtonViewInner({ model, component, binding, beforeClick }: { model: OriginalPrefabModel;
   component: OriginalComponent; binding?: OriginalButtonBinding; beforeClick?: (type: number) => void }) {
   const data = component.data, disabled = !binding?.action || !!binding.disabled;
   const sound = useOriginalUiSound();
@@ -293,7 +293,7 @@ function bindOriginalCheckboxes(source: OriginalPrefabModel, bindings: OriginalV
   return { model: new OriginalPrefabModel(source.prefab, { components, nodes }), bindings: { ...bindings, buttons } };
 }
 
-export function OriginalPrefabView({ model: source, root, bindings: initialBindings = {} }: {
+function OriginalPrefabViewInner({ model: source, root, bindings: initialBindings = {} }: {
   model: OriginalPrefabModel; root?: number; bindings?: OriginalViewBindings;
 }) {
   const fontRevision = useOriginalFontRevision();
@@ -392,3 +392,8 @@ function SliderView({ model, component, binding }: { model: OriginalPrefabModel;
     </div>
   </>;
 }
+
+const SpriteView = memo(SpriteViewInner);
+const LabelView = memo(LabelViewInner);
+const ButtonView = memo(ButtonViewInner);
+export const OriginalPrefabView = memo(OriginalPrefabViewInner);

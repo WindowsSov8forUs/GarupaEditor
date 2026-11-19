@@ -1,0 +1,2220 @@
+{
+ "reverseCommit": "85d16429",
+ "source": "StarUIScrollPopupList in prefabs/dialog/areatalkfilterdialog (jp.co.craftegg.band 10.2.0_231, Area subtree): artifacts/investigations/dropdown-components-20261110/staruiscrollpopuplist_contract_jp_10_2_0.json and staruiscrollpopuplist-jp-10.2.0.md",
+ "prefab": {
+  "resource": "prefabs/dialog/areatalkfilterdialog",
+  "nodes": [
+   {
+    "id": 2,
+    "transformId": 75,
+    "name": "Area",
+    "parent": null,
+    "position": {
+     "x": 0.0,
+     "y": -15.0,
+     "z": 0.0
+    },
+    "scale": {
+     "x": 1.0,
+     "y": 1.0,
+     "z": 1.0
+    },
+    "rotation": {
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0,
+     "w": 1.0
+    },
+    "active": true,
+    "path": "Area"
+   },
+   {
+    "id": 23,
+    "transformId": 66,
+    "name": "Caption",
+    "parent": 2,
+    "position": {
+     "x": -207.0,
+     "y": 27.0,
+     "z": 0.0
+    },
+    "scale": {
+     "x": 1.0,
+     "y": 1.0,
+     "z": 1.0
+    },
+    "rotation": {
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0,
+     "w": 1.0
+    },
+    "active": true,
+    "path": "Area/Caption"
+   },
+   {
+    "id": 38,
+    "transformId": 86,
+    "name": "Background",
+    "parent": 23,
+    "position": {
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0
+    },
+    "scale": {
+     "x": 0.800000011920929,
+     "y": 0.800000011920929,
+     "z": 1.0
+    },
+    "rotation": {
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0,
+     "w": 1.0
+    },
+    "active": true,
+    "path": "Area/Caption/Background"
+   },
+   {
+    "id": 24,
+    "transformId": 78,
+    "name": "Label",
+    "parent": 23,
+    "position": {
+     "x": -30.0,
+     "y": -2.0,
+     "z": 0.0
+    },
+    "scale": {
+     "x": 1.0,
+     "y": 1.0,
+     "z": 1.0
+    },
+    "rotation": {
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0,
+     "w": 1.0
+    },
+    "active": true,
+    "path": "Area/Caption/Label"
+   },
+   {
+    "id": 26,
+    "transformId": 77,
+    "name": "ListButton",
+    "parent": 2,
+    "position": {
+     "x": 55.0,
+     "y": 27.0,
+     "z": 0.0
+    },
+    "scale": {
+     "x": 1.0,
+     "y": 1.0,
+     "z": 1.0
+    },
+    "rotation": {
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0,
+     "w": 1.0
+    },
+    "active": true,
+    "path": "Area/ListButton"
+   },
+   {
+    "id": 33,
+    "transformId": 67,
+    "name": "PulldownIcon",
+    "parent": 26,
+    "position": {
+     "x": 171.0,
+     "y": -2.0,
+     "z": 0.0
+    },
+    "scale": {
+     "x": 1.0,
+     "y": 1.0,
+     "z": 1.0
+    },
+    "rotation": {
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0,
+     "w": 1.0
+    },
+    "active": true,
+    "path": "Area/ListButton/PulldownIcon"
+   },
+   {
+    "id": 1,
+    "transformId": 63,
+    "name": "Label",
+    "parent": 26,
+    "position": {
+     "x": -184.0,
+     "y": -1.0,
+     "z": 0.0
+    },
+    "scale": {
+     "x": 1.0,
+     "y": 1.0,
+     "z": 1.0
+    },
+    "rotation": {
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0,
+     "w": 1.0
+    },
+    "active": true,
+    "path": "Area/ListButton/Label"
+   },
+   {
+    "id": 9,
+    "transformId": 51,
+    "name": "ScrollPopupList",
+    "parent": 2,
+    "position": {
+     "x": 55.0,
+     "y": 8.0,
+     "z": 0.0
+    },
+    "scale": {
+     "x": 1.0,
+     "y": 1.0,
+     "z": 1.0
+    },
+    "rotation": {
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0,
+     "w": 1.0
+    },
+    "active": false,
+    "path": "Area/ScrollPopupList"
+   },
+   {
+    "id": 28,
+    "transformId": 64,
+    "name": "BG",
+    "parent": 9,
+    "position": {
+     "x": 0.0,
+     "y": -158.0,
+     "z": 0.0
+    },
+    "scale": {
+     "x": 1.0,
+     "y": 1.0,
+     "z": 1.0
+    },
+    "rotation": {
+     "x": -0.0,
+     "y": -0.0,
+     "z": -0.0,
+     "w": 1.0
+    },
+    "active": true,
+    "path": "Area/ScrollPopupList/BG"
+   },
+   {
+    "id": 10,
+    "transformId": 53,
+    "name": "ClipPanelBase",
+    "parent": 9,
+    "position": {
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0
+    },
+    "scale": {
+     "x": 1.0,
+     "y": 1.0,
+     "z": 1.0
+    },
+    "rotation": {
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0,
+     "w": 1.0
+    },
+    "active": true,
+    "path": "Area/ScrollPopupList/ClipPanelBase"
+   },
+   {
+    "id": 16,
+    "transformId": 49,
+    "name": "SelectedBG",
+    "parent": 10,
+    "position": {
+     "x": -16.0,
+     "y": 0.0,
+     "z": 0.0
+    },
+    "scale": {
+     "x": 1.0,
+     "y": 1.0,
+     "z": 1.0
+    },
+    "rotation": {
+     "x": -0.0,
+     "y": -0.0,
+     "z": -0.0,
+     "w": 1.0
+    },
+    "active": true,
+    "path": "Area/ScrollPopupList/ClipPanelBase/SelectedBG"
+   },
+   {
+    "id": 31,
+    "transformId": 68,
+    "name": "ScrollBar",
+    "parent": 10,
+    "position": {
+     "x": 180.0,
+     "y": -165.0,
+     "z": 0.0
+    },
+    "scale": {
+     "x": 1.0,
+     "y": 1.0,
+     "z": 1.0
+    },
+    "rotation": {
+     "x": -0.0,
+     "y": -0.0,
+     "z": -0.0,
+     "w": 1.0
+    },
+    "active": true,
+    "path": "Area/ScrollPopupList/ClipPanelBase/ScrollBar"
+   },
+   {
+    "id": 11,
+    "transformId": 59,
+    "name": "Thumb",
+    "parent": 31,
+    "position": {
+     "x": 0.0,
+     "y": 1.0,
+     "z": 0.0
+    },
+    "scale": {
+     "x": 1.0,
+     "y": 1.0,
+     "z": 1.0
+    },
+    "rotation": {
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0,
+     "w": 1.0
+    },
+    "active": true,
+    "path": "Area/ScrollPopupList/ClipPanelBase/ScrollBar/Thumb"
+   },
+   {
+    "id": 12,
+    "transformId": 73,
+    "name": "Background",
+    "parent": 31,
+    "position": {
+     "x": 0.0,
+     "y": 1.0,
+     "z": 0.0
+    },
+    "scale": {
+     "x": 1.0,
+     "y": 1.0,
+     "z": 1.0
+    },
+    "rotation": {
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0,
+     "w": 1.0
+    },
+    "active": true,
+    "path": "Area/ScrollPopupList/ClipPanelBase/ScrollBar/Background"
+   },
+   {
+    "id": 19,
+    "transformId": 52,
+    "name": "ClipPanel",
+    "parent": 9,
+    "position": {
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0
+    },
+    "scale": {
+     "x": 1.0,
+     "y": 1.0,
+     "z": 1.0
+    },
+    "rotation": {
+     "x": -0.0,
+     "y": -0.0,
+     "z": -0.0,
+     "w": 1.0
+    },
+    "active": true,
+    "path": "Area/ScrollPopupList/ClipPanel"
+   },
+   {
+    "id": 3,
+    "transformId": 56,
+    "name": "Grid",
+    "parent": 19,
+    "position": {
+     "x": 4.0,
+     "y": -24.0,
+     "z": 0.0
+    },
+    "scale": {
+     "x": 1.0,
+     "y": 1.0,
+     "z": 1.0
+    },
+    "rotation": {
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0,
+     "w": 1.0
+    },
+    "active": true,
+    "path": "Area/ScrollPopupList/ClipPanel/Grid"
+   }
+  ],
+  "components": [
+   {
+    "id": 157,
+    "node": 38,
+    "kind": "UISprite",
+    "data": {
+     "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 38
+     },
+     "m_Enabled": 1,
+     "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 13807648768
+     },
+     "m_Name": "",
+     "leftAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 0.0,
+      "absolute": 0
+     },
+     "rightAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 1.0,
+      "absolute": 0
+     },
+     "bottomAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 0.0,
+      "absolute": 0
+     },
+     "topAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 1.0,
+      "absolute": 0
+     },
+     "updateAnchors": 1,
+     "mColor": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+     },
+     "mPivot": 4,
+     "mWidth": 116,
+     "mHeight": 40,
+     "mDepth": 5,
+     "boundless": 0,
+     "mMat": {
+      "m_FileID": 0,
+      "m_PathID": 0
+     },
+     "autoResizeBoxCollider": 0,
+     "hideIfOffScreen": 0,
+     "keepAspectRatio": 0,
+     "aspectRatio": 2.9000000953674316,
+     "mType": 1,
+     "mFillDirection": 4,
+     "mFillAmount": 1.0,
+     "mInvert": 0,
+     "mFlip": 0,
+     "mApplyGradient": 0,
+     "mGradientTop": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+     },
+     "mGradientBottom": {
+      "r": 0.699999988079071,
+      "g": 0.699999988079071,
+      "b": 0.699999988079071,
+      "a": 1.0
+     },
+     "centerType": 1,
+     "leftType": 1,
+     "rightType": 1,
+     "bottomType": 1,
+     "topType": 1,
+     "mAtlas": {
+      "m_FileID": 2,
+      "m_PathID": 1796
+     },
+     "mSpriteName": "label_round_black",
+     "mFixedAspect": 0,
+     "mFillCenter": 1
+    }
+   },
+   {
+    "id": 130,
+    "node": 24,
+    "kind": "UILabel",
+    "data": {
+     "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 24
+     },
+     "m_Enabled": 1,
+     "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 109890764800
+     },
+     "m_Name": "",
+     "leftAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 1.0,
+      "absolute": 10
+     },
+     "rightAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 1.0,
+      "absolute": 0
+     },
+     "bottomAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 1.0,
+      "absolute": -50
+     },
+     "topAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 1.0,
+      "absolute": -5
+     },
+     "updateAnchors": 1,
+     "mColor": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+     },
+     "mPivot": 3,
+     "mWidth": 150,
+     "mHeight": 50,
+     "mDepth": 6,
+     "boundless": 0,
+     "mMat": {
+      "m_FileID": 0,
+      "m_PathID": 0
+     },
+     "autoResizeBoxCollider": 0,
+     "hideIfOffScreen": 0,
+     "keepAspectRatio": 0,
+     "aspectRatio": 3.0,
+     "keepCrispWhenShrunk": 1,
+     "mTrueTypeFont": {
+      "m_FileID": 0,
+      "m_PathID": 0
+     },
+     "mFont": {
+      "m_FileID": 2,
+      "m_PathID": 1799
+     },
+     "mText": "エリア",
+     "mFontSize": 20,
+     "mFontStyle": 0,
+     "mAlignment": 0,
+     "mEncoding": 1,
+     "mMaxLineCount": 0,
+     "mEffectStyle": 0,
+     "mEffectColor": {
+      "r": 0.0,
+      "g": 0.0,
+      "b": 0.0,
+      "a": 1.0
+     },
+     "mSymbols": 1,
+     "mEffectDistance": {
+      "x": 1.0,
+      "y": 1.0
+     },
+     "mOverflow": 0,
+     "mApplyGradient": 0,
+     "mGradientTop": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+     },
+     "mGradientBottom": {
+      "r": 0.699999988079071,
+      "g": 0.699999988079071,
+      "b": 0.699999988079071,
+      "a": 1.0
+     },
+     "mSpacingX": 0,
+     "mSpacingY": 0,
+     "mUseFloatSpacing": 0,
+     "mFloatSpacingX": 0.0,
+     "mFloatSpacingY": 0.0,
+     "mOverflowEllipsis": 0,
+     "mOverflowWidth": 0,
+     "mOverflowHeight": 0,
+     "mModifier": 0,
+     "mSymbolDepth": 0,
+     "mShrinkToFit": 0,
+     "mMaxLineWidth": 0,
+     "mMaxLineHeight": 0,
+     "mLineWidth": 0.0,
+     "mMultiline": 1
+    }
+   },
+   {
+    "id": 127,
+    "node": 24,
+    "kind": "WordingSetter",
+    "data": {
+     "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 24
+     },
+     "m_Enabled": 1,
+     "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 51053068288
+     },
+     "m_Name": "",
+     "wordingKey": "dialog_areaTalkFilter_caption_area",
+     "targetLabel": {
+      "m_FileID": 0,
+      "m_PathID": 130
+     }
+    }
+   },
+   {
+    "id": 125,
+    "node": 26,
+    "kind": "UISprite",
+    "data": {
+     "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 26
+     },
+     "m_Enabled": 1,
+     "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 13807648768
+     },
+     "m_Name": "",
+     "leftAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 0.0,
+      "absolute": 0
+     },
+     "rightAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 1.0,
+      "absolute": 0
+     },
+     "bottomAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 0.0,
+      "absolute": 0
+     },
+     "topAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 1.0,
+      "absolute": 0
+     },
+     "updateAnchors": 1,
+     "mColor": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+     },
+     "mPivot": 4,
+     "mWidth": 400,
+     "mHeight": 38,
+     "mDepth": 5,
+     "boundless": 0,
+     "mMat": {
+      "m_FileID": 0,
+      "m_PathID": 0
+     },
+     "autoResizeBoxCollider": 0,
+     "hideIfOffScreen": 0,
+     "keepAspectRatio": 0,
+     "aspectRatio": 10.526315689086914,
+     "mType": 1,
+     "mFillDirection": 4,
+     "mFillAmount": 1.0,
+     "mInvert": 0,
+     "mFlip": 0,
+     "mApplyGradient": 0,
+     "mGradientTop": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+     },
+     "mGradientBottom": {
+      "r": 0.699999988079071,
+      "g": 0.699999988079071,
+      "b": 0.699999988079071,
+      "a": 1.0
+     },
+     "centerType": 1,
+     "leftType": 1,
+     "rightType": 1,
+     "bottomType": 1,
+     "topType": 1,
+     "mAtlas": {
+      "m_FileID": 2,
+      "m_PathID": 1796
+     },
+     "mSpriteName": "bg_form_text",
+     "mFixedAspect": 0,
+     "mFillCenter": 1
+    }
+   },
+   {
+    "id": 93,
+    "node": 26,
+    "kind": "BoxCollider2D",
+    "data": {
+     "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 26
+     },
+     "m_Enabled": 1,
+     "m_Density": 1.0,
+     "m_Material": {
+      "m_FileID": 0,
+      "m_PathID": 0
+     },
+     "m_IncludeLayers": {
+      "m_Bits": 0
+     },
+     "m_ExcludeLayers": {
+      "m_Bits": 0
+     },
+     "m_LayerOverridePriority": 0,
+     "m_ForceSendLayers": {
+      "m_Bits": 4294967295
+     },
+     "m_ForceReceiveLayers": {
+      "m_Bits": 4294967295
+     },
+     "m_ContactCaptureLayers": {
+      "m_Bits": 4294967295
+     },
+     "m_CallbackLayers": {
+      "m_Bits": 4294967295
+     },
+     "m_IsTrigger": false,
+     "m_UsedByEffector": false,
+     "m_UsedByComposite": false,
+     "m_Offset": {
+      "x": 0.0,
+      "y": 0.0
+     },
+     "m_SpriteTilingProperty": {
+      "border": {
+       "x": 0.0,
+       "y": 0.0,
+       "z": 0.0,
+       "w": 0.0
+      },
+      "pivot": {
+       "x": 0.0,
+       "y": 0.0
+      },
+      "oldSize": {
+       "x": 0.0,
+       "y": 0.0
+      },
+      "newSize": {
+       "x": 0.0,
+       "y": 0.0
+      },
+      "adaptiveTilingThreshold": 0.0,
+      "drawMode": 0,
+      "adaptiveTiling": false
+     },
+     "m_AutoTiling": false,
+     "m_Size": {
+      "x": 412.0,
+      "y": 50.0
+     },
+     "m_EdgeRadius": 0.0
+    }
+   },
+   {
+    "id": 139,
+    "node": 26,
+    "kind": "StarUIButton",
+    "data": {
+     "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 26
+     },
+     "m_Enabled": 1,
+     "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 104119402496
+     },
+     "m_Name": "",
+     "tweenTarget": {
+      "m_FileID": 0,
+      "m_PathID": 26
+     },
+     "hover": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+     },
+     "pressed": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+     },
+     "disabledColor": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+     },
+     "duration": 0.20000000298023224,
+     "dragHighlight": 0,
+     "hoverSprite": "",
+     "pressedSprite": "",
+     "disabledSprite": "",
+     "hoverSprite2D": {
+      "m_FileID": 0,
+      "m_PathID": 0
+     },
+     "pressedSprite2D": {
+      "m_FileID": 0,
+      "m_PathID": 0
+     },
+     "disabledSprite2D": {
+      "m_FileID": 0,
+      "m_PathID": 0
+     },
+     "pixelSnap": 0,
+     "onClick": [],
+     "pressedSpriteElement": {
+      "widget": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "color": {
+       "r": 1.0,
+       "g": 1.0,
+       "b": 1.0,
+       "a": 0.5
+      }
+     },
+     "disableSpriteElement": {
+      "widget": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "color": {
+       "r": 0.0,
+       "g": 0.0,
+       "b": 0.0,
+       "a": 0.5
+      }
+     },
+     "contentSprite": {
+      "m_FileID": 0,
+      "m_PathID": 0
+     },
+     "initializeTemplateColorPattern": 0,
+     "initializeTemplateHeight": 0,
+     "initializeTemplateWidth": 0,
+     "isInitializeTemplateLabel": 1,
+     "clickSEType": 1,
+     "longPressJudgementTime": 1.0,
+     "onStartLongPressEventList": [],
+     "onLongPressEventList": [],
+     "onReleaseLongPressEventList": [],
+     "enableDoubleTap": 0,
+     "atlas": {
+      "m_FileID": 0,
+      "m_PathID": 0
+     },
+     "additionalParts": []
+    }
+   },
+   {
+    "id": 124,
+    "node": 33,
+    "kind": "UISprite",
+    "data": {
+     "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 33
+     },
+     "m_Enabled": 1,
+     "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 13807648768
+     },
+     "m_Name": "",
+     "leftAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 0.0,
+      "absolute": 0
+     },
+     "rightAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 1.0,
+      "absolute": 0
+     },
+     "bottomAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 0.0,
+      "absolute": 0
+     },
+     "topAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 1.0,
+      "absolute": 0
+     },
+     "updateAnchors": 1,
+     "mColor": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+     },
+     "mPivot": 4,
+     "mWidth": 28,
+     "mHeight": 16,
+     "mDepth": 6,
+     "boundless": 0,
+     "mMat": {
+      "m_FileID": 0,
+      "m_PathID": 0
+     },
+     "autoResizeBoxCollider": 0,
+     "hideIfOffScreen": 0,
+     "keepAspectRatio": 0,
+     "aspectRatio": 1.75,
+     "mType": 0,
+     "mFillDirection": 4,
+     "mFillAmount": 1.0,
+     "mInvert": 0,
+     "mFlip": 0,
+     "mApplyGradient": 0,
+     "mGradientTop": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+     },
+     "mGradientBottom": {
+      "r": 0.699999988079071,
+      "g": 0.699999988079071,
+      "b": 0.699999988079071,
+      "a": 1.0
+     },
+     "centerType": 1,
+     "leftType": 1,
+     "rightType": 1,
+     "bottomType": 1,
+     "topType": 1,
+     "mAtlas": {
+      "m_FileID": 2,
+      "m_PathID": 1796
+     },
+     "mSpriteName": "icon_pulldown_arrow_gray",
+     "mFixedAspect": 0,
+     "mFillCenter": 1
+    }
+   },
+   {
+    "id": 113,
+    "node": 1,
+    "kind": "UILabel",
+    "data": {
+     "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 1
+     },
+     "m_Enabled": 1,
+     "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 109890764800
+     },
+     "m_Name": "",
+     "leftAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 1.0,
+      "absolute": 10
+     },
+     "rightAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 1.0,
+      "absolute": 0
+     },
+     "bottomAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 1.0,
+      "absolute": -50
+     },
+     "topAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 1.0,
+      "absolute": -5
+     },
+     "updateAnchors": 1,
+     "mColor": {
+      "r": 0.3137255012989044,
+      "g": 0.3137255012989044,
+      "b": 0.3137255012989044,
+      "a": 1.0
+     },
+     "mPivot": 3,
+     "mWidth": 350,
+     "mHeight": 50,
+     "mDepth": 7,
+     "boundless": 0,
+     "mMat": {
+      "m_FileID": 0,
+      "m_PathID": 0
+     },
+     "autoResizeBoxCollider": 0,
+     "hideIfOffScreen": 0,
+     "keepAspectRatio": 0,
+     "aspectRatio": 7.0,
+     "keepCrispWhenShrunk": 1,
+     "mTrueTypeFont": {
+      "m_FileID": 0,
+      "m_PathID": 0
+     },
+     "mFont": {
+      "m_FileID": 2,
+      "m_PathID": 1799
+     },
+     "mText": "すべて",
+     "mFontSize": 24,
+     "mFontStyle": 0,
+     "mAlignment": 0,
+     "mEncoding": 1,
+     "mMaxLineCount": 0,
+     "mEffectStyle": 0,
+     "mEffectColor": {
+      "r": 0.0,
+      "g": 0.0,
+      "b": 0.0,
+      "a": 1.0
+     },
+     "mSymbols": 1,
+     "mEffectDistance": {
+      "x": 1.0,
+      "y": 1.0
+     },
+     "mOverflow": 0,
+     "mApplyGradient": 0,
+     "mGradientTop": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+     },
+     "mGradientBottom": {
+      "r": 0.699999988079071,
+      "g": 0.699999988079071,
+      "b": 0.699999988079071,
+      "a": 1.0
+     },
+     "mSpacingX": 1,
+     "mSpacingY": 0,
+     "mUseFloatSpacing": 0,
+     "mFloatSpacingX": 0.0,
+     "mFloatSpacingY": 0.0,
+     "mOverflowEllipsis": 0,
+     "mOverflowWidth": 0,
+     "mOverflowHeight": 0,
+     "mModifier": 0,
+     "mSymbolDepth": 0,
+     "mShrinkToFit": 0,
+     "mMaxLineWidth": 0,
+     "mMaxLineHeight": 0,
+     "mLineWidth": 0.0,
+     "mMultiline": 1
+    }
+   },
+   {
+    "id": 119,
+    "node": 9,
+    "kind": "StarUIScrollPopupList",
+    "data": {
+     "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 9
+     },
+     "m_Enabled": 1,
+     "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 20233322496
+     },
+     "m_Name": "",
+     "valueList": [],
+     "contentSize": {
+      "x": 400.0,
+      "y": 316.0
+     },
+     "cellHeight": 48.0,
+     "cellDepth": 5,
+     "popupDirection": 1,
+     "useFont": {
+      "m_FileID": 2,
+      "m_PathID": 75
+     },
+     "useUIFont": {
+      "m_FileID": 0,
+      "m_PathID": 0
+     },
+     "fontAlignment": 1,
+     "fontSize": 24,
+     "fontColor": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+     },
+     "fontMargine": 20,
+     "clipPanel": {
+      "m_FileID": 0,
+      "m_PathID": 105
+     },
+     "outerButton": {
+      "m_FileID": 0,
+      "m_PathID": 106
+     },
+     "contentGrid": {
+      "m_FileID": 0,
+      "m_PathID": 121
+     },
+     "contentBG": {
+      "m_FileID": 0,
+      "m_PathID": 104
+     },
+     "selectedCellBG": {
+      "m_FileID": 0,
+      "m_PathID": 138
+     },
+     "arrowSprite": {
+      "m_FileID": 0,
+      "m_PathID": 124
+     },
+     "scrollBar": {
+      "m_FileID": 0,
+      "m_PathID": 128
+     },
+     "shouldFitSelectedCellBGToCellSize": 0,
+     "selectedCellBGPositionOffset": {
+      "x": -16.0,
+      "y": 0.0,
+      "z": 0.0
+     }
+    }
+   },
+   {
+    "id": 136,
+    "node": 9,
+    "kind": "UIPanel",
+    "data": {
+     "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 9
+     },
+     "m_Enabled": 1,
+     "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 81621155840
+     },
+     "m_Name": "",
+     "leftAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 0.0,
+      "absolute": 0
+     },
+     "rightAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 1.0,
+      "absolute": 0
+     },
+     "bottomAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 0.0,
+      "absolute": 0
+     },
+     "topAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 1.0,
+      "absolute": 0
+     },
+     "updateAnchors": 1,
+     "showInPanelTool": 1,
+     "generateNormals": 0,
+     "generateUV2": 0,
+     "shadowMode": 0,
+     "widgetsAreStatic": 0,
+     "cullWhileDragging": 1,
+     "alwaysOnScreen": 0,
+     "anchorOffset": 0,
+     "softBorderPadding": 1,
+     "renderQueue": 0,
+     "startingRenderQueue": 3012,
+     "mClipTexture": {
+      "m_FileID": 0,
+      "m_PathID": 0
+     },
+     "mAlpha": 1.0,
+     "mAlphaProp": "",
+     "mClipping": 0,
+     "mClipRange": {
+      "x": 0.0,
+      "y": 100.0,
+      "z": 300.0,
+      "w": 200.0
+     },
+     "mClipSoftness": {
+      "x": 0.0,
+      "y": 0.0
+     },
+     "mDepth": 31,
+     "mSortingOrder": 0,
+     "mSortingLayerName": "",
+     "mClipOffset": {
+      "x": 0.0,
+      "y": 0.0
+     },
+     "useSortingOrder": 0
+    }
+   },
+   {
+    "id": 96,
+    "node": 9,
+    "kind": "BoxCollider2D",
+    "data": {
+     "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 9
+     },
+     "m_Enabled": 1,
+     "m_Density": 1.0,
+     "m_Material": {
+      "m_FileID": 0,
+      "m_PathID": 0
+     },
+     "m_IncludeLayers": {
+      "m_Bits": 0
+     },
+     "m_ExcludeLayers": {
+      "m_Bits": 0
+     },
+     "m_LayerOverridePriority": 0,
+     "m_ForceSendLayers": {
+      "m_Bits": 4294967295
+     },
+     "m_ForceReceiveLayers": {
+      "m_Bits": 4294967295
+     },
+     "m_ContactCaptureLayers": {
+      "m_Bits": 4294967295
+     },
+     "m_CallbackLayers": {
+      "m_Bits": 4294967295
+     },
+     "m_IsTrigger": false,
+     "m_UsedByEffector": false,
+     "m_UsedByComposite": false,
+     "m_Offset": {
+      "x": 0.0,
+      "y": 0.0
+     },
+     "m_SpriteTilingProperty": {
+      "border": {
+       "x": 0.0,
+       "y": 0.0,
+       "z": 0.0,
+       "w": 0.0
+      },
+      "pivot": {
+       "x": 0.0,
+       "y": 0.0
+      },
+      "oldSize": {
+       "x": 0.0,
+       "y": 0.0
+      },
+      "newSize": {
+       "x": 0.0,
+       "y": 0.0
+      },
+      "adaptiveTilingThreshold": 0.0,
+      "drawMode": 0,
+      "adaptiveTiling": false
+     },
+     "m_AutoTiling": false,
+     "m_Size": {
+      "x": 2000.0,
+      "y": 2000.0
+     },
+     "m_EdgeRadius": 0.0
+    }
+   },
+   {
+    "id": 106,
+    "node": 9,
+    "kind": "StarUIButton",
+    "data": {
+     "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 9
+     },
+     "m_Enabled": 1,
+     "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 104119402496
+     },
+     "m_Name": "",
+     "tweenTarget": {
+      "m_FileID": 0,
+      "m_PathID": 9
+     },
+     "hover": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+     },
+     "pressed": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+     },
+     "disabledColor": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+     },
+     "duration": 0.20000000298023224,
+     "dragHighlight": 0,
+     "hoverSprite": "",
+     "pressedSprite": "",
+     "disabledSprite": "",
+     "hoverSprite2D": {
+      "m_FileID": 0,
+      "m_PathID": 0
+     },
+     "pressedSprite2D": {
+      "m_FileID": 0,
+      "m_PathID": 0
+     },
+     "disabledSprite2D": {
+      "m_FileID": 0,
+      "m_PathID": 0
+     },
+     "pixelSnap": 0,
+     "onClick": [],
+     "pressedSpriteElement": {
+      "widget": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "color": {
+       "r": 1.0,
+       "g": 1.0,
+       "b": 1.0,
+       "a": 0.5
+      }
+     },
+     "disableSpriteElement": {
+      "widget": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "color": {
+       "r": 0.0,
+       "g": 0.0,
+       "b": 0.0,
+       "a": 0.5
+      }
+     },
+     "contentSprite": {
+      "m_FileID": 0,
+      "m_PathID": 0
+     },
+     "initializeTemplateColorPattern": 0,
+     "initializeTemplateHeight": 0,
+     "initializeTemplateWidth": 0,
+     "isInitializeTemplateLabel": 1,
+     "clickSEType": 3,
+     "longPressJudgementTime": 0.5,
+     "onStartLongPressEventList": [],
+     "onLongPressEventList": [],
+     "onReleaseLongPressEventList": [],
+     "enableDoubleTap": 0,
+     "atlas": {
+      "m_FileID": 0,
+      "m_PathID": 0
+     },
+     "additionalParts": []
+    }
+   },
+   {
+    "id": 104,
+    "node": 28,
+    "kind": "UISprite",
+    "data": {
+     "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 28
+     },
+     "m_Enabled": 1,
+     "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 13807648768
+     },
+     "m_Name": "",
+     "leftAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 0.0,
+      "absolute": 0
+     },
+     "rightAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 1.0,
+      "absolute": 0
+     },
+     "bottomAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 0.0,
+      "absolute": 0
+     },
+     "topAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 1.0,
+      "absolute": 0
+     },
+     "updateAnchors": 1,
+     "mColor": {
+      "r": 0.7254902124404907,
+      "g": 0.7254902124404907,
+      "b": 0.7254902124404907,
+      "a": 1.0
+     },
+     "mPivot": 4,
+     "mWidth": 400,
+     "mHeight": 314,
+     "mDepth": 0,
+     "boundless": 0,
+     "mMat": {
+      "m_FileID": 0,
+      "m_PathID": 0
+     },
+     "autoResizeBoxCollider": 0,
+     "hideIfOffScreen": 0,
+     "keepAspectRatio": 0,
+     "aspectRatio": 1.2738853693008423,
+     "mType": 1,
+     "mFillDirection": 4,
+     "mFillAmount": 1.0,
+     "mInvert": 0,
+     "mFlip": 0,
+     "mApplyGradient": 0,
+     "mGradientTop": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+     },
+     "mGradientBottom": {
+      "r": 0.699999988079071,
+      "g": 0.699999988079071,
+      "b": 0.699999988079071,
+      "a": 1.0
+     },
+     "centerType": 1,
+     "leftType": 1,
+     "rightType": 1,
+     "bottomType": 1,
+     "topType": 1,
+     "mAtlas": {
+      "m_FileID": 2,
+      "m_PathID": 1796
+     },
+     "mSpriteName": "bg_form_text",
+     "mFixedAspect": 0,
+     "mFillCenter": 1
+    }
+   },
+   {
+    "id": 140,
+    "node": 10,
+    "kind": "UIPanel",
+    "data": {
+     "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 10
+     },
+     "m_Enabled": 1,
+     "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 81621155840
+     },
+     "m_Name": "",
+     "leftAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 0.0,
+      "absolute": 0
+     },
+     "rightAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 1.0,
+      "absolute": 0
+     },
+     "bottomAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 0.0,
+      "absolute": 0
+     },
+     "topAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 1.0,
+      "absolute": 0
+     },
+     "updateAnchors": 1,
+     "showInPanelTool": 1,
+     "generateNormals": 0,
+     "generateUV2": 0,
+     "shadowMode": 0,
+     "widgetsAreStatic": 0,
+     "cullWhileDragging": 1,
+     "alwaysOnScreen": 0,
+     "anchorOffset": 0,
+     "softBorderPadding": 1,
+     "renderQueue": 0,
+     "startingRenderQueue": 3013,
+     "mClipTexture": {
+      "m_FileID": 0,
+      "m_PathID": 0
+     },
+     "mAlpha": 1.0,
+     "mAlphaProp": "",
+     "mClipping": 3,
+     "mClipRange": {
+      "x": 0.0,
+      "y": -158.0,
+      "z": 398.0,
+      "w": 316.0
+     },
+     "mClipSoftness": {
+      "x": 5.0,
+      "y": 5.0
+     },
+     "mDepth": 32,
+     "mSortingOrder": 0,
+     "mSortingLayerName": "",
+     "mClipOffset": {
+      "x": 0.0,
+      "y": 0.0
+     },
+     "useSortingOrder": 0
+    }
+   },
+   {
+    "id": 138,
+    "node": 16,
+    "kind": "UISprite",
+    "data": {
+     "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 16
+     },
+     "m_Enabled": 1,
+     "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 13807648768
+     },
+     "m_Name": "",
+     "leftAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 0.0,
+      "absolute": 0
+     },
+     "rightAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 1.0,
+      "absolute": 0
+     },
+     "bottomAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 0.0,
+      "absolute": 0
+     },
+     "topAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 1.0,
+      "absolute": 0
+     },
+     "updateAnchors": 1,
+     "mColor": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+     },
+     "mPivot": 4,
+     "mWidth": 368,
+     "mHeight": 48,
+     "mDepth": 1,
+     "boundless": 0,
+     "mMat": {
+      "m_FileID": 0,
+      "m_PathID": 0
+     },
+     "autoResizeBoxCollider": 0,
+     "hideIfOffScreen": 0,
+     "keepAspectRatio": 0,
+     "aspectRatio": 7.666666507720947,
+     "mType": 1,
+     "mFillDirection": 4,
+     "mFillAmount": 1.0,
+     "mInvert": 0,
+     "mFlip": 0,
+     "mApplyGradient": 0,
+     "mGradientTop": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+     },
+     "mGradientBottom": {
+      "r": 0.699999988079071,
+      "g": 0.699999988079071,
+      "b": 0.699999988079071,
+      "a": 1.0
+     },
+     "centerType": 1,
+     "leftType": 1,
+     "rightType": 1,
+     "bottomType": 1,
+     "topType": 1,
+     "mAtlas": {
+      "m_FileID": 2,
+      "m_PathID": 1796
+     },
+     "mSpriteName": "bg_pulldown_active",
+     "mFixedAspect": 0,
+     "mFillCenter": 1
+    }
+   },
+   {
+    "id": 128,
+    "node": 31,
+    "kind": "UIScrollBar",
+    "data": {
+     "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 31
+     },
+     "m_Enabled": 1,
+     "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 29477568512
+     },
+     "m_Name": "",
+     "thumb": {
+      "m_FileID": 0,
+      "m_PathID": 0
+     },
+     "mBG": {
+      "m_FileID": 0,
+      "m_PathID": 134
+     },
+     "mFG": {
+      "m_FileID": 0,
+      "m_PathID": 115
+     },
+     "mValue": 0.12812498211860657,
+     "mFill": 3,
+     "numberOfSteps": 0,
+     "onChange": [
+      {
+       "mTarget": {
+        "m_FileID": 0,
+        "m_PathID": 123
+       },
+       "mMethodName": "OnScrollBar",
+       "mParameters": [],
+       "oneShot": 0
+      }
+     ],
+     "foreground": {
+      "m_FileID": 0,
+      "m_PathID": 0
+     },
+     "rawValue": 1.0,
+     "direction": 2,
+     "mInverted": 0,
+     "mSize": 0.9924939274787903,
+     "mScroll": 0.0,
+     "mDir": 2
+    }
+   },
+   {
+    "id": 116,
+    "node": 31,
+    "kind": "UIEventListener",
+    "data": {
+     "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 31
+     },
+     "m_Enabled": 1,
+     "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 82980110336
+     },
+     "m_Name": "",
+     "needsActiveCollider": 1
+    }
+   },
+   {
+    "id": 115,
+    "node": 11,
+    "kind": "UISprite",
+    "data": {
+     "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 11
+     },
+     "m_Enabled": 1,
+     "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 13807648768
+     },
+     "m_Name": "",
+     "leftAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 1.0,
+      "absolute": -27
+     },
+     "rightAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 1.0,
+      "absolute": -21
+     },
+     "bottomAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 0.0,
+      "absolute": 83
+     },
+     "topAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 1.0,
+      "absolute": -105
+     },
+     "updateAnchors": 1,
+     "mColor": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+     },
+     "mPivot": 4,
+     "mWidth": 8,
+     "mHeight": 280,
+     "mDepth": 10,
+     "boundless": 0,
+     "mMat": {
+      "m_FileID": 0,
+      "m_PathID": 0
+     },
+     "autoResizeBoxCollider": 0,
+     "hideIfOffScreen": 0,
+     "keepAspectRatio": 0,
+     "aspectRatio": 0.02857142873108387,
+     "mType": 1,
+     "mFillDirection": 4,
+     "mFillAmount": 1.0,
+     "mInvert": 0,
+     "mFlip": 0,
+     "mApplyGradient": 0,
+     "mGradientTop": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+     },
+     "mGradientBottom": {
+      "r": 0.699999988079071,
+      "g": 0.699999988079071,
+      "b": 0.699999988079071,
+      "a": 1.0
+     },
+     "centerType": 1,
+     "leftType": 1,
+     "rightType": 1,
+     "bottomType": 1,
+     "topType": 1,
+     "mAtlas": {
+      "m_FileID": 2,
+      "m_PathID": 1796
+     },
+     "mSpriteName": "scrollbar_top",
+     "mFixedAspect": 0,
+     "mFillCenter": 1
+    }
+   },
+   {
+    "id": 134,
+    "node": 12,
+    "kind": "UISprite",
+    "data": {
+     "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 12
+     },
+     "m_Enabled": 1,
+     "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 13807648768
+     },
+     "m_Name": "",
+     "leftAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 1.0,
+      "absolute": -27
+     },
+     "rightAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 1.0,
+      "absolute": -21
+     },
+     "bottomAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 0.0,
+      "absolute": 83
+     },
+     "topAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 1.0,
+      "absolute": -105
+     },
+     "updateAnchors": 1,
+     "mColor": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+     },
+     "mPivot": 4,
+     "mWidth": 8,
+     "mHeight": 280,
+     "mDepth": 8,
+     "boundless": 0,
+     "mMat": {
+      "m_FileID": 0,
+      "m_PathID": 0
+     },
+     "autoResizeBoxCollider": 1,
+     "hideIfOffScreen": 0,
+     "keepAspectRatio": 0,
+     "aspectRatio": 0.02857142873108387,
+     "mType": 1,
+     "mFillDirection": 4,
+     "mFillAmount": 1.0,
+     "mInvert": 0,
+     "mFlip": 0,
+     "mApplyGradient": 0,
+     "mGradientTop": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+     },
+     "mGradientBottom": {
+      "r": 0.699999988079071,
+      "g": 0.699999988079071,
+      "b": 0.699999988079071,
+      "a": 1.0
+     },
+     "centerType": 1,
+     "leftType": 1,
+     "rightType": 1,
+     "bottomType": 1,
+     "topType": 1,
+     "mAtlas": {
+      "m_FileID": 2,
+      "m_PathID": 1796
+     },
+     "mSpriteName": "scrollbar_base",
+     "mFixedAspect": 0,
+     "mFillCenter": 1
+    }
+   },
+   {
+    "id": 105,
+    "node": 19,
+    "kind": "UIPanel",
+    "data": {
+     "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 19
+     },
+     "m_Enabled": 1,
+     "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 81621155840
+     },
+     "m_Name": "",
+     "leftAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 0.0,
+      "absolute": 0
+     },
+     "rightAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 1.0,
+      "absolute": 0
+     },
+     "bottomAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 0.0,
+      "absolute": 0
+     },
+     "topAnchor": {
+      "target": {
+       "m_FileID": 0,
+       "m_PathID": 0
+      },
+      "relative": 1.0,
+      "absolute": 0
+     },
+     "updateAnchors": 1,
+     "showInPanelTool": 1,
+     "generateNormals": 0,
+     "generateUV2": 0,
+     "shadowMode": 0,
+     "widgetsAreStatic": 0,
+     "cullWhileDragging": 1,
+     "alwaysOnScreen": 0,
+     "anchorOffset": 0,
+     "softBorderPadding": 1,
+     "renderQueue": 0,
+     "startingRenderQueue": 3014,
+     "mClipTexture": {
+      "m_FileID": 0,
+      "m_PathID": 0
+     },
+     "mAlpha": 1.0,
+     "mAlphaProp": "",
+     "mClipping": 3,
+     "mClipRange": {
+      "x": 0.0,
+      "y": -158.0,
+      "z": 400.0,
+      "w": 316.0
+     },
+     "mClipSoftness": {
+      "x": 5.0,
+      "y": 5.0
+     },
+     "mDepth": 33,
+     "mSortingOrder": 0,
+     "mSortingLayerName": "",
+     "mClipOffset": {
+      "x": 0.0,
+      "y": 0.0
+     },
+     "useSortingOrder": 0
+    }
+   },
+   {
+    "id": 123,
+    "node": 19,
+    "kind": "UIScrollView",
+    "data": {
+     "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 19
+     },
+     "m_Enabled": 1,
+     "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 101065949184
+     },
+     "m_Name": "",
+     "movement": 1,
+     "dragEffect": 2,
+     "restrictWithinPanel": 1,
+     "constrainOnDrag": 0,
+     "disableDragIfFits": 1,
+     "smoothDragStart": 1,
+     "iOSDragEmulation": 1,
+     "scrollWheelFactor": 0.25,
+     "momentumAmount": 35.0,
+     "springStrength": 8.0,
+     "dampenStrength": 9.0,
+     "horizontalScrollBar": {
+      "m_FileID": 0,
+      "m_PathID": 0
+     },
+     "verticalScrollBar": {
+      "m_FileID": 0,
+      "m_PathID": 128
+     },
+     "showScrollBars": 0,
+     "customMovement": {
+      "x": 1.0,
+      "y": 0.0
+     },
+     "contentPivot": 1,
+     "scale": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+     },
+     "relativePositionOnReset": {
+      "x": 0.0,
+      "y": 0.0
+     },
+     "centerOnChild": {
+      "m_FileID": 0,
+      "m_PathID": 0
+     }
+    }
+   },
+   {
+    "id": 121,
+    "node": 3,
+    "kind": "UIGrid",
+    "data": {
+     "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 3
+     },
+     "m_Enabled": 1,
+     "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 5519704064
+     },
+     "m_Name": "",
+     "arrangement": 1,
+     "sorting": 0,
+     "inverted": 0,
+     "pivot": 1,
+     "expansionStyle": 0,
+     "maxPerLine": 0,
+     "cellWidth": 350.0,
+     "cellHeight": 48.0,
+     "animateSmoothly": 0,
+     "animateFadeIn": 0,
+     "hideInactive": 0,
+     "keepWithinPanel": 0,
+     "sorted": 0
+    }
+   }
+  ]
+ },
+ "runtime": {
+  "cell": {
+   "width": 400,
+   "labelWidth": 360,
+   "labelSpacingX": 1,
+   "labelAlignment": 1,
+   "labelOverflow": 0
+  },
+  "viewRows": 6,
+  "selectedIndexDefault": 0,
+  "open": {
+   "tween": "scale",
+   "fromScaleY": 0,
+   "duration": 0.125,
+   "arrowFlip": 2
+  },
+  "close": {
+   "tween": "alpha",
+   "fromAlpha": 1,
+   "toAlpha": 0,
+   "duration": 0.125,
+   "arrowFlip": 0
+  }
+ }
+}

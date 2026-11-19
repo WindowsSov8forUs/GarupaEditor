@@ -27,9 +27,10 @@ export function BestdoriLoginModal(props: BestdoriLoginModalProps) {
     if (event.key === "Enter" && !event.nativeEvent.isComposing) { event.preventDefault(); submit(); }
   };
   return <>
-    <OriginalTransferDialog open={props.open} title="Bestdori 账号" onClose={close} busy={props.submitting}>
+    <OriginalTransferDialog open={props.open} title="Bestdori 账号" fitContent onClose={close} busy={props.submitting}>
       <div className="transfer-body">
-        <div className="transfer-page">
+        {/* The window fits its button row, as the original dialogs do; the form fills that width. */}
+        <div className="transfer-page transfer-page-follows-actions">
           <OriginalFormSubtitle text="用户名" />
           <OriginalFormInput aria-label="Bestdori 用户名" value={form ? props.username : props.accountUsername}
             readOnly={!form} disabled={props.submitting} autoComplete="username"

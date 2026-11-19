@@ -33,6 +33,10 @@ export function useOriginalDialogInput(ref: RefObject<HTMLDivElement | null>, mo
       else focus();
     };
     frame = requestAnimationFrame(focusWhenPainted);
+    // A layer a control of the dialog opens over it (a scroll popup list, portaled to the body) is part of the dialog:
+    // focus going there stays (taking it back would blur the pressed button and drop its press).
+    const inDialog = (element: Element | null) => !!element && (node.contains(element)
+      || !!element.closest("[data-original-dialog-overlay]"));
     const keydown = (event: KeyboardEvent) => {
       if (!isTop(node)) return;
       if (event.key === "Escape") {
@@ -41,12 +45,12 @@ export function useOriginalDialogInput(ref: RefObject<HTMLDivElement | null>, mo
       } else if (event.key === "Tab") {
         const items = focusable();
         const first = items[0], last = items[items.length - 1];
-        if (!first || !node.contains(document.activeElement)) { event.preventDefault(); focus(); }
+        if (!first || !inDialog(document.activeElement)) { event.preventDefault(); focus(); }
         else if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
         else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
       }
     };
-    const focusin = () => { if (isTop(node) && !node.contains(document.activeElement)) focus(); };
+    const focusin = () => { if (isTop(node) && !inDialog(document.activeElement)) focus(); };
     document.addEventListener("keydown", keydown, true);
     document.addEventListener("focusin", focusin, true);
     return () => {

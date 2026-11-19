@@ -37,3 +37,6 @@ button.original-button.original-prefab-hit:focus-visible { outline: 2px solid #f
 }
 .original-prefab-slider-hit:focus-visible { outline: 2px solid #ff3b72; }
 .original-prefab-slider-hit[aria-disabled="true"] { cursor: default; }
+/* StarUIScrollPopupList: the list opens with a vertical TweenScale (0 → 1) and closes with a TweenAlpha (1 → 0). */
+@keyframes original-scroll-popup-open { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes original-scroll-popup-fade { from { opacity: 1; } to { opacity: 0; } }

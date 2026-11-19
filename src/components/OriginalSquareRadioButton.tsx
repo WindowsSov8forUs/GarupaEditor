@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import { OriginalPrefabModel, ORIGINAL_PREFABS } from "./originalPrefabModel";
 import { OriginalPrefabView } from "./OriginalPrefabView";
 
@@ -10,13 +10,15 @@ export function OriginalSquareRadioButton({ label, selected, onClick, content, d
   label: string; selected: boolean; onClick(): void; content?: ReactNode;
   disabled?: boolean; textX?: number; textY?: number; spacing?: number;
 }) {
-  const model = new OriginalPrefabModel(ORIGINAL_PREFABS.staruisquareradiobutton!, {
-    nodes: { 1: { active: selected }, 3: { active: content != null, x: 1, y: 0, scaleX: 0.45, scaleY: 0.45 },
-      4: { active: content == null, x: textX, y: textY } },
+  const hasContent = content != null;
+  // The model depends only on these values, so it is kept across re-renders (zoom, scroll) instead of rebuilt each time.
+  const model = useMemo(() => new OriginalPrefabModel(ORIGINAL_PREFABS.staruisquareradiobutton!, {
+    nodes: { 1: { active: selected }, 3: { active: hasContent, x: 1, y: 0, scaleX: 0.45, scaleY: 0.45 },
+      4: { active: !hasContent, x: textX, y: textY } },
     components: { 11: { m_Enabled: selected ? 0 : 1 }, 13: { m_Enabled: selected ? 1 : 0 },
       16: { mText: label, mFontSize: 20, mSpacingX: spacing,
         ...(selected ? { mColor: { r: 1, g: 1, b: 1, a: 1 } } : {}) } },
-  });
+  }), [selected, hasContent, textX, textY, label, spacing]);
   return <OriginalPrefabView model={model} bindings={{
     buttons: { 14: { action: onClick, label, role: "radio", selected, disabled } },
     textures: content == null ? {} : { 15: content },
