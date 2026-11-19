@@ -2211,6 +2211,10 @@ function ChartEditorController() {
     toolDirectionalWidth,
     toolRhythmWidth,
   ]);
+  /** Whether a chart project is in progress: anything in it differs from a new one. */
+  const hasProjectContent = notes.length > 0 || slideChains.length > 0 || bpmEvents.length > 0
+    || Object.values(chartMediaResources).some(ref => ref !== null)
+    || JSON.stringify(metadata) !== JSON.stringify(DEFAULT_METADATA);
   const canDeleteSelection = selectedNoteCount > 0;
   const {
     clearSelection,
@@ -2438,6 +2442,7 @@ function ChartEditorController() {
     handleMvUpload,
     handleIllustBackgroundUpload,
     removeIllustBackground,
+    applySongInformationEdit,
     applyWindowPresetById,
     applyBestdoriSkinSelection,
     downloadProgress,
@@ -5622,6 +5627,21 @@ function ChartEditorController() {
     showDialog,
   ]);
 
+  /**
+   * 创建工程's 确定: a new project in place of the current one (the program's cached project with it), holding what
+   * the page set: its metadata and media, an empty chart. Nothing changes when a medium fails to import.
+   */
+  const createSongProject = useCallback((edit: Parameters<typeof applySongInformationEdit>[0]) =>
+    applySongInformationEdit(edit, { beforeApply: () => {
+      skipProjectWidthAdjustmentRef.current = true;
+      setProjectId(crypto.randomUUID());
+      setSettingsState(DEFAULT_SETTINGS);
+      setNotesState([]); setSlideChainsState([]); setBpmEventsState([]); setTimingGroupsState(ensureTimingGroups(null));
+      setChartMediaResources(Object.freeze({ bgm: null, cover: null, mv: null, illustBackground: null }));
+      setAudioFileName(""); setAudioDurationSec(0);
+      clearSelection();
+      undoStackRef.current = []; redoStackRef.current = []; pendingUndoSourcesRef.current = null; setUndoVersion(v => v + 1);
+    } }), [applySongInformationEdit, clearSelection]);
   const layoutVm = useStableEvents({
         settingsResourcesReady,
         workspaceReady: settingsResourcesReady && !isSkinApplying && isSkinReady && isCanvasResourceReady && startupMediaReady,
@@ -5893,6 +5913,9 @@ function ChartEditorController() {
         handleMvUpload,
         handleIllustBackgroundUpload,
         removeIllustBackground,
+        applySongInformationEdit,
+        createSongProject,
+        hasProjectContent,
         isAppSettingsOpen,
         setIsAppSettingsOpen,
         appOptionSettings,

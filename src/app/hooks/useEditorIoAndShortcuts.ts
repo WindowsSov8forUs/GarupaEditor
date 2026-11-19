@@ -1931,6 +1931,41 @@ export function useEditorIoAndShortcuts(params: any) {
     setChartMediaResources((current: typeof chartMediaResources) => Object.freeze({ ...current, illustBackground: null }));
   };
 
+  /**
+   * 编辑信息's 确定: imports the media chosen there, then applies them and the metadata together; when an import fails
+   * nothing is applied. `null` removes the MV, the custom background or the audio; an absent medium stays as it is.
+   */
+  const applySongInformationEdit = async (edit: {
+    metadata: ChartMetadata; cover?: File; mv?: File | null; illustBackground?: File | null; audio?: File | null;
+  }, options?: {
+    /** Run once the media are imported, before anything is applied (a new project clearing the current one). */
+    beforeApply?(): void;
+  }): Promise<boolean> => {
+    try {
+      const [cover, mv, illustBackground, bgm] = await Promise.all([
+        edit.cover ? importWorkspaceMedia("cover", edit.cover) : undefined,
+        edit.mv ? importWorkspaceMedia("mv", edit.mv) : edit.mv,
+        edit.illustBackground ? importWorkspaceMedia("illust-background", edit.illustBackground) : edit.illustBackground,
+        edit.audio ? importWorkspaceMedia("bgm", edit.audio) : edit.audio,
+      ]);
+      options?.beforeApply?.();
+      setChartMediaResources((current: typeof chartMediaResources) => Object.freeze({ ...current,
+        ...(cover ? { cover } : {}), ...(mv !== undefined ? { mv } : {}),
+        ...(illustBackground !== undefined ? { illustBackground } : {}),
+        ...(bgm !== undefined ? { bgm } : {}) }));
+      if (edit.audio !== undefined) {
+        // As the audio upload and the community import set them.
+        setAudioFileName(edit.audio ? edit.audio.name : "");
+        setAudioDurationSec(0);
+      }
+      setMetadata(edit.metadata);
+      return true;
+    } catch (error) {
+      showDialog(`歌曲信息保存失败：${error instanceof Error ? error.message : String(error)}`, "error");
+      return false;
+    }
+  };
+
   // A preset saved while the window is minimized waits for the window to be restored.
   const pendingWindowPresetRef = useRef<{ presetId: string; options?: { silent?: boolean } } | null>(null);
   const applyWindowPresetRef = useRef<(presetId: string, options?: { silent?: boolean }) => Promise<void>>(async () => {});
@@ -2243,6 +2278,7 @@ export function useEditorIoAndShortcuts(params: any) {
     handleMvUpload,
     handleIllustBackgroundUpload,
     removeIllustBackground,
+    applySongInformationEdit,
     applyWindowPresetById,
     applyBestdoriSkinSelection,
     downloadProgress,

@@ -20,3 +20,15 @@
 .song-difficulty-base > .original-difficulty-select { position: relative; }
 .song-jacket-image { object-fit: contain; }
 .song-jacket-empty { display: grid; place-items: center; width: 100%; height: 100%; background: #fff; color: #505050; font-size: 24px; }
+/* 编辑信息 */
+.song-information-edit-column { min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.song-information-edit-jacket { width: 100%; flex: 1; min-height: 0; }
+.song-information-edit-actions { display: flex; justify-content: center; flex-shrink: 0; margin-top: auto; }
+.original-button.song-jacket-picker, div.song-jacket-picker { position: absolute; display: block; padding: 0; border: 0; overflow: hidden; background: #fff; }
+.original-button.song-jacket-picker { cursor: pointer; }
+.song-jacket-picker .song-jacket-image { width: 100%; height: 100%; display: block; }
+.song-jacket-picker-empty { display: grid; place-items: center; width: 100%; height: 100%; background: #fff; color: #a0a0a0; font-size: 28px; }
+.song-difficulty-slot-level { position: absolute; z-index: 11; text-align: center; color: #434343; }
+.song-profile-level-bar-caption { position: absolute; z-index: 11; color: #fff; white-space: nowrap; }
+.song-audio-row { position: absolute; display: flex; align-items: center; justify-content: flex-start; z-index: 11; }
+.song-media-preview { position: absolute; object-fit: contain; z-index: 11; background: rgba(0, 0, 0, 0.06); }
