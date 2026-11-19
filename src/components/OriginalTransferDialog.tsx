@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState, type ReactNode } from "react";
+import { memo, useLayoutEffect, useState, type ReactNode } from "react";
 import { OriginalAuthoredDialog } from "./OriginalAuthoredDialog";
 import { OriginalPrefabModel, ORIGINAL_PREFABS, originalRef, type OriginalData, type OriginalOverrides } from "./originalPrefabModel";
 import type { OriginalButtonBinding } from "./OriginalPrefabView";
@@ -9,7 +9,7 @@ const sourceTabs = [...source.components.values()].filter(item => item.kind === 
   .sort((a, b) => a.data.tabIndex - b.data.tabIndex);
 
 /** Editor-owned content hosted in the existing settings window, in its original coordinate system. */
-export function OriginalTransferDialog({ open, title, tabs, selected, onSelect, onClose, busy = false, fitContent = false, children }: {
+function OriginalTransferDialogInner({ open, title, tabs, selected, onSelect, onClose, busy = false, fitContent = false, children }: {
   open: boolean; title: string; tabs?: readonly { key: string; label: string }[];
   selected?: string; onSelect?: (key: string) => void; onClose(): void; busy?: boolean; fitContent?: boolean; children: ReactNode;
 }) {
@@ -81,3 +81,5 @@ export function OriginalTransferDialog({ open, title, tabs, selected, onSelect, 
       } : {}) }}>{children}</div>
   </OriginalAuthoredDialog>;
 }
+
+export const OriginalTransferDialog = memo(OriginalTransferDialogInner);

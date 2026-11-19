@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { memo, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { UiAuthoredSurface } from "./UiViewport";
 export { useOriginalUiScale } from "./useUiViewport";
@@ -8,7 +8,7 @@ import { useOriginalDialogInput } from "./useOriginalDialogInput";
 import { OriginalPrefabView, type OriginalViewBindings } from "./OriginalPrefabView";
 import type { OriginalPrefabModel } from "./originalPrefabModel";
 
-export function OriginalAuthoredDialog({ open, model, bindings, onClose, onClosed, motion = "scale", busy = false, frameComponentId, coverAlpha, children, cameraOverlay }: {
+function OriginalAuthoredDialogInner({ open, model, bindings, onClose, onClosed, motion = "scale", busy = false, frameComponentId, coverAlpha, children, cameraOverlay }: {
   open: boolean; model: OriginalPrefabModel; bindings: OriginalViewBindings; onClose: () => void;
   onClosed?: () => void; motion?: DialogMotion; busy?: boolean; frameComponentId?: number; coverAlpha?: number; children?: ReactNode; cameraOverlay?: ReactNode;
 }) {
@@ -65,3 +65,5 @@ export function OriginalAuthoredDialog({ open, model, bindings, onClose, onClose
         mixBlendMode: "plus-lighter" }}>{cameraOverlay}</div>, document.body)}
   </>;
 }
+
+export const OriginalAuthoredDialog = memo(OriginalAuthoredDialogInner);

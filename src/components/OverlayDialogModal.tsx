@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { OriginalButton } from "./OriginalUi";
 import { StandardValueModal } from "./StandardModal";
 import { createPortal } from "react-dom";
@@ -21,7 +22,7 @@ const OVERLAY_DIALOG_TITLES: Record<OverlayDialogTone, string> = {
   error: "错误",
 };
 
-export function OverlayDialogModal({
+function OverlayDialogModalInner({
   dialog,
   onConfirm,
   onCancel,
@@ -58,3 +59,5 @@ export function OverlayDialogModal({
     document.body,
   );
 }
+
+export const OverlayDialogModal = memo(OverlayDialogModalInner);

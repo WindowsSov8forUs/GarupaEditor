@@ -1,4 +1,4 @@
-import { useRef, type ButtonHTMLAttributes, type HTMLAttributes, type ReactNode } from "react";
+import { memo, useRef, type ButtonHTMLAttributes, type HTMLAttributes, type ReactNode } from "react";
 import { useOriginalCanvasSurface, useOriginalSurface, type OriginalAtlas } from "./useOriginalSurface";
 import { useOriginalButtonAction } from "./useOriginalButtonAction";
 import { useOriginalUiSound } from "./OriginalUiSound";
@@ -8,11 +8,11 @@ import "./OriginalUi.css";
 const labelColor = (rgb: readonly number[]) => `rgb(${rgb.map(value => value * 255).join(" ")})`;
 
 type OriginalSpriteProps = HTMLAttributes<HTMLSpanElement> & { sprite: string; atlas?: OriginalAtlas; scale?: number; scaleY?: number; spriteType?: number; fillCenter?: boolean };
-export function OriginalSprite(props: OriginalSpriteProps) {
+function OriginalSpriteInner(props: OriginalSpriteProps) {
   return typeof props.style?.width === "number" && typeof props.style?.height === "number"
     ? <OriginalCanvasSprite {...props} /> : <OriginalBackgroundSprite {...props} />;
 }
-function OriginalCanvasSprite({ sprite, atlas = "menu", scale = 0.75, scaleY = scale, spriteType = 1, fillCenter = true, style, ...props }: OriginalSpriteProps) {
+function OriginalCanvasSpriteInner({ sprite, atlas = "menu", scale = 0.75, scaleY = scale, spriteType = 1, fillCenter = true, style, ...props }: OriginalSpriteProps) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const ready = useOriginalCanvasSurface(canvas, sprite, atlas, style!.width as number, style!.height as number, scale, scaleY, spriteType, fillCenter);
   return <span {...props} aria-hidden="true" data-original-surface-ready={ready}
@@ -76,3 +76,6 @@ export function OriginalButton({ tone = "gray", sprite, surfaceImage, atlas = "c
       opacity: pressed && !disabled ? 0.5 : 0 }} />
   </button>;
 }
+
+export const OriginalSprite = memo(OriginalSpriteInner);
+const OriginalCanvasSprite = memo(OriginalCanvasSpriteInner);
