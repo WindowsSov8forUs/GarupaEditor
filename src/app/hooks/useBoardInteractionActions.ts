@@ -54,8 +54,11 @@ export function useBoardInteractionActions(params: any) {
     setSlideBuildState,
     setSlideBuildCursor,
     setSlideConnectTarget,
+    findHiddenNodeAtBoardPoint,
+    boardXToFreeLane,
+    deleteRightClickedNotes,
     setCursorPreview,
-    committedSlideRoleByNoteId: _committedSlideRoleByNoteId,
+    committedSlideRoleByNoteId,
     committedSlideChainById,
     suppressNextBoardClickRef,
     suppressNextNoteClickRef,
@@ -366,12 +369,24 @@ export function useBoardInteractionActions(params: any) {
   }, [committedSlideChainById, createId, exGarupaEnabled, noteById, setNotes, setSlideChains, setSlideStart, slideBuildRef,
     sortNotes, toolTimingGroup]);
 
-  /** One press of the Slide tool on `hit` (a note) or else on blank board at (boardX, boardY). */
+  /** One press of the Slide or Hidden tool on `hit` (a note) or else on blank board at (boardX, boardY). The Hidden
+   * tool places Hidden nodes (on a free lane), reaches Hidden nodes by their handles, and turns a Slide's visible middle
+   * node it presses without a start into a Hidden node. */
   const pressSlideTool = useCallback((hit: ChartNote | null, boardX: number, boardY: number) => {
     clearSelection();
     setCursorPreview(null);
+    const hidden = tool === "hidden";
     const start = slideBuildRef.current;
+    if (!hit && hidden) hit = findHiddenNodeAtBoardPoint(boardX, boardY);
     if (hit) {
+      const role = committedSlideRoleByNoteId.get(hit.id);
+      if (hidden && !start && hit.type !== "hidden" && role && role.index > 0 && role.index < role.length - 1
+        && !committedSlideChainById.get(role.chainId)?.long) {
+        setNotes((previous: ChartNote[]) => previous.map((note) => note.id !== hit!.id ? note
+          : { id: note.id, type: "hidden" as const, lane: note.lane, beat: note.beat,
+            ...(note.timingGroup === undefined ? {} : { timingGroup: note.timingGroup }) }));
+        return;
+      }
       if (!start) setSlideStart(hit.id);
       else connectSlideStartTo(hit);
       return;
@@ -384,7 +399,8 @@ export function useBoardInteractionActions(params: any) {
     if (from && !(placement.beat > from.beat + 1e-6)) {
       return;
     }
-    const created = placeNoteWithType("single", placement.lane, placement.beat, {
+    const created = placeNoteWithType(hidden ? "hidden" : "single", hidden ? boardXToFreeLane(boardX) : placement.lane,
+      placement.beat, {
       selectPlaced: false,
       preserveToolLaneOverride: true,
     });
@@ -393,28 +409,73 @@ export function useBoardInteractionActions(params: any) {
     }
     if (!start) setSlideStart(created.id, created.id);
     else if (!connectSlideStartTo(created)) setNotes((previous: ChartNote[]) => previous.filter((note) => note.id !== created.id));
-  }, [clearSelection, connectSlideStartTo, noteById, placeNoteWithType, resolveBoardPlacement, setCursorPreview, setNotes,
-    setSlideStart, slideBuildRef]);
+  }, [boardXToFreeLane, clearSelection, committedSlideChainById, committedSlideRoleByNoteId, connectSlideStartTo,
+    findHiddenNodeAtBoardPoint, noteById, placeNoteWithType, resolveBoardPlacement, setCursorPreview, setNotes,
+    setSlideStart, slideBuildRef, tool]);
 
-  /** Where the last Slide tool press was, to tell a release elsewhere (a drag) from a click. */
-  const slidePressRef = useRef<{ clientX: number; clientY: number } | null>(null);
+  /** Where the last Slide or Hidden tool press was, to tell a release elsewhere (a drag) from a click. A press on a
+   * Hidden node's handle (`hiddenId`) waits for its release: dragged, it moves the node; else it is that handle's
+   * press. */
+  const slidePressRef = useRef<{ clientX: number; clientY: number; hiddenId?: string } | null>(null);
 
-  /** A release of the Slide tool's press: dragged away from the press, it connects the start to the release point. */
+  /** The Hidden tool's drag of a handle, until its release: the handle follows the pointer. */
+  const dragHiddenHandle = useCallback((clientX: number, clientY: number) => {
+    const press = slidePressRef.current;
+    if (!press?.hiddenId) return;
+    const handle = document.querySelector<HTMLElement>(`.hidden-node-handle[data-node-id="${press.hiddenId}"]`);
+    if (handle) handle.style.transform = `translate(${clientX - press.clientX}px, ${clientY - press.clientY}px)`;
+  }, []);
+
+  /**
+   * A Hidden node moved to board (x, y): a free lane, and the division beat under it when that is another grid cell
+   * than its own and still between its Slide neighbours; otherwise it keeps its beat (a node finer than the division,
+   * as the shape presets place, moves sideways).
+   */
+  const moveHiddenNode = useCallback((noteId: string, x: number, y: number) => {
+    const node = noteById.get(noteId);
+    const placement = resolveBoardPlacement(x, y, { type: "single" });
+    if (!node || !placement) return;
+    const role = committedSlideRoleByNoteId.get(noteId);
+    const chain = role ? committedSlideChainById.get(role.chainId) : undefined;
+    const previous = chain && role!.index > 0 ? noteById.get(chain.noteIds[role!.index - 1]) : undefined;
+    const next = chain ? noteById.get(chain.noteIds[role!.index + 1]) : undefined;
+    const fits = (candidate: number) => (!previous || candidate > previous.beat + 1e-6) && (!next || candidate < next.beat - 1e-6);
+    const sameCell = Math.abs(placement.beat - quantizeBeat(node.beat, beatDivision)) < 1e-6;
+    const beat = !sameCell && fits(placement.beat) ? placement.beat : node.beat;
+    const lane = boardXToFreeLane(x);
+    if (lane === node.lane && Math.abs(beat - node.beat) < 1e-6) return;
+    setNotes((current: ChartNote[]) => sortNotes(current.map((note) => note.id === noteId ? { ...note, lane, beat } : note)));
+  }, [beatDivision, boardXToFreeLane, committedSlideChainById, committedSlideRoleByNoteId, noteById, quantizeBeat,
+    resolveBoardPlacement, setNotes, sortNotes]);
+
+  /** A release of the Slide or Hidden tool's press: dragged away from the press, it connects the start to the release
+   * point (or moves the pressed Hidden node); a Hidden handle's press released in place presses that handle. */
   const releaseSlideConnection = useCallback((clientX: number, clientY: number) => {
     const press = slidePressRef.current;
     slidePressRef.current = null;
     const board = playfieldBoardRef.current;
-    if (!press || !board || !slideBuildRef.current || Math.hypot(clientX - press.clientX, clientY - press.clientY) < 6) {
+    if (!press || !board) {
       return;
     }
+    const moved = Math.hypot(clientX - press.clientX, clientY - press.clientY) >= 6;
     const rect = board.getBoundingClientRect();
     const x = clientX - rect.left, y = clientY - rect.top;
+    if (press.hiddenId) {
+      const handle = document.querySelector<HTMLElement>(`.hidden-node-handle[data-node-id="${press.hiddenId}"]`);
+      if (handle) handle.style.transform = "";
+      if (moved) moveHiddenNode(press.hiddenId, x, y);
+      else pressSlideTool(noteById.get(press.hiddenId) ?? null, press.clientX - rect.left, press.clientY - rect.top);
+      return;
+    }
+    if (!slideBuildRef.current || !moved) {
+      return;
+    }
     pressSlideTool(findNoteAtBoardPoint(x, y), x, y);
-  }, [findNoteAtBoardPoint, playfieldBoardRef, pressSlideTool, slideBuildRef]);
+  }, [findNoteAtBoardPoint, moveHiddenNode, noteById, playfieldBoardRef, pressSlideTool, slideBuildRef]);
 
   // Another tool, or no tool, drops the start.
   useEffect(() => {
-    if (slideBuildRef.current && !(isToolArmed && tool === "slide")) cancelSlideBuild();
+    if (slideBuildRef.current && !(isToolArmed && (tool === "slide" || tool === "hidden"))) cancelSlideBuild();
   }, [cancelSlideBuild, isToolArmed, slideBuildRef, tool]);
 
   // Esc drops the start; without one it puts the tool down.
@@ -657,6 +718,16 @@ export function useBoardInteractionActions(params: any) {
       cancelSlideBuild();
       return;
     }
+    // The Hidden tool's right-click on a Hidden node's handle removes it from its Slide.
+    if (isToolArmed && tool === "hidden" && playfieldBoardRef.current) {
+      const rect = playfieldBoardRef.current.getBoundingClientRect();
+      const node = findHiddenNodeAtBoardPoint(event.clientX - rect.left, event.clientY - rect.top);
+      if (node) {
+        event.preventDefault();
+        deleteRightClickedNotes([node.id]);
+        return;
+      }
+    }
     if (event.target !== event.currentTarget) {
       return;
     }
@@ -698,15 +769,24 @@ export function useBoardInteractionActions(params: any) {
       return;
     }
 
+    if (slidePressRef.current?.hiddenId && (event.buttons & 1) === 1) {
+      dragHiddenHandle(event.clientX, event.clientY);
+      return;
+    }
+
     const activeSlideBuild = slideBuildRef.current;
     if (activeSlideBuild) {
       setSlideBuildCursor({ x, y });
-      const hit = findNoteAtBoardPoint(x, y);
+      const hit = findNoteAtBoardPoint(x, y) ?? (tool === "hidden" ? findHiddenNodeAtBoardPoint(x, y) : null);
       const from = noteById.get(activeSlideBuild.noteIds[0]);
       // Where a press on blank board would place the node the start connects to.
       if (!hit) {
         const placement = resolveBoardPlacement(x, y, { type: "single" });
         setSlideConnectTarget(placement && from && placement.beat > from.beat + 1e-6 ? "new" : null);
+        if (tool === "hidden") {
+          if (cursorPreview !== null) setCursorPreview(null);
+          return;
+        }
         const canPreviewSnap = placement !== null;
         setCursorPreview({
           x,
@@ -858,7 +938,8 @@ export function useBoardInteractionActions(params: any) {
       return;
     }
 
-    if (tool === "slide") {
+    // The Slide and Hidden tools act on the press (pressSlideTool), not the click.
+    if (tool === "slide" || tool === "hidden") {
       return;
     }
 
@@ -925,7 +1006,7 @@ export function useBoardInteractionActions(params: any) {
 
     const targetElement = event.target as HTMLElement | null;
     const isNoteTarget = Boolean(targetElement?.closest(".note-token"));
-    if (isNoteTarget && !(isToolArmed && tool === "slide")) {
+    if (isNoteTarget && !(isToolArmed && (tool === "slide" || tool === "hidden"))) {
       return;
     }
 
@@ -943,10 +1024,13 @@ export function useBoardInteractionActions(params: any) {
       return;
     }
 
-    if (isToolArmed && tool === "slide") {
+    if (isToolArmed && (tool === "slide" || tool === "hidden")) {
       event.preventDefault();
-      slidePressRef.current = { clientX: event.clientX, clientY: event.clientY };
-      pressSlideTool(findNoteAtBoardPoint(boardX, boardY), boardX, boardY);
+      const visibleHit = findNoteAtBoardPoint(boardX, boardY);
+      const handle = tool === "hidden" && !visibleHit ? findHiddenNodeAtBoardPoint(boardX, boardY) : null;
+      slidePressRef.current = { clientX: event.clientX, clientY: event.clientY, ...(handle ? { hiddenId: handle.id } : {}) };
+      // A Hidden handle's press waits for its release (a drag moves the node).
+      if (!handle) pressSlideTool(visibleHit, boardX, boardY);
       return;
     }
 

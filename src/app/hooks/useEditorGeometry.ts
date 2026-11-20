@@ -16,6 +16,9 @@ function playbackAnchorFromBottom(playfield: HTMLElement, positionPercent: numbe
   return playfield.getBoundingClientRect().bottom - judgeBottom + ratio * (judgeBottom - workspaceTop);
 }
 
+/** How far from a Hidden node's centre its handle is hit, in lanes. */
+export const HIDDEN_HANDLE_HIT_LANES = 0.3;
+
 export function useEditorGeometry(params: any) {
   const {
     laneMin,
@@ -371,6 +374,28 @@ export function useEditorGeometry(params: any) {
     [LANE_WIDTH, getNoteCenterAt, getNoteHitboxWidth, noteVisualScale, notes],
   );
 
+  /** The Hidden node whose handle (the Hidden tool's control point) is at the point, nearest first. */
+  const findHiddenNodeAtBoardPoint = useCallback(
+    (x: number, y: number): ChartNote | null => {
+      const radius = LANE_WIDTH * HIDDEN_HANDLE_HIT_LANES;
+      let best: ChartNote | null = null, bestDistance = Infinity;
+      for (const note of notes) {
+        if (note.type !== "hidden") continue;
+        const center = getNoteCenterAt(note);
+        const distance = Math.hypot(center.x - x, center.y - y);
+        if (distance <= radius && distance < bestDistance) { best = note; bestDistance = distance; }
+      }
+      return best;
+    },
+    [LANE_WIDTH, getNoteCenterAt, notes],
+  );
+
+  /** The lane a Hidden node takes at board x: free, to the original virtual lane's 0.01 lanes. */
+  const boardXToFreeLane = useCallback(
+    (x: number): number => Number((laneMin + x / LANE_WIDTH - 0.5).toFixed(2)),
+    [LANE_WIDTH, laneMin],
+  );
+
   /** Notes a note placed here would cover: the visible notes on its beat whose lane spans meet its span. */
   const findPlacementOverlaps = useCallback((
     lane: number,
@@ -671,6 +696,8 @@ export function useEditorGeometry(params: any) {
     getNoteCenterAt,
     getNoteHitboxWidth,
     findNoteAtBoardPoint,
+    findHiddenNodeAtBoardPoint,
+    boardXToFreeLane,
     findPlacementOverlaps,
     resolveBoardPlacement,
     finishSelectionDrag,

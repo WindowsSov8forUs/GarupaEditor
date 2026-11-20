@@ -5,6 +5,7 @@ export function useEditorPointerLifecycle(params: any) {
     slideBuildRef,
     showDialog,
     releaseSlideConnection,
+    slidePressRef,
     selectionMoveRef,
     calcSelectionMoveDelta,
     setSelectionMovePreview,
@@ -50,7 +51,7 @@ export function useEditorPointerLifecycle(params: any) {
 
     const handleWindowMouseUp = (event: globalThis.MouseEvent) => {
       // A Slide tool press dragged elsewhere connects to where it is released.
-      if (slideBuildRef.current && event.button === 0) {
+      if ((slideBuildRef.current || slidePressRef.current?.hiddenId) && event.button === 0) {
         releaseSlideConnection(event.clientX, event.clientY);
         return;
       }
@@ -92,6 +93,6 @@ export function useEditorPointerLifecycle(params: any) {
       window.removeEventListener("mousemove", handleWindowMouseMove);
       window.removeEventListener("mouseup", handleWindowMouseUp);
     };
-  }, [applySelectedOffset, calcSelectionMoveDelta, finishSelectionDrag, releaseSlideConnection, selectionMoveRef, setCursorPreview, setSelectionMovePreview, showDialog, slideBuildRef, suppressNextBoardClickRef, suppressNextNoteClickRef]);
+  }, [applySelectedOffset, calcSelectionMoveDelta, finishSelectionDrag, releaseSlideConnection, slidePressRef, selectionMoveRef, setCursorPreview, setSelectionMovePreview, showDialog, slideBuildRef, suppressNextBoardClickRef, suppressNextNoteClickRef]);
 }
 

@@ -2713,6 +2713,8 @@ function ChartEditorController() {
     getSlideAnchorLane,
     getRenderedNotePlacement,
     findNoteAtBoardPoint,
+    findHiddenNodeAtBoardPoint,
+    boardXToFreeLane,
     findPlacementOverlaps,
     resolveBoardPlacement,
     finishSelectionDrag,
@@ -2774,6 +2776,55 @@ function ChartEditorController() {
   resolveBoardPlacementRef.current = resolveBoardPlacement;
 
   /** Middle tool on a Slide's line: a single node inserted where it was pressed, between that segment's two nodes. */
+  /** Whether a Hidden node's handle is under a client point: the Hidden tool then presses the handle, not the line. */
+  const isHiddenHandleAtClientPoint = useCallback((clientX: number, clientY: number): boolean => {
+    const board = playfieldBoardRef.current;
+    if (!board) return false;
+    const rect = board.getBoundingClientRect();
+    return findHiddenNodeAtBoardPoint(clientX - rect.left, clientY - rect.top) !== null;
+  }, [findHiddenNodeAtBoardPoint]);
+  /** The Hidden tool on a Slide's line: a Hidden node there, between the segment's two nodes. */
+  const insertHiddenNodeOnConnection = useCallback((segment: any, event: ReactMouseEvent<HTMLElement>) => {
+    if (!isToolArmed || tool !== "hidden" || slideBuildRef.current) {
+      return;
+    }
+    const board = playfieldBoardRef.current;
+    const chain = typeof segment?.chainId === "string" ? committedSlideChainById.get(segment.chainId) : undefined;
+    const segmentIndex = Number(segment?.index);
+    if (!board || !chain || !Number.isInteger(segmentIndex)) {
+      return;
+    }
+    if (chain.long === true) {
+      showDialog("Long 不能添加中间节点。");
+      return;
+    }
+    const from = noteById.get(chain.noteIds[segmentIndex]);
+    const to = noteById.get(chain.noteIds[segmentIndex + 1]);
+    const rect = board.getBoundingClientRect();
+    const x = event.clientX - rect.left, y = event.clientY - rect.top;
+    const placement = resolveBoardPlacement(x, y, { type: "single" });
+    if (!from || !to || !placement) {
+      return;
+    }
+    // On the division under the press; between two nodes closer than the division (a shape preset's), halfway.
+    const snapped = quantizeBeat(placement.beat, beatDivision);
+    const beat = snapped > from.beat + 1e-6 && snapped < to.beat - 1e-6 ? snapped
+      : Number(((from.beat + to.beat) / 2).toFixed(6));
+    if (!(beat > from.beat + 1e-6 && beat < to.beat - 1e-6)) {
+      return;
+    }
+    const node = normalizeNote({ id: createId(), type: "hidden", lane: boardXToFreeLane(x), beat,
+      timingGroup: normalizeNoteTimingGroup(chain.timingGroup) }, settings);
+    if (!node) {
+      return;
+    }
+    setNotes((previous) => sortNotes([...previous, node]));
+    setSlideChains((previous) => previous.map((current) => current.id !== chain.id ? current : {
+      ...current, noteIds: [...current.noteIds.slice(0, segmentIndex + 1), node.id, ...current.noteIds.slice(segmentIndex + 1)],
+    }));
+  }, [beatDivision, boardXToFreeLane, committedSlideChainById, isToolArmed, noteById, resolveBoardPlacement, setNotes,
+    setSlideChains, settings, showDialog, tool]);
+
   const insertSingleNodeOnConnection = useCallback((segment: any, event: ReactMouseEvent<HTMLElement>) => {
     if (!isToolArmed || tool !== "middle" || slideBuildRef.current) {
       return;
@@ -2967,6 +3018,9 @@ function ChartEditorController() {
     setSlideBuildState,
     setSlideBuildCursor,
     setSlideConnectTarget,
+    findHiddenNodeAtBoardPoint,
+    boardXToFreeLane,
+    deleteRightClickedNotes,
     setCursorPreview,
     committedSlideRoleByNoteId,
     committedSlideChainById,
@@ -4666,6 +4720,7 @@ function ChartEditorController() {
     setSlideBuildState,
     showDialog,
     releaseSlideConnection,
+    slidePressRef,
     selectionMoveRef,
     calcSelectionMoveDelta,
     setSelectionMovePreview,
@@ -4821,7 +4876,7 @@ function ChartEditorController() {
   );
   const resolveNoteReplacePreviewAt = useCallback(
     (x: number, y: number): NoteReplacePreviewState | null => {
-      if (!isToolArmed || !isNoteTool(tool) || tool === "slide") {
+      if (!isToolArmed || !isNoteTool(tool) || tool === "slide" || tool === "hidden") {
         return null;
       }
       const previewType = tool;
@@ -5165,6 +5220,8 @@ function ChartEditorController() {
     noteVisualScale,
     isSimultaneousLineEnabled: appOptionSettings.simultaneousLineEnabled,
     onMiddleToolConnectionClick: insertSingleNodeOnConnection,
+    onHiddenToolConnectionClick: insertHiddenNodeOnConnection,
+    isHiddenHandleAtClientPoint,
     onCurveToolConnectionClick: applyCurveToolOnConnection,
   });
   useCanvasPlayfieldBackend({

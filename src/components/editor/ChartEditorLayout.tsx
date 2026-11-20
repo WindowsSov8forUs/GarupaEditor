@@ -1,3 +1,4 @@
+import { HIDDEN_HANDLE_HIT_LANES } from "../../app/hooks/useEditorGeometry";
 import type { SlideFitSettings } from "../../app/slideFitShapes";
 import profile from "../../data/originalSongDetailProfile.json";
 import { OriginalPrefabModel, type OriginalPrefab } from "../originalPrefabModel";
@@ -1256,7 +1257,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     if (runtime.isToolArmed && (runtime.tool === "copy" || runtime.tool === "paste")) {
       return;
     }
-    if (runtime.isToolArmed && runtime.tool === "slide") {
+    if (runtime.isToolArmed && (runtime.tool === "slide" || runtime.tool === "hidden")) {
       event.preventDefault();
       event.stopPropagation();
       runtime.slidePressRef.current = { clientX: event.clientX, clientY: event.clientY };
@@ -1296,7 +1297,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       return;
     }
     event.stopPropagation();
-    if (runtime.isToolArmed && runtime.tool === "slide") {
+    if (runtime.isToolArmed && (runtime.tool === "slide" || runtime.tool === "hidden")) {
       return;
     }
     if (runtime.suppressNextNoteClickRef.current) {
@@ -1418,6 +1419,17 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       slideBuildSelectedIdSet,
     ],
   );
+  // The Hidden tool shows every Hidden node as a handle it can press, connect to and right-click away.
+  const hiddenNodeHandles = useMemo(() => !(isToolArmed && tool === "hidden") ? null
+    : renderNotes.flatMap((note: any) => {
+      if (note.type !== "hidden") return [];
+      const { lane, beat } = getRenderedNotePlacement(note);
+      const size = LANE_WIDTH * HIDDEN_HANDLE_HIT_LANES * 1.2;
+      return [<div key={`hidden-handle-${note.id}`} data-node-id={note.id} className={`hidden-node-handle${slideBuildSelectedIdSet.has(note.id) ? " is-start" : ""}`}
+        style={{ left: (laneToColumn(lane) + 0.5) * LANE_WIDTH - size / 2,
+          top: (getNoteDisplayY?.(note, beat) ?? beatToY(beat)) - size / 2, width: size, height: size }} />];
+    }), [LANE_WIDTH, beatToY, getNoteDisplayY, getRenderedNotePlacement, isToolArmed, laneToColumn, renderNotes,
+    slideBuildSelectedIdSet, tool]);
 
   return (
     <OriginalUiSoundProvider volumePercent={appOptionSettings.simulatorSettings.systemSeVolumePercent}
@@ -1725,6 +1737,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
 
                   <div className="note-layer">
                     {renderedNoteButtons}
+                    {hiddenNodeHandles}
 
                     {canvasPreviewType && canvasPreviewSpec && canvasPreviewLayers && canvasPreviewHasSprite && (
                       <>

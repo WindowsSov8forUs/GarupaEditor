@@ -41,6 +41,8 @@ export function usePlayfieldRenderers(params: any) {
     getNoteSpanLanes,
     longLineOpacityScale,
     onMiddleToolConnectionClick,
+    onHiddenToolConnectionClick,
+    isHiddenHandleAtClientPoint,
     onCurveToolConnectionClick,
     noteVisualScale,
   } = params;
@@ -166,7 +168,14 @@ export function usePlayfieldRenderers(params: any) {
             if (isPreviewChain) {
               return;
             }
-            if (isToolArmed && (tool === "slide" || tool === "middle" || tool === "curve")) {
+            // With a start the Hidden tool connects to a new node here, as on blank board; without one its click
+            // inserts a node into this line.
+            // A Hidden node's handle on the line is pressed as the handle.
+            if (isToolArmed && tool === "hidden"
+              && (slideBuildRef.current || isHiddenHandleAtClientPoint?.(event.clientX, event.clientY))) {
+              return;
+            }
+            if (isToolArmed && (tool === "slide" || tool === "middle" || tool === "curve" || tool === "hidden")) {
               event.preventDefault();
               event.stopPropagation();
               return;
@@ -192,6 +201,15 @@ export function usePlayfieldRenderers(params: any) {
               event.stopPropagation();
               if (!slideBuildRef.current && typeof onMiddleToolConnectionClick === "function") {
                 onMiddleToolConnectionClick(segment, event);
+              }
+              return;
+            }
+            if (isToolArmed && tool === "hidden") {
+              event.preventDefault();
+              event.stopPropagation();
+              if (!slideBuildRef.current && !isHiddenHandleAtClientPoint?.(event.clientX, event.clientY)
+                && typeof onHiddenToolConnectionClick === "function") {
+                onHiddenToolConnectionClick(segment, event);
               }
               return;
             }
@@ -226,6 +244,11 @@ export function usePlayfieldRenderers(params: any) {
           }}
           onContextMenu={(event) => {
             if (isPreviewChain) {
+              return;
+            }
+            // The Hidden tool's right-click on a handle on the line is for the handle.
+            if (isToolArmed && tool === "hidden" && !slideBuildRef.current
+              && isHiddenHandleAtClientPoint?.(event.clientX, event.clientY)) {
               return;
             }
             if (isMuted) {

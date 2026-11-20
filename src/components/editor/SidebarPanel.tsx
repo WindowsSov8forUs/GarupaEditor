@@ -134,7 +134,7 @@ export const SidebarPanel = memo(function SidebarPanel({ isSkinReady, isToolArme
   getSpriteLayers, getSpriteAspectRatio, renderSpriteStack, historyTools, mirrorTools, directionalEnabled, longBodyTexture, curveSlideLineTexture, curve, sv }: SidebarPanelProps) {
   const visibleTools = directionalEnabled ? tools : basicTools;
   // Note tools, Long, Middle, Curve, BPM and (in ExGarupa) SV.
-  const noteRows = Math.ceil((visibleTools.length + 4 + (sv ? 1 : 0)) / 2);
+  const noteRows = Math.ceil((visibleTools.length + 5 + (sv ? 1 : 0)) / 2);
   const middleLayers = getSpriteLayers("single", { baseImageType: "slide_among", includeDirectionalOverlay: false, includeFlickOverlay: false });
   const middleRatio = getSpriteAspectRatio(middleLayers);
   const [preview, setPreview] = useState(false);
@@ -186,7 +186,8 @@ export const SidebarPanel = memo(function SidebarPanel({ isSkinReady, isToolArme
       }}>
     <div className="editor-note-grid" role="radiogroup" aria-label="音符选择"
       style={{ position: "absolute", left: scrollLeft, top: scrollTop + objectPanel.mClipSoftness.y }}>
-      {visibleTools.map(type => {
+      {/* Notes, then the long-note tools together: Long, Slide, Hidden, Middle, Curve. */}
+      {visibleTools.filter(type => type !== "slide").map(type => {
         const label = NOTE_SPECS[type].label;
         const layers = getSpriteLayers(type, { includeDirectionalOverlay: false, includeFlickOverlay: false });
         const ratio = getSpriteAspectRatio(layers);
@@ -200,17 +201,44 @@ export const SidebarPanel = memo(function SidebarPanel({ isSkinReady, isToolArme
                 </span>} />
             </div>
           </div>
+        </Fragment>;
+      })}
           {/* Long tool, right after Slide: the icon is the long note's head and tail with its body, from the current skin. */}
-          {type === "slide" && <div className="editor-note-button-slot">
+          <div className="editor-note-button-slot">
             <div className="original-prefab-origin" style={{ left: -ORIGINAL_SQUARE_RADIO_BOUNDS.x, top: -ORIGINAL_SQUARE_RADIO_BOUNDS.y }}>
               <OriginalSquareRadioButton label="Long" selected={isToolArmed && tool === "long"} disabled={!isSkinReady}
                 onClick={() => { if (isSkinReady && !(isToolArmed && tool === "long")) onArmLongTool(); }}
                 content={<EditorLongIcon note={isSkinReady ? getSpriteLayers("slide", { includeDirectionalOverlay: false, includeFlickOverlay: false }).base : undefined}
                   body={longBodyTexture} />} />
             </div>
-          </div>}
+          </div>
+      {(() => {
+        const type = "slide" as const;
+        const label = NOTE_SPECS[type].label;
+        const layers = getSpriteLayers(type, { includeDirectionalOverlay: false, includeFlickOverlay: false });
+        const ratio = getSpriteAspectRatio(layers);
+        return <div className="editor-note-button-slot">
+            <div className="original-prefab-origin" style={{ left: -ORIGINAL_SQUARE_RADIO_BOUNDS.x, top: -ORIGINAL_SQUARE_RADIO_BOUNDS.y }}>
+              <OriginalSquareRadioButton label={label} selected={isToolArmed && tool === type} disabled={!isSkinReady}
+                onClick={() => { if (isSkinReady && !(isToolArmed && tool === type)) applyToolFromPalette(type); }}
+                content={<span className="editor-note-button-image" style={{ "--sprite-aspect-ratio": String(ratio) } as CSSProperties}>
+                  {isSkinReady && layers.base ? renderSpriteStack(layers, label, "note-sprite-stack", ratio) : null}
+                </span>} />
+            </div>
+          </div>;
+      })()}
+          {/* Hidden tool: the Slide tool placing Hidden nodes. No original sprite; the slide middle node, faded. */}
+          <div className="editor-note-button-slot">
+            <div className="original-prefab-origin" style={{ left: -ORIGINAL_SQUARE_RADIO_BOUNDS.x, top: -ORIGINAL_SQUARE_RADIO_BOUNDS.y }}>
+              <OriginalSquareRadioButton label="Hidden" selected={isToolArmed && tool === "hidden"} disabled={!isSkinReady}
+                onClick={() => { if (isSkinReady && !(isToolArmed && tool === "hidden")) applyToolFromPalette("hidden"); }}
+                content={<span className="editor-note-button-image editor-hidden-icon" style={{ "--sprite-aspect-ratio": String(middleRatio) } as CSSProperties}>
+                  {isSkinReady && middleLayers.base ? renderSpriteStack(middleLayers, "Hidden", "note-sprite-stack", middleRatio) : null}
+                </span>} />
+            </div>
+          </div>
           {/* Middle tool, after Long: the icon is the skin's slide middle-node sprite. */}
-          {type === "slide" && <div className="editor-note-button-slot">
+          <div className="editor-note-button-slot">
             <div className="original-prefab-origin" style={{ left: -ORIGINAL_SQUARE_RADIO_BOUNDS.x, top: -ORIGINAL_SQUARE_RADIO_BOUNDS.y }}>
               <OriginalSquareRadioButton label="Middle" selected={isToolArmed && tool === "middle"} disabled={!isSkinReady}
                 onClick={() => { if (isSkinReady && !(isToolArmed && tool === "middle")) onArmMiddleTool(); }}
@@ -218,10 +246,10 @@ export const SidebarPanel = memo(function SidebarPanel({ isSkinReady, isToolArme
                   {isSkinReady && middleLayers.base ? renderSpriteStack(middleLayers, "Middle", "note-sprite-stack", middleRatio) : null}
                 </span>} />
             </div>
-          </div>}
+          </div>
           {/* Curve tool, after Middle: its icon previews the saved shape with the current skin. Every press, armed or not,
               opens the preset dialog; while armed, pressing a Slide segment applies the preset there. */}
-          {type === "slide" && <div className="editor-note-button-slot">
+          <div className="editor-note-button-slot">
             <div className="original-prefab-origin" style={{ left: -ORIGINAL_SQUARE_RADIO_BOUNDS.x, top: -ORIGINAL_SQUARE_RADIO_BOUNDS.y }}>
               <OriginalSquareRadioButton label="Curve" selected={isToolArmed && tool === "curve"} disabled={!isSkinReady}
                 onClick={() => { if (isSkinReady) setCurveOpen(true); }}
@@ -237,9 +265,7 @@ export const SidebarPanel = memo(function SidebarPanel({ isSkinReady, isToolArme
                 boardLaneWidth: curve.boardLaneWidth }}
               onSave={settings => { curve.onSave(settings); setCurveOpen(false); }}
               onCancel={() => { curve.onCancel(); setCurveOpen(false); }} />
-          </div>}
-        </Fragment>;
-      })}
+          </div>
       <div className="editor-note-button-slot">
         <div className="original-prefab-origin" style={{ left: -ORIGINAL_SQUARE_RADIO_BOUNDS.x, top: -ORIGINAL_SQUARE_RADIO_BOUNDS.y }}>
           {/* First press arms the BPM placement tool; pressing it again while armed opens the BPM setting. */}
