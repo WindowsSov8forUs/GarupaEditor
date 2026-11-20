@@ -1550,7 +1550,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
           onPlay={sidebarPlay}
           onPreview={sidebarPreview}
           applyToolFromPalette={applyToolFromPalette} bpm={vm.activeBpmValue} onApplyBpm={vm.updateActiveBpm}
-          onArmBpmTool={vm.applyBpmToolFromPalette} onArmLongTool={vm.applyLongToolFromPalette} onArmMiddleTool={vm.applyMiddleToolFromPalette} getSpriteLayers={getPaletteSpriteLayers}
+          onArmBpmTool={vm.applyBpmToolFromPalette} onArmLongTool={vm.applyLongToolFromPalette} onArmMiddleTool={vm.applyMiddleToolFromPalette} onDisarmTool={() => vm.setIsToolArmed(false)} getSpriteLayers={getPaletteSpriteLayers}
           getSpriteAspectRatio={getPaletteSpriteAspectRatio} renderSpriteStack={renderPaletteSpriteStack}
           historyTools={historyTools} mirrorTools={mirrorTools} directionalEnabled={vm.editorMode !== "basic"} longBodyTexture={longBodyTexture} curveSlideLineTexture={curveSlideLineTexture}
           curve={sidebarCurve}

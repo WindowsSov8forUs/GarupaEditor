@@ -25,6 +25,8 @@ type SidebarPanelProps = {
   onArmLongTool(): void;
   /** Arms the Middle tool: it inserts nodes into Slides (and places lone middle nodes in ExGarupa). */
   onArmMiddleTool(): void;
+  /** Puts the selected tool down: pressing a selected placement tool again. */
+  onDisarmTool(): void;
   /** The SV tool, offered in ExGarupa mode: the first press arms it, the next opens its setting. */
   sv?: {
     value: number;
@@ -130,7 +132,7 @@ function EditorLongIcon({ note, body }: { note?: string; body?: string }) {
 /** The Curve tool icon's image area in the note button (design px), as the other tool icons'. */
 const CURVE_ICON_BOX = { width: 101, height: 48 };
 
-export const SidebarPanel = memo(function SidebarPanel({ isSkinReady, isToolArmed, tool, applyToolFromPalette, bpm, onApplyBpm, onArmBpmTool, onArmLongTool, onArmMiddleTool, onPlay, onPreview,
+export const SidebarPanel = memo(function SidebarPanel({ isSkinReady, isToolArmed, tool, applyToolFromPalette, bpm, onApplyBpm, onArmBpmTool, onArmLongTool, onArmMiddleTool, onDisarmTool, onPlay, onPreview,
   getSpriteLayers, getSpriteAspectRatio, renderSpriteStack, historyTools, mirrorTools, directionalEnabled, longBodyTexture, curveSlideLineTexture, curve, sv }: SidebarPanelProps) {
   const visibleTools = directionalEnabled ? tools : basicTools;
   // Note tools, Long, Middle, Curve, BPM and (in ExGarupa) SV.
@@ -195,7 +197,7 @@ export const SidebarPanel = memo(function SidebarPanel({ isSkinReady, isToolArme
           <div className="editor-note-button-slot">
             <div className="original-prefab-origin" style={{ left: -ORIGINAL_SQUARE_RADIO_BOUNDS.x, top: -ORIGINAL_SQUARE_RADIO_BOUNDS.y }}>
               <OriginalSquareRadioButton label={label} selected={isToolArmed && tool === type} disabled={!isSkinReady}
-                onClick={() => { if (isSkinReady && !(isToolArmed && tool === type)) applyToolFromPalette(type); }}
+                onClick={() => { if (!isSkinReady) return; if (isToolArmed && tool === type) onDisarmTool(); else applyToolFromPalette(type); }}
                 content={<span className="editor-note-button-image" style={{ "--sprite-aspect-ratio": String(ratio) } as CSSProperties}>
                   {isSkinReady && layers.base ? renderSpriteStack(layers, label, "note-sprite-stack", ratio) : null}
                 </span>} />
@@ -207,7 +209,7 @@ export const SidebarPanel = memo(function SidebarPanel({ isSkinReady, isToolArme
           <div className="editor-note-button-slot">
             <div className="original-prefab-origin" style={{ left: -ORIGINAL_SQUARE_RADIO_BOUNDS.x, top: -ORIGINAL_SQUARE_RADIO_BOUNDS.y }}>
               <OriginalSquareRadioButton label="Long" selected={isToolArmed && tool === "long"} disabled={!isSkinReady}
-                onClick={() => { if (isSkinReady && !(isToolArmed && tool === "long")) onArmLongTool(); }}
+                onClick={() => { if (!isSkinReady) return; if (isToolArmed && tool === "long") onDisarmTool(); else onArmLongTool(); }}
                 content={<EditorLongIcon note={isSkinReady ? getSpriteLayers("slide", { includeDirectionalOverlay: false, includeFlickOverlay: false }).base : undefined}
                   body={longBodyTexture} />} />
             </div>
@@ -220,7 +222,7 @@ export const SidebarPanel = memo(function SidebarPanel({ isSkinReady, isToolArme
         return <div className="editor-note-button-slot">
             <div className="original-prefab-origin" style={{ left: -ORIGINAL_SQUARE_RADIO_BOUNDS.x, top: -ORIGINAL_SQUARE_RADIO_BOUNDS.y }}>
               <OriginalSquareRadioButton label={label} selected={isToolArmed && tool === type} disabled={!isSkinReady}
-                onClick={() => { if (isSkinReady && !(isToolArmed && tool === type)) applyToolFromPalette(type); }}
+                onClick={() => { if (!isSkinReady) return; if (isToolArmed && tool === type) onDisarmTool(); else applyToolFromPalette(type); }}
                 content={<span className="editor-note-button-image" style={{ "--sprite-aspect-ratio": String(ratio) } as CSSProperties}>
                   {isSkinReady && layers.base ? renderSpriteStack(layers, label, "note-sprite-stack", ratio) : null}
                 </span>} />
@@ -231,7 +233,7 @@ export const SidebarPanel = memo(function SidebarPanel({ isSkinReady, isToolArme
           <div className="editor-note-button-slot">
             <div className="original-prefab-origin" style={{ left: -ORIGINAL_SQUARE_RADIO_BOUNDS.x, top: -ORIGINAL_SQUARE_RADIO_BOUNDS.y }}>
               <OriginalSquareRadioButton label="Hidden" selected={isToolArmed && tool === "hidden"} disabled={!isSkinReady}
-                onClick={() => { if (isSkinReady && !(isToolArmed && tool === "hidden")) applyToolFromPalette("hidden"); }}
+                onClick={() => { if (!isSkinReady) return; if (isToolArmed && tool === "hidden") onDisarmTool(); else applyToolFromPalette("hidden"); }}
                 content={<span className="editor-note-button-image editor-hidden-icon" style={{ "--sprite-aspect-ratio": String(middleRatio) } as CSSProperties}>
                   {isSkinReady && middleLayers.base ? renderSpriteStack(middleLayers, "Hidden", "note-sprite-stack", middleRatio) : null}
                 </span>} />
@@ -241,7 +243,7 @@ export const SidebarPanel = memo(function SidebarPanel({ isSkinReady, isToolArme
           <div className="editor-note-button-slot">
             <div className="original-prefab-origin" style={{ left: -ORIGINAL_SQUARE_RADIO_BOUNDS.x, top: -ORIGINAL_SQUARE_RADIO_BOUNDS.y }}>
               <OriginalSquareRadioButton label="Middle" selected={isToolArmed && tool === "middle"} disabled={!isSkinReady}
-                onClick={() => { if (isSkinReady && !(isToolArmed && tool === "middle")) onArmMiddleTool(); }}
+                onClick={() => { if (!isSkinReady) return; if (isToolArmed && tool === "middle") onDisarmTool(); else onArmMiddleTool(); }}
                 content={<span className="editor-note-button-image" style={{ "--sprite-aspect-ratio": String(middleRatio) } as CSSProperties}>
                   {isSkinReady && middleLayers.base ? renderSpriteStack(middleLayers, "Middle", "note-sprite-stack", middleRatio) : null}
                 </span>} />
