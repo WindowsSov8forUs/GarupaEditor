@@ -296,14 +296,12 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     cancelSelectionWidth,
     renderNotes,
     slideBuildRef,
-    appendSlideBuildNote,
-    setSlideBuildMode,
-    startSlideBuildFromSeedNote,
+    pressSlideTool,
+    slidePressRef,
     beginSelectedNotesMove,
     suppressNextNoteClickRef,
     toggleSelectedNote,
     applyToolToPlacedNote,
-    finalizeSlideBuild,
     cancelSlideBuild,
     deleteRightClickedNotes,
     toolDirectionalWidth,
@@ -1194,15 +1192,13 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     isToolArmed,
     tool,
     slideBuildRef,
-    appendSlideBuildNote,
-    setSlideBuildMode,
+    pressSlideTool,
+    slidePressRef,
     showDialog,
-    startSlideBuildFromSeedNote,
     beginSelectedNotesMove,
     suppressNextNoteClickRef,
     toggleSelectedNote,
     applyToolToPlacedNote,
-    finalizeSlideBuild,
     cancelSlideBuild,
     clearSelection,
     deleteRightClickedNotes,
@@ -1263,25 +1259,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     if (runtime.isToolArmed && runtime.tool === "slide") {
       event.preventDefault();
       event.stopPropagation();
-      const activeSlideBuild = runtime.slideBuildRef.current;
-      if (activeSlideBuild) {
-        if (activeSlideBuild.mode === "append") {
-          const result = runtime.appendSlideBuildNote(note.id);
-          if (result.blocked) {
-            runtime.showDialog("Long 不能添加中间节点。");
-            return;
-          }
-          if (result.appended) {
-            runtime.setSlideBuildMode("drag");
-          }
-          return;
-        }
-        if (runtime.appendSlideBuildNote(note.id).blocked) {
-          runtime.showDialog("Long 不能添加中间节点。");
-        }
-        return;
-      }
-      runtime.startSlideBuildFromSeedNote(note);
+      runtime.slidePressRef.current = { clientX: event.clientX, clientY: event.clientY };
+      runtime.pressSlideTool(note, 0, 0);
       return;
     }
     runtime.beginSelectedNotesMove(event, note.id);
@@ -1346,13 +1325,9 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     if (runtime.isNoteOutsideActiveTimingGroup?.(note)) {
       return;
     }
-    const activeSlideBuild = runtime.slideBuildRef.current;
-    if (activeSlideBuild) {
-      if (activeSlideBuild.persistUntilRightClick) {
-        runtime.finalizeSlideBuild({ disarmTool: true });
-      } else {
-        runtime.cancelSlideBuild();
-      }
+    // Right-click drops the Slide tool's start.
+    if (runtime.slideBuildRef.current) {
+      runtime.cancelSlideBuild();
       return;
     }
     runtime.deleteRightClickedNotes([note.id]);

@@ -1,5 +1,6 @@
 // @refresh reset
 // This controller owns the editor hook tree; hot updates must not reuse an older hook layout.
+import { connectSlideNodes } from "./slideConnect";
 import { minimapLaneVisible } from "./editorMinimapGeometry";
 import { allowedSelectionWidthDelta, canResizeSelectionWidth, planSelectionWidthChange, type SelectionWidthContext, type SelectionWidthEdge } from "./selectionWidthDrag";
 import { editorNoteHeight, editorNoteTokenWidth, editorSlideLineWidth, SELECTION_FRAME_MARGIN } from "./editorNoteMetrics";
@@ -927,6 +928,9 @@ function ChartEditorController() {
   const setSlideBuildCursor = useCallback((next: { x: number; y: number } | null) => {
     slideBuildCursorRef.current = next;
   }, []);
+  // What the Slide tool's current connection would reach under the pointer: a note's id, "new" (a node placed on blank
+  // board), or null (nothing it can reach). Set only when it changes, so moving the pointer renders nothing else.
+  const [slideConnectTarget, setSlideConnectTarget] = useState<string | null>(null);
   const beatInputEditingRef = useRef(false);
   const bpmInputEditingRef = useRef(false);
   const svInputEditingRef = useRef(false);
@@ -1270,31 +1274,34 @@ function ChartEditorController() {
     }
     return roleMap;
   }, [slideChains]);
-  const effectiveSlideChains = useMemo(() => {
-    if (!slideBuildState) {
-      return slideChains;
+  // The Slide tool commits every connection as it is made; its start alone is no chain, so the chains drawn are the
+  // committed ones.
+  const effectiveSlideChains = slideChains;
+  /** The chains the Slide tool's current connection involves (its start's and its target's) and the segments it would
+   * remove. */
+  const slideConnectHighlight = useMemo(() => {
+    const startId = slideBuildState?.noteIds[0];
+    const start = startId === undefined ? undefined : noteById.get(startId);
+    if (!start) return null;
+    const chainOf = (id: string) => slideChains.find((chain) => chain.noteIds.includes(id));
+    const chainIds = new Set<string>();
+    const startChain = chainOf(start.id);
+    if (startChain) chainIds.add(startChain.id);
+    const target = slideConnectTarget === null || slideConnectTarget === "new" ? undefined : noteById.get(slideConnectTarget);
+    const reachable = slideConnectTarget === "new" || (target !== undefined && target.beat > start.beat + 1e-6);
+    const broken = new Set<string>();
+    if (reachable) {
+      const toId = target?.id ?? "__slide_connect_new__";
+      const targetChain = target ? chainOf(target.id) : undefined;
+      if (targetChain) chainIds.add(targetChain.id);
+      for (const [fromId, toLinkId] of connectSlideNodes(slideChains, start.id, toId, () => "")?.brokenLinks ?? []) {
+        const chain = chainOf(fromId);
+        const index = chain ? chain.noteIds.indexOf(fromId) : -1;
+        if (chain && chain.noteIds[index + 1] === toLinkId) broken.add(`${chain.id}:${index}`);
+      }
     }
-    const buildingIds = Array.from(new Set(slideBuildState.noteIds)).filter((id) => noteById.has(id));
-    const buildingSet = new Set(buildingIds);
-    const cleaned = slideChains
-      .map((chain) => ({
-        ...chain,
-        noteIds: chain.noteIds.filter((id) => !buildingSet.has(id)),
-      }))
-      .filter((chain) => chain.noteIds.length > 0);
-
-    if (buildingIds.length === 0) {
-      return cleaned;
-    }
-
-    return [
-      ...cleaned,
-      {
-        id: "__slide_build_preview__",
-        noteIds: buildingIds,
-      },
-    ];
-  }, [noteById, slideBuildState, slideChains]);
+    return { chainIds, broken };
+  }, [noteById, slideBuildState, slideChains, slideConnectTarget]);
 
   const slideRoleByNoteId = useMemo(() => {
     const roleMap = new Map<string, { chainId: string; index: number; length: number }>();
@@ -2913,11 +2920,10 @@ function ChartEditorController() {
     applySvToolFromPalette: applySvToolFromPaletteRaw,
     applyCopyToolFromPalette: applyCopyToolFromPaletteRaw,
     applyPasteToolFromPalette: applyPasteToolFromPaletteRaw,
-    setSlideBuildMode,
-    startSlideBuildFromSeedNote,
-    appendSlideBuildNote,
+    pressSlideTool,
+    slidePressRef,
     cancelSlideBuild,
-    finalizeSlideBuild,
+    releaseSlideConnection,
     applyToolToPlacedNote,
     handleBoardContextMenu,
     handleBoardMouseMove: handleBoardMouseMoveRaw,
@@ -2960,6 +2966,7 @@ function ChartEditorController() {
     slideBuildRef,
     setSlideBuildState,
     setSlideBuildCursor,
+    setSlideConnectTarget,
     setCursorPreview,
     committedSlideRoleByNoteId,
     committedSlideChainById,
@@ -4658,7 +4665,7 @@ function ChartEditorController() {
     slideBuildRef,
     setSlideBuildState,
     showDialog,
-    finalizeSlideBuild,
+    releaseSlideConnection,
     selectionMoveRef,
     calcSelectionMoveDelta,
     setSelectionMovePreview,
@@ -5138,7 +5145,6 @@ function ChartEditorController() {
     toolSvValue,
     toolTimingGroup,
     slideBuildRef,
-    finalizeSlideBuild,
     cancelSlideBuild,
     slideRoleByNoteId,
     noteById,
@@ -5183,6 +5189,7 @@ function ChartEditorController() {
     svVisualLines: canvasSvVisualLines,
     laneChangeVisualLines: canvasLaneChangeVisualLines,
     selectedSlideSegmentIds,
+    slideConnectHighlight,
     simultaneousSegments: visibleSimultaneousSegments,
     connectionSegments: renderModel.connectionSegments,
     noteVisuals: canvasNoteVisuals,
@@ -5897,14 +5904,12 @@ function ChartEditorController() {
         cancelSelectionWidth,
         renderNotes: displayNotes,
         slideBuildRef,
-        appendSlideBuildNote,
-        setSlideBuildMode,
-        startSlideBuildFromSeedNote,
+        pressSlideTool,
+        slidePressRef,
         beginSelectedNotesMove,
         suppressNextNoteClickRef,
         toggleSelectedNote,
         applyToolToPlacedNote,
-        finalizeSlideBuild,
         cancelSlideBuild,
         deleteRightClickedNotes,
         toolDirectionalWidth,

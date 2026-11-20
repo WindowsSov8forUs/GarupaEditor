@@ -26,7 +26,6 @@ export function usePlayfieldRenderers(params: any) {
     setSvEvents,
     tool,
     slideBuildRef,
-    finalizeSlideBuild,
     cancelSlideBuild,
     noteById,
     getRenderedNotePlacement,
@@ -236,13 +235,8 @@ export function usePlayfieldRenderers(params: any) {
             }
             event.preventDefault();
             event.stopPropagation();
-            const activeSlideBuild = slideBuildRef.current;
-            if (activeSlideBuild) {
-              if (activeSlideBuild.persistUntilRightClick) {
-                finalizeSlideBuild({ disarmTool: true });
-              } else {
-                cancelSlideBuild();
-              }
+            if (slideBuildRef.current) {
+              cancelSlideBuild();
               return;
             }
             deleteRightClickedNotes(slideSegmentEndNoteIds(slideSegmentId));

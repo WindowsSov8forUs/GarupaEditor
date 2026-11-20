@@ -3,9 +3,8 @@ import { useEffect } from "react";
 export function useEditorPointerLifecycle(params: any) {
   const {
     slideBuildRef,
-    setSlideBuildState,
     showDialog,
-    finalizeSlideBuild,
+    releaseSlideConnection,
     selectionMoveRef,
     calcSelectionMoveDelta,
     setSelectionMovePreview,
@@ -50,26 +49,9 @@ export function useEditorPointerLifecycle(params: any) {
     };
 
     const handleWindowMouseUp = (event: globalThis.MouseEvent) => {
-      const activeSlideBuild = slideBuildRef.current;
-      if (activeSlideBuild && event.button === 0) {
-        if (activeSlideBuild.persistUntilRightClick) {
-          if (activeSlideBuild.mode === "drag") {
-            setSlideBuildState((previous: any) => {
-              if (!previous || previous.mode === "append") {
-                slideBuildRef.current = previous;
-                return previous;
-              }
-              const next = {
-                ...previous,
-                mode: "append",
-              };
-              slideBuildRef.current = next;
-              return next;
-            });
-          }
-          return;
-        }
-        finalizeSlideBuild();
+      // A Slide tool press dragged elsewhere connects to where it is released.
+      if (slideBuildRef.current && event.button === 0) {
+        releaseSlideConnection(event.clientX, event.clientY);
         return;
       }
 
@@ -110,6 +92,6 @@ export function useEditorPointerLifecycle(params: any) {
       window.removeEventListener("mousemove", handleWindowMouseMove);
       window.removeEventListener("mouseup", handleWindowMouseUp);
     };
-  }, [applySelectedOffset, calcSelectionMoveDelta, finalizeSlideBuild, finishSelectionDrag, selectionMoveRef, setCursorPreview, setSelectionMovePreview, setSlideBuildState, showDialog, slideBuildRef, suppressNextBoardClickRef, suppressNextNoteClickRef]);
+  }, [applySelectedOffset, calcSelectionMoveDelta, finishSelectionDrag, releaseSlideConnection, selectionMoveRef, setCursorPreview, setSelectionMovePreview, showDialog, slideBuildRef, suppressNextBoardClickRef, suppressNextNoteClickRef]);
 }
 
