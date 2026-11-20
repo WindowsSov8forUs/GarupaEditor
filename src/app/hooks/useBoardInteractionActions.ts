@@ -210,7 +210,7 @@ export function useBoardInteractionActions(params: any) {
           width: normalizeDirectionalWidth(toolDirectionalWidth),
         }
         : (
-          canUseHabahiro(modeOptions) && isRhythmWidthEditableType(noteTool)
+          canUseHabahiro(settings) && isRhythmWidthEditableType(noteTool)
             ? {
               width: normalizeRhythmWidth(toolRhythmWidth),
             }
@@ -277,7 +277,7 @@ export function useBoardInteractionActions(params: any) {
       ...previous,
       { id: createId(), noteIds, timingGroup: head.timingGroup, long: true as const },
     ]);
-    if (canUseHabahiro(modeOptions)) {
+    if (canUseHabahiro(settings)) {
       setNotes((previous: ChartNote[]) => applyHabahiroLongWidthToNoteIds(previous, noteIds));
     }
   };
@@ -569,7 +569,7 @@ export function useBoardInteractionActions(params: any) {
     const chain = role ? committedSlideChainById.get(role.chainId) : undefined;
     const head = chain?.long === true && role!.index === 1 ? noteById.get(chain.noteIds[0]) : undefined;
     if (!head) return null;
-    const habahiro = canUseHabahiro(modeOptions);
+    const habahiro = canUseHabahiro(settings);
     const headWidth = habahiro ? normalizeRhythmWidth(head.width) : 1;
     if (isDirectionalNoteType(nextType)) {
       const first = noteLaneSpanStart(head.type, head.lane, headWidth);
@@ -637,7 +637,7 @@ export function useBoardInteractionActions(params: any) {
                 : normalizeDirectionalWidth(toolDirectionalWidth),
             }
             : (
-              canUseHabahiro(modeOptions) && isRhythmWidthEditableType(nextType)
+              canUseHabahiro(settings) && isRhythmWidthEditableType(nextType)
                 ? {
                   width: isRhythmWidthEditableType(note.type)
                     ? normalizeRhythmWidth(note.width)
@@ -655,7 +655,7 @@ export function useBoardInteractionActions(params: any) {
             : {}),
         };
         return normalizeNote({ ...replacementDraft,
-          lane: laneForReplacement(note, nextType, replacementDraft.width, canUseHabahiro(modeOptions)),
+          lane: laneForReplacement(note, nextType, replacementDraft.width, canUseHabahiro(settings)),
           ...longTailPlacement(note, nextType, replacementDraft.width) }, settings);
       });
       return;
@@ -691,7 +691,7 @@ export function useBoardInteractionActions(params: any) {
             : normalizeDirectionalWidth(toolDirectionalWidth),
         }
         : (
-          canUseHabahiro(modeOptions) && isRhythmWidthEditableType(nextType)
+          canUseHabahiro(settings) && isRhythmWidthEditableType(nextType)
             ? {
               width: isRhythmWidthEditableType(target.type)
                 ? normalizeRhythmWidth(target.width)
@@ -710,7 +710,7 @@ export function useBoardInteractionActions(params: any) {
     };
 
     const replacement = normalizeNote({ ...replacementDraft,
-      lane: laneForReplacement(target, nextType, replacementDraft.width, canUseHabahiro(modeOptions)),
+      lane: laneForReplacement(target, nextType, replacementDraft.width, canUseHabahiro(settings)),
       // A Long's tail lines up with its head, so the Long keeps its shape.
       ...longTailPlacement(target, nextType, replacementDraft.width) }, settings);
     if (!replacement) {
@@ -1003,7 +1003,7 @@ export function useBoardInteractionActions(params: any) {
       // The lane the move snaps to whole lanes by: a wide note's first lane (its lane is its centre).
       anchorLane: anchor === null ? null : isDirectionalNoteType(anchor.type) ? anchor.lane
         : noteLaneSpanStart(anchor.type, anchor.lane,
-          canUseHabahiro(modeOptions) ? normalizeRhythmWidth(anchor.width) : 1),
+          canUseHabahiro(settings) ? normalizeRhythmWidth(anchor.width) : 1),
       anchorBeat: anchor?.beat ?? null,
       isDragging: false,
     };
