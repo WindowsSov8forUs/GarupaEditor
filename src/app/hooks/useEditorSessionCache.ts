@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   GLOBAL_TIMING_GROUP_ID,
   buildTimingGroupsFromSvEvents,
+  centreLegacyWideNoteLanes,
   ensureTimingGroups,
   type ChartTimingGroupMap,
   ChartBpmEvent,
@@ -367,9 +368,10 @@ export function useEditorSessionCache(params: any) {
           const loadedAudioMimeType = normalizeOptionalText(loadedChart.audioMimeType) ?? "audio/mpeg";
           const nextMetadataBase = normalizeMetadata(snapshotMetadata);
 
-          const normalizedNotes = (Array.isArray(snapshot.notes) ? snapshot.notes : [])
+          // The legacy cache predates centred wide-note lanes.
+          const normalizedNotes = centreLegacyWideNoteLanes((Array.isArray(snapshot.notes) ? snapshot.notes : [])
             .map((item) => (isRecord(item) ? normalizeNote(item as Partial<ChartNote>, nextSettings) : null))
-            .filter((item: ChartNote | null): item is ChartNote => item !== null);
+            .filter((item: ChartNote | null): item is ChartNote => item !== null), nextSettings.habahiro === true);
 
           const seenNoteIds = new Set<string>();
           const dedupedNotes = normalizedNotes.map((note) => {

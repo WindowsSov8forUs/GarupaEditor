@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { ChartNote } from "../../chartCore";
+import { noteLaneSpanStart, type ChartNote } from "../../chartCore";
 import { slideSegmentId, slideSegmentRanges } from "../slideSegments";
 
 type RenderTimingSegment = {
@@ -127,10 +127,7 @@ export function useEditorRenderModel(params: any) {
       }
       const placement = getRenderedNotePlacement(note);
       const spanLanes = getNoteSpanLanes(note);
-      const startLane =
-        note.type === "directional_flick_left"
-          ? placement.lane - spanLanes + 1
-          : placement.lane;
+      const startLane = noteLaneSpanStart(note.type, placement.lane, spanLanes);
       sprites.push({
         id: note.id,
         type: note.type,
@@ -170,9 +167,7 @@ export function useEditorRenderModel(params: any) {
       .map((note: ChartNote) => {
         const placement = getRenderedNotePlacement(note);
         const spanLanes = getNoteSpanLanes(note);
-        const startLane = note.type === "directional_flick_left"
-          ? placement.lane - spanLanes + 1
-          : placement.lane;
+        const startLane = noteLaneSpanStart(note.type, placement.lane, spanLanes);
         const endLane = startLane + spanLanes - 1;
         // A note's sync line ends at its centre; a Directional's at the centre of its lane nearest the other note.
         const directional = isDirectionalType(note.type);

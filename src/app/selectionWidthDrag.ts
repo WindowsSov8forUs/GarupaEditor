@@ -4,6 +4,7 @@ import {
   isRhythmWidthEditableType,
   normalizeDirectionalWidth,
   normalizeRhythmWidth,
+  noteLaneSpanStart,
   type ChartNote,
 } from "../chartCore";
 
@@ -31,14 +32,17 @@ function spanLanes(note: ChartNote, habahiro: boolean): number {
 
 function laneBounds(note: ChartNote, habahiro: boolean): { start: number; end: number } {
   const span = spanLanes(note, habahiro);
-  if (note.type === "directional_flick_left") return { start: note.lane - span + 1, end: note.lane };
-  return { start: note.lane, end: note.lane + span - 1 };
+  const start = noteLaneSpanStart(note.type, note.lane, span);
+  return { start, end: start + span - 1 };
 }
 
-/** The note with its lane span set to [start, end]: a left Directional is anchored at its right end. */
+/** The note with its lane span set to [start, end]: a Directional is anchored at its root end, any other note at its
+ * centre. */
 function withBounds(note: ChartNote, start: number, end: number): ChartNote {
   const width = end - start + 1;
-  return { ...note, lane: note.type === "directional_flick_left" ? end : start, width };
+  const lane = note.type === "directional_flick_left" ? end : note.type === "directional_flick_right" ? start
+    : (start + end) / 2;
+  return { ...note, lane, width };
 }
 
 /**
@@ -98,7 +102,8 @@ export function planSelectionWidthChange(context: SelectionWidthContext, edge: S
         if (!approxEq(next.lane, note.lane)) return null;
       } else if (partner && !selected.has(partner.id)) {
         changed.set(partner.id, isDirectionalNoteType(partner.type)
-          ? { ...partner, lane: Math.floor((start + end) / 2) }
+          // The root the original keeps, ⌊(first + last) / 2⌋ counted from the span's first lane.
+          ? { ...partner, lane: Number((start + Math.floor((end - start) / 2)).toFixed(6)) }
           : withBounds(partner, start, end));
       }
     }

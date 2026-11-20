@@ -8,7 +8,7 @@ import { hitTestEventBubble, type EventBubbleHit, type TimelineEventTarget } fro
 import type { EventBubbleHandlers } from "../../app/hooks/usePlayfieldRenderers";
 import { EditorBpmDialog } from "./EditorBpmDialog";
 import { EditorSvDialog } from "./EditorSvDialog";
-import { DEFAULT_METADATA, GLOBAL_TIMING_GROUP_ID, toolPreviewNoteType } from "../../chartCore";
+import { DEFAULT_METADATA, GLOBAL_TIMING_GROUP_ID, noteLaneSpanStart, toolPreviewNoteType } from "../../chartCore";
 import { EditorBeatDivisionButton } from "./EditorBeatDivision";
 import { EditorOptionsButton } from "./EditorOptionsButton";
 import { EditorOptionsDrawer } from "./EditorOptionsDrawer";
@@ -926,10 +926,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       };
       const spanLanes = getNoteSpanLanes(adjustedNote);
       const isDirectional = isDirectionalNoteType(source.type);
-      const directionalStartLane =
-        source.type === "directional_flick_left"
-          ? adjustedLane - spanLanes + 1
-          : adjustedLane;
+      const directionalStartLane = noteLaneSpanStart(source.type, adjustedLane, spanLanes);
       const widthValue =
         isHabahiroEnabled && isRhythmWidthEditableType(source.type)
           ? normalizeRhythmWidth(source.width)
@@ -1093,10 +1090,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       show(canvasNoteCursorPreviewRef.current);
       applyPos(canvasNoteCursorPreviewRef.current, livePreview.x, livePreview.y);
       if (livePreview.snappedLane !== null && livePreview.snappedBeat !== null) {
-        const snappedStartLane =
-          tool === "directional_flick_left"
-            ? livePreview.snappedLane - canvasPreviewSpanLanes + 1
-            : livePreview.snappedLane;
+        const snappedStartLane = noteLaneSpanStart(canvasPreviewType ?? "single", livePreview.snappedLane, canvasPreviewSpanLanes);
         const snappedX = (laneToColumn(snappedStartLane) + canvasPreviewSpanLanes / 2) * LANE_WIDTH;
         const snappedY = beatToY(livePreview.snappedBeat);
         show(canvasNoteSnapPreviewRef.current);
@@ -1375,10 +1369,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         const spanLanes = getNoteSpanLanes(note);
         const { lane: renderLane, beat: renderBeat } = getRenderedNotePlacement(note);
         const renderY = getNoteDisplayY?.(note, renderBeat) ?? beatToY(renderBeat);
-        const directionalStartLane =
-          note.type === "directional_flick_left"
-            ? renderLane - spanLanes + 1
-            : renderLane;
+        const directionalStartLane = noteLaneSpanStart(note.type, renderLane, spanLanes);
         const resolved = resolvePlacedNoteLayers(note, { beat: renderBeat });
         if (!resolved.layers.base) {
           return null;

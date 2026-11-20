@@ -591,6 +591,54 @@ export function isDirectionalNoteType(type: NoteType): boolean {
   return DIRECTIONAL_NOTE_TYPES.includes(type);
 }
 
+/**
+ * The first lane of a note `spanLanes` wide on `lane`: a Directional runs from its lane toward its arrow; any other
+ * note is centred on its lane (between two lanes for an even width), so it starts (spanLanes − 1) / 2 lanes left.
+ */
+export function noteLaneSpanStart(type: NoteType, lane: number, spanLanes: number): number {
+  if (type === "directional_flick_left") return lane - spanLanes + 1;
+  if (type === "directional_flick_right") return lane;
+  return lane - (spanLanes - 1) / 2;
+}
+
+/**
+ * The lane for a note turned into `type` (`width` wide) from `from`: a Directional keeps the lane a note is placed
+ * by (its root, a non-Directional note's first lane) and a non-Directional note starts there, so turning a note into
+ * another never leaves whole lanes. `habahiro`: whether non-Directional notes have widths.
+ */
+export function laneForReplacement(from: Pick<ChartNote, "type" | "lane" | "width">, type: NoteType,
+  width: number | undefined, habahiro: boolean): number {
+  const spanOf = (noteType: NoteType, noteWidth: number | undefined) => isDirectionalNoteType(noteType)
+    ? normalizeDirectionalWidth(noteWidth) : habahiro ? normalizeRhythmWidth(noteWidth) : 1;
+  const anchor = isDirectionalNoteType(from.type) ? from.lane
+    : noteLaneSpanStart(from.type, from.lane, spanOf(from.type, from.width));
+  return Number((isDirectionalNoteType(type) ? anchor : anchor + (spanOf(type, width) - 1) / 2).toFixed(6));
+}
+
+/**
+ * Notes saved before a non-Directional note's lane became its centre (project semantics 1, the legacy chart cache):
+ * under HABAHIRO a wide note's lane was the first lane of its span. Without HABAHIRO a note covers one lane, which
+ * both readings agree on.
+ */
+export function centreLegacyWideNoteLanes<T extends Pick<ChartNote, "type" | "lane" | "width" | "endLane">>(
+  notes: readonly T[], habahiro: boolean): T[] {
+  if (!habahiro) return [...notes];
+  return notes.map((note) => {
+    const width = normalizeRhythmWidth(note.width);
+    if (isDirectionalNoteType(note.type) || width <= 1) return note;
+    const shift = (width - 1) / 2;
+    return { ...note, lane: Number((note.lane + shift).toFixed(6)),
+      ...(typeof note.endLane === "number" ? { endLane: Number((note.endLane + shift).toFixed(6)) } : {}) };
+  });
+}
+
+/** A non-Directional note given `width` with its first lane kept, so it grows or shrinks on its right; its lane is
+ * the new span's centre. */
+export function withRhythmWidthKeepingStart<T extends Pick<ChartNote, "lane" | "width">>(note: T, width: number): T {
+  const start = note.lane - (normalizeRhythmWidth(note.width) - 1) / 2;
+  return { ...note, width, lane: Number((start + (width - 1) / 2).toFixed(6)) };
+}
+
 export function isNoteTool(tool: EditorTool): tool is NoteType {
   return tool !== "long" && tool !== "middle" && tool !== "curve" && tool !== "bpm" && tool !== "sv" && tool !== "copy"
     && tool !== "paste";

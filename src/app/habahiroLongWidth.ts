@@ -1,6 +1,7 @@
 import {
   isDirectionalNoteType,
   normalizeRhythmWidth,
+  withRhythmWidthKeepingStart,
   type ChartNote,
 } from "../chartCore";
 
@@ -19,7 +20,8 @@ function isRhythmWidthNode(note: ChartNote | undefined): note is ChartNote {
   return !!note && note.type !== "hidden" && !isDirectionalNoteType(note.type);
 }
 
-/** Gives the Long's non-Directional notes one width: `preferredWidth`, else its first such note's width. */
+/** Gives the Long's non-Directional notes one width: `preferredWidth`, else its first such note's width; each keeps
+ * its first lane. */
 export function applyHabahiroLongWidthToNoteIds(
   notes: ChartNote[],
   noteIds: readonly string[],
@@ -45,7 +47,7 @@ export function applyHabahiroLongWidthToNoteIds(
       return note;
     }
     changed = true;
-    return { ...note, width: targetWidth };
+    return withRhythmWidthKeepingStart(note, targetWidth);
   });
   return changed ? next : notes;
 }

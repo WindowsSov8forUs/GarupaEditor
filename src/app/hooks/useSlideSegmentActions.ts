@@ -21,8 +21,7 @@ function shapeEndOf(note: ChartNote, mode: "incoming" | "outgoing", habahiro: bo
     return { beat: note.beat, lane, width: 1 };
   }
   if (!habahiro) return { beat: note.beat, lane: note.lane, width: 1 };
-  const width = normalizeRhythmWidth(note.width);
-  return { beat: note.beat, lane: note.lane + (width - 1) / 2, width };
+  return { beat: note.beat, lane: note.lane, width: normalizeRhythmWidth(note.width) };
 }
 
 export function useSlideSegmentActions(params: any) {
@@ -88,7 +87,7 @@ export function useSlideSegmentActions(params: any) {
         return {
           id: createId(),
           type: "hidden",
-          lane: Number((width === null ? node.lane : node.lane - (width - 1) / 2).toFixed(20)),
+          lane: Number(node.lane.toFixed(20)),
           beat: node.beat,
           ...(width === null ? {} : { width }),
         };

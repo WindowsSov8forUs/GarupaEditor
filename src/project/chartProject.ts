@@ -1,4 +1,5 @@
-import type { ChartMetadata, ChartSettings, ChartNote, ChartBpmEvent, ChartTimingGroupMap } from "../chartCore";
+import { centreLegacyWideNoteLanes, type ChartMetadata, type ChartSettings, type ChartNote, type ChartBpmEvent,
+  type ChartTimingGroupMap } from "../chartCore";
 import type { SlideChain } from "../app/editorHelpers";
 import type { ChartMediaResources } from "../resources/selections";
 import type { ObservedIntegrity, ResourceRef } from "../resources/contracts";
@@ -6,6 +7,8 @@ import { createResourceRef } from "../resources/contracts";
 
 export const PROJECT_FORMAT = "GarupaEditor.ChartProject";
 export const PROJECT_VERSION = 1;
+/** 2: a non-Directional note's lane is the centre of its lane span (1: under HABAHIRO, its first lane). */
+export const PROJECT_SEMANTICS_VERSION = 2;
 export const PROJECT_MEDIA_ROLES = ["bgm", "cover", "mv", "illustBackground"] as const;
 export type ProjectMediaRole = typeof PROJECT_MEDIA_ROLES[number];
 
@@ -34,7 +37,7 @@ export interface ChartProjectDraft {
 export interface ChartProject {
   format: typeof PROJECT_FORMAT;
   schemaVersion: 1;
-  semanticsVersion: 1;
+  semanticsVersion: typeof PROJECT_SEMANTICS_VERSION;
   projectId: string;
   contentHash: string;
   metadata: ChartMetadata;
@@ -93,8 +96,11 @@ const HASH = /^[A-F0-9]{64}$/;
 
 /** Validate structure without sorting, snapping, dropping or replacing persisted values. */
 export function validateProject(value: unknown): asserts value is ChartProject {
+  validateProjectAt(value, PROJECT_SEMANTICS_VERSION);
+}
+function validateProjectAt(value: unknown, semanticsVersion: number): asserts value is ChartProject {
   requireValue(record(value) && value.format === PROJECT_FORMAT, "文件类型");
-  requireValue(value.schemaVersion === PROJECT_VERSION && value.semanticsVersion === 1, "不支持的项目版本");
+  requireValue(value.schemaVersion === PROJECT_VERSION && value.semanticsVersion === semanticsVersion, "不支持的项目版本");
   requireValue(identifier(value.projectId) && HASH.test(value.contentHash), "项目标识／内容摘要");
   const m = value.metadata, c = value.chart;
   requireValue(record(m) && [m.title, m.artist, m.charter, m.difficultyLevel].every(text)
@@ -151,14 +157,21 @@ export function validateProject(value: unknown): asserts value is ChartProject {
 export async function readChartProject(json: string): Promise<ChartProject> {
   const project: unknown = JSON.parse(json);
   const legacy = renameLegacyProjectMedia(project);
-  validateProject(project);
+  const legacyLanes = record(project) && project.semanticsVersion === 1;
+  validateProjectAt(project, legacyLanes ? 1 : PROJECT_SEMANTICS_VERSION);
   const content = projectContent(project) as { media: Record<string, unknown> };
   if (legacy) {
     // The hash was taken over the old role name; verify it, then rehash.
     const { illustBackground, ...media } = content.media;
     requireValue(await projectHash({ ...content, media: { ...media, stageBackdrop: illustBackground } }) === project.contentHash, "内容摘要不匹配");
-    project.contentHash = await projectHash(content);
   } else requireValue(await projectHash(content) === project.contentHash, "内容摘要不匹配");
+  if (legacyLanes) {
+    // Verified as written; its wide notes' lanes then move to their centres.
+    project.semanticsVersion = PROJECT_SEMANTICS_VERSION;
+    project.chart = { ...project.chart,
+      notes: centreLegacyWideNoteLanes(project.chart.notes, project.chart.settings.habahiro === true) };
+  }
+  if (legacy || legacyLanes) project.contentHash = await projectHash(projectContent(project));
   return project;
 }
 

@@ -1,6 +1,6 @@
 import { editorNoteHeight, editorDirectionalSegmentWidth } from "../editorNoteMetrics";
 import { useCallback, useEffect, useMemo, useRef, type UIEvent } from "react";
-import { toolPreviewNoteType, type ChartNote, type NoteType } from "../../chartCore";
+import { noteLaneSpanStart, toolPreviewNoteType, type ChartNote, type NoteType } from "../../chartCore";
 import { buildSelectionMoveOffsetMap } from "../slideHiddenMoveOffsets";
 
 const ZERO_BEAT_RENDER_OFFSET_PX = 4;
@@ -242,7 +242,8 @@ export function useEditorGeometry(params: any) {
       return { start: lane, end: lane + spanLanes - 1 };
     }
     if (isHabahiroEnabled) {
-      return { start: lane, end: lane + Math.max(1, spanLanes) - 1 };
+      const start = noteLaneSpanStart(type, lane, Math.max(1, spanLanes));
+      return { start, end: start + Math.max(1, spanLanes) - 1 };
     }
     return { start: lane, end: lane };
   }, [isHabahiroEnabled]);
@@ -280,13 +281,10 @@ export function useEditorGeometry(params: any) {
         }
         return note.lane - span + 1;
       }
-      if (isHabahiroEnabled) {
-        const span = normalizeRhythmWidth(note.width);
-        return note.lane + (span - 1) / 2;
-      }
+      // Any other note's lane is its centre.
       return note.lane;
     },
-    [isDirectionalNoteType, isHabahiroEnabled, normalizeDirectionalWidth, normalizeRhythmWidth],
+    [isDirectionalNoteType, normalizeDirectionalWidth],
   );
 
   const previewOffsetById = useMemo(() => {
@@ -330,7 +328,7 @@ export function useEditorGeometry(params: any) {
     (note: Pick<ChartNote, "type" | "lane" | "beat" | "width">) => {
       const spanLanes = getNoteSpanLanes(note);
       const directionalStartLane =
-        note.type === "directional_flick_left" ? note.lane - spanLanes + 1 : note.lane;
+        noteLaneSpanStart(note.type, note.lane, spanLanes);
       const x = (laneToColumn(directionalStartLane) + spanLanes / 2) * LANE_WIDTH;
       const y = beatToY(note.beat);
       return { x, y, spanLanes };
@@ -454,7 +452,8 @@ export function useEditorGeometry(params: any) {
           0,
           maxStartColumn,
         );
-        return laneValues[snappedStartColumn];
+        // A wide note's lane is its centre.
+        return laneValues[snappedStartColumn] + (snapSpan - 1) / 2;
       }
 
       const columnIndex = clamp(Math.floor(x / LANE_WIDTH), 0, laneCount - 1);
@@ -527,7 +526,7 @@ export function useEditorGeometry(params: any) {
         }
         const spanLanes = getNoteSpanLanes(note);
         const directionalStartLane =
-          note.type === "directional_flick_left" ? note.lane - spanLanes + 1 : note.lane;
+          noteLaneSpanStart(note.type, note.lane, spanLanes);
         const noteCenterX = (laneToColumn(directionalStartLane) + spanLanes / 2) * LANE_WIDTH;
         const noteCenterY = beatToY(note.beat);
         const noteWidth = getNoteHitboxWidth(note.type, spanLanes);

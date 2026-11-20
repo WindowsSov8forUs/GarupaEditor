@@ -2,6 +2,7 @@ import {
   GLOBAL_TIMING_GROUP_ID,
   normalizeNoteTimingGroup,
   normalizeTimingGroup,
+  noteLaneSpanStart,
   type ChartNote,
   type ChartSettings,
   type ChartSvEvent,
@@ -214,12 +215,11 @@ function slideChainUsesExGarupa(chain: SlideChain, noteById: Map<string, ChartNo
 const STANDARD_LANE_MIN = 0;
 const STANDARD_LANE_MAX = 6;
 
-/** Lanes a note covers: from its lane rightward, or leftward from its root for a left directional flick. */
+/** Lanes a note covers: a Directional from its root toward its arrow, any other note centred on its lane. */
 function noteLaneSpan(note: ChartNote): [number, number] {
   const width = normalizeNoteWidth(note.width);
-  return note.type === "directional_flick_left"
-    ? [note.lane - width + 1, note.lane]
-    : [note.lane, note.lane + width - 1];
+  const start = noteLaneSpanStart(note.type, note.lane, width);
+  return [start, start + width - 1];
 }
 
 function noteOutsideStandardLanes(note: ChartNote): boolean {
@@ -369,7 +369,8 @@ export function regressChartWithoutExGarupa(input: ChartStateLike): ChartStateLi
 }
 
 /**
- * Regress habahiro chart style by forcing non-directional note width to 1.
+ * Regress habahiro chart style by forcing non-directional note width to 1. A visible note keeps the lane the original
+ * keeps for a wide note, the left middle lane of an even width; a Hidden node keeps its centre, where its line passes.
  */
 export function regressChartWithoutHabahiro(input: ChartStateLike): ChartStateLike {
   const nextNotes = input.notes.map((note) => {
@@ -381,6 +382,8 @@ export function regressChartWithoutHabahiro(input: ChartStateLike): ChartStateLi
     }
     return {
       ...note,
+      lane: note.type === "hidden" ? note.lane : Number((noteLaneSpanStart(note.type, note.lane, normalizeNoteWidth(note.width))
+        + Math.floor((normalizeNoteWidth(note.width) - 1) / 2)).toFixed(6)),
       width: 1,
     };
   });

@@ -4,6 +4,7 @@ import {
   isDirectionalNoteType,
   normalizeDirectionalWidth,
   normalizeRhythmWidth,
+  noteLaneSpanStart,
   type ChartNote,
 } from "../chartCore";
 
@@ -36,8 +37,8 @@ function spanLanes(note: ChartNote, habahiro: boolean): number {
 
 function laneBounds(note: ChartNote, habahiro: boolean): { start: number; end: number } {
   const span = spanLanes(note, habahiro);
-  if (note.type === "directional_flick_left") return { start: note.lane - span + 1, end: note.lane };
-  return { start: note.lane, end: note.lane + span - 1 };
+  const start = noteLaneSpanStart(note.type, note.lane, span);
+  return { start, end: start + span - 1 };
 }
 
 /** The mirror tools work on several selected notes, or on selected notes of a Slide that holds Hidden nodes (its
@@ -135,7 +136,9 @@ export function mirrorSelection<T extends SlideChainLike>(context: SelectionMirr
       const start = toFixed6(sum - bound.end), end = toFixed6(sum - bound.start);
       const type = note.type === "directional_flick_left" ? "directional_flick_right"
         : note.type === "directional_flick_right" ? "directional_flick_left" : note.type;
-      changed.set(note.id, { ...note, type, lane: type === "directional_flick_left" ? end : start });
+      const lane = type === "directional_flick_left" ? end : type === "directional_flick_right" ? start
+        : toFixed6((start + end) / 2);
+      changed.set(note.id, { ...note, type, lane });
     }
   } else {
     const sum = Math.min(...visible.map(note => note.beat)) + Math.max(...visible.map(note => note.beat));

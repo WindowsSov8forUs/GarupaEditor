@@ -157,6 +157,7 @@ import {
   GLOBAL_TIMING_GROUP_DISPLAY_NAME,
   sortTimingGroupIds,
   applySvEventsToTimingGroups,
+  noteLaneSpanStart,
 } from "../chartCore";
 import {
   useApplicationResourceManager,
@@ -1590,8 +1591,12 @@ function ChartEditorController() {
       const anchorBeat = beatValues.reduce((minValue, beat) => Math.min(minValue, beat), beatValues[0] ?? 0);
       const notesAtAnchorBeat = copiedNotes.filter((note) => approxEq(note.beat, anchorBeat));
       const laneAnchorEnabled = notesAtAnchorBeat.length > 0;
+      // A wide note's lane is its centre; the anchor is the first lane it covers (a Directional's root), so a paste
+      // lands on whole lanes.
+      const anchorLaneOf = (note: ChartNote) => isDirectionalNoteType(note.type) ? note.lane
+        : noteLaneSpanStart(note.type, note.lane, isHabahiroEnabled ? normalizeRhythmWidth(note.width) : 1);
       const anchorLane = laneAnchorEnabled
-        ? notesAtAnchorBeat.reduce((minValue, note) => Math.min(minValue, note.lane), notesAtAnchorBeat[0].lane)
+        ? notesAtAnchorBeat.reduce((minValue, note) => Math.min(minValue, anchorLaneOf(note)), anchorLaneOf(notesAtAnchorBeat[0]))
         : 0;
 
       return {
@@ -1607,6 +1612,7 @@ function ChartEditorController() {
     [
       approxEq,
       bpmEvents,
+      isHabahiroEnabled,
       normalizeObjectTimingGroup,
       noteById,
       noteTimingGroupIdByNoteId,
@@ -2820,7 +2826,11 @@ function ChartEditorController() {
         {
           ...replacedHidden,
           type: "single",
-          lane: isExGarupaEnabled ? replacedHidden.lane : Math.round(replacedHidden.lane),
+          // Rounded so its span starts on a whole lane (its lane is the span's centre).
+          lane: isExGarupaEnabled ? replacedHidden.lane : (() => {
+            const half = (isHabahiroEnabled ? normalizeRhythmWidth(replacedHidden.width) - 1 : 0) / 2;
+            return Number((Math.round(replacedHidden.lane - half) + half).toFixed(6));
+          })(),
           timingGroup: normalizeNoteTimingGroup(chain.timingGroup),
         },
         settings,
@@ -2882,6 +2892,7 @@ function ChartEditorController() {
     clearSelection,
     findPlacementOverlaps,
     isExGarupaEnabled,
+    isHabahiroEnabled,
     isToolArmed,
     noteById,
     notes,
@@ -4771,14 +4782,8 @@ function ChartEditorController() {
 
       const { lane: currentRenderLane, beat: currentRenderBeat } = getRenderedNotePlacement(hitNote);
       const { lane: nextRenderLane } = getRenderedNotePlacement(widened);
-      const currentStartLane =
-        hitNote.type === "directional_flick_left"
-          ? currentRenderLane - currentSpanLanes + 1
-          : currentRenderLane;
-      const nextStartLane =
-        widened.type === "directional_flick_left"
-          ? nextRenderLane - nextSpanLanes + 1
-          : nextRenderLane;
+      const currentStartLane = noteLaneSpanStart(hitNote.type, currentRenderLane, currentSpanLanes);
+      const nextStartLane = noteLaneSpanStart(widened.type, nextRenderLane, nextSpanLanes);
       const currentEndLane = currentStartLane + currentSpanLanes - 1;
       const nextEndLane = nextStartLane + nextSpanLanes - 1;
       const previewLane = directionalTool === "directional_flick_left" ? nextStartLane : nextEndLane;
@@ -4837,9 +4842,7 @@ function ChartEditorController() {
             : previewWidth
         )
         : previewWidth;
-      const startLane = previewType === "directional_flick_left"
-        ? renderLane - spanLanes + 1
-        : renderLane;
+      const startLane = noteLaneSpanStart(previewType, renderLane, spanLanes);
 
       return {
         type: previewType,
@@ -4874,10 +4877,7 @@ function ChartEditorController() {
       }
       const { lane: renderLane, beat: renderBeat } = getRenderedNotePlacement(note);
       const spanLanes = getNoteSpanLanes(note);
-      const directionalStartLane =
-        note.type === "directional_flick_left"
-          ? renderLane - spanLanes + 1
-          : renderLane;
+      const directionalStartLane = noteLaneSpanStart(note.type, renderLane, spanLanes);
       const { layers } = resolvePlacedNoteLayers(note, { beat: renderBeat });
       if (!layers.base && !layers.overlay) {
         return [];
@@ -5007,7 +5007,7 @@ function ChartEditorController() {
     if (note.type === "hidden") return [];
     const placement = getRenderedNotePlacement(note);
     const spanLanes = getNoteSpanLanes(note);
-    const start = note.type === "directional_flick_left" ? placement.lane - spanLanes + 1 : placement.lane;
+    const start = noteLaneSpanStart(note.type, placement.lane, spanLanes);
     const { layers } = resolvePlacedNoteLayers(note, { beat: placement.beat });
     return [{ id: note.id, type: note.type, x: laneToColumn(start) + spanLanes / 2,
       y: minimapBeatToTime(placement.beat), spanLanes, base: layers.base ?? null, overlay: layers.overlay ?? null,
@@ -5017,7 +5017,7 @@ function ChartEditorController() {
     const validByChain = new Map(effectiveSlideChains.map(chain => [chain.id, chain.noteIds
       .map(id => noteById.get(id)).filter((note): note is ChartNote => !!note).map(note => {
         const placement = getRenderedNotePlacement(note), span = getNoteSpanLanes(note);
-        const start = note.type === "directional_flick_left" ? placement.lane - span + 1 : placement.lane;
+        const start = noteLaneSpanStart(note.type, placement.lane, span);
         return minimapLaneVisible(laneToColumn(start) + span / 2, span, laneValues.length);
       })]));
     return minimapRenderModel.connectionSegments.filter(segment => {

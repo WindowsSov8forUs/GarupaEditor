@@ -1,7 +1,9 @@
 import { startTransition, useCallback, type MouseEvent } from "react";
 import {
   GLOBAL_TIMING_GROUP_ID,
+  laneForReplacement,
   normalizeNoteTimingGroup,
+  noteLaneSpanStart,
   normalizeTimingGroup,
   type ChartNote,
   type EditorTool,
@@ -757,7 +759,8 @@ export function useBoardInteractionActions(params: any) {
             }
             : {}),
         };
-        return normalizeNote(replacementDraft, settings);
+        return normalizeNote({ ...replacementDraft,
+          lane: laneForReplacement(note, nextType, replacementDraft.width, canUseHabahiro(modeOptions)) }, settings);
       });
       return;
     }
@@ -810,7 +813,8 @@ export function useBoardInteractionActions(params: any) {
         : {}),
     };
 
-    const replacement = normalizeNote(replacementDraft, settings);
+    const replacement = normalizeNote({ ...replacementDraft,
+      lane: laneForReplacement(target, nextType, replacementDraft.width, canUseHabahiro(modeOptions)) }, settings);
     if (!replacement) {
       return;
     }
@@ -1084,7 +1088,10 @@ export function useBoardInteractionActions(params: any) {
       startClientY: event.clientY,
       startBoardY: event.clientY - rect.top,
       anchorNoteId: anchor?.id ?? null,
-      anchorLane: anchor?.lane ?? null,
+      // The lane the move snaps to whole lanes by: a wide note's first lane (its lane is its centre).
+      anchorLane: anchor === null ? null : isDirectionalNoteType(anchor.type) ? anchor.lane
+        : noteLaneSpanStart(anchor.type, anchor.lane,
+          canUseHabahiro(modeOptions) ? normalizeRhythmWidth(anchor.width) : 1),
       anchorBeat: anchor?.beat ?? null,
       isDragging: false,
     };

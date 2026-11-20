@@ -1,4 +1,5 @@
 ﻿import { useCallback } from "react";
+import { withRhythmWidthKeepingStart } from "../../chartCore";
 
 export function useEditorSelectionActions(params: any) {
   const {
@@ -214,10 +215,7 @@ export function useEditorSelectionActions(params: any) {
             if (!isRhythmWidthEditableType(note.type)) {
               return note;
             }
-            return {
-              ...note,
-              width: nextWidth,
-            };
+            return withRhythmWidthKeepingStart(note, nextWidth);
           },
         );
         return;
