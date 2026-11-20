@@ -42,6 +42,7 @@ export function usePlayfieldRenderers(params: any) {
     longLineOpacityScale,
     onMiddleToolConnectionClick,
     onHiddenToolConnectionClick,
+    onSlideKindConnectionClick,
     isHiddenHandleAtClientPoint,
     onCurveToolConnectionClick,
     noteVisualScale,
@@ -175,7 +176,7 @@ export function usePlayfieldRenderers(params: any) {
               && (slideBuildRef.current || isHiddenHandleAtClientPoint?.(event.clientX, event.clientY))) {
               return;
             }
-            if (isToolArmed && (tool === "slide" || tool === "middle" || tool === "curve" || tool === "hidden")) {
+            if (isToolArmed && (tool === "slide" || tool === "long" || tool === "middle" || tool === "curve" || tool === "hidden")) {
               event.preventDefault();
               event.stopPropagation();
               return;
@@ -222,9 +223,11 @@ export function usePlayfieldRenderers(params: any) {
               }
               return;
             }
-            if (isToolArmed && tool === "slide") {
+            // Long ⇄ Slide: the Long tool makes the pressed straight two-node Slide a Long, the Slide tool a Long a Slide.
+            if (isToolArmed && (tool === "slide" || tool === "long")) {
               event.preventDefault();
               event.stopPropagation();
+              if (!slideBuildRef.current) onSlideKindConnectionClick?.(segment);
               return;
             }
             if (shouldBypassConnectionLeftClick) {

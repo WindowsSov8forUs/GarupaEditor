@@ -1,5 +1,6 @@
 // @refresh reset
 // This controller owns the editor hook tree; hot updates must not reuse an older hook layout.
+import { isGarupaLongSlideShape } from "../chart";
 import { connectSlideNodes } from "./slideConnect";
 import { minimapLaneVisible } from "./editorMinimapGeometry";
 import { allowedSelectionWidthDelta, canResizeSelectionWidth, planSelectionWidthChange, type SelectionWidthContext, type SelectionWidthEdge } from "./selectionWidthDrag";
@@ -2783,6 +2784,35 @@ function ChartEditorController() {
     const rect = board.getBoundingClientRect();
     return findHiddenNodeAtBoardPoint(clientX - rect.left, clientY - rect.top) !== null;
   }, [findHiddenNodeAtBoardPoint]);
+  /**
+   * Long ⇄ Slide on a line: the Long tool makes a two-node straight Slide (the Long shape) a Long, the Slide tool makes
+   * a Long a Slide. A chain of another shape stays as it is, with the reason.
+   */
+  const convertSlideChainKind = useCallback((segment: any) => {
+    if (!isToolArmed || slideBuildRef.current) return;
+    const chain = typeof segment?.chainId === "string" ? committedSlideChainById.get(segment.chainId) : undefined;
+    if (!chain) return;
+    if (tool === "slide" && chain.long === true) {
+      setSlideChains((previous) => previous.map((current) => {
+        if (current.id !== chain.id) return current;
+        const { long: _long, ...rest } = current;
+        return rest;
+      }));
+      return;
+    }
+    if (tool !== "long" || chain.long === true) return;
+    const connections = chain.noteIds.map((id) => noteById.get(id)).filter((note): note is ChartNote => !!note)
+      .map((note) => ({ beat: note.beat, lane: note.lane, width: note.width ?? 1,
+        type: isDirectionalNoteType(note.type) ? "Directional" : note.type === "skill" ? "Skill" : note.type === "flick" ? "Flick"
+          : note.type === "hidden" ? "Hidden" : "Single",
+        ...(isDirectionalNoteType(note.type) ? { direction: note.type === "directional_flick_left" ? "Left" : "Right" } : {}) }));
+    if (!isGarupaLongSlideShape({ connections: connections as never })) {
+      showDialog("只有两个节点、头为 Single 或 Skill、尾与头在同一轨段的直 Slide 才能转为 Long。");
+      return;
+    }
+    setSlideChains((previous) => previous.map((current) => current.id === chain.id ? { ...current, long: true as const } : current));
+  }, [committedSlideChainById, isToolArmed, noteById, setSlideChains, showDialog, tool]);
+
   /** The Hidden tool on a Slide's line: a Hidden node there, between the segment's two nodes. */
   const insertHiddenNodeOnConnection = useCallback((segment: any, event: ReactMouseEvent<HTMLElement>) => {
     if (!isToolArmed || tool !== "hidden" || slideBuildRef.current) {
@@ -5221,6 +5251,7 @@ function ChartEditorController() {
     isSimultaneousLineEnabled: appOptionSettings.simultaneousLineEnabled,
     onMiddleToolConnectionClick: insertSingleNodeOnConnection,
     onHiddenToolConnectionClick: insertHiddenNodeOnConnection,
+    onSlideKindConnectionClick: convertSlideChainKind,
     isHiddenHandleAtClientPoint,
     onCurveToolConnectionClick: applyCurveToolOnConnection,
   });
