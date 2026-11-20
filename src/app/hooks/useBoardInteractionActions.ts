@@ -558,6 +558,26 @@ export function useBoardInteractionActions(params: any) {
     clearSelection();
   };
 
+  /**
+   * Where a Long's tail goes when a tool turns it into `nextType` (`width` wide): a Directional tail's root on the head's
+   * centre lane (garupaLongCenterLane), any other tail on the head's lanes, so the Long keeps its shape. Null for a
+   * note that is no Long's tail.
+   */
+  const longTailPlacement = (target: ChartNote, nextType: NoteType, width: number | undefined)
+    : { lane: number; width?: number } | null => {
+    const role = committedSlideRoleByNoteId.get(target.id);
+    const chain = role ? committedSlideChainById.get(role.chainId) : undefined;
+    const head = chain?.long === true && role!.index === 1 ? noteById.get(chain.noteIds[0]) : undefined;
+    if (!head) return null;
+    const habahiro = canUseHabahiro(modeOptions);
+    const headWidth = habahiro ? normalizeRhythmWidth(head.width) : 1;
+    if (isDirectionalNoteType(nextType)) {
+      const first = noteLaneSpanStart(head.type, head.lane, headWidth);
+      return { lane: Number((first + Math.floor((headWidth - 1) / 2)).toFixed(6)), ...(width === undefined ? {} : { width }) };
+    }
+    return { lane: head.lane, ...(habahiro ? { width: headWidth } : {}) };
+  };
+
   const applyToolToPlacedNote = (target: ChartNote) => {
     if (!isToolArmed) {
       setToolLane(target.lane);
@@ -635,7 +655,8 @@ export function useBoardInteractionActions(params: any) {
             : {}),
         };
         return normalizeNote({ ...replacementDraft,
-          lane: laneForReplacement(note, nextType, replacementDraft.width, canUseHabahiro(modeOptions)) }, settings);
+          lane: laneForReplacement(note, nextType, replacementDraft.width, canUseHabahiro(modeOptions)),
+          ...longTailPlacement(note, nextType, replacementDraft.width) }, settings);
       });
       return;
     }
@@ -689,7 +710,9 @@ export function useBoardInteractionActions(params: any) {
     };
 
     const replacement = normalizeNote({ ...replacementDraft,
-      lane: laneForReplacement(target, nextType, replacementDraft.width, canUseHabahiro(modeOptions)) }, settings);
+      lane: laneForReplacement(target, nextType, replacementDraft.width, canUseHabahiro(modeOptions)),
+      // A Long's tail lines up with its head, so the Long keeps its shape.
+      ...longTailPlacement(target, nextType, replacementDraft.width) }, settings);
     if (!replacement) {
       return;
     }
