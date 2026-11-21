@@ -169,6 +169,12 @@ export function usePlayfieldRenderers(params: any) {
             if (isPreviewChain) {
               return;
             }
+            // The Slide and Hidden tools' press on a line is the board's when it connects (there is a start) or, for
+            // the Hidden tool, presses the Hidden node in that grid cell.
+            if (isToolArmed && (tool === "slide" || tool === "hidden")
+              && (slideBuildRef.current || (tool === "hidden" && isHiddenHandleAtClientPoint?.(event.clientX, event.clientY)))) {
+              return;
+            }
             // With a start the Hidden tool connects to a new node here, as on blank board; without one its click
             // inserts a node into this line.
             // A Hidden node's handle on the line is pressed as the handle.

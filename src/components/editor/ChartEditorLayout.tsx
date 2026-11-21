@@ -16,7 +16,7 @@ import { EditorOptionsDrawer } from "./EditorOptionsDrawer";
 import { EDITOR_HISTORY_TRAILING_WIDTH, EditorControlColumn, EditorHistoryTools, EditorMirrorTools, EditorPlaybackClock } from "./EditorControlColumn";
 import { useApplicationResourceUrl } from "../../resources/applicationResourceContext";
 import { ORIGINAL_HEADER_MENU_BOUNDS, ORIGINAL_HEADER_TITLE_BOTTOM } from "../OriginalPageHeader";
-import { editorDirectionalBackLineWidth, editorDirectionalHeadGeometry, editorFlickArrowGeometry, editorNoteHeight, editorDirectionalSegmentWidth, editorNoteTokenWidth, SELECTION_FRAME_MARGIN, SELECTION_RESIZE_GRIP_MAX_HEIGHT, SELECTION_RESIZE_GRIP_SCALE, SELECTION_RESIZE_GRIP_WIDTH, SELECTION_RESIZE_HIT_WIDTH } from "../../app/editorNoteMetrics";
+import { editorDirectionalBackLineWidth, editorDirectionalHeadGeometry, editorFlickArrowGeometry, editorNoteHeight, editorDirectionalSegmentWidth, editorHiddenButtonHeight, editorNoteTokenWidth, SELECTION_FRAME_MARGIN, SELECTION_RESIZE_GRIP_MAX_HEIGHT, SELECTION_RESIZE_GRIP_SCALE, SELECTION_RESIZE_GRIP_WIDTH, SELECTION_RESIZE_HIT_WIDTH } from "../../app/editorNoteMetrics";
 import { EditorSelectionOverlay, type EditorSelectionOverlayHandle } from "./EditorSelectionOverlay";
 import { OriginalMenuBackground } from "../OriginalMenuBackground";
 import { useApplicationPresentation, useReturnToTitle } from "../../app/titleNavigation";
@@ -1288,9 +1288,9 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     if (runtime.isToolArmed && (runtime.tool === "slide" || runtime.tool === "hidden")) {
       event.preventDefault();
       event.stopPropagation();
-      runtime.slidePressRef.current = { clientX: event.clientX, clientY: event.clientY };
       // The press acts on the grid cell under it: this note, another note there, or blank board.
       const point = boardPointOf(runtime, event);
+      runtime.slidePressRef.current = { clientX: event.clientX, clientY: event.clientY };
       runtime.pressSlideTool(point ? runtime.findNoteAtGridPoint(point.x, point.y) : note, point?.x ?? 0, point?.y ?? 0);
       return;
     }
@@ -1379,7 +1379,35 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     () =>
       renderNotes.map((note: any) => {
         if (note.type === "hidden") {
-          return null;
+          // A Hidden node is a note one lane wide on the board, drawn as its mark (the skin's slide among body); off
+          // the beat lines it is neither shown nor operable on a board too compressed for subdivision lines.
+          if (!vm.isHiddenNodeShown(note)) return null;
+          const span = getNoteSpanLanes(note);
+          const { lane, beat } = getRenderedNotePlacement(note);
+          const y = getNoteDisplayY?.(note, beat) ?? beatToY(beat);
+          const mark = editorHiddenMarkGeometry(span, LANE_WIDTH, noteVisualScale, vm.hiddenMarkBoxAt(span));
+          const isStart = isSlideBuilding && slideBuildSelectedIdSet.has(note.id);
+          const muted = isNoteOutsideActiveTimingGroup?.(note) === true;
+          return (
+            <NoteWindowCull key={note.id} y={y}>
+            <button key={note.id} type="button" data-note-id={note.id}
+              className={`note-token note-hitbox hidden-node-token ${selectedNoteIdSet.has(note.id) ? "selected" : ""} ${muted ? "timing-group-muted" : ""}`}
+              style={{ left: (laneToColumn(lane) + 0.5) * LANE_WIDTH, top: y,
+                width: editorNoteTokenWidth(span, false, LANE_WIDTH, noteVisualScale),
+                height: editorHiddenButtonHeight(LANE_WIDTH, noteVisualScale) }}
+              title={`Hidden | Lane ${note.lane} | Beat ${formatBeat(note.beat)}`}
+              onMouseDown={handleSharedNoteMouseDown}
+              onMouseEnter={handleSharedNoteMouseEnter}
+              onMouseLeave={handleSharedNoteMouseLeave}
+              onClick={handleSharedNoteClick}
+              onContextMenu={handleSharedNoteContextMenu}
+            >
+              <span className={`hidden-node-handle${isStart ? " is-start" : ""}${selectedNoteIdSet.has(note.id) ? " is-selected" : ""}`}
+                style={{ left: `calc(50% + ${mark.offsetX - mark.width / 2}px)`, top: `calc(50% + ${mark.offsetY - mark.height / 2}px)`,
+                  width: mark.width, height: mark.height }} />
+            </button>
+            </NoteWindowCull>
+          );
         }
         const spec = NOTE_SPECS[note.type];
         const isDirectional = isDirectionalNoteType(note.type);
@@ -1458,23 +1486,10 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       resolvePlacedNoteLayers,
       selectedNoteIdSet,
       slideBuildSelectedIdSet,
+      vm.hiddenMarkBoxAt,
+      vm.isHiddenNodeShown,
     ],
   );
-  // The Hidden tool shows every Hidden node as its mark (the slide among sprite's body), which it can press, drag,
-  // connect to and right-click away.
-  const hiddenNodeHandles = useMemo(() => !(isToolArmed && tool === "hidden") ? null
-    : renderNotes.flatMap((note: any) => {
-      if (note.type !== "hidden") return [];
-      const { lane, beat } = getRenderedNotePlacement(note);
-      const span = getNoteSpanLanes(note);
-      const mark = editorHiddenMarkGeometry(span, LANE_WIDTH, noteVisualScale, vm.hiddenMarkBoxAt(span));
-      return [<div key={`hidden-handle-${note.id}`} data-node-id={note.id} className={`hidden-node-handle${slideBuildSelectedIdSet.has(note.id) ? " is-start" : ""}`}
-        style={{ left: (laneToColumn(lane) + 0.5) * LANE_WIDTH + mark.offsetX - mark.width / 2,
-          top: (getNoteDisplayY?.(note, beat) ?? beatToY(beat)) + mark.offsetY - mark.height / 2,
-          width: mark.width, height: mark.height }} />];
-    }), [LANE_WIDTH, beatToY, getNoteDisplayY, getNoteSpanLanes, getRenderedNotePlacement, isToolArmed, laneToColumn,
-    noteVisualScale, renderNotes, slideBuildSelectedIdSet, tool, vm.hiddenMarkBoxAt]);
-
   return (
     <OriginalUiSoundProvider volumePercent={appOptionSettings.simulatorSettings.systemSeVolumePercent}
       masterPercent={appOptionSettings.simulatorSettings.masterVolumePercent} onError={message => vm.showDialog(`界面音效失败：${message}`, "error")}>
@@ -1785,7 +1800,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
 
                   <div className="note-layer">
                     {renderedNoteButtons}
-                    {hiddenNodeHandles}
 
                     {canvasPreviewType && canvasPreviewSpec && canvasPreviewLayers && canvasPreviewHasSprite && (
                       <>

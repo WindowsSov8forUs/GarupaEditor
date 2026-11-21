@@ -77,6 +77,13 @@ export function editorHiddenMarkGeometry(spanLanes: number, laneWidth: number, n
   };
 }
 
+/** A Hidden node's button (what it is pressed, hovered and framed by): a note one lane wide, but this much of a
+ * note's height, so it does not cover the notes next to it on its Slide. */
+const HIDDEN_BUTTON_HEIGHT_RATE = 0.4;
+export function editorHiddenButtonHeight(laneWidth: number, noteScale: number): number {
+  return editorNoteHeight(laneWidth, noteScale) * HIDDEN_BUTTON_HEIGHT_RATE;
+}
+
 /** Width of a Slide or Long line `spanLanes` lanes wide (a Directional end counts as 1). */
 export function editorSlideLineWidth(spanLanes: number, laneWidth: number, noteScale: number): number {
   const span = Math.max(1, spanLanes);

@@ -1,4 +1,4 @@
-import { editorNoteHeight, editorDirectionalSegmentWidth, editorHiddenMarkGeometry } from "../editorNoteMetrics";
+import { editorNoteHeight, editorDirectionalSegmentWidth, editorHiddenButtonHeight, editorNoteTokenWidth } from "../editorNoteMetrics";
 import { useCallback, useEffect, useMemo, useRef, type UIEvent } from "react";
 import { noteLaneSpanStart, toolPreviewNoteType, type ChartNote, type NoteType } from "../../chartCore";
 import { buildSelectionMoveOffsetMap } from "../slideHiddenMoveOffsets";
@@ -16,13 +16,10 @@ function playbackAnchorFromBottom(playfield: HTMLElement, positionPercent: numbe
   return playfield.getBoundingClientRect().bottom - judgeBottom + ratio * (judgeBottom - workspaceTop);
 }
 
-/** The least height a Hidden node's mark is hit over, in lanes. */
-export const HIDDEN_HANDLE_HIT_LANES = 0.3;
-
 export function useEditorGeometry(params: any) {
   const {
     laneMin,
-    hiddenMarkBoxRef,
+    isHiddenNodeShown,
     playbackLinePositionPercent,
     bpmTimeline,
     boardHeight,
@@ -375,33 +372,6 @@ export function useEditorGeometry(params: any) {
     [LANE_WIDTH, getNoteCenterAt, getNoteHitboxWidth, noteVisualScale, notes],
   );
 
-  /** The Hidden node whose mark (the Hidden tool's handle) is at the point, nearest first. A mark is hit over its
-   * width and at least HIDDEN_HANDLE_HIT_LANES of a lane tall. */
-  const findHiddenNodeAtBoardPoint = useCallback(
-    (x: number, y: number): ChartNote | null => {
-      let best: ChartNote | null = null, bestDistance = Infinity;
-      for (const note of notes) {
-        if (note.type !== "hidden") continue;
-        const center = getNoteCenterAt(note);
-        const mark = editorHiddenMarkGeometry(center.spanLanes, LANE_WIDTH, noteVisualScale,
-          hiddenMarkBoxRef?.current?.(center.spanLanes) ?? null);
-        const markX = center.x + mark.offsetX, markY = center.y + mark.offsetY;
-        const halfHeight = Math.max(mark.height, LANE_WIDTH * HIDDEN_HANDLE_HIT_LANES) / 2;
-        if (Math.abs(x - markX) > mark.width / 2 || Math.abs(y - markY) > halfHeight) continue;
-        const distance = Math.hypot(markX - x, markY - y);
-        if (distance < bestDistance) { best = note; bestDistance = distance; }
-      }
-      return best;
-    },
-    [LANE_WIDTH, getNoteCenterAt, noteVisualScale, notes],
-  );
-
-  /** The lane a Hidden node takes at board x: free, to the original virtual lane's 0.01 lanes. */
-  const boardXToFreeLane = useCallback(
-    (x: number): number => Number((laneMin + x / LANE_WIDTH - 0.5).toFixed(2)),
-    [LANE_WIDTH, laneMin],
-  );
-
   /** Notes a note placed here would cover: the visible notes on its beat whose lane spans meet its span. */
   const findPlacementOverlaps = useCallback((
     lane: number,
@@ -552,7 +522,9 @@ export function useEditorGeometry(params: any) {
       let nearestDistance = Number.POSITIVE_INFINITY;
 
       for (const note of notes) {
-        if (note.type === "hidden") {
+        // A Hidden node shown on the board is selected as a note one lane wide.
+        const hidden = note.type === "hidden";
+        if (hidden && !isHiddenNodeShown(note)) {
           continue;
         }
         const spanLanes = getNoteSpanLanes(note);
@@ -560,8 +532,10 @@ export function useEditorGeometry(params: any) {
           noteLaneSpanStart(note.type, note.lane, spanLanes);
         const noteCenterX = (laneToColumn(directionalStartLane) + spanLanes / 2) * LANE_WIDTH;
         const noteCenterY = beatToY(note.beat);
-        const noteWidth = getNoteHitboxWidth(note.type, spanLanes);
-        const noteHeight = editorNoteHeight(LANE_WIDTH, noteVisualScale);
+        const noteWidth = hidden ? editorNoteTokenWidth(spanLanes, false, LANE_WIDTH, noteVisualScale)
+          : getNoteHitboxWidth(note.type, spanLanes);
+        const noteHeight = hidden ? editorHiddenButtonHeight(LANE_WIDTH, noteVisualScale)
+          : editorNoteHeight(LANE_WIDTH, noteVisualScale);
         const noteLeft = noteCenterX - noteWidth / 2;
         const noteRight = noteCenterX + noteWidth / 2;
         const noteTop = noteCenterY - noteHeight / 2;
@@ -632,6 +606,7 @@ export function useEditorGeometry(params: any) {
       svEvents,
       clearSelection,
       getNoteHitboxWidth,
+      isHiddenNodeShown,
       laneToColumn,
       noteVisualScale,
       notes,
@@ -651,29 +626,42 @@ export function useEditorGeometry(params: any) {
    * The note a placing tool's press at (x, y) acts on: one whose button is under the point and that sits in the grid
    * cell the press snaps to (its beat, on the current division, and a lane it covers). A press on a note's button but
    * in another cell (notes closer than their buttons are tall) is a press on that cell, which places there.
+   * A Hidden node shown on the board (isHiddenNodeShown) is reached the same way, as a note one lane wide (a node off
+   * the lanes is in the cell of the lane it is nearest).
    */
   const findNoteAtGridPoint = useCallback(
     (x: number, y: number): ChartNote | null => {
       const placement = resolveBoardPlacement(x, y, { type: "single" });
       if (!placement) return null;
+      // A visible note in the cell wins over a Hidden node there.
       let best: ChartNote | null = null, bestDistance = Infinity;
+      let bestHidden: ChartNote | null = null, bestHiddenDistance = Infinity;
       for (const note of notes) {
-        if (note.type === "hidden") continue;
+        const hidden = note.type === "hidden";
+        if (hidden && !isHiddenNodeShown(note)) continue;
         if (Math.abs(quantizeBeat(note.beat, beatDivision) - placement.beat) > 1e-6) continue;
         const span = getNoteSpanLanes(note);
-        const start = noteLaneSpanStart(note.type, note.lane, span);
-        if (placement.lane < start - 1e-6 || placement.lane > start + span - 1 + 1e-6) continue;
+        if (hidden) {
+          if (Math.abs(placement.lane - note.lane) > span / 2 + 1e-6) continue;
+        } else {
+          const start = noteLaneSpanStart(note.type, note.lane, span);
+          if (placement.lane < start - 1e-6 || placement.lane > start + span - 1 + 1e-6) continue;
+        }
         const { x: centerX, y: centerY } = getNoteCenterAt(note);
-        const halfWidth = getNoteHitboxWidth(note.type, span) / 2;
-        const halfHeight = editorNoteHeight(LANE_WIDTH, noteVisualScale) / 2;
+        const halfWidth = (hidden ? editorNoteTokenWidth(span, false, LANE_WIDTH, noteVisualScale)
+          : getNoteHitboxWidth(note.type, span)) / 2;
+        const halfHeight = (hidden ? editorHiddenButtonHeight(LANE_WIDTH, noteVisualScale)
+          : editorNoteHeight(LANE_WIDTH, noteVisualScale)) / 2;
         if (Math.abs(x - centerX) > halfWidth || Math.abs(y - centerY) > halfHeight) continue;
         const distance = Math.hypot(x - centerX, y - centerY);
-        if (distance < bestDistance) { best = note; bestDistance = distance; }
+        if (hidden) {
+          if (distance < bestHiddenDistance) { bestHidden = note; bestHiddenDistance = distance; }
+        } else if (distance < bestDistance) { best = note; bestDistance = distance; }
       }
-      return best;
+      return best ?? bestHidden;
     },
     [LANE_WIDTH, beatDivision, getNoteCenterAt, getNoteHitboxWidth, getNoteSpanLanes, noteVisualScale, notes, quantizeBeat,
-      resolveBoardPlacement],
+      isHiddenNodeShown, resolveBoardPlacement],
   );
 
   const calcSelectionMoveDelta = useCallback(
@@ -732,8 +720,6 @@ export function useEditorGeometry(params: any) {
     getNoteHitboxWidth,
     findNoteAtBoardPoint,
     findNoteAtGridPoint,
-    findHiddenNodeAtBoardPoint,
-    boardXToFreeLane,
     findPlacementOverlaps,
     resolveBoardPlacement,
     finishSelectionDrag,

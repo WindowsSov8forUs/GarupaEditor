@@ -610,8 +610,10 @@ export function laneForReplacement(from: Pick<ChartNote, "type" | "lane" | "widt
   width: number | undefined, habahiro: boolean): number {
   const spanOf = (noteType: NoteType, noteWidth: number | undefined) => isDirectionalNoteType(noteType)
     ? normalizeDirectionalWidth(noteWidth) : habahiro ? normalizeRhythmWidth(noteWidth) : 1;
-  const anchor = isDirectionalNoteType(from.type) ? from.lane
+  // A Hidden node made visible starts on the whole lane nearest its span's start.
+  const start = isDirectionalNoteType(from.type) ? from.lane
     : noteLaneSpanStart(from.type, from.lane, spanOf(from.type, from.width));
+  const anchor = from.type === "hidden" && type !== "hidden" ? Math.round(start) : start;
   return Number((isDirectionalNoteType(type) ? anchor : anchor + (spanOf(type, width) - 1) / 2).toFixed(6));
 }
 

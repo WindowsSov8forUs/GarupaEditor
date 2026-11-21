@@ -1,11 +1,12 @@
 // @refresh reset
 // This controller owns the editor hook tree; hot updates must not reuse an older hook layout.
+import { isSubdivisionLineHidden } from "./editorGridWindow";
 import { spriteOpaqueBox, useSpriteOpaqueBoxVersion, type SpriteOpaqueBox } from "./spriteOpaqueBox";
 import { isGarupaLongSlideShape } from "../chart";
 import { connectSlideNodes } from "./slideConnect";
 import { minimapLaneVisible } from "./editorMinimapGeometry";
 import { allowedSelectionWidthDelta, canResizeSelectionWidth, planSelectionWidthChange, type SelectionWidthContext, type SelectionWidthEdge } from "./selectionWidthDrag";
-import { editorNoteHeight, editorNoteTokenWidth, editorSlideLineWidth, SELECTION_FRAME_MARGIN } from "./editorNoteMetrics";
+import { editorHiddenButtonHeight, editorNoteHeight, editorNoteTokenWidth, editorSlideLineWidth, SELECTION_FRAME_MARGIN } from "./editorNoteMetrics";
 import { useEditorScrollExtent } from "./hooks/useEditorScrollExtent";
 import { useUiViewport } from "../components/useUiViewport";
 import { TRACK_ZONE_WIDTH, trackZoneGeometry, useEditorViewportZoom } from "./hooks/useEditorViewportZoom";
@@ -927,9 +928,6 @@ function ChartEditorController() {
   // The pointer during a Slide build, where its following connection line ends: kept out of React state, as the cursor preview is, so moving
   // the pointer redraws the playfield canvas without rendering the editor again.
   const slideBuildCursorRef = useRef<{ x: number; y: number } | null>(null);
-  // The current skin's slide among body for a Hidden node `span` lanes wide (null until measured): what its mark draws
-  // and is hit over. Filled once the skin's sprites are known, below.
-  const hiddenMarkBoxRef = useRef<(span: number) => SpriteOpaqueBox | null>(() => null);
   const setSlideBuildCursor = useCallback((next: { x: number; y: number } | null) => {
     slideBuildCursorRef.current = next;
   }, []);
@@ -992,6 +990,12 @@ function ChartEditorController() {
 
   const playfieldRef = useRef<HTMLDivElement | null>(null);
   const { verticalZoom, viewportWidth, attachViewport, viewportElement } = useEditorViewportZoom(playfieldRef, isSkinReady);
+  // Hidden nodes are shown and operable as notes, except those off the measure and beat lines once the board is too
+  // compressed to draw its subdivision lines.
+  const hideOffBeatHiddenNodes = isSubdivisionLineHidden(verticalZoom);
+  const isHiddenNodeShown = useCallback((note: Pick<ChartNote, "type" | "beat">): boolean =>
+    note.type !== "hidden" || !hideOffBeatHiddenNodes || Math.abs(note.beat - Math.round(note.beat)) < 1e-6,
+  [hideOffBeatHiddenNodes]);
   const uiScale = useUiViewport().scale;
   const scrollPadding = useEditorScrollExtent(playfieldRef, viewportElement, viewportPlaybackPositionPercent);
   // The track always fills the track zone, which ends where the flat lane art (FIELD_WIDTH_LANES lanes, wider than
@@ -2719,14 +2723,13 @@ function ChartEditorController() {
     getRenderedNotePlacement,
     findNoteAtBoardPoint,
     findNoteAtGridPoint,
-    findHiddenNodeAtBoardPoint,
-    boardXToFreeLane,
+    getNoteCenterAt,
     findPlacementOverlaps,
     resolveBoardPlacement,
     finishSelectionDrag,
     calcSelectionMoveDelta,
   } = useEditorGeometry({
-    hiddenMarkBoxRef,
+    isHiddenNodeShown,
     playbackLinePositionPercent: viewportPlaybackPositionPercent,
     laneMin,
     bpmTimeline,
@@ -2788,8 +2791,8 @@ function ChartEditorController() {
     const board = playfieldBoardRef.current;
     if (!board) return false;
     const rect = board.getBoundingClientRect();
-    return findHiddenNodeAtBoardPoint(clientX - rect.left, clientY - rect.top) !== null;
-  }, [findHiddenNodeAtBoardPoint]);
+    return findNoteAtGridPoint(clientX - rect.left, clientY - rect.top)?.type === "hidden";
+  }, [findNoteAtGridPoint]);
   /**
    * Long ⇄ Slide on a line: the Long tool makes a two-node straight Slide (the Long shape) a Long, the Slide tool makes
    * a Long a Slide. A chain of another shape stays as it is, with the reason.
@@ -2849,7 +2852,7 @@ function ChartEditorController() {
     if (!(beat > from.beat + 1e-6 && beat < to.beat - 1e-6)) {
       return;
     }
-    const node = normalizeNote({ id: createId(), type: "hidden", lane: boardXToFreeLane(x), beat,
+    const node = normalizeNote({ id: createId(), type: "hidden", lane: placement.lane, beat,
       timingGroup: normalizeNoteTimingGroup(chain.timingGroup) }, settings);
     if (!node) {
       return;
@@ -2858,7 +2861,7 @@ function ChartEditorController() {
     setSlideChains((previous) => previous.map((current) => current.id !== chain.id ? current : {
       ...current, noteIds: [...current.noteIds.slice(0, segmentIndex + 1), node.id, ...current.noteIds.slice(segmentIndex + 1)],
     }));
-  }, [beatDivision, boardXToFreeLane, committedSlideChainById, isToolArmed, noteById, resolveBoardPlacement, setNotes,
+  }, [beatDivision, committedSlideChainById, isToolArmed, noteById, resolveBoardPlacement, setNotes,
     setSlideChains, settings, showDialog, tool]);
 
   const insertSingleNodeOnConnection = useCallback((segment: any, event: ReactMouseEvent<HTMLElement>) => {
@@ -3055,8 +3058,7 @@ function ChartEditorController() {
     setSlideBuildCursor,
     setSlideConnectTarget,
     findNoteAtGridPoint,
-    findHiddenNodeAtBoardPoint,
-    boardXToFreeLane,
+    getNoteCenterAt,
     deleteRightClickedNotes,
     setCursorPreview,
     committedSlideRoleByNoteId,
@@ -4757,7 +4759,6 @@ function ChartEditorController() {
     setSlideBuildState,
     showDialog,
     releaseSlideConnection,
-    slidePressRef,
     selectionMoveRef,
     calcSelectionMoveDelta,
     setSelectionMovePreview,
@@ -4793,12 +4794,13 @@ function ChartEditorController() {
     DEFAULT_SPRITE_ASPECT_RATIO,
   });
   const spriteBoxVersion = useSpriteOpaqueBoxVersion();
+  // The current skin's slide among body for a Hidden node `span` lanes wide (null until measured): what its mark draws.
   const hiddenMarkBoxAt = useCallback((span: number): SpriteOpaqueBox | null =>
     spriteOpaqueBox(getSpriteLayers("single", { baseImageType: "slide_among", width: span,
       includeDirectionalOverlay: false, includeFlickOverlay: false }).base) ?? null,
   // eslint-disable-next-line react-hooks/exhaustive-deps
   [getSpriteLayers, spriteBoxVersion]);
-  hiddenMarkBoxRef.current = hiddenMarkBoxAt;
+
   const getNoteDisplayY = useCallback((note: ChartNote, beat: number): number => {
     const hitSec = beatToSeconds(beat, bpmTimeline);
     const timingGroup = noteTimingGroupById.get(note.id) ?? normalizeTimingGroupId(note.timingGroup);
@@ -5069,10 +5071,22 @@ function ChartEditorController() {
           Math.max(segment.fromX, segment.toX) + halfWidth, segment.maxY);
       }
     }
+    // A selected Hidden node, or the connection start one, is framed as a note one lane wide.
+    const startId = slideBuildState?.noteIds[0];
+    for (const note of notes) {
+      if (note.type !== "hidden" || !(selectedNoteIdSet.has(note.id) || note.id === startId) || !isHiddenNodeShown(note)) continue;
+      const { lane, beat } = getRenderedNotePlacement(note);
+      const width = editorNoteTokenWidth(getNoteSpanLanes(note), false, LANE_WIDTH, noteVisualScale);
+      const x = (laneToColumn(lane) + 0.5) * LANE_WIDTH, y = getNoteDisplayY(note, beat);
+      const height = editorHiddenButtonHeight(LANE_WIDTH, noteVisualScale);
+      include(x - width / 2, y - height / 2, x + width / 2, y + height / 2);
+    }
     if (!Number.isFinite(left)) return null;
     const margin = SELECTION_FRAME_MARGIN * uiScale;
     return { left: left - margin, top: top - margin, width: right - left + 2 * margin, height: bottom - top + 2 * margin };
-  }, [LANE_WIDTH, canvasNoteVisuals, noteVisualScale, renderModel.connectionSegments, selectedSlideSegmentIds, uiScale]);
+  }, [LANE_WIDTH, canvasNoteVisuals, getNoteDisplayY, getNoteSpanLanes, getRenderedNotePlacement, isHiddenNodeShown,
+    laneToColumn, noteVisualScale, notes, renderModel.connectionSegments, selectedNoteIdSet, selectedSlideSegmentIds,
+    slideBuildState, uiScale]);
   /** Dragging an edge of the selection frame widens or narrows the selected notes (see selectionWidthDrag). */
   const selectionWidthContext = useMemo<SelectionWidthContext>(() => ({
     notes, selectedNoteIds, slideChains, habahiro: isHabahiroEnabled,
@@ -5882,6 +5896,7 @@ function ChartEditorController() {
         renderPaletteSpriteStack,
         getSpriteLayers,
         hiddenMarkBoxAt,
+        isHiddenNodeShown,
         getSpriteAspectRatio,
         renderSpriteStack,
         setTool,
