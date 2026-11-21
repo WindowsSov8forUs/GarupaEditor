@@ -664,6 +664,31 @@ export function useEditorGeometry(params: any) {
       isHiddenNodeShown, resolveBoardPlacement],
   );
 
+  /**
+   * The note pressed at (x, y) without a placing tool: of the notes whose buttons are under the point (a shown Hidden
+   * node's is its smaller button), the one whose centre is nearest. Buttons of notes close together overlap; the
+   * topmost one is not necessarily the one meant.
+   */
+  const findNoteNearestAtBoardPoint = useCallback(
+    (x: number, y: number): ChartNote | null => {
+      let best: ChartNote | null = null, bestDistance = Infinity;
+      for (const note of notes) {
+        const hidden = note.type === "hidden";
+        if (hidden && !isHiddenNodeShown(note)) continue;
+        const { x: centerX, y: centerY, spanLanes } = getNoteCenterAt(note);
+        const halfWidth = (hidden ? editorNoteTokenWidth(spanLanes, false, LANE_WIDTH, noteVisualScale)
+          : getNoteHitboxWidth(note.type, spanLanes)) / 2;
+        const halfHeight = (hidden ? editorHiddenButtonHeight(LANE_WIDTH, noteVisualScale)
+          : editorNoteHeight(LANE_WIDTH, noteVisualScale)) / 2;
+        if (Math.abs(x - centerX) > halfWidth || Math.abs(y - centerY) > halfHeight) continue;
+        const distance = Math.hypot(x - centerX, y - centerY);
+        if (distance < bestDistance) { best = note; bestDistance = distance; }
+      }
+      return best;
+    },
+    [LANE_WIDTH, getNoteCenterAt, getNoteHitboxWidth, isHiddenNodeShown, noteVisualScale, notes],
+  );
+
   const calcSelectionMoveDelta = useCallback(
     (clientX: number, clientY: number): { laneDelta: number; beatDelta: number; moved: boolean } | null => {
       const drag = selectionMoveRef.current;
@@ -720,6 +745,7 @@ export function useEditorGeometry(params: any) {
     getNoteHitboxWidth,
     findNoteAtBoardPoint,
     findNoteAtGridPoint,
+    findNoteNearestAtBoardPoint,
     findPlacementOverlaps,
     resolveBoardPlacement,
     finishSelectionDrag,

@@ -162,6 +162,12 @@ function SlideSegmentsLayer({ render }: { render: (window: { top: number; bottom
   return <>{render(window)}</>;
 }
 
+/** The note a press on a note's button means: of the overlapping buttons under it, the note whose centre is nearest. */
+function pressedNoteOf(runtime: any, event: { clientX: number; clientY: number }, fallback: any) {
+  const point = boardPointOf(runtime, event);
+  return (point && runtime.findNoteNearestAtBoardPoint?.(point.x, point.y)) ?? fallback;
+}
+
 /** A note press's point on the playfield board. */
 function boardPointOf(runtime: any, event: { clientX: number; clientY: number }): { x: number; y: number } | null {
   const board = runtime.playfieldBoardRef?.current as HTMLElement | null | undefined;
@@ -308,6 +314,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     pressSlideTool,
     slidePressRef,
     findNoteAtGridPoint,
+    findNoteNearestAtBoardPoint,
     beginSelectedNotesMove,
     suppressNextNoteClickRef,
     toggleSelectedNote,
@@ -1205,6 +1212,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     pressSlideTool,
     slidePressRef,
     findNoteAtGridPoint,
+    findNoteNearestAtBoardPoint,
     playfieldBoardRef,
     showDialog,
     beginSelectedNotesMove,
@@ -1242,25 +1250,19 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     const runtime = noteInteractionRef.current;
     return Boolean(runtime?.isToolArmed && runtime.tool !== "copy" && runtime.tool !== "paste");
   };
-  const handleSharedNoteMouseEnter = useCallback((event: ReactMouseEvent<HTMLButtonElement>) => {
-    if (placingToolHovers()) return;
-    hoveredNoteIdRef.current = event.currentTarget.dataset.noteId ?? null;
-    placeHoverFrame();
-  }, [placeHoverFrame]);
+  // The hover frame follows the pointer over the board (updateGridHoverFrame), not a button's enter and leave.
+  const handleSharedNoteMouseEnter = useCallback(() => {}, []);
   const updateGridHoverFrame = useCallback((event: ReactMouseEvent<HTMLElement>) => {
-    if (!placingToolHovers()) return;
     const runtime = noteInteractionRef.current;
+    if (!runtime) return;
     const point = boardPointOf(runtime, event);
-    const id = point ? runtime.findNoteAtGridPoint(point.x, point.y)?.id ?? null : null;
+    const id = !point ? null : placingToolHovers() ? runtime.findNoteAtGridPoint(point.x, point.y)?.id ?? null
+      : runtime.findNoteNearestAtBoardPoint(point.x, point.y)?.id ?? null;
     if (id === hoveredNoteIdRef.current) return;
     hoveredNoteIdRef.current = id;
     placeHoverFrame();
   }, [placeHoverFrame]);
-  const handleSharedNoteMouseLeave = useCallback(() => {
-    if (placingToolHovers()) return;
-    hoveredNoteIdRef.current = null;
-    selectionOverlayRef.current?.setHoverFrame(null);
-  }, []);
+  const handleSharedNoteMouseLeave = useCallback(() => {}, []);
   useLayoutEffect(() => {
     if (hoveredNoteIdRef.current) placeHoverFrame();
   });
@@ -1270,7 +1272,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     if (!runtime || !noteId) {
       return;
     }
-    const note = runtime.noteById?.get(noteId);
+    const note = pressedNoteOf(runtime, event, runtime.noteById?.get(noteId));
     if (!note) {
       return;
     }
@@ -1303,7 +1305,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     if (!runtime || !noteId) {
       return;
     }
-    const note = runtime.noteById?.get(noteId);
+    const note = pressedNoteOf(runtime, event, runtime.noteById?.get(noteId));
     if (!note) {
       return;
     }
@@ -1358,7 +1360,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     if (!runtime || !noteId) {
       return;
     }
-    const note = runtime.noteById?.get(noteId);
+    const note = pressedNoteOf(runtime, event, runtime.noteById?.get(noteId));
     if (!note) {
       return;
     }
@@ -1648,7 +1650,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                 onMouseDown={handleBoardMouseDown}
                 onMouseMove={handleBoardMouseMove}
                 onMouseLeave={(event) => {
-                  if (placingToolHovers()) { hoveredNoteIdRef.current = null; selectionOverlayRef.current?.setHoverFrame(null); }
+                  hoveredNoteIdRef.current = null;
+                  selectionOverlayRef.current?.setHoverFrame(null);
                   handleBoardMouseLeave(event);
                 }}
                 onContextMenu={handleBoardContextMenu}
