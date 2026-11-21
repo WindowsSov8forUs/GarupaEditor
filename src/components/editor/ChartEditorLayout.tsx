@@ -162,6 +162,14 @@ function SlideSegmentsLayer({ render }: { render: (window: { top: number; bottom
   return <>{render(window)}</>;
 }
 
+/** A note press's point on the playfield board. */
+function boardPointOf(runtime: any, event: { clientX: number; clientY: number }): { x: number; y: number } | null {
+  const board = runtime.playfieldBoardRef?.current as HTMLElement | null | undefined;
+  if (!board) return null;
+  const rect = board.getBoundingClientRect();
+  return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+}
+
 export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   const returnToTitle = useReturnToTitle();
   const presentation = useApplicationPresentation();
@@ -299,6 +307,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     slideBuildRef,
     pressSlideTool,
     slidePressRef,
+    findNoteAtGridPoint,
     beginSelectedNotesMove,
     suppressNextNoteClickRef,
     toggleSelectedNote,
@@ -1195,6 +1204,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     slideBuildRef,
     pressSlideTool,
     slidePressRef,
+    findNoteAtGridPoint,
+    playfieldBoardRef,
     showDialog,
     beginSelectedNotesMove,
     suppressNextNoteClickRef,
@@ -1225,11 +1236,28 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     selectionOverlayRef.current?.setHoverFrame({ left: rect.left - boardRect.left - margin, top: rect.top - boardRect.top - margin,
       width: rect.width + 2 * margin, height: rect.height + 2 * margin });
   }, [playfieldBoardRef]);
+  // With a placing tool, the hover frame is around the note a press would act on: the one in the grid cell under the
+  // pointer (findNoteAtGridPoint), not the note whose button the pointer is over.
+  const placingToolHovers = () => {
+    const runtime = noteInteractionRef.current;
+    return Boolean(runtime?.isToolArmed && runtime.tool !== "copy" && runtime.tool !== "paste");
+  };
   const handleSharedNoteMouseEnter = useCallback((event: ReactMouseEvent<HTMLButtonElement>) => {
+    if (placingToolHovers()) return;
     hoveredNoteIdRef.current = event.currentTarget.dataset.noteId ?? null;
     placeHoverFrame();
   }, [placeHoverFrame]);
+  const updateGridHoverFrame = useCallback((event: ReactMouseEvent<HTMLElement>) => {
+    if (!placingToolHovers()) return;
+    const runtime = noteInteractionRef.current;
+    const point = boardPointOf(runtime, event);
+    const id = point ? runtime.findNoteAtGridPoint(point.x, point.y)?.id ?? null : null;
+    if (id === hoveredNoteIdRef.current) return;
+    hoveredNoteIdRef.current = id;
+    placeHoverFrame();
+  }, [placeHoverFrame]);
   const handleSharedNoteMouseLeave = useCallback(() => {
+    if (placingToolHovers()) return;
     hoveredNoteIdRef.current = null;
     selectionOverlayRef.current?.setHoverFrame(null);
   }, []);
@@ -1261,7 +1289,9 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       event.preventDefault();
       event.stopPropagation();
       runtime.slidePressRef.current = { clientX: event.clientX, clientY: event.clientY };
-      runtime.pressSlideTool(note, 0, 0);
+      // The press acts on the grid cell under it: this note, another note there, or blank board.
+      const point = boardPointOf(runtime, event);
+      runtime.pressSlideTool(point ? runtime.findNoteAtGridPoint(point.x, point.y) : note, point?.x ?? 0, point?.y ?? 0);
       return;
     }
     runtime.beginSelectedNotesMove(event, note.id);
@@ -1296,6 +1326,17 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     if (runtime.isToolArmed && (runtime.tool === "copy" || runtime.tool === "paste")) {
       return;
     }
+    // A placing tool acts on the grid cell under the press: a note's button can reach into the cells next to it (notes
+    // closer than their buttons are tall). A press in a cell with no note there is the board's, which places in it.
+    let target = note;
+    if (runtime.isToolArmed && runtime.tool !== "slide" && runtime.tool !== "hidden") {
+      const point = boardPointOf(runtime, event);
+      const gridNote = point ? runtime.findNoteAtGridPoint(point.x, point.y) : note;
+      if (!gridNote && !runtime.suppressNextNoteClickRef.current) {
+        return;
+      }
+      target = gridNote ?? note;
+    }
     event.stopPropagation();
     if (runtime.isToolArmed && (runtime.tool === "slide" || runtime.tool === "hidden")) {
       return;
@@ -1308,7 +1349,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       runtime.toggleSelectedNote(note.id);
       return;
     }
-    runtime.applyToolToPlacedNote(note);
+    runtime.applyToolToPlacedNote(target);
   }, []);
 
   const handleSharedNoteContextMenu = useCallback((event: ReactMouseEvent<HTMLButtonElement>) => {
@@ -1591,7 +1632,10 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                 style={{ height: scaledScrollContentHeight + judgeInsetBottom }}
                 onMouseDown={handleBoardMouseDown}
                 onMouseMove={handleBoardMouseMove}
-                onMouseLeave={handleBoardMouseLeave}
+                onMouseLeave={(event) => {
+                  if (placingToolHovers()) { hoveredNoteIdRef.current = null; selectionOverlayRef.current?.setHoverFrame(null); }
+                  handleBoardMouseLeave(event);
+                }}
                 onContextMenu={handleBoardContextMenu}
                 // Event bubbles drawn on the canvas are the events' hit areas; only the BPM and SV tools act on them.
                 onMouseDownCapture={(event) => {
@@ -1612,6 +1656,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                   eventBubbleHandlers.remove(hit);
                 }}
                 onMouseMoveCapture={(event) => {
+                  updateGridHoverFrame(event);
                   const hovering = eventBubbleHitAt(event) !== null;
                   if (event.currentTarget.classList.contains("is-over-event-bubble") !== hovering) {
                     event.currentTarget.classList.toggle("is-over-event-bubble", hovering);

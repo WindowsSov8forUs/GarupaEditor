@@ -54,6 +54,7 @@ export function useBoardInteractionActions(params: any) {
     setSlideBuildState,
     setSlideBuildCursor,
     setSlideConnectTarget,
+    findNoteAtGridPoint,
     findHiddenNodeAtBoardPoint,
     boardXToFreeLane,
     deleteRightClickedNotes,
@@ -81,7 +82,7 @@ export function useBoardInteractionActions(params: any) {
     playfieldBoardRef,
     selectionMoveRef,
     cursorPreview,
-    findNoteAtBoardPoint,
+    findNoteAtBoardPoint: _findNoteAtBoardPoint,
     resolveBoardPlacement,
     findPlacementOverlaps,
     selectionDragRef,
@@ -470,8 +471,8 @@ export function useBoardInteractionActions(params: any) {
     if (!slideBuildRef.current || !moved) {
       return;
     }
-    pressSlideTool(findNoteAtBoardPoint(x, y), x, y);
-  }, [findNoteAtBoardPoint, moveHiddenNode, noteById, playfieldBoardRef, pressSlideTool, slideBuildRef]);
+    pressSlideTool(findNoteAtGridPoint(x, y), x, y);
+  }, [findNoteAtGridPoint, moveHiddenNode, noteById, playfieldBoardRef, pressSlideTool, slideBuildRef]);
 
   // Another tool, or no tool, drops the start.
   useEffect(() => {
@@ -800,7 +801,7 @@ export function useBoardInteractionActions(params: any) {
     const activeSlideBuild = slideBuildRef.current;
     if (activeSlideBuild) {
       setSlideBuildCursor({ x, y });
-      const hit = findNoteAtBoardPoint(x, y) ?? (tool === "hidden" ? findHiddenNodeAtBoardPoint(x, y) : null);
+      const hit = findNoteAtGridPoint(x, y) ?? (tool === "hidden" ? findHiddenNodeAtBoardPoint(x, y) : null);
       const from = noteById.get(activeSlideBuild.noteIds[0]);
       // Where a press on blank board would place the node the start connects to.
       if (!hit) {
@@ -1049,7 +1050,7 @@ export function useBoardInteractionActions(params: any) {
 
     if (isToolArmed && (tool === "slide" || tool === "hidden")) {
       event.preventDefault();
-      const visibleHit = findNoteAtBoardPoint(boardX, boardY);
+      const visibleHit = findNoteAtGridPoint(boardX, boardY);
       const handle = tool === "hidden" && !visibleHit ? findHiddenNodeAtBoardPoint(boardX, boardY) : null;
       slidePressRef.current = { clientX: event.clientX, clientY: event.clientY, ...(handle ? { hiddenId: handle.id } : {}) };
       // A Hidden handle's press waits for its release (a drag moves the node).

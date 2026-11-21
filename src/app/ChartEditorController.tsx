@@ -2718,6 +2718,7 @@ function ChartEditorController() {
     getSlideAnchorLane,
     getRenderedNotePlacement,
     findNoteAtBoardPoint,
+    findNoteAtGridPoint,
     findHiddenNodeAtBoardPoint,
     boardXToFreeLane,
     findPlacementOverlaps,
@@ -3053,6 +3054,7 @@ function ChartEditorController() {
     setSlideBuildState,
     setSlideBuildCursor,
     setSlideConnectTarget,
+    findNoteAtGridPoint,
     findHiddenNodeAtBoardPoint,
     boardXToFreeLane,
     deleteRightClickedNotes,
@@ -4867,7 +4869,7 @@ function ChartEditorController() {
         return null;
       }
 
-      const hitNote = findNoteAtBoardPoint(x, y);
+      const hitNote = findNoteAtGridPoint(x, y);
       if (!hitNote || hitNote.type !== directionalTool) {
         return null;
       }
@@ -4903,7 +4905,7 @@ function ChartEditorController() {
     },
     [
       LANE_WIDTH,
-      findNoteAtBoardPoint,
+      findNoteAtGridPoint,
       getNoteDisplayY,
       getNoteSpanLanes,
       getRenderedNotePlacement,
@@ -4922,7 +4924,7 @@ function ChartEditorController() {
         return null;
       }
       const previewType = tool;
-      const hitNote = findNoteAtBoardPoint(x, y);
+      const hitNote = findNoteAtGridPoint(x, y);
       if (!hitNote) {
         return null;
       }
@@ -4958,7 +4960,7 @@ function ChartEditorController() {
     },
     [
       LANE_WIDTH,
-      findNoteAtBoardPoint,
+      findNoteAtGridPoint,
       getNoteDisplayY,
       getNoteSpanLanes,
       getRenderedNotePlacement,
@@ -6007,6 +6009,7 @@ function ChartEditorController() {
         slideBuildRef,
         pressSlideTool,
         slidePressRef,
+        findNoteAtGridPoint,
         beginSelectedNotesMove,
         suppressNextNoteClickRef,
         toggleSelectedNote,

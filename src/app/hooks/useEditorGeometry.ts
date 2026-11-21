@@ -647,6 +647,35 @@ export function useEditorGeometry(params: any) {
     ],
   );
 
+  /**
+   * The note a placing tool's press at (x, y) acts on: one whose button is under the point and that sits in the grid
+   * cell the press snaps to (its beat, on the current division, and a lane it covers). A press on a note's button but
+   * in another cell (notes closer than their buttons are tall) is a press on that cell, which places there.
+   */
+  const findNoteAtGridPoint = useCallback(
+    (x: number, y: number): ChartNote | null => {
+      const placement = resolveBoardPlacement(x, y, { type: "single" });
+      if (!placement) return null;
+      let best: ChartNote | null = null, bestDistance = Infinity;
+      for (const note of notes) {
+        if (note.type === "hidden") continue;
+        if (Math.abs(quantizeBeat(note.beat, beatDivision) - placement.beat) > 1e-6) continue;
+        const span = getNoteSpanLanes(note);
+        const start = noteLaneSpanStart(note.type, note.lane, span);
+        if (placement.lane < start - 1e-6 || placement.lane > start + span - 1 + 1e-6) continue;
+        const { x: centerX, y: centerY } = getNoteCenterAt(note);
+        const halfWidth = getNoteHitboxWidth(note.type, span) / 2;
+        const halfHeight = editorNoteHeight(LANE_WIDTH, noteVisualScale) / 2;
+        if (Math.abs(x - centerX) > halfWidth || Math.abs(y - centerY) > halfHeight) continue;
+        const distance = Math.hypot(x - centerX, y - centerY);
+        if (distance < bestDistance) { best = note; bestDistance = distance; }
+      }
+      return best;
+    },
+    [LANE_WIDTH, beatDivision, getNoteCenterAt, getNoteHitboxWidth, getNoteSpanLanes, noteVisualScale, notes, quantizeBeat,
+      resolveBoardPlacement],
+  );
+
   const calcSelectionMoveDelta = useCallback(
     (clientX: number, clientY: number): { laneDelta: number; beatDelta: number; moved: boolean } | null => {
       const drag = selectionMoveRef.current;
@@ -702,6 +731,7 @@ export function useEditorGeometry(params: any) {
     getNoteCenterAt,
     getNoteHitboxWidth,
     findNoteAtBoardPoint,
+    findNoteAtGridPoint,
     findHiddenNodeAtBoardPoint,
     boardXToFreeLane,
     findPlacementOverlaps,
