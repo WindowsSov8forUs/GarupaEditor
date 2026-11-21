@@ -1,8 +1,12 @@
 // @refresh reset
 // This controller owns the editor hook tree; hot updates must not reuse an older hook layout.
+import { isSubdivisionLineHidden } from "./editorGridWindow";
+import { spriteOpaqueBox, useSpriteOpaqueBoxVersion, type SpriteOpaqueBox } from "./spriteOpaqueBox";
+import { isGarupaLongSlideShape } from "../chart";
+import { connectSlideNodes } from "./slideConnect";
 import { minimapLaneVisible } from "./editorMinimapGeometry";
 import { allowedSelectionWidthDelta, canResizeSelectionWidth, planSelectionWidthChange, type SelectionWidthContext, type SelectionWidthEdge } from "./selectionWidthDrag";
-import { editorNoteHeight, editorNoteTokenWidth, editorSlideLineWidth, SELECTION_FRAME_MARGIN } from "./editorNoteMetrics";
+import { editorHiddenButtonHeight, editorNoteHeight, editorNoteTokenWidth, editorSlideLineWidth, SELECTION_FRAME_MARGIN } from "./editorNoteMetrics";
 import { useEditorScrollExtent } from "./hooks/useEditorScrollExtent";
 import { useUiViewport } from "../components/useUiViewport";
 import { TRACK_ZONE_WIDTH, trackZoneGeometry, useEditorViewportZoom } from "./hooks/useEditorViewportZoom";
@@ -157,6 +161,7 @@ import {
   GLOBAL_TIMING_GROUP_DISPLAY_NAME,
   sortTimingGroupIds,
   applySvEventsToTimingGroups,
+  noteLaneSpanStart,
 } from "../chartCore";
 import {
   useApplicationResourceManager,
@@ -926,6 +931,9 @@ function ChartEditorController() {
   const setSlideBuildCursor = useCallback((next: { x: number; y: number } | null) => {
     slideBuildCursorRef.current = next;
   }, []);
+  // What the Slide tool's current connection would reach under the pointer: a note's id, "new" (a node placed on blank
+  // board), or null (nothing it can reach). Set only when it changes, so moving the pointer renders nothing else.
+  const [slideConnectTarget, setSlideConnectTarget] = useState<string | null>(null);
   const beatInputEditingRef = useRef(false);
   const bpmInputEditingRef = useRef(false);
   const svInputEditingRef = useRef(false);
@@ -982,6 +990,12 @@ function ChartEditorController() {
 
   const playfieldRef = useRef<HTMLDivElement | null>(null);
   const { verticalZoom, viewportWidth, attachViewport, viewportElement } = useEditorViewportZoom(playfieldRef, isSkinReady);
+  // Hidden nodes are shown and operable as notes, except those off the measure and beat lines once the board is too
+  // compressed to draw its subdivision lines.
+  const hideOffBeatHiddenNodes = isSubdivisionLineHidden(verticalZoom);
+  const isHiddenNodeShown = useCallback((note: Pick<ChartNote, "type" | "beat">): boolean =>
+    note.type !== "hidden" || !hideOffBeatHiddenNodes || Math.abs(note.beat - Math.round(note.beat)) < 1e-6,
+  [hideOffBeatHiddenNodes]);
   const uiScale = useUiViewport().scale;
   const scrollPadding = useEditorScrollExtent(playfieldRef, viewportElement, viewportPlaybackPositionPercent);
   // The track always fills the track zone, which ends where the flat lane art (FIELD_WIDTH_LANES lanes, wider than
@@ -1269,31 +1283,34 @@ function ChartEditorController() {
     }
     return roleMap;
   }, [slideChains]);
-  const effectiveSlideChains = useMemo(() => {
-    if (!slideBuildState) {
-      return slideChains;
+  // The Slide tool commits every connection as it is made; its start alone is no chain, so the chains drawn are the
+  // committed ones.
+  const effectiveSlideChains = slideChains;
+  /** The chains the Slide tool's current connection involves (its start's and its target's) and the segments it would
+   * remove. */
+  const slideConnectHighlight = useMemo(() => {
+    const startId = slideBuildState?.noteIds[0];
+    const start = startId === undefined ? undefined : noteById.get(startId);
+    if (!start) return null;
+    const chainOf = (id: string) => slideChains.find((chain) => chain.noteIds.includes(id));
+    const chainIds = new Set<string>();
+    const startChain = chainOf(start.id);
+    if (startChain) chainIds.add(startChain.id);
+    const target = slideConnectTarget === null || slideConnectTarget === "new" ? undefined : noteById.get(slideConnectTarget);
+    const reachable = slideConnectTarget === "new" || (target !== undefined && target.beat > start.beat + 1e-6);
+    const broken = new Set<string>();
+    if (reachable) {
+      const toId = target?.id ?? "__slide_connect_new__";
+      const targetChain = target ? chainOf(target.id) : undefined;
+      if (targetChain) chainIds.add(targetChain.id);
+      for (const [fromId, toLinkId] of connectSlideNodes(slideChains, start.id, toId, () => "")?.brokenLinks ?? []) {
+        const chain = chainOf(fromId);
+        const index = chain ? chain.noteIds.indexOf(fromId) : -1;
+        if (chain && chain.noteIds[index + 1] === toLinkId) broken.add(`${chain.id}:${index}`);
+      }
     }
-    const buildingIds = Array.from(new Set(slideBuildState.noteIds)).filter((id) => noteById.has(id));
-    const buildingSet = new Set(buildingIds);
-    const cleaned = slideChains
-      .map((chain) => ({
-        ...chain,
-        noteIds: chain.noteIds.filter((id) => !buildingSet.has(id)),
-      }))
-      .filter((chain) => chain.noteIds.length > 0);
-
-    if (buildingIds.length === 0) {
-      return cleaned;
-    }
-
-    return [
-      ...cleaned,
-      {
-        id: "__slide_build_preview__",
-        noteIds: buildingIds,
-      },
-    ];
-  }, [noteById, slideBuildState, slideChains]);
+    return { chainIds, broken };
+  }, [noteById, slideBuildState, slideChains, slideConnectTarget]);
 
   const slideRoleByNoteId = useMemo(() => {
     const roleMap = new Map<string, { chainId: string; index: number; length: number }>();
@@ -1590,8 +1607,12 @@ function ChartEditorController() {
       const anchorBeat = beatValues.reduce((minValue, beat) => Math.min(minValue, beat), beatValues[0] ?? 0);
       const notesAtAnchorBeat = copiedNotes.filter((note) => approxEq(note.beat, anchorBeat));
       const laneAnchorEnabled = notesAtAnchorBeat.length > 0;
+      // A wide note's lane is its centre; the anchor is the first lane it covers (a Directional's root), so a paste
+      // lands on whole lanes.
+      const anchorLaneOf = (note: ChartNote) => isDirectionalNoteType(note.type) ? note.lane
+        : noteLaneSpanStart(note.type, note.lane, isHabahiroEnabled ? normalizeRhythmWidth(note.width) : 1);
       const anchorLane = laneAnchorEnabled
-        ? notesAtAnchorBeat.reduce((minValue, note) => Math.min(minValue, note.lane), notesAtAnchorBeat[0].lane)
+        ? notesAtAnchorBeat.reduce((minValue, note) => Math.min(minValue, anchorLaneOf(note)), anchorLaneOf(notesAtAnchorBeat[0]))
         : 0;
 
       return {
@@ -1607,6 +1628,7 @@ function ChartEditorController() {
     [
       approxEq,
       bpmEvents,
+      isHabahiroEnabled,
       normalizeObjectTimingGroup,
       noteById,
       noteTimingGroupIdByNoteId,
@@ -2700,11 +2722,15 @@ function ChartEditorController() {
     getSlideAnchorLane,
     getRenderedNotePlacement,
     findNoteAtBoardPoint,
+    findNoteAtGridPoint,
+    findNoteNearestAtBoardPoint,
+    getNoteCenterAt,
     findPlacementOverlaps,
     resolveBoardPlacement,
     finishSelectionDrag,
     calcSelectionMoveDelta,
   } = useEditorGeometry({
+    isHiddenNodeShown,
     playbackLinePositionPercent: viewportPlaybackPositionPercent,
     laneMin,
     bpmTimeline,
@@ -2761,6 +2787,84 @@ function ChartEditorController() {
   resolveBoardPlacementRef.current = resolveBoardPlacement;
 
   /** Middle tool on a Slide's line: a single node inserted where it was pressed, between that segment's two nodes. */
+  /** Whether a Hidden node's handle is under a client point: the Hidden tool then presses the handle, not the line. */
+  const isHiddenHandleAtClientPoint = useCallback((clientX: number, clientY: number): boolean => {
+    const board = playfieldBoardRef.current;
+    if (!board) return false;
+    const rect = board.getBoundingClientRect();
+    return findNoteAtGridPoint(clientX - rect.left, clientY - rect.top)?.type === "hidden";
+  }, [findNoteAtGridPoint]);
+  /**
+   * Long ⇄ Slide on a line: the Long tool makes a two-node straight Slide (the Long shape) a Long, the Slide tool makes
+   * a Long a Slide. A chain of another shape stays as it is, with the reason.
+   */
+  const convertSlideChainKind = useCallback((segment: any) => {
+    if (!isToolArmed || slideBuildRef.current) return;
+    const chain = typeof segment?.chainId === "string" ? committedSlideChainById.get(segment.chainId) : undefined;
+    if (!chain) return;
+    if (tool === "slide" && chain.long === true) {
+      setSlideChains((previous) => previous.map((current) => {
+        if (current.id !== chain.id) return current;
+        const { long: _long, ...rest } = current;
+        return rest;
+      }));
+      return;
+    }
+    if (tool !== "long" || chain.long === true) return;
+    const connections = chain.noteIds.map((id) => noteById.get(id)).filter((note): note is ChartNote => !!note)
+      .map((note) => ({ beat: note.beat, lane: note.lane, width: note.width ?? 1,
+        type: isDirectionalNoteType(note.type) ? "Directional" : note.type === "skill" ? "Skill" : note.type === "flick" ? "Flick"
+          : note.type === "hidden" ? "Hidden" : "Single",
+        ...(isDirectionalNoteType(note.type) ? { direction: note.type === "directional_flick_left" ? "Left" : "Right" } : {}) }));
+    if (!isGarupaLongSlideShape({ connections: connections as never })) {
+      showDialog("只有两个节点、头为 Single 或 Skill、尾与头在同一轨段的直 Slide 才能转为 Long。");
+      return;
+    }
+    setSlideChains((previous) => previous.map((current) => current.id === chain.id ? { ...current, long: true as const } : current));
+  }, [committedSlideChainById, isToolArmed, noteById, setSlideChains, showDialog, tool]);
+
+  /** The Hidden tool on a Slide's line: a Hidden node there, between the segment's two nodes. */
+  const insertHiddenNodeOnConnection = useCallback((segment: any, event: ReactMouseEvent<HTMLElement>) => {
+    if (!isToolArmed || tool !== "hidden" || slideBuildRef.current) {
+      return;
+    }
+    const board = playfieldBoardRef.current;
+    const chain = typeof segment?.chainId === "string" ? committedSlideChainById.get(segment.chainId) : undefined;
+    const segmentIndex = Number(segment?.index);
+    if (!board || !chain || !Number.isInteger(segmentIndex)) {
+      return;
+    }
+    if (chain.long === true) {
+      showDialog("Long 不能添加中间节点。");
+      return;
+    }
+    const from = noteById.get(chain.noteIds[segmentIndex]);
+    const to = noteById.get(chain.noteIds[segmentIndex + 1]);
+    const rect = board.getBoundingClientRect();
+    const x = event.clientX - rect.left, y = event.clientY - rect.top;
+    const placement = resolveBoardPlacement(x, y, { type: "single" });
+    if (!from || !to || !placement) {
+      return;
+    }
+    // On the division under the press; between two nodes closer than the division (a shape preset's), halfway.
+    const snapped = quantizeBeat(placement.beat, beatDivision);
+    const beat = snapped > from.beat + 1e-6 && snapped < to.beat - 1e-6 ? snapped
+      : Number(((from.beat + to.beat) / 2).toFixed(6));
+    if (!(beat > from.beat + 1e-6 && beat < to.beat - 1e-6)) {
+      return;
+    }
+    const node = normalizeNote({ id: createId(), type: "hidden", lane: placement.lane, beat,
+      timingGroup: normalizeNoteTimingGroup(chain.timingGroup) }, settings);
+    if (!node) {
+      return;
+    }
+    setNotes((previous) => sortNotes([...previous, node]));
+    setSlideChains((previous) => previous.map((current) => current.id !== chain.id ? current : {
+      ...current, noteIds: [...current.noteIds.slice(0, segmentIndex + 1), node.id, ...current.noteIds.slice(segmentIndex + 1)],
+    }));
+  }, [beatDivision, committedSlideChainById, isToolArmed, noteById, resolveBoardPlacement, setNotes,
+    setSlideChains, settings, showDialog, tool]);
+
   const insertSingleNodeOnConnection = useCallback((segment: any, event: ReactMouseEvent<HTMLElement>) => {
     if (!isToolArmed || tool !== "middle" || slideBuildRef.current) {
       return;
@@ -2820,7 +2924,11 @@ function ChartEditorController() {
         {
           ...replacedHidden,
           type: "single",
-          lane: isExGarupaEnabled ? replacedHidden.lane : Math.round(replacedHidden.lane),
+          // Rounded so its span starts on a whole lane (its lane is the span's centre).
+          lane: isExGarupaEnabled ? replacedHidden.lane : (() => {
+            const half = (isHabahiroEnabled ? normalizeRhythmWidth(replacedHidden.width) - 1 : 0) / 2;
+            return Number((Math.round(replacedHidden.lane - half) + half).toFixed(6));
+          })(),
           timingGroup: normalizeNoteTimingGroup(chain.timingGroup),
         },
         settings,
@@ -2882,6 +2990,7 @@ function ChartEditorController() {
     clearSelection,
     findPlacementOverlaps,
     isExGarupaEnabled,
+    isHabahiroEnabled,
     isToolArmed,
     noteById,
     notes,
@@ -2902,11 +3011,10 @@ function ChartEditorController() {
     applySvToolFromPalette: applySvToolFromPaletteRaw,
     applyCopyToolFromPalette: applyCopyToolFromPaletteRaw,
     applyPasteToolFromPalette: applyPasteToolFromPaletteRaw,
-    setSlideBuildMode,
-    startSlideBuildFromSeedNote,
-    appendSlideBuildNote,
+    pressSlideTool,
+    slidePressRef,
     cancelSlideBuild,
-    finalizeSlideBuild,
+    releaseSlideConnection,
     applyToolToPlacedNote,
     handleBoardContextMenu,
     handleBoardMouseMove: handleBoardMouseMoveRaw,
@@ -2949,6 +3057,10 @@ function ChartEditorController() {
     slideBuildRef,
     setSlideBuildState,
     setSlideBuildCursor,
+    setSlideConnectTarget,
+    findNoteAtGridPoint,
+    getNoteCenterAt,
+    deleteRightClickedNotes,
     setCursorPreview,
     committedSlideRoleByNoteId,
     committedSlideChainById,
@@ -4647,7 +4759,7 @@ function ChartEditorController() {
     slideBuildRef,
     setSlideBuildState,
     showDialog,
-    finalizeSlideBuild,
+    releaseSlideConnection,
     selectionMoveRef,
     calcSelectionMoveDelta,
     setSelectionMovePreview,
@@ -4682,6 +4794,14 @@ function ChartEditorController() {
     isColorAssistEnabled: appOptionSettings.colorAssistEnabled,
     DEFAULT_SPRITE_ASPECT_RATIO,
   });
+  const spriteBoxVersion = useSpriteOpaqueBoxVersion();
+  // The current skin's slide among body for a Hidden node `span` lanes wide (null until measured): what its mark draws.
+  const hiddenMarkBoxAt = useCallback((span: number): SpriteOpaqueBox | null =>
+    spriteOpaqueBox(getSpriteLayers("single", { baseImageType: "slide_among", width: span,
+      includeDirectionalOverlay: false, includeFlickOverlay: false }).base) ?? null,
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [getSpriteLayers, spriteBoxVersion]);
+
   const getNoteDisplayY = useCallback((note: ChartNote, beat: number): number => {
     const hitSec = beatToSeconds(beat, bpmTimeline);
     const timingGroup = noteTimingGroupById.get(note.id) ?? normalizeTimingGroupId(note.timingGroup);
@@ -4752,7 +4872,7 @@ function ChartEditorController() {
         return null;
       }
 
-      const hitNote = findNoteAtBoardPoint(x, y);
+      const hitNote = findNoteAtGridPoint(x, y);
       if (!hitNote || hitNote.type !== directionalTool) {
         return null;
       }
@@ -4771,14 +4891,8 @@ function ChartEditorController() {
 
       const { lane: currentRenderLane, beat: currentRenderBeat } = getRenderedNotePlacement(hitNote);
       const { lane: nextRenderLane } = getRenderedNotePlacement(widened);
-      const currentStartLane =
-        hitNote.type === "directional_flick_left"
-          ? currentRenderLane - currentSpanLanes + 1
-          : currentRenderLane;
-      const nextStartLane =
-        widened.type === "directional_flick_left"
-          ? nextRenderLane - nextSpanLanes + 1
-          : nextRenderLane;
+      const currentStartLane = noteLaneSpanStart(hitNote.type, currentRenderLane, currentSpanLanes);
+      const nextStartLane = noteLaneSpanStart(widened.type, nextRenderLane, nextSpanLanes);
       const currentEndLane = currentStartLane + currentSpanLanes - 1;
       const nextEndLane = nextStartLane + nextSpanLanes - 1;
       const previewLane = directionalTool === "directional_flick_left" ? nextStartLane : nextEndLane;
@@ -4794,7 +4908,7 @@ function ChartEditorController() {
     },
     [
       LANE_WIDTH,
-      findNoteAtBoardPoint,
+      findNoteAtGridPoint,
       getNoteDisplayY,
       getNoteSpanLanes,
       getRenderedNotePlacement,
@@ -4809,11 +4923,11 @@ function ChartEditorController() {
   );
   const resolveNoteReplacePreviewAt = useCallback(
     (x: number, y: number): NoteReplacePreviewState | null => {
-      if (!isToolArmed || !isNoteTool(tool) || tool === "slide") {
+      if (!isToolArmed || !isNoteTool(tool) || tool === "slide" || tool === "hidden") {
         return null;
       }
       const previewType = tool;
-      const hitNote = findNoteAtBoardPoint(x, y);
+      const hitNote = findNoteAtGridPoint(x, y);
       if (!hitNote) {
         return null;
       }
@@ -4837,9 +4951,7 @@ function ChartEditorController() {
             : previewWidth
         )
         : previewWidth;
-      const startLane = previewType === "directional_flick_left"
-        ? renderLane - spanLanes + 1
-        : renderLane;
+      const startLane = noteLaneSpanStart(previewType, renderLane, spanLanes);
 
       return {
         type: previewType,
@@ -4851,7 +4963,7 @@ function ChartEditorController() {
     },
     [
       LANE_WIDTH,
-      findNoteAtBoardPoint,
+      findNoteAtGridPoint,
       getNoteDisplayY,
       getNoteSpanLanes,
       getRenderedNotePlacement,
@@ -4874,10 +4986,7 @@ function ChartEditorController() {
       }
       const { lane: renderLane, beat: renderBeat } = getRenderedNotePlacement(note);
       const spanLanes = getNoteSpanLanes(note);
-      const directionalStartLane =
-        note.type === "directional_flick_left"
-          ? renderLane - spanLanes + 1
-          : renderLane;
+      const directionalStartLane = noteLaneSpanStart(note.type, renderLane, spanLanes);
       const { layers } = resolvePlacedNoteLayers(note, { beat: renderBeat });
       if (!layers.base && !layers.overlay) {
         return [];
@@ -4963,10 +5072,22 @@ function ChartEditorController() {
           Math.max(segment.fromX, segment.toX) + halfWidth, segment.maxY);
       }
     }
+    // A selected Hidden node, or the connection start one, is framed as a note one lane wide.
+    const startId = slideBuildState?.noteIds[0];
+    for (const note of notes) {
+      if (note.type !== "hidden" || !(selectedNoteIdSet.has(note.id) || note.id === startId) || !isHiddenNodeShown(note)) continue;
+      const { lane, beat } = getRenderedNotePlacement(note);
+      const width = editorNoteTokenWidth(getNoteSpanLanes(note), false, LANE_WIDTH, noteVisualScale);
+      const x = (laneToColumn(lane) + 0.5) * LANE_WIDTH, y = getNoteDisplayY(note, beat);
+      const height = editorHiddenButtonHeight(LANE_WIDTH, noteVisualScale);
+      include(x - width / 2, y - height / 2, x + width / 2, y + height / 2);
+    }
     if (!Number.isFinite(left)) return null;
     const margin = SELECTION_FRAME_MARGIN * uiScale;
     return { left: left - margin, top: top - margin, width: right - left + 2 * margin, height: bottom - top + 2 * margin };
-  }, [LANE_WIDTH, canvasNoteVisuals, noteVisualScale, renderModel.connectionSegments, selectedSlideSegmentIds, uiScale]);
+  }, [LANE_WIDTH, canvasNoteVisuals, getNoteDisplayY, getNoteSpanLanes, getRenderedNotePlacement, isHiddenNodeShown,
+    laneToColumn, noteVisualScale, notes, renderModel.connectionSegments, selectedNoteIdSet, selectedSlideSegmentIds,
+    slideBuildState, uiScale]);
   /** Dragging an edge of the selection frame widens or narrows the selected notes (see selectionWidthDrag). */
   const selectionWidthContext = useMemo<SelectionWidthContext>(() => ({
     notes, selectedNoteIds, slideChains, habahiro: isHabahiroEnabled,
@@ -5007,7 +5128,7 @@ function ChartEditorController() {
     if (note.type === "hidden") return [];
     const placement = getRenderedNotePlacement(note);
     const spanLanes = getNoteSpanLanes(note);
-    const start = note.type === "directional_flick_left" ? placement.lane - spanLanes + 1 : placement.lane;
+    const start = noteLaneSpanStart(note.type, placement.lane, spanLanes);
     const { layers } = resolvePlacedNoteLayers(note, { beat: placement.beat });
     return [{ id: note.id, type: note.type, x: laneToColumn(start) + spanLanes / 2,
       y: minimapBeatToTime(placement.beat), spanLanes, base: layers.base ?? null, overlay: layers.overlay ?? null,
@@ -5017,7 +5138,7 @@ function ChartEditorController() {
     const validByChain = new Map(effectiveSlideChains.map(chain => [chain.id, chain.noteIds
       .map(id => noteById.get(id)).filter((note): note is ChartNote => !!note).map(note => {
         const placement = getRenderedNotePlacement(note), span = getNoteSpanLanes(note);
-        const start = note.type === "directional_flick_left" ? placement.lane - span + 1 : placement.lane;
+        const start = noteLaneSpanStart(note.type, placement.lane, span);
         return minimapLaneVisible(laneToColumn(start) + span / 2, span, laneValues.length);
       })]));
     return minimapRenderModel.connectionSegments.filter(segment => {
@@ -5138,7 +5259,6 @@ function ChartEditorController() {
     toolSvValue,
     toolTimingGroup,
     slideBuildRef,
-    finalizeSlideBuild,
     cancelSlideBuild,
     slideRoleByNoteId,
     noteById,
@@ -5159,6 +5279,9 @@ function ChartEditorController() {
     noteVisualScale,
     isSimultaneousLineEnabled: appOptionSettings.simultaneousLineEnabled,
     onMiddleToolConnectionClick: insertSingleNodeOnConnection,
+    onHiddenToolConnectionClick: insertHiddenNodeOnConnection,
+    onSlideKindConnectionClick: convertSlideChainKind,
+    isHiddenHandleAtClientPoint,
     onCurveToolConnectionClick: applyCurveToolOnConnection,
   });
   useCanvasPlayfieldBackend({
@@ -5183,6 +5306,7 @@ function ChartEditorController() {
     svVisualLines: canvasSvVisualLines,
     laneChangeVisualLines: canvasLaneChangeVisualLines,
     selectedSlideSegmentIds,
+    slideConnectHighlight,
     simultaneousSegments: visibleSimultaneousSegments,
     connectionSegments: renderModel.connectionSegments,
     noteVisuals: canvasNoteVisuals,
@@ -5772,6 +5896,8 @@ function ChartEditorController() {
         getPaletteSpriteAspectRatio,
         renderPaletteSpriteStack,
         getSpriteLayers,
+        hiddenMarkBoxAt,
+        isHiddenNodeShown,
         getSpriteAspectRatio,
         renderSpriteStack,
         setTool,
@@ -5897,14 +6023,14 @@ function ChartEditorController() {
         cancelSelectionWidth,
         renderNotes: displayNotes,
         slideBuildRef,
-        appendSlideBuildNote,
-        setSlideBuildMode,
-        startSlideBuildFromSeedNote,
+        pressSlideTool,
+        slidePressRef,
+        findNoteAtGridPoint,
+        findNoteNearestAtBoardPoint,
         beginSelectedNotesMove,
         suppressNextNoteClickRef,
         toggleSelectedNote,
         applyToolToPlacedNote,
-        finalizeSlideBuild,
         cancelSlideBuild,
         deleteRightClickedNotes,
         toolDirectionalWidth,

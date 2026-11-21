@@ -38,7 +38,7 @@ export function copyAndFreezeGarupaChartJson(
   const headers = validateHabahiroItems(items);
   if (headers.status !== "ok") return headers;
   return ok(Object.freeze({
-    chart: Object.freeze(items),
+    chart: Object.freeze(items.map(withSpanStartLanes)),
     extensions: Object.freeze({ svItemCount, timingGroupFieldCount }),
   }));
 }
@@ -124,6 +124,27 @@ function copyItem(
     0,
     note.value.hasTimingGroup ? 1 : 0,
   );
+}
+
+/**
+ * The simulator's chart construction reads a non-Directional note's lane as the first lane of its span, as the
+ * original counts a wide note's buttons from its left; a Garupa JSON lane is the span's centre. The copy given to the
+ * simulator carries span starts (an exact decimal start is kept exact, so an original virtual lane stays one).
+ */
+function withSpanStartLanes(item: GarupaChartJsonItem): GarupaChartJsonItem {
+  if (item.type === "Slide") {
+    return Object.freeze({ ...item, connections: Object.freeze(item.connections.map(spanStartNode)) });
+  }
+  if (item.type === "Single" || item.type === "Flick" || item.type === "Skill") return spanStartNode(item);
+  return item;
+}
+
+function spanStartNode<T extends GarupaChartJsonSlideConnection>(node: T): T {
+  if (node.type === "Directional" || node.width === 1) return node;
+  const start = node.lane - (node.width - 1) / 2;
+  const decimal = Math.round(start * 1e6) / 1e6;
+  const moved: T = { ...node, lane: Math.abs(decimal - start) < 1e-9 ? decimal : start };
+  return Object.freeze(moved);
 }
 
 /** The original merges wide notes only under #HABAHIRO; a lane change also requires it. */

@@ -81,10 +81,26 @@ export type GarupaChartJsonItem =
 
 export type GarupaChartJson = readonly GarupaChartJsonItem[];
 
-/** combineNotes keeps the root at ⌊(first + last) / 2⌋ of a merged range: the left middle
- * lane of an even width. */
+/** A non-Directional note's lane is the centre of its lane span: it starts (width − 1) / 2 lanes left of it, between
+ * two lanes for an even width. A Directional's lane is its root, where its arrow starts. */
+export function garupaSpanStart(note: Pick<GarupaChartJsonSlideConnection, "type" | "lane" | "width"> &
+  { readonly direction?: GarupaChartJsonDirection }): number {
+  if (note.type !== "Directional") return exactDecimal(note.lane - (note.width - 1) / 2);
+  return note.direction === "Left" ? note.lane - note.width + 1 : note.lane;
+}
+
+/** A value within 1e-9 of a 6-decimal value, as that value: undoes the binary error of moving a decimal lane by a
+ * half lane (2.2 − 0.5 is 1.7000000000000002). */
+function exactDecimal(value: number): number {
+  const decimal = Math.round(value * 1e6) / 1e6;
+  return Math.abs(decimal - value) < 1e-9 ? decimal : value;
+}
+
+/** combineNotes keeps the root at ⌊(first + last) / 2⌋ of a merged range: counted from the span's own first lane,
+ * the centre lane of an odd width, the left middle lane of an even width (lanes 1.3–2.3 of a width-2 head: 1.3). */
 export function garupaLongCenterLane(head: Pick<GarupaChartJsonSimpleNote, "lane" | "width">): number {
-  return head.lane + Math.floor((head.width - 1) / 2);
+  return exactDecimal(garupaSpanStart({ type: "Single", lane: head.lane, width: head.width })
+    + Math.floor((head.width - 1) / 2));
 }
 
 /**

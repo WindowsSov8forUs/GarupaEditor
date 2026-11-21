@@ -1,7 +1,9 @@
-import { startTransition, useCallback, type MouseEvent } from "react";
+import { startTransition, useCallback, useEffect, useRef, type MouseEvent } from "react";
 import {
   GLOBAL_TIMING_GROUP_ID,
+  laneForReplacement,
   normalizeNoteTimingGroup,
+  noteLaneSpanStart,
   normalizeTimingGroup,
   type ChartNote,
   type EditorTool,
@@ -10,8 +12,8 @@ import {
 import { isLastBeatOrderedBpmNegative } from "../editorHelpers";
 import { applyHabahiroLongWidthToNoteIds } from "../habahiroLongWidth";
 import { dropNoteIdsFromChains } from "../slideChainCleanup";
-import { canUseHabahiro, canUseSpRhythm, canUseSv, normalizeSlideBuildForMode } from "../modeChartRegression";
-import { cleanupSlideChainsHidden } from "../slideChainCleanup";
+import { canUseHabahiro, canUseSpRhythm, canUseSv, normalizeSlideNodeForMode } from "../modeChartRegression";
+import { connectSlideNodes } from "../slideConnect";
 
 /** Length of the Long the Long tool places, in beats. */
 const LONG_TOOL_LENGTH_BEATS = 0.5;
@@ -51,6 +53,10 @@ export function useBoardInteractionActions(params: any) {
     slideBuildRef,
     setSlideBuildState,
     setSlideBuildCursor,
+    setSlideConnectTarget,
+    findNoteAtGridPoint,
+    getNoteCenterAt: _getNoteCenterAt,
+    deleteRightClickedNotes,
     setCursorPreview,
     committedSlideRoleByNoteId,
     committedSlideChainById,
@@ -75,7 +81,7 @@ export function useBoardInteractionActions(params: any) {
     playfieldBoardRef,
     selectionMoveRef,
     cursorPreview,
-    findNoteAtBoardPoint,
+    findNoteAtBoardPoint: _findNoteAtBoardPoint,
     resolveBoardPlacement,
     findPlacementOverlaps,
     selectionDragRef,
@@ -204,7 +210,7 @@ export function useBoardInteractionActions(params: any) {
           width: normalizeDirectionalWidth(toolDirectionalWidth),
         }
         : (
-          canUseHabahiro(modeOptions) && isRhythmWidthEditableType(noteTool)
+          canUseHabahiro(settings) && isRhythmWidthEditableType(noteTool)
             ? {
               width: normalizeRhythmWidth(toolRhythmWidth),
             }
@@ -271,7 +277,7 @@ export function useBoardInteractionActions(params: any) {
       ...previous,
       { id: createId(), noteIds, timingGroup: head.timingGroup, long: true as const },
     ]);
-    if (canUseHabahiro(modeOptions)) {
+    if (canUseHabahiro(settings)) {
       setNotes((previous: ChartNote[]) => applyHabahiroLongWidthToNoteIds(previous, noteIds));
     }
   };
@@ -299,322 +305,149 @@ export function useBoardInteractionActions(params: any) {
     ]);
   };
 
-  const beginSlideBuild = useCallback(
-    (
-      headNoteId: string,
-      createdHeadId: string | null = null,
-      options?: {
-        persistUntilRightClick?: boolean;
-        mode?: "drag" | "append";
-        initialNoteIds?: string[];
-      },
-    ) => {
-      const persistUntilRightClick = options?.persistUntilRightClick ?? false;
-      const mode = options?.mode ?? "drag";
-      const seedNoteIds = Array.isArray(options?.initialNoteIds) && options.initialNoteIds.length > 0
-        ? options.initialNoteIds
-        : [headNoteId];
-      const dedupedNoteIds = Array.from(
-        new Set(
-          seedNoteIds.filter((id) => noteById.has(id)),
-        ),
-      );
-      if (!dedupedNoteIds.includes(headNoteId)) {
-        dedupedNoteIds.push(headNoteId);
-      }
-      const next = {
-        noteIds: dedupedNoteIds,
-        createdHeadId,
-        mode,
-        persistUntilRightClick,
-      };
-      slideBuildRef.current = next;
-      setSlideBuildState(next);
-      setSlideBuildCursor(null);
-      clearSelection();
-      setCursorPreview(null);
-    },
-    [clearSelection, noteById, setCursorPreview, setSlideBuildCursor, setSlideBuildState, showDialog, slideBuildRef],
-  );
-
-  const setSlideBuildMode = useCallback((mode: "drag" | "append") => {
-    setSlideBuildState((previous: any) => {
-      if (!previous || previous.mode === mode) {
-        slideBuildRef.current = previous;
-        return previous;
-      }
-      const next = {
-        ...previous,
-        mode,
-      };
-      slideBuildRef.current = next;
-      return next;
-    });
-  }, [setSlideBuildState, slideBuildRef]);
-
-  const replaceCommittedSlideChainSegments = useCallback(
-    (chain: any, segments: any[]) => {
-      setSlideChains((previous: any[]) => {
-        const replacementChains = cleanupSlideChainsHidden({
-          chains: segments,
-          noteMap: noteById,
-          minLength: 2,
-        });
-        return previous.flatMap((currentChain) =>
-          currentChain.id === chain.id ? replacementChains : [currentChain],
-        );
-      });
-    },
-    [noteById, setSlideChains],
-  );
-
-  const startSlideBuildFromSeedNote = useCallback((seedNote: ChartNote) => {
-    const committedRole = committedSlideRoleByNoteId.get(seedNote.id);
-    if (committedRole && committedSlideChainById.get(committedRole.chainId)?.long === true) {
-      showDialog("Long 不能添加中间节点。");
-      return;
-    }
-    if (committedRole && committedRole.index > 0 && committedRole.index < committedRole.length - 1) {
-      const chain = committedSlideChainById.get(committedRole.chainId);
-      if (chain && chain.noteIds.length > 0) {
-        const prefixIds = chain.noteIds.slice(0, committedRole.index + 1);
-        const suffixIds = chain.noteIds.slice(committedRole.index + 1);
-        replaceCommittedSlideChainSegments(chain, [
-          {
-            ...chain,
-            noteIds: prefixIds,
-          },
-          {
-            ...chain,
-            id: createId(),
-            noteIds: suffixIds,
-          },
-        ]);
-        beginSlideBuild(seedNote.id, null, {
-          persistUntilRightClick: false,
-          mode: "drag",
-          initialNoteIds: prefixIds,
-        });
-        return;
-      }
-    }
-    if (committedRole && committedRole.index === committedRole.length - 1) {
-      const chain = committedSlideChainById.get(committedRole.chainId);
-      if (chain && chain.noteIds.length > 0) {
-        beginSlideBuild(seedNote.id, null, {
-          persistUntilRightClick: false,
-          mode: "drag",
-          initialNoteIds: chain.noteIds,
-        });
-        return;
-      }
-    }
-    beginSlideBuild(seedNote.id, null, { persistUntilRightClick: false, mode: "drag" });
-  }, [beginSlideBuild, committedSlideChainById, committedSlideRoleByNoteId, createId, replaceCommittedSlideChainSegments, showDialog]);
-
-  const appendSlideBuildNote = useCallback((noteId: string): { appended: boolean; merged: boolean; blocked: boolean } => {
-    const previous = slideBuildRef.current;
-    if (!previous) {
-      return { appended: false, merged: false, blocked: false };
-    }
-    if (previous.noteIds[previous.noteIds.length - 1] === noteId) {
-      return { appended: false, merged: false, blocked: false };
-    }
-    if (previous.noteIds.includes(noteId)) {
-      return { appended: false, merged: false, blocked: false };
-    }
-
-    const existingRole = committedSlideRoleByNoteId.get(noteId);
-    let nextIds = [...previous.noteIds];
-    let merged = false;
-    let blocked = false;
-
-    if (existingRole) {
-      const existingChain = committedSlideChainById.get(existingRole.chainId);
-      if (existingChain?.long === true) {
-        blocked = true;
-      } else if (existingChain && existingRole.index === 0) {
-        for (const id of existingChain.noteIds) {
-          if (!nextIds.includes(id)) {
-            nextIds.push(id);
-          }
-        }
-        merged = true;
-      } else if (existingChain) {
-        const beforeIds = existingChain.noteIds.slice(0, existingRole.index);
-        const suffixIds = existingChain.noteIds.slice(existingRole.index);
-        replaceCommittedSlideChainSegments(existingChain, [
-          {
-            ...existingChain,
-            id: createId(),
-            noteIds: beforeIds,
-          },
-          {
-            ...existingChain,
-            noteIds: suffixIds,
-          },
-        ]);
-        for (const id of suffixIds) {
-          if (!nextIds.includes(id)) {
-            nextIds.push(id);
-          }
-        }
-        merged = true;
-      }
-    } else {
-      nextIds.push(noteId);
-    }
-
-    if (blocked) {
-      return { appended: false, merged: false, blocked: true };
-    }
-    if (
-      nextIds.length === previous.noteIds.length &&
-      nextIds.every((id, index) => id === previous.noteIds[index])
-    ) {
-      return { appended: false, merged, blocked: false };
-    }
-
-    const next = {
-      ...previous,
-      noteIds: nextIds,
-    };
+  /*
+   * The Slide tool: every press is one connection. The first press picks a start (a note, or a Single placed on blank
+   * board); every later press connects the start to the pressed note (or a Single placed there) and makes it the
+   * start. A press dragged to another place and released there connects to that place too. Right-click, Esc or
+   * another tool drops the start (and a start this tool placed but never connected). The start is the Slide build
+   * state's only node; the board draws it highlighted, with a connection line following the pointer.
+   */
+  const setSlideStart = useCallback((noteId: string | null, createdHeadId: string | null = null) => {
+    const next = noteId === null ? null : { noteIds: [noteId], createdHeadId, mode: "drag" as const, persistUntilRightClick: false };
     slideBuildRef.current = next;
     setSlideBuildState(next);
-    return { appended: true, merged, blocked: false };
-  }, [
-    committedSlideChainById,
-    committedSlideRoleByNoteId,
-    createId,
-    replaceCommittedSlideChainSegments,
-    setSlideBuildState,
-    slideBuildRef,
-  ]);
+    setSlideConnectTarget(null);
+    if (next === null) setSlideBuildCursor(null);
+  }, [setSlideBuildCursor, setSlideBuildState, setSlideConnectTarget, slideBuildRef]);
 
-  const cancelSlideBuild = useCallback(
-    () => {
-      const current = slideBuildRef.current;
-      if (!current) {
-        return;
-      }
-      slideBuildRef.current = null;
-      setSlideBuildState(null);
-      setSlideBuildCursor(null);
-      suppressNextBoardClickRef.current = true;
-      suppressNextNoteClickRef.current = true;
-      if (current.createdHeadId) {
-        setNotes((previous: ChartNote[]) => previous.filter((note) => note.id !== current.createdHeadId));
-        removeNoteIdsFromSlideChains([current.createdHeadId]);
-      }
-      clearSelection();
-      setIsToolArmed(false);
-    },
-    [clearSelection, removeNoteIdsFromSlideChains, setIsToolArmed, setNotes, setSlideBuildCursor, setSlideBuildState, showDialog, slideBuildRef, suppressNextBoardClickRef, suppressNextNoteClickRef],
-  );
-
-  const finalizeSlideBuild = useCallback((options?: { disarmTool?: boolean }) => {
+  /** Drops the start, and the Single the tool placed for it if it was never connected. */
+  const cancelSlideBuild = useCallback(() => {
     const current = slideBuildRef.current;
     if (!current) {
       return;
     }
-    slideBuildRef.current = null;
-    setSlideBuildState(null);
-    setSlideBuildCursor(null);
+    setSlideStart(null);
     suppressNextBoardClickRef.current = true;
     suppressNextNoteClickRef.current = true;
+    if (current.createdHeadId) {
+      setNotes((previous: ChartNote[]) => previous.filter((note) => note.id !== current.createdHeadId));
+      removeNoteIdsFromSlideChains([current.createdHeadId]);
+    }
+  }, [removeNoteIdsFromSlideChains, setNotes, setSlideStart, slideBuildRef, suppressNextBoardClickRef, suppressNextNoteClickRef]);
 
-    const noteIds = Array.from(new Set(current.noteIds)) as string[];
-    if (noteIds.length === 0) {
+  /** Connects the start to `target` ("the start's next node is `target`"); false when it cannot (not later in time,
+   * or already its next node). */
+  const connectSlideStartTo = useCallback((target: ChartNote): boolean => {
+    const start = slideBuildRef.current;
+    const from = start ? noteById.get(start.noteIds[0]) : undefined;
+    if (!from || target.id === from.id || !(target.beat > from.beat + 1e-6)) {
+      return false;
+    }
+    const timingGroup = normalizeNoteTimingGroup(exGarupaEnabled ? toolTimingGroup : GLOBAL_TIMING_GROUP_ID);
+    const result = connectSlideNodes(Array.from(committedSlideChainById.values()) as any[], from.id, target.id,
+      createId, timingGroup);
+    if (!result) {
+      return false;
+    }
+    const joined = result.chains.find((chain: any) => chain.id === result.joinedId)!;
+    // Each node takes the type its place allows outside ExGarupa (a head is not a Flick, a middle node is a Single).
+    const typeById = new Map<string, ChartNote>();
+    joined.noteIds.forEach((id: string, index: number) => {
+      const note = id === target.id ? target : noteById.get(id);
+      if (!note) return;
+      const role = index === 0 ? "head" : index === joined.noteIds.length - 1 ? "tail" : "middle";
+      const normalized = normalizeSlideNodeForMode(note, role, exGarupaEnabled);
+      if (normalized !== note) typeById.set(id, normalized);
+    });
+    const detached = new Set(result.detachedIds);
+    setNotes((previous: ChartNote[]) => sortNotes(previous
+      .filter((note) => !(detached.has(note.id) && note.type === "hidden"))
+      .map((note) => typeById.get(note.id) ?? note)));
+    setSlideChains(result.chains);
+    setSlideStart(target.id);
+    return true;
+  }, [committedSlideChainById, createId, exGarupaEnabled, noteById, setNotes, setSlideChains, setSlideStart, slideBuildRef,
+    sortNotes, toolTimingGroup]);
+
+  /** One press of the Slide or Hidden tool on `hit` (a note) or else on blank board at (boardX, boardY). The Hidden
+   * tool places Hidden nodes (on a free lane), reaches Hidden nodes by their handles, and turns a Slide's visible middle
+   * node it presses without a start into a Hidden node. */
+  const pressSlideTool = useCallback((hit: ChartNote | null, boardX: number, boardY: number) => {
+    clearSelection();
+    setCursorPreview(null);
+    const hidden = tool === "hidden";
+    const start = slideBuildRef.current;
+    if (hit) {
+      const role = committedSlideRoleByNoteId.get(hit.id);
+      if (hidden && !start && hit.type !== "hidden" && role && role.index > 0 && role.index < role.length - 1
+        && !committedSlideChainById.get(role.chainId)?.long) {
+        setNotes((previous: ChartNote[]) => previous.map((note) => note.id !== hit!.id ? note
+          : { id: note.id, type: "hidden" as const, lane: note.lane, beat: note.beat,
+            ...(note.timingGroup === undefined ? {} : { timingGroup: note.timingGroup }) }));
+        return;
+      }
+      if (!start) setSlideStart(hit.id);
+      else connectSlideStartTo(hit);
       return;
     }
-
-    const resolveChainTimingGroup = (): string => {
-      const placementTimingGroup = normalizeTimingGroup(toolTimingGroup, GLOBAL_TIMING_GROUP_ID);
-      if (placementTimingGroup !== GLOBAL_TIMING_GROUP_ID) {
-        return placementTimingGroup;
-      }
-      for (const noteId of noteIds) {
-        const committedRole = committedSlideRoleByNoteId.get(noteId);
-        if (committedRole) {
-          const committedChain = committedSlideChainById.get(committedRole.chainId);
-          if (committedChain) {
-            return normalizeTimingGroup(committedChain.timingGroup, GLOBAL_TIMING_GROUP_ID);
-          }
-        }
-        const note = noteById.get(noteId);
-        if (note) {
-          return normalizeTimingGroup(note.timingGroup, GLOBAL_TIMING_GROUP_ID);
-        }
-      }
-      return GLOBAL_TIMING_GROUP_ID;
-    };
-    const nextChainTimingGroup = resolveChainTimingGroup();
-
-    const noteIdSet = new Set(noteIds);
-    const buildNextChains = (previous: any[], normalizedChain: any | null) => {
-      const cleaned = previous
-        .map((chain) => ({
-          ...chain,
-          noteIds: chain.noteIds.filter((id: string) => !noteIdSet.has(id)),
-        }))
-        .filter((chain) => chain.noteIds.length > 0);
-      return normalizedChain ? [...cleaned, normalizedChain] : cleaned;
-    };
-
-    const rawChain = {
-      id: createId(),
-      noteIds,
-      timingGroup: normalizeNoteTimingGroup(nextChainTimingGroup),
-    };
-    const normalizedBuild = normalizeSlideBuildForMode(
-      notes,
-      rawChain,
-      exGarupaEnabled,
-    );
-    const normalizedNoteById = new Map(normalizedBuild.notes.map((note) => [note.id, note] as const));
-    const normalizedNoteIds = normalizedBuild.chain?.noteIds ?? [];
-
-    const applyNextNotes = (previous: ChartNote[]) => sortNotes(
-      previous.map((note) => normalizedNoteById.get(note.id) ?? note),
-    );
-
-    setSlideChains((previous: any[]) => {
-      return buildNextChains(previous, normalizedBuild.chain);
-    });
-    setNotes((previous: ChartNote[]) => {
-      return applyNextNotes(previous);
-    });
-
-    const selectionNoteIds = normalizedNoteIds.length > 0 ? normalizedNoteIds : noteIds;
-    const tailId = [...selectionNoteIds]
-      .reverse()
-      .find((id) => (normalizedNoteById.get(id) ?? noteById.get(id))?.type !== "hidden")
-      ?? (selectionNoteIds[selectionNoteIds.length - 1] ?? selectionNoteIds[0]);
-    setSingleSelectedNote(tailId);
-    if (options?.disarmTool) {
-      setIsToolArmed(false);
+    const placement = resolveBoardPlacement(boardX, boardY, { type: "single" });
+    if (!placement) {
+      return;
     }
-  }, [
-    committedSlideChainById,
-    committedSlideRoleByNoteId,
-    createId,
-    exGarupaEnabled,
-    noteById,
-    notes,
-    setIsToolArmed,
-    setNotes,
-    setSingleSelectedNote,
-    setSlideBuildCursor,
-    setSlideBuildState,
-    setSlideChains,
-    showDialog,
-    slideBuildRef,
-    sortNotes,
-    suppressNextBoardClickRef,
-    suppressNextNoteClickRef,
-    toolTimingGroup,
-    toFinite,
-  ]);
+    const from = start ? noteById.get(start.noteIds[0]) : undefined;
+    if (from && !(placement.beat > from.beat + 1e-6)) {
+      return;
+    }
+    const created = placeNoteWithType(hidden ? "hidden" : "single", placement.lane,
+      placement.beat, {
+      selectPlaced: false,
+      preserveToolLaneOverride: true,
+    });
+    if (!created) {
+      return;
+    }
+    if (!start) setSlideStart(created.id, created.id);
+    else if (!connectSlideStartTo(created)) setNotes((previous: ChartNote[]) => previous.filter((note) => note.id !== created.id));
+  }, [clearSelection, committedSlideChainById, committedSlideRoleByNoteId, connectSlideStartTo,
+    noteById, placeNoteWithType, resolveBoardPlacement, setCursorPreview, setNotes,
+    setSlideStart, slideBuildRef, tool]);
+
+  /** Where the last Slide or Hidden tool press was, to tell a release elsewhere (a drag) from a click. */
+  const slidePressRef = useRef<{ clientX: number; clientY: number } | null>(null);
+
+  /** A release of the Slide or Hidden tool's press: dragged away from the press, it connects the start to the release
+   * point (a Hidden node is moved as a selected note, without a tool). */
+  const releaseSlideConnection = useCallback((clientX: number, clientY: number) => {
+    const press = slidePressRef.current;
+    slidePressRef.current = null;
+    const board = playfieldBoardRef.current;
+    if (!press || !board || !slideBuildRef.current || Math.hypot(clientX - press.clientX, clientY - press.clientY) < 6) {
+      return;
+    }
+    const rect = board.getBoundingClientRect();
+    const x = clientX - rect.left, y = clientY - rect.top;
+    pressSlideTool(findNoteAtGridPoint(x, y), x, y);
+  }, [findNoteAtGridPoint, playfieldBoardRef, pressSlideTool, slideBuildRef]);
+
+  // Another tool, or no tool, drops the start.
+  useEffect(() => {
+    if (slideBuildRef.current && !(isToolArmed && (tool === "slide" || tool === "hidden"))) cancelSlideBuild();
+  }, [cancelSlideBuild, isToolArmed, slideBuildRef, tool]);
+
+  // Esc drops the start; without one it puts the tool down.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.defaultPrevented || document.querySelector(".modal-transition-mask")) return;
+      const target = event.target as HTMLElement | null;
+      if (target?.closest("input, textarea, [contenteditable='true']")) return;
+      if (slideBuildRef.current) cancelSlideBuild();
+      else if (isToolArmed) setIsToolArmed(false);
+      else return;
+      event.preventDefault();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [cancelSlideBuild, isToolArmed, setIsToolArmed, slideBuildRef]);
 
   const placeBpmEvent = (beat: number) => {
     const quantizedBeat = quantizeBeat(beat, beatDivision);
@@ -681,6 +514,26 @@ export function useBoardInteractionActions(params: any) {
     clearSelection();
   };
 
+  /**
+   * Where a Long's tail goes when a tool turns it into `nextType` (`width` wide): a Directional tail's root on the head's
+   * centre lane (garupaLongCenterLane), any other tail on the head's lanes, so the Long keeps its shape. Null for a
+   * note that is no Long's tail.
+   */
+  const longTailPlacement = (target: ChartNote, nextType: NoteType, width: number | undefined)
+    : { lane: number; width?: number } | null => {
+    const role = committedSlideRoleByNoteId.get(target.id);
+    const chain = role ? committedSlideChainById.get(role.chainId) : undefined;
+    const head = chain?.long === true && role!.index === 1 ? noteById.get(chain.noteIds[0]) : undefined;
+    if (!head) return null;
+    const habahiro = canUseHabahiro(settings);
+    const headWidth = habahiro ? normalizeRhythmWidth(head.width) : 1;
+    if (isDirectionalNoteType(nextType)) {
+      const first = noteLaneSpanStart(head.type, head.lane, headWidth);
+      return { lane: Number((first + Math.floor((headWidth - 1) / 2)).toFixed(6)), ...(width === undefined ? {} : { width }) };
+    }
+    return { lane: head.lane, ...(habahiro ? { width: headWidth } : {}) };
+  };
+
   const applyToolToPlacedNote = (target: ChartNote) => {
     if (!isToolArmed) {
       setToolLane(target.lane);
@@ -740,7 +593,7 @@ export function useBoardInteractionActions(params: any) {
                 : normalizeDirectionalWidth(toolDirectionalWidth),
             }
             : (
-              canUseHabahiro(modeOptions) && isRhythmWidthEditableType(nextType)
+              canUseHabahiro(settings) && isRhythmWidthEditableType(nextType)
                 ? {
                   width: isRhythmWidthEditableType(note.type)
                     ? normalizeRhythmWidth(note.width)
@@ -757,7 +610,9 @@ export function useBoardInteractionActions(params: any) {
             }
             : {}),
         };
-        return normalizeNote(replacementDraft, settings);
+        return normalizeNote({ ...replacementDraft,
+          lane: laneForReplacement(note, nextType, replacementDraft.width, canUseHabahiro(settings)),
+          ...longTailPlacement(note, nextType, replacementDraft.width) }, settings);
       });
       return;
     }
@@ -792,7 +647,7 @@ export function useBoardInteractionActions(params: any) {
             : normalizeDirectionalWidth(toolDirectionalWidth),
         }
         : (
-          canUseHabahiro(modeOptions) && isRhythmWidthEditableType(nextType)
+          canUseHabahiro(settings) && isRhythmWidthEditableType(nextType)
             ? {
               width: isRhythmWidthEditableType(target.type)
                 ? normalizeRhythmWidth(target.width)
@@ -810,7 +665,10 @@ export function useBoardInteractionActions(params: any) {
         : {}),
     };
 
-    const replacement = normalizeNote(replacementDraft, settings);
+    const replacement = normalizeNote({ ...replacementDraft,
+      lane: laneForReplacement(target, nextType, replacementDraft.width, canUseHabahiro(settings)),
+      // A Long's tail lines up with its head, so the Long keeps its shape.
+      ...longTailPlacement(target, nextType, replacementDraft.width) }, settings);
     if (!replacement) {
       return;
     }
@@ -833,15 +691,21 @@ export function useBoardInteractionActions(params: any) {
   };
 
   const handleBoardContextMenu = (event: MouseEvent<HTMLDivElement>) => {
-    const activeSlideBuild = slideBuildRef.current;
-    if (activeSlideBuild) {
+    // Right-click drops the Slide tool's start: the current connection, not the ones made.
+    if (slideBuildRef.current) {
       event.preventDefault();
-      if (activeSlideBuild.persistUntilRightClick) {
-        finalizeSlideBuild({ disarmTool: true });
-      } else {
-        cancelSlideBuild();
-      }
+      cancelSlideBuild();
       return;
+    }
+    // The Hidden tool's right-click on a Hidden node's handle removes it from its Slide.
+    if (isToolArmed && tool === "hidden" && playfieldBoardRef.current) {
+      const rect = playfieldBoardRef.current.getBoundingClientRect();
+      const node = findNoteAtGridPoint(event.clientX - rect.left, event.clientY - rect.top);
+      if (node?.type === "hidden") {
+        event.preventDefault();
+        deleteRightClickedNotes([node.id]);
+        return;
+      }
     }
     if (event.target !== event.currentTarget) {
       return;
@@ -887,15 +751,16 @@ export function useBoardInteractionActions(params: any) {
     const activeSlideBuild = slideBuildRef.current;
     if (activeSlideBuild) {
       setSlideBuildCursor({ x, y });
-      if (activeSlideBuild.mode === "drag" && (event.buttons & 1) === 1) {
-        const hitNote = findNoteAtBoardPoint(x, y);
-        if (hitNote) {
-          appendSlideBuildNote(hitNote.id);
-        }
-      }
-
-      if (activeSlideBuild.persistUntilRightClick && activeSlideBuild.mode === "append") {
+      const hit = findNoteAtGridPoint(x, y);
+      const from = noteById.get(activeSlideBuild.noteIds[0]);
+      // Where a press on blank board would place the node the start connects to.
+      if (!hit) {
         const placement = resolveBoardPlacement(x, y, { type: "single" });
+        setSlideConnectTarget(placement && from && placement.beat > from.beat + 1e-6 ? "new" : null);
+        if (tool === "hidden") {
+          if (cursorPreview !== null) setCursorPreview(null);
+          return;
+        }
         const canPreviewSnap = placement !== null;
         setCursorPreview({
           x,
@@ -903,8 +768,9 @@ export function useBoardInteractionActions(params: any) {
           snappedLane: canPreviewSnap && placement ? placement.lane : null,
           snappedBeat: canPreviewSnap && placement ? placement.beat : null,
         });
-      } else if (cursorPreview !== null) {
-        setCursorPreview(null);
+      } else {
+        setSlideConnectTarget(hit.id);
+        if (cursorPreview !== null) setCursorPreview(null);
       }
       return;
     }
@@ -1046,7 +912,8 @@ export function useBoardInteractionActions(params: any) {
       return;
     }
 
-    if (tool === "slide") {
+    // The Slide and Hidden tools act on the press (pressSlideTool), not the click.
+    if (tool === "slide" || tool === "hidden") {
       return;
     }
 
@@ -1084,7 +951,10 @@ export function useBoardInteractionActions(params: any) {
       startClientY: event.clientY,
       startBoardY: event.clientY - rect.top,
       anchorNoteId: anchor?.id ?? null,
-      anchorLane: anchor?.lane ?? null,
+      // The lane the move snaps to whole lanes by: a wide note's first lane (its lane is its centre).
+      anchorLane: anchor === null ? null : isDirectionalNoteType(anchor.type) ? anchor.lane
+        : noteLaneSpanStart(anchor.type, anchor.lane,
+          canUseHabahiro(settings) ? normalizeRhythmWidth(anchor.width) : 1),
       anchorBeat: anchor?.beat ?? null,
       isDragging: false,
     };
@@ -1110,7 +980,7 @@ export function useBoardInteractionActions(params: any) {
 
     const targetElement = event.target as HTMLElement | null;
     const isNoteTarget = Boolean(targetElement?.closest(".note-token"));
-    if (isNoteTarget && !(isToolArmed && tool === "slide")) {
+    if (isNoteTarget && !(isToolArmed && (tool === "slide" || tool === "hidden"))) {
       return;
     }
 
@@ -1128,64 +998,10 @@ export function useBoardInteractionActions(params: any) {
       return;
     }
 
-    if (isToolArmed && tool === "slide") {
+    if (isToolArmed && (tool === "slide" || tool === "hidden")) {
       event.preventDefault();
-      const activeSlideBuild = slideBuildRef.current;
-      const hitNote = findNoteAtBoardPoint(boardX, boardY);
-      if (activeSlideBuild) {
-        if (activeSlideBuild.mode === "append") {
-          if (hitNote) {
-            const result = appendSlideBuildNote(hitNote.id);
-            if (result.blocked) {
-              showDialog("Long 不能添加中间节点。");
-              return;
-            }
-            if (result.appended) {
-              setSlideBuildMode("drag");
-            }
-            return;
-          }
-
-          const placement = resolveBoardPlacement(boardX, boardY, { type: "single" });
-          if (!placement) {
-            return;
-          }
-          const created = placeNoteWithType("single", placement.lane, placement.beat, {
-            selectPlaced: false,
-            preserveToolLaneOverride: true,
-          });
-          if (!created) {
-            return;
-          }
-          appendSlideBuildNote(created.id);
-          return;
-        }
-
-        if (hitNote && appendSlideBuildNote(hitNote.id).blocked) {
-          showDialog("Long 不能添加中间节点。");
-        }
-        return;
-      }
-
-      if (hitNote) {
-        startSlideBuildFromSeedNote(hitNote);
-        return;
-      }
-      const placement = resolveBoardPlacement(boardX, boardY, { type: "single" });
-      if (!placement) {
-        return;
-      }
-      const created = placeNoteWithType("single", placement.lane, placement.beat, {
-        selectPlaced: false,
-        preserveToolLaneOverride: true,
-      });
-      if (!created) {
-        return;
-      }
-      beginSlideBuild(created.id, created.id, {
-        persistUntilRightClick: true,
-        mode: "drag",
-      });
+      slidePressRef.current = { clientX: event.clientX, clientY: event.clientY };
+      pressSlideTool(findNoteAtGridPoint(boardX, boardY), boardX, boardY);
       return;
     }
 
@@ -1211,12 +1027,10 @@ export function useBoardInteractionActions(params: any) {
     applyPasteToolFromPalette,
     placeNoteWithType,
     placeNote,
-    beginSlideBuild,
-    setSlideBuildMode,
-    startSlideBuildFromSeedNote,
-    appendSlideBuildNote,
+    pressSlideTool,
+    slidePressRef,
     cancelSlideBuild,
-    finalizeSlideBuild,
+    releaseSlideConnection,
     applyToolToPlacedNote,
     placeBpmEvent,
     placeSvEvent,

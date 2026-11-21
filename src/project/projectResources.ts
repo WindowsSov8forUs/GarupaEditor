@@ -1,6 +1,6 @@
 import type { ApplicationResourceManager } from "../resources/applicationResourceManager";
 import { ResourceFailureError, type ResourceConsumerLease } from "../resources/contracts";
-import { PROJECT_FORMAT, PROJECT_MEDIA_ROLES, canonicalJson, projectContent, projectHash, validateProject,
+import { PROJECT_FORMAT, PROJECT_MEDIA_ROLES, PROJECT_SEMANTICS_VERSION, canonicalJson, projectContent, projectHash, validateProject,
   type ChartProject, type ChartProjectDraft, type ProjectMedia, type ProjectMediaRole } from "./chartProject";
 
 // Workspace IDs are content-addressed. Reuse metadata rather than rehashing an MV on every autosave.
@@ -32,7 +32,7 @@ export async function captureChartProject(manager: ApplicationResourceManager, i
     media[role] = entry;
     if (ref.id.startsWith("workspace/")) cache(manager).set(ref.id, entry);
   }
-  const body: Omit<ChartProject, "contentHash"> = { format: PROJECT_FORMAT, schemaVersion: 1 as const, semanticsVersion: 1 as const,
+  const body: Omit<ChartProject, "contentHash"> = { format: PROJECT_FORMAT, schemaVersion: 1 as const, semanticsVersion: PROJECT_SEMANTICS_VERSION,
     projectId: draft.projectId, metadata: draft.metadata, chart: draft.chart, media,
     audioFileName: draft.audioFileName, audioDurationSec: draft.audioDurationSec };
   const project: ChartProject = { ...body, contentHash: await projectHash(projectContent(body)) };

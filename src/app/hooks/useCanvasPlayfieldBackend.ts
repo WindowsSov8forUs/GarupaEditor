@@ -162,6 +162,8 @@ const BOARD_HORIZONTAL_OVERSCAN_PX = 160;
 const RENDER_WINDOW_SNAP_PX = 96;
 const MAX_RENDER_DPR = 2;
 const CONNECTION_SEGMENT_X_CONTINUITY_TOLERANCE_PX = 1;
+/** How much of its opacity a connection segment keeps while the Slide tool's current connection would remove it. */
+const SLIDE_CONNECT_BROKEN_ALPHA = 0.3;
 
 type SegmentGeometry = {
   topX: number;
@@ -445,6 +447,9 @@ export function useCanvasPlayfieldBackend(params: {
   svVisualLines: CanvasSvVisual[];
   laneChangeVisualLines: CanvasLaneChangeVisual[];
   selectedSlideSegmentIds: ReadonlySet<string>;
+  /** The Slide tool's current connection: the chains it involves (drawn brighter) and the connection segments it
+   * would remove (`chainId:index`, drawn faded). */
+  slideConnectHighlight: { chainIds: ReadonlySet<string>; broken: ReadonlySet<string> } | null;
   simultaneousSegments: RenderSimultaneousSegment[];
   connectionSegments: RenderConnectionSegment[];
   noteVisuals: CanvasNoteVisual[];
@@ -485,6 +490,7 @@ export function useCanvasPlayfieldBackend(params: {
     svVisualLines,
     laneChangeVisualLines,
     selectedSlideSegmentIds,
+    slideConnectHighlight,
     simultaneousSegments,
     connectionSegments,
     noteVisuals,
@@ -523,6 +529,7 @@ export function useCanvasPlayfieldBackend(params: {
     svVisualLines: CanvasSvVisual[];
     laneChangeVisualLines: CanvasLaneChangeVisual[];
     selectedSlideSegmentIds: ReadonlySet<string>;
+    slideConnectHighlight: { chainIds: ReadonlySet<string>; broken: ReadonlySet<string> } | null;
     simultaneousSegments: RenderSimultaneousSegment[];
     connectionSegments: RenderConnectionSegment[];
     noteVisuals: CanvasNoteVisual[];
@@ -580,6 +587,7 @@ export function useCanvasPlayfieldBackend(params: {
     laneWidth: number;
     noteVisualScale: number;
     selectedSlideSegmentIds: ReadonlySet<string>;
+    slideConnectHighlightRef: { chainIds: ReadonlySet<string>; broken: ReadonlySet<string> } | null;
     simultaneousSegmentsRef: RenderSimultaneousSegment[];
     connectionSegmentsRef: RenderConnectionSegment[];
     noteVisualsRef: CanvasNoteVisual[];
@@ -615,6 +623,7 @@ export function useCanvasPlayfieldBackend(params: {
     svVisualLines,
     laneChangeVisualLines,
     selectedSlideSegmentIds,
+    slideConnectHighlight,
     simultaneousSegments,
     connectionSegments,
     noteVisuals,
@@ -755,6 +764,7 @@ export function useCanvasPlayfieldBackend(params: {
         laneWidth: snapshot.laneWidth,
         noteVisualScale: snapshot.noteVisualScale,
         selectedSlideSegmentIds: snapshot.selectedSlideSegmentIds,
+        slideConnectHighlightRef: snapshot.slideConnectHighlight,
         simultaneousSegmentsRef: snapshot.simultaneousSegments,
         connectionSegmentsRef: snapshot.connectionSegments,
         noteVisualsRef: snapshot.noteVisuals,
@@ -780,6 +790,7 @@ export function useCanvasPlayfieldBackend(params: {
         || previousNoteMemo.laneWidth !== noteMemo.laneWidth
         || previousNoteMemo.noteVisualScale !== noteMemo.noteVisualScale
         || previousNoteMemo.selectedSlideSegmentIds !== noteMemo.selectedSlideSegmentIds
+        || previousNoteMemo.slideConnectHighlightRef !== noteMemo.slideConnectHighlightRef
         || previousNoteMemo.simultaneousSegmentsRef !== noteMemo.simultaneousSegmentsRef
         || previousNoteMemo.connectionSegmentsRef !== noteMemo.connectionSegmentsRef
         || previousNoteMemo.noteVisualsRef !== noteMemo.noteVisualsRef
@@ -1030,13 +1041,18 @@ export function useCanvasPlayfieldBackend(params: {
         }
         const lineWidthAt = (lanes: number) => editorSlideLineWidth(lanes, snapshot.laneWidth, snapshot.noteVisualScale);
         // The selected line segment group is drawn brighter; the selection frame encloses it.
-        const highlighted = !segment.isPreviewChain && snapshot.selectedSlideSegmentIds.has(segment.slideSegmentId);
+        // So is every segment of a chain the Slide tool's current connection involves; a segment that connection
+        // would remove is drawn faded.
+        const connect = snapshot.slideConnectHighlight;
+        const broken = connect !== null && connect.broken.has(`${segment.chainId}:${segment.index}`);
+        const highlighted = !segment.isPreviewChain && !broken && (snapshot.selectedSlideSegmentIds.has(segment.slideSegmentId)
+          || (connect !== null && connect.chainIds.has(segment.chainId)));
         if (highlighted) {
           context.save();
           context.filter = SELECTED_HIGHLIGHT_FILTER;
         }
-        drawConnectionSegment(context, segment, geometry, lineWidthAt(segment.fromSpanLanes),
-          lineWidthAt(segment.toSpanLanes), texture);
+        drawConnectionSegment(context, broken ? { ...segment, opacity: segment.opacity * SLIDE_CONNECT_BROKEN_ALPHA } : segment,
+          geometry, lineWidthAt(segment.fromSpanLanes), lineWidthAt(segment.toSpanLanes), texture);
         if (highlighted) context.restore();
       }
 

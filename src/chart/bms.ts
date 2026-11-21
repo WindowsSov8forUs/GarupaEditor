@@ -629,9 +629,12 @@ function laneSpan(n: Note): [number, number] {
   return [unique[0]!, unique.length];
 }
 
+/** A non-Directional note's lane: the centre of the span from `first`. */
+const centreLane = (first: number, width: number) => first + (width - 1) / 2;
+
 function simpleNote(type: Exclude<GarupaChartJsonSimpleNoteType, "Hidden">, n: Note) {
-  const [lane, width] = laneSpan(n);
-  return { type, beat: beatOf(n.pos), lane, width };
+  const [first, width] = laneSpan(n);
+  return { type, beat: beatOf(n.pos), lane: centreLane(first, width), width };
 }
 
 const isLeftDirectionalEnd = (game: number) => game === 12 || game === 14 || game === 16;
@@ -646,12 +649,12 @@ function connection(n: Note, head: boolean): GarupaChartJsonSlideConnection {
     const direction: GarupaChartJsonDirection = isLeftDirectionalEnd(g) ? "Left" : "Right";
     return { type: "Directional", beat, lane, width: 1 + n.adds.length, direction };
   }
-  if (g === 3 || g === 8 || g === 9) return { type: "Flick", beat, lane, width };
+  if (g === 3 || g === 8 || g === 9) return { type: "Flick", beat, lane: centreLane(lane, width), width };
   if (n.invisible && !head) {
     const sign = n.vdir === 1 ? -1 : n.vdir === 2 ? 1 : 0;
-    return { type: "Hidden", beat, lane: (100 * lane + sign * n.vdist) / 100, width };
+    return { type: "Hidden", beat, lane: centreLane((100 * lane + sign * n.vdist) / 100, width), width };
   }
-  return { type: n.add === 2 ? "Skill" : "Single", beat, lane, width };
+  return { type: n.add === 2 ? "Skill" : "Single", beat, lane: centreLane(lane, width), width };
 }
 
 interface Keyed { pos: number; button: number; cc: number; family?: "A" | "B"; item: GarupaChartJsonItem }

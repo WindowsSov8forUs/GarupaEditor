@@ -1,3 +1,4 @@
+import { editorHiddenMarkGeometry } from "../../app/editorNoteMetrics";
 import type { SlideFitSettings } from "../../app/slideFitShapes";
 import profile from "../../data/originalSongDetailProfile.json";
 import { OriginalPrefabModel, type OriginalPrefab } from "../originalPrefabModel";
@@ -8,14 +9,14 @@ import { hitTestEventBubble, type EventBubbleHit, type TimelineEventTarget } fro
 import type { EventBubbleHandlers } from "../../app/hooks/usePlayfieldRenderers";
 import { EditorBpmDialog } from "./EditorBpmDialog";
 import { EditorSvDialog } from "./EditorSvDialog";
-import { DEFAULT_METADATA, GLOBAL_TIMING_GROUP_ID, toolPreviewNoteType } from "../../chartCore";
+import { DEFAULT_METADATA, GLOBAL_TIMING_GROUP_ID, noteLaneSpanStart, toolPreviewNoteType } from "../../chartCore";
 import { EditorBeatDivisionButton } from "./EditorBeatDivision";
 import { EditorOptionsButton } from "./EditorOptionsButton";
 import { EditorOptionsDrawer } from "./EditorOptionsDrawer";
 import { EDITOR_HISTORY_TRAILING_WIDTH, EditorControlColumn, EditorHistoryTools, EditorMirrorTools, EditorPlaybackClock } from "./EditorControlColumn";
 import { useApplicationResourceUrl } from "../../resources/applicationResourceContext";
 import { ORIGINAL_HEADER_MENU_BOUNDS, ORIGINAL_HEADER_TITLE_BOTTOM } from "../OriginalPageHeader";
-import { editorDirectionalBackLineWidth, editorDirectionalHeadGeometry, editorFlickArrowGeometry, editorNoteHeight, editorDirectionalSegmentWidth, editorNoteTokenWidth, SELECTION_FRAME_MARGIN, SELECTION_RESIZE_GRIP_MAX_HEIGHT, SELECTION_RESIZE_GRIP_SCALE, SELECTION_RESIZE_GRIP_WIDTH, SELECTION_RESIZE_HIT_WIDTH } from "../../app/editorNoteMetrics";
+import { editorDirectionalBackLineWidth, editorDirectionalHeadGeometry, editorFlickArrowGeometry, editorNoteHeight, editorDirectionalSegmentWidth, editorHiddenButtonHeight, editorNoteTokenWidth, SELECTION_FRAME_MARGIN, SELECTION_RESIZE_GRIP_MAX_HEIGHT, SELECTION_RESIZE_GRIP_SCALE, SELECTION_RESIZE_GRIP_WIDTH, SELECTION_RESIZE_HIT_WIDTH } from "../../app/editorNoteMetrics";
 import { EditorSelectionOverlay, type EditorSelectionOverlayHandle } from "./EditorSelectionOverlay";
 import { OriginalMenuBackground } from "../OriginalMenuBackground";
 import { useApplicationPresentation, useReturnToTitle } from "../../app/titleNavigation";
@@ -161,6 +162,20 @@ function SlideSegmentsLayer({ render }: { render: (window: { top: number; bottom
   return <>{render(window)}</>;
 }
 
+/** The note a press on a note's button means: of the overlapping buttons under it, the note whose centre is nearest. */
+function pressedNoteOf(runtime: any, event: { clientX: number; clientY: number }, fallback: any) {
+  const point = boardPointOf(runtime, event);
+  return (point && runtime.findNoteNearestAtBoardPoint?.(point.x, point.y)) ?? fallback;
+}
+
+/** A note press's point on the playfield board. */
+function boardPointOf(runtime: any, event: { clientX: number; clientY: number }): { x: number; y: number } | null {
+  const board = runtime.playfieldBoardRef?.current as HTMLElement | null | undefined;
+  if (!board) return null;
+  const rect = board.getBoundingClientRect();
+  return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+}
+
 export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   const returnToTitle = useReturnToTitle();
   const presentation = useApplicationPresentation();
@@ -296,14 +311,14 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     cancelSelectionWidth,
     renderNotes,
     slideBuildRef,
-    appendSlideBuildNote,
-    setSlideBuildMode,
-    startSlideBuildFromSeedNote,
+    pressSlideTool,
+    slidePressRef,
+    findNoteAtGridPoint,
+    findNoteNearestAtBoardPoint,
     beginSelectedNotesMove,
     suppressNextNoteClickRef,
     toggleSelectedNote,
     applyToolToPlacedNote,
-    finalizeSlideBuild,
     cancelSlideBuild,
     deleteRightClickedNotes,
     toolDirectionalWidth,
@@ -926,10 +941,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       };
       const spanLanes = getNoteSpanLanes(adjustedNote);
       const isDirectional = isDirectionalNoteType(source.type);
-      const directionalStartLane =
-        source.type === "directional_flick_left"
-          ? adjustedLane - spanLanes + 1
-          : adjustedLane;
+      const directionalStartLane = noteLaneSpanStart(source.type, adjustedLane, spanLanes);
       const widthValue =
         isHabahiroEnabled && isRhythmWidthEditableType(source.type)
           ? normalizeRhythmWidth(source.width)
@@ -1093,10 +1105,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       show(canvasNoteCursorPreviewRef.current);
       applyPos(canvasNoteCursorPreviewRef.current, livePreview.x, livePreview.y);
       if (livePreview.snappedLane !== null && livePreview.snappedBeat !== null) {
-        const snappedStartLane =
-          tool === "directional_flick_left"
-            ? livePreview.snappedLane - canvasPreviewSpanLanes + 1
-            : livePreview.snappedLane;
+        const snappedStartLane = noteLaneSpanStart(canvasPreviewType ?? "single", livePreview.snappedLane, canvasPreviewSpanLanes);
         const snappedX = (laneToColumn(snappedStartLane) + canvasPreviewSpanLanes / 2) * LANE_WIDTH;
         const snappedY = beatToY(livePreview.snappedBeat);
         show(canvasNoteSnapPreviewRef.current);
@@ -1200,15 +1209,16 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     isToolArmed,
     tool,
     slideBuildRef,
-    appendSlideBuildNote,
-    setSlideBuildMode,
+    pressSlideTool,
+    slidePressRef,
+    findNoteAtGridPoint,
+    findNoteNearestAtBoardPoint,
+    playfieldBoardRef,
     showDialog,
-    startSlideBuildFromSeedNote,
     beginSelectedNotesMove,
     suppressNextNoteClickRef,
     toggleSelectedNote,
     applyToolToPlacedNote,
-    finalizeSlideBuild,
     cancelSlideBuild,
     clearSelection,
     deleteRightClickedNotes,
@@ -1234,14 +1244,25 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     selectionOverlayRef.current?.setHoverFrame({ left: rect.left - boardRect.left - margin, top: rect.top - boardRect.top - margin,
       width: rect.width + 2 * margin, height: rect.height + 2 * margin });
   }, [playfieldBoardRef]);
-  const handleSharedNoteMouseEnter = useCallback((event: ReactMouseEvent<HTMLButtonElement>) => {
-    hoveredNoteIdRef.current = event.currentTarget.dataset.noteId ?? null;
+  // With a placing tool, the hover frame is around the note a press would act on: the one in the grid cell under the
+  // pointer (findNoteAtGridPoint), not the note whose button the pointer is over.
+  const placingToolHovers = () => {
+    const runtime = noteInteractionRef.current;
+    return Boolean(runtime?.isToolArmed && runtime.tool !== "copy" && runtime.tool !== "paste");
+  };
+  // The hover frame follows the pointer over the board (updateGridHoverFrame), not a button's enter and leave.
+  const handleSharedNoteMouseEnter = useCallback(() => {}, []);
+  const updateGridHoverFrame = useCallback((event: ReactMouseEvent<HTMLElement>) => {
+    const runtime = noteInteractionRef.current;
+    if (!runtime) return;
+    const point = boardPointOf(runtime, event);
+    const id = !point ? null : placingToolHovers() ? runtime.findNoteAtGridPoint(point.x, point.y)?.id ?? null
+      : runtime.findNoteNearestAtBoardPoint(point.x, point.y)?.id ?? null;
+    if (id === hoveredNoteIdRef.current) return;
+    hoveredNoteIdRef.current = id;
     placeHoverFrame();
   }, [placeHoverFrame]);
-  const handleSharedNoteMouseLeave = useCallback(() => {
-    hoveredNoteIdRef.current = null;
-    selectionOverlayRef.current?.setHoverFrame(null);
-  }, []);
+  const handleSharedNoteMouseLeave = useCallback(() => {}, []);
   useLayoutEffect(() => {
     if (hoveredNoteIdRef.current) placeHoverFrame();
   });
@@ -1251,7 +1272,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     if (!runtime || !noteId) {
       return;
     }
-    const note = runtime.noteById?.get(noteId);
+    const note = pressedNoteOf(runtime, event, runtime.noteById?.get(noteId));
     if (!note) {
       return;
     }
@@ -1266,28 +1287,13 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     if (runtime.isToolArmed && (runtime.tool === "copy" || runtime.tool === "paste")) {
       return;
     }
-    if (runtime.isToolArmed && runtime.tool === "slide") {
+    if (runtime.isToolArmed && (runtime.tool === "slide" || runtime.tool === "hidden")) {
       event.preventDefault();
       event.stopPropagation();
-      const activeSlideBuild = runtime.slideBuildRef.current;
-      if (activeSlideBuild) {
-        if (activeSlideBuild.mode === "append") {
-          const result = runtime.appendSlideBuildNote(note.id);
-          if (result.blocked) {
-            runtime.showDialog("Long 不能添加中间节点。");
-            return;
-          }
-          if (result.appended) {
-            runtime.setSlideBuildMode("drag");
-          }
-          return;
-        }
-        if (runtime.appendSlideBuildNote(note.id).blocked) {
-          runtime.showDialog("Long 不能添加中间节点。");
-        }
-        return;
-      }
-      runtime.startSlideBuildFromSeedNote(note);
+      // The press acts on the grid cell under it: this note, another note there, or blank board.
+      const point = boardPointOf(runtime, event);
+      runtime.slidePressRef.current = { clientX: event.clientX, clientY: event.clientY };
+      runtime.pressSlideTool(point ? runtime.findNoteAtGridPoint(point.x, point.y) : note, point?.x ?? 0, point?.y ?? 0);
       return;
     }
     runtime.beginSelectedNotesMove(event, note.id);
@@ -1299,7 +1305,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     if (!runtime || !noteId) {
       return;
     }
-    const note = runtime.noteById?.get(noteId);
+    const note = pressedNoteOf(runtime, event, runtime.noteById?.get(noteId));
     if (!note) {
       return;
     }
@@ -1322,8 +1328,19 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     if (runtime.isToolArmed && (runtime.tool === "copy" || runtime.tool === "paste")) {
       return;
     }
+    // A placing tool acts on the grid cell under the press: a note's button can reach into the cells next to it (notes
+    // closer than their buttons are tall). A press in a cell with no note there is the board's, which places in it.
+    let target = note;
+    if (runtime.isToolArmed && runtime.tool !== "slide" && runtime.tool !== "hidden") {
+      const point = boardPointOf(runtime, event);
+      const gridNote = point ? runtime.findNoteAtGridPoint(point.x, point.y) : note;
+      if (!gridNote && !runtime.suppressNextNoteClickRef.current) {
+        return;
+      }
+      target = gridNote ?? note;
+    }
     event.stopPropagation();
-    if (runtime.isToolArmed && runtime.tool === "slide") {
+    if (runtime.isToolArmed && (runtime.tool === "slide" || runtime.tool === "hidden")) {
       return;
     }
     if (runtime.suppressNextNoteClickRef.current) {
@@ -1334,7 +1351,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       runtime.toggleSelectedNote(note.id);
       return;
     }
-    runtime.applyToolToPlacedNote(note);
+    runtime.applyToolToPlacedNote(target);
   }, []);
 
   const handleSharedNoteContextMenu = useCallback((event: ReactMouseEvent<HTMLButtonElement>) => {
@@ -1343,7 +1360,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     if (!runtime || !noteId) {
       return;
     }
-    const note = runtime.noteById?.get(noteId);
+    const note = pressedNoteOf(runtime, event, runtime.noteById?.get(noteId));
     if (!note) {
       return;
     }
@@ -1352,13 +1369,9 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     if (runtime.isNoteOutsideActiveTimingGroup?.(note)) {
       return;
     }
-    const activeSlideBuild = runtime.slideBuildRef.current;
-    if (activeSlideBuild) {
-      if (activeSlideBuild.persistUntilRightClick) {
-        runtime.finalizeSlideBuild({ disarmTool: true });
-      } else {
-        runtime.cancelSlideBuild();
-      }
+    // Right-click drops the Slide tool's start.
+    if (runtime.slideBuildRef.current) {
+      runtime.cancelSlideBuild();
       return;
     }
     runtime.deleteRightClickedNotes([note.id]);
@@ -1368,17 +1381,42 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     () =>
       renderNotes.map((note: any) => {
         if (note.type === "hidden") {
-          return null;
+          // A Hidden node is a note one lane wide on the board, drawn as its mark (the skin's slide among body); off
+          // the beat lines it is neither shown nor operable on a board too compressed for subdivision lines.
+          if (!vm.isHiddenNodeShown(note)) return null;
+          const span = getNoteSpanLanes(note);
+          const { lane, beat } = getRenderedNotePlacement(note);
+          const y = getNoteDisplayY?.(note, beat) ?? beatToY(beat);
+          const mark = editorHiddenMarkGeometry(span, LANE_WIDTH, noteVisualScale, vm.hiddenMarkBoxAt(span));
+          const isStart = isSlideBuilding && slideBuildSelectedIdSet.has(note.id);
+          const muted = isNoteOutsideActiveTimingGroup?.(note) === true;
+          return (
+            <NoteWindowCull key={note.id} y={y}>
+            <button key={note.id} type="button" data-note-id={note.id}
+              className={`note-token note-hitbox hidden-node-token ${selectedNoteIdSet.has(note.id) ? "selected" : ""} ${muted ? "timing-group-muted" : ""}`}
+              style={{ left: (laneToColumn(lane) + 0.5) * LANE_WIDTH, top: y,
+                width: editorNoteTokenWidth(span, false, LANE_WIDTH, noteVisualScale),
+                height: editorHiddenButtonHeight(LANE_WIDTH, noteVisualScale) }}
+              title={`Hidden | Lane ${note.lane} | Beat ${formatBeat(note.beat)}`}
+              onMouseDown={handleSharedNoteMouseDown}
+              onMouseEnter={handleSharedNoteMouseEnter}
+              onMouseLeave={handleSharedNoteMouseLeave}
+              onClick={handleSharedNoteClick}
+              onContextMenu={handleSharedNoteContextMenu}
+            >
+              <span className={`hidden-node-handle${isStart ? " is-start" : ""}${selectedNoteIdSet.has(note.id) ? " is-selected" : ""}`}
+                style={{ left: `calc(50% + ${mark.offsetX - mark.width / 2}px)`, top: `calc(50% + ${mark.offsetY - mark.height / 2}px)`,
+                  width: mark.width, height: mark.height }} />
+            </button>
+            </NoteWindowCull>
+          );
         }
         const spec = NOTE_SPECS[note.type];
         const isDirectional = isDirectionalNoteType(note.type);
         const spanLanes = getNoteSpanLanes(note);
         const { lane: renderLane, beat: renderBeat } = getRenderedNotePlacement(note);
         const renderY = getNoteDisplayY?.(note, renderBeat) ?? beatToY(renderBeat);
-        const directionalStartLane =
-          note.type === "directional_flick_left"
-            ? renderLane - spanLanes + 1
-            : renderLane;
+        const directionalStartLane = noteLaneSpanStart(note.type, renderLane, spanLanes);
         const resolved = resolvePlacedNoteLayers(note, { beat: renderBeat });
         if (!resolved.layers.base) {
           return null;
@@ -1450,9 +1488,10 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       resolvePlacedNoteLayers,
       selectedNoteIdSet,
       slideBuildSelectedIdSet,
+      vm.hiddenMarkBoxAt,
+      vm.isHiddenNodeShown,
     ],
   );
-
   return (
     <OriginalUiSoundProvider volumePercent={appOptionSettings.simulatorSettings.systemSeVolumePercent}
       masterPercent={appOptionSettings.simulatorSettings.masterVolumePercent} onError={message => vm.showDialog(`界面音效失败：${message}`, "error")}>
@@ -1572,7 +1611,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
           onPlay={sidebarPlay}
           onPreview={sidebarPreview}
           applyToolFromPalette={applyToolFromPalette} bpm={vm.activeBpmValue} onApplyBpm={vm.updateActiveBpm}
-          onArmBpmTool={vm.applyBpmToolFromPalette} onArmLongTool={vm.applyLongToolFromPalette} onArmMiddleTool={vm.applyMiddleToolFromPalette} getSpriteLayers={getPaletteSpriteLayers}
+          onArmBpmTool={vm.applyBpmToolFromPalette} onArmLongTool={vm.applyLongToolFromPalette} onArmMiddleTool={vm.applyMiddleToolFromPalette} onDisarmTool={() => vm.setIsToolArmed(false)} getSpriteLayers={getPaletteSpriteLayers}
           getSpriteAspectRatio={getPaletteSpriteAspectRatio} renderSpriteStack={renderPaletteSpriteStack}
           historyTools={historyTools} mirrorTools={mirrorTools} directionalEnabled={vm.editorMode !== "basic"} longBodyTexture={longBodyTexture} curveSlideLineTexture={curveSlideLineTexture}
           curve={sidebarCurve}
@@ -1610,7 +1649,11 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                 style={{ height: scaledScrollContentHeight + judgeInsetBottom }}
                 onMouseDown={handleBoardMouseDown}
                 onMouseMove={handleBoardMouseMove}
-                onMouseLeave={handleBoardMouseLeave}
+                onMouseLeave={(event) => {
+                  hoveredNoteIdRef.current = null;
+                  selectionOverlayRef.current?.setHoverFrame(null);
+                  handleBoardMouseLeave(event);
+                }}
                 onContextMenu={handleBoardContextMenu}
                 // Event bubbles drawn on the canvas are the events' hit areas; only the BPM and SV tools act on them.
                 onMouseDownCapture={(event) => {
@@ -1631,6 +1674,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                   eventBubbleHandlers.remove(hit);
                 }}
                 onMouseMoveCapture={(event) => {
+                  updateGridHoverFrame(event);
                   const hovering = eventBubbleHitAt(event) !== null;
                   if (event.currentTarget.classList.contains("is-over-event-bubble") !== hovering) {
                     event.currentTarget.classList.toggle("is-over-event-bubble", hovering);

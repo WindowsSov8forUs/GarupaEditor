@@ -26,7 +26,6 @@ export function usePlayfieldRenderers(params: any) {
     setSvEvents,
     tool,
     slideBuildRef,
-    finalizeSlideBuild,
     cancelSlideBuild,
     noteById,
     getRenderedNotePlacement,
@@ -42,6 +41,9 @@ export function usePlayfieldRenderers(params: any) {
     getNoteSpanLanes,
     longLineOpacityScale,
     onMiddleToolConnectionClick,
+    onHiddenToolConnectionClick,
+    onSlideKindConnectionClick,
+    isHiddenHandleAtClientPoint,
     onCurveToolConnectionClick,
     noteVisualScale,
   } = params;
@@ -167,7 +169,20 @@ export function usePlayfieldRenderers(params: any) {
             if (isPreviewChain) {
               return;
             }
-            if (isToolArmed && (tool === "slide" || tool === "middle" || tool === "curve")) {
+            // The Slide and Hidden tools' press on a line is the board's when it connects (there is a start) or, for
+            // the Hidden tool, presses the Hidden node in that grid cell.
+            if (isToolArmed && (tool === "slide" || tool === "hidden")
+              && (slideBuildRef.current || (tool === "hidden" && isHiddenHandleAtClientPoint?.(event.clientX, event.clientY)))) {
+              return;
+            }
+            // With a start the Hidden tool connects to a new node here, as on blank board; without one its click
+            // inserts a node into this line.
+            // A Hidden node's handle on the line is pressed as the handle.
+            if (isToolArmed && tool === "hidden"
+              && (slideBuildRef.current || isHiddenHandleAtClientPoint?.(event.clientX, event.clientY))) {
+              return;
+            }
+            if (isToolArmed && (tool === "slide" || tool === "long" || tool === "middle" || tool === "curve" || tool === "hidden")) {
               event.preventDefault();
               event.stopPropagation();
               return;
@@ -196,6 +211,15 @@ export function usePlayfieldRenderers(params: any) {
               }
               return;
             }
+            if (isToolArmed && tool === "hidden") {
+              event.preventDefault();
+              event.stopPropagation();
+              if (!slideBuildRef.current && !isHiddenHandleAtClientPoint?.(event.clientX, event.clientY)
+                && typeof onHiddenToolConnectionClick === "function") {
+                onHiddenToolConnectionClick(segment, event);
+              }
+              return;
+            }
             // The curve tool applies its shape preset to the pressed segment.
             if (isToolArmed && tool === "curve") {
               event.preventDefault();
@@ -205,9 +229,11 @@ export function usePlayfieldRenderers(params: any) {
               }
               return;
             }
-            if (isToolArmed && tool === "slide") {
+            // Long ⇄ Slide: the Long tool makes the pressed straight two-node Slide a Long, the Slide tool a Long a Slide.
+            if (isToolArmed && (tool === "slide" || tool === "long")) {
               event.preventDefault();
               event.stopPropagation();
+              if (!slideBuildRef.current) onSlideKindConnectionClick?.(segment);
               return;
             }
             if (shouldBypassConnectionLeftClick) {
@@ -229,6 +255,11 @@ export function usePlayfieldRenderers(params: any) {
             if (isPreviewChain) {
               return;
             }
+            // The Hidden tool's right-click on a handle on the line is for the handle.
+            if (isToolArmed && tool === "hidden" && !slideBuildRef.current
+              && isHiddenHandleAtClientPoint?.(event.clientX, event.clientY)) {
+              return;
+            }
             if (isMuted) {
               event.preventDefault();
               event.stopPropagation();
@@ -236,13 +267,8 @@ export function usePlayfieldRenderers(params: any) {
             }
             event.preventDefault();
             event.stopPropagation();
-            const activeSlideBuild = slideBuildRef.current;
-            if (activeSlideBuild) {
-              if (activeSlideBuild.persistUntilRightClick) {
-                finalizeSlideBuild({ disarmTool: true });
-              } else {
-                cancelSlideBuild();
-              }
+            if (slideBuildRef.current) {
+              cancelSlideBuild();
               return;
             }
             deleteRightClickedNotes(slideSegmentEndNoteIds(slideSegmentId));

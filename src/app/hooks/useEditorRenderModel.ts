@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { ChartNote } from "../../chartCore";
+import { noteLaneSpanStart, type ChartNote } from "../../chartCore";
 import { slideSegmentId, slideSegmentRanges } from "../slideSegments";
 
 type RenderTimingSegment = {
@@ -127,10 +127,7 @@ export function useEditorRenderModel(params: any) {
       }
       const placement = getRenderedNotePlacement(note);
       const spanLanes = getNoteSpanLanes(note);
-      const startLane =
-        note.type === "directional_flick_left"
-          ? placement.lane - spanLanes + 1
-          : placement.lane;
+      const startLane = noteLaneSpanStart(note.type, placement.lane, spanLanes);
       sprites.push({
         id: note.id,
         type: note.type,
@@ -170,9 +167,7 @@ export function useEditorRenderModel(params: any) {
       .map((note: ChartNote) => {
         const placement = getRenderedNotePlacement(note);
         const spanLanes = getNoteSpanLanes(note);
-        const startLane = note.type === "directional_flick_left"
-          ? placement.lane - spanLanes + 1
-          : placement.lane;
+        const startLane = noteLaneSpanStart(note.type, placement.lane, spanLanes);
         const endLane = startLane + spanLanes - 1;
         // A note's sync line ends at its centre; a Directional's at the centre of its lane nearest the other note.
         const directional = isDirectionalType(note.type);
@@ -317,14 +312,16 @@ export function useEditorRenderModel(params: any) {
       for (let index = 0; index < chainNotes.length - 1; index += 1) {
         const fromAnchor = chainNodeAnchors[index];
         const toAnchor = chainNodeAnchors[index + 1];
-        // As the original's NoteMesh: each end is as wide as its own note's buttons (a Directional member is one),
-        // the line's width runs linearly between them.
+        // As the original's NoteMesh: a Slide segment's ends are each as wide as their own note's buttons (a
+        // Directional member is one), the line's width running linearly between them. A Long's body is its root's
+        // buttons at both ends (buildOrdinaryLongNormalMesh), straight from the head to its tail, a Directional tail too.
+        const isLong = chain.long === true;
         const fromSpanLanes = fromAnchor.directional ? 1 : fromAnchor.spanLanes;
-        const toSpanLanes = toAnchor.directional ? 1 : toAnchor.spanLanes;
+        const toSpanLanes = isLong ? fromSpanLanes : toAnchor.directional ? 1 : toAnchor.spanLanes;
         const spanLanes = Math.max(fromSpanLanes, toSpanLanes);
         const fromX = fromAnchor.outgoingX;
         const fromY = fromAnchor.y;
-        const toX = toAnchor.incomingX;
+        const toX = isLong ? fromX : toAnchor.incomingX;
         const toY = toAnchor.y;
         const deltaX = normalizeCoord(toX - fromX);
         const deltaY = normalizeCoord(toY - fromY);
