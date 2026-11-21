@@ -1,4 +1,4 @@
-import { editorNoteHeight, editorDirectionalSegmentWidth } from "../editorNoteMetrics";
+import { editorNoteHeight, editorDirectionalSegmentWidth, editorHiddenMarkGeometry } from "../editorNoteMetrics";
 import { useCallback, useEffect, useMemo, useRef, type UIEvent } from "react";
 import { noteLaneSpanStart, toolPreviewNoteType, type ChartNote, type NoteType } from "../../chartCore";
 import { buildSelectionMoveOffsetMap } from "../slideHiddenMoveOffsets";
@@ -16,12 +16,13 @@ function playbackAnchorFromBottom(playfield: HTMLElement, positionPercent: numbe
   return playfield.getBoundingClientRect().bottom - judgeBottom + ratio * (judgeBottom - workspaceTop);
 }
 
-/** How far from a Hidden node's centre its handle is hit, in lanes. */
+/** The least height a Hidden node's mark is hit over, in lanes. */
 export const HIDDEN_HANDLE_HIT_LANES = 0.3;
 
 export function useEditorGeometry(params: any) {
   const {
     laneMin,
+    hiddenMarkBoxRef,
     playbackLinePositionPercent,
     bpmTimeline,
     boardHeight,
@@ -374,20 +375,25 @@ export function useEditorGeometry(params: any) {
     [LANE_WIDTH, getNoteCenterAt, getNoteHitboxWidth, noteVisualScale, notes],
   );
 
-  /** The Hidden node whose handle (the Hidden tool's control point) is at the point, nearest first. */
+  /** The Hidden node whose mark (the Hidden tool's handle) is at the point, nearest first. A mark is hit over its
+   * width and at least HIDDEN_HANDLE_HIT_LANES of a lane tall. */
   const findHiddenNodeAtBoardPoint = useCallback(
     (x: number, y: number): ChartNote | null => {
-      const radius = LANE_WIDTH * HIDDEN_HANDLE_HIT_LANES;
       let best: ChartNote | null = null, bestDistance = Infinity;
       for (const note of notes) {
         if (note.type !== "hidden") continue;
         const center = getNoteCenterAt(note);
-        const distance = Math.hypot(center.x - x, center.y - y);
-        if (distance <= radius && distance < bestDistance) { best = note; bestDistance = distance; }
+        const mark = editorHiddenMarkGeometry(center.spanLanes, LANE_WIDTH, noteVisualScale,
+          hiddenMarkBoxRef?.current?.(center.spanLanes) ?? null);
+        const markX = center.x + mark.offsetX, markY = center.y + mark.offsetY;
+        const halfHeight = Math.max(mark.height, LANE_WIDTH * HIDDEN_HANDLE_HIT_LANES) / 2;
+        if (Math.abs(x - markX) > mark.width / 2 || Math.abs(y - markY) > halfHeight) continue;
+        const distance = Math.hypot(markX - x, markY - y);
+        if (distance < bestDistance) { best = note; bestDistance = distance; }
       }
       return best;
     },
-    [LANE_WIDTH, getNoteCenterAt, notes],
+    [LANE_WIDTH, getNoteCenterAt, noteVisualScale, notes],
   );
 
   /** The lane a Hidden node takes at board x: free, to the original virtual lane's 0.01 lanes. */

@@ -44,6 +44,39 @@ export function editorNoteTokenWidth(spanLanes: number, directional: boolean, la
   return Math.max(1, laneWidth * lanesOf(NOTE_BODY_WIDTH_PX[span - 1]!) * noteScale);
 }
 
+/**
+ * The Hidden node mark: the body of the skin's slide among sprite, the part of it at least half opaque (measured from
+ * the current skin, see spriteOpaqueBox), where the editor draws that sprite for a node `spanLanes` wide. Until the
+ * sprite is measured, or when it cannot be, the body fitted over every skin's slide among (note_slide_among, 308 × 120
+ * px in the 22 distinct skins; mean alpha ≥ 0.5): a capsule 13 px in from each end, rows 49–66 px.
+ */
+export const HIDDEN_MARK_FITTED_BOX = { left: 13 / 308, right: 295 / 308, top: 49 / 120, bottom: 66 / 120 } as const;
+
+/** A Hidden node's mark: its size, and where its centre is from the node's centre. `box` is the sprite's opaque box as
+ * fractions of the sprite (null: the fitted one). */
+export function editorHiddenMarkGeometry(spanLanes: number, laneWidth: number, noteScale: number,
+  box: { left: number; right: number; top: number; bottom: number } | null = null) {
+  const span = Math.min(NOTE_BODY_WIDTH_PX.length, Math.max(1, Math.round(spanLanes)));
+  const tokenWidth = editorNoteTokenWidth(span, false, laneWidth, noteScale);
+  const tokenHeight = editorNoteHeight(laneWidth, noteScale);
+  if (box) {
+    return {
+      width: (box.right - box.left) * tokenWidth,
+      height: (box.bottom - box.top) * tokenHeight,
+      offsetX: ((box.left + box.right) / 2 - 0.5) * tokenWidth,
+      offsetY: ((box.top + box.bottom) / 2 - 0.5) * tokenHeight,
+    };
+  }
+  const unit = laneWidth * noteScale / SPRITE_PX_PER_LANE;
+  const fitted = HIDDEN_MARK_FITTED_BOX;
+  return {
+    width: (NOTE_BODY_WIDTH_PX[span - 1]! - 2 * fitted.left * 308) * unit,
+    height: (fitted.bottom - fitted.top) * tokenHeight,
+    offsetX: 0,
+    offsetY: ((fitted.top + fitted.bottom) / 2 - 0.5) * tokenHeight,
+  };
+}
+
 /** Width of a Slide or Long line `spanLanes` lanes wide (a Directional end counts as 1). */
 export function editorSlideLineWidth(spanLanes: number, laneWidth: number, noteScale: number): number {
   const span = Math.max(1, spanLanes);

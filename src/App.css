@@ -2752,11 +2752,12 @@ button.app-settings-apply-button:not(.original-button):not(.note-token):not(.bpm
 .editor-note-button-slot { position: relative; width: var(--note-button-width); height: var(--note-button-height); }
 .editor-note-button-image { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
 .editor-note-button-image .note-sprite-stack { width: 100%; max-height: 100%; }
-.editor-hidden-icon .note-sprite-stack { opacity: 0.4; }
-/* The Hidden tool's handle on a Hidden node; the current connection's start is filled. */
-.hidden-node-handle { position: absolute; z-index: 5; box-sizing: border-box; border-radius: 50%; pointer-events: none;
-  border: 2px solid rgba(83, 232, 140, 0.95); background: rgba(20, 40, 30, 0.55); }
-.hidden-node-handle.is-start { background: rgba(83, 232, 140, 0.95); }
+/* A Hidden node's mark (the slide among sprite's body): semi-transparent green border, semi-transparent black fill; the
+   current connection's start is filled green. The Hidden tool's icon is one. */
+.hidden-node-handle { position: absolute; z-index: 5; box-sizing: border-box; border-radius: 9999px; pointer-events: none;
+  border: 1.5px solid rgba(83, 232, 140, 0.75); background: rgba(0, 0, 0, 0.5); }
+.hidden-node-handle.is-start { background: rgba(83, 232, 140, 0.6); border-color: rgba(83, 232, 140, 0.95); }
+.editor-hidden-icon { position: relative; display: block; width: 100%; }
 /* Long icon: two notes joined by the long-note body, which is narrower than the notes as in play. */
 /* The image area is one note wide and short, so the notes are small and sit a little past its top and bottom;
    the body runs between their centres behind them, narrower than the notes as in play. */

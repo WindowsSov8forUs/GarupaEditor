@@ -1,3 +1,5 @@
+import { HIDDEN_MARK_FITTED_BOX } from "../../app/editorNoteMetrics";
+import { spriteOpaqueBox, useSpriteOpaqueBoxVersion } from "../../app/spriteOpaqueBox";
 import { EditorSlideFitDialog } from "./EditorSlideFitDialog";
 import type { SlideFitSettings } from "../../app/slideFitShapes";
 import { SlideFitPreview } from "./SlideFitPreview";
@@ -139,6 +141,9 @@ export const SidebarPanel = memo(function SidebarPanel({ isSkinReady, isToolArme
   const noteRows = Math.ceil((visibleTools.length + 5 + (sv ? 1 : 0)) / 2);
   const middleLayers = getSpriteLayers("single", { baseImageType: "slide_among", includeDirectionalOverlay: false, includeFlickOverlay: false });
   const middleRatio = getSpriteAspectRatio(middleLayers);
+  // The Hidden tool's icon is a Hidden node's mark: the current skin's slide among body, drawn where its sprite is.
+  useSpriteOpaqueBoxVersion();
+  const hiddenIconBox = spriteOpaqueBox(middleLayers.base) ?? HIDDEN_MARK_FITTED_BOX;
   const [preview, setPreview] = useState(false);
   const [bpmOpen, setBpmOpen] = useState(false);
   const [svOpen, setSvOpen] = useState(false);
@@ -229,13 +234,17 @@ export const SidebarPanel = memo(function SidebarPanel({ isSkinReady, isToolArme
             </div>
           </div>;
       })()}
-          {/* Hidden tool: the Slide tool placing Hidden nodes. No original sprite; the slide middle node, faded. */}
+          {/* Hidden tool: the Slide tool placing Hidden nodes. No original sprite; its icon is a Hidden node's mark. */}
           <div className="editor-note-button-slot">
             <div className="original-prefab-origin" style={{ left: -ORIGINAL_SQUARE_RADIO_BOUNDS.x, top: -ORIGINAL_SQUARE_RADIO_BOUNDS.y }}>
               <OriginalSquareRadioButton label="Hidden" selected={isToolArmed && tool === "hidden"} disabled={!isSkinReady}
                 onClick={() => { if (!isSkinReady) return; if (isToolArmed && tool === "hidden") onDisarmTool(); else applyToolFromPalette("hidden"); }}
-                content={<span className="editor-note-button-image editor-hidden-icon" style={{ "--sprite-aspect-ratio": String(middleRatio) } as CSSProperties}>
-                  {isSkinReady && middleLayers.base ? renderSpriteStack(middleLayers, "Hidden", "note-sprite-stack", middleRatio) : null}
+                content={<span className="editor-note-button-image">
+                  <span className="editor-hidden-icon" style={{ aspectRatio: String(middleRatio) }}>
+                    <span className="hidden-node-handle" style={{ left: `${hiddenIconBox.left * 100}%`,
+                      width: `${(hiddenIconBox.right - hiddenIconBox.left) * 100}%`, top: `${hiddenIconBox.top * 100}%`,
+                      height: `${(hiddenIconBox.bottom - hiddenIconBox.top) * 100}%` }} />
+                  </span>
                 </span>} />
             </div>
           </div>

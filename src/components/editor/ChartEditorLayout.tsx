@@ -1,4 +1,4 @@
-import { HIDDEN_HANDLE_HIT_LANES } from "../../app/hooks/useEditorGeometry";
+import { editorHiddenMarkGeometry } from "../../app/editorNoteMetrics";
 import type { SlideFitSettings } from "../../app/slideFitShapes";
 import profile from "../../data/originalSongDetailProfile.json";
 import { OriginalPrefabModel, type OriginalPrefab } from "../originalPrefabModel";
@@ -1419,17 +1419,20 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       slideBuildSelectedIdSet,
     ],
   );
-  // The Hidden tool shows every Hidden node as a handle it can press, connect to and right-click away.
+  // The Hidden tool shows every Hidden node as its mark (the slide among sprite's body), which it can press, drag,
+  // connect to and right-click away.
   const hiddenNodeHandles = useMemo(() => !(isToolArmed && tool === "hidden") ? null
     : renderNotes.flatMap((note: any) => {
       if (note.type !== "hidden") return [];
       const { lane, beat } = getRenderedNotePlacement(note);
-      const size = LANE_WIDTH * HIDDEN_HANDLE_HIT_LANES * 1.2;
+      const span = getNoteSpanLanes(note);
+      const mark = editorHiddenMarkGeometry(span, LANE_WIDTH, noteVisualScale, vm.hiddenMarkBoxAt(span));
       return [<div key={`hidden-handle-${note.id}`} data-node-id={note.id} className={`hidden-node-handle${slideBuildSelectedIdSet.has(note.id) ? " is-start" : ""}`}
-        style={{ left: (laneToColumn(lane) + 0.5) * LANE_WIDTH - size / 2,
-          top: (getNoteDisplayY?.(note, beat) ?? beatToY(beat)) - size / 2, width: size, height: size }} />];
-    }), [LANE_WIDTH, beatToY, getNoteDisplayY, getRenderedNotePlacement, isToolArmed, laneToColumn, renderNotes,
-    slideBuildSelectedIdSet, tool]);
+        style={{ left: (laneToColumn(lane) + 0.5) * LANE_WIDTH + mark.offsetX - mark.width / 2,
+          top: (getNoteDisplayY?.(note, beat) ?? beatToY(beat)) + mark.offsetY - mark.height / 2,
+          width: mark.width, height: mark.height }} />];
+    }), [LANE_WIDTH, beatToY, getNoteDisplayY, getNoteSpanLanes, getRenderedNotePlacement, isToolArmed, laneToColumn,
+    noteVisualScale, renderNotes, slideBuildSelectedIdSet, tool, vm.hiddenMarkBoxAt]);
 
   return (
     <OriginalUiSoundProvider volumePercent={appOptionSettings.simulatorSettings.systemSeVolumePercent}

@@ -1,5 +1,6 @@
 // @refresh reset
 // This controller owns the editor hook tree; hot updates must not reuse an older hook layout.
+import { spriteOpaqueBox, useSpriteOpaqueBoxVersion, type SpriteOpaqueBox } from "./spriteOpaqueBox";
 import { isGarupaLongSlideShape } from "../chart";
 import { connectSlideNodes } from "./slideConnect";
 import { minimapLaneVisible } from "./editorMinimapGeometry";
@@ -926,6 +927,9 @@ function ChartEditorController() {
   // The pointer during a Slide build, where its following connection line ends: kept out of React state, as the cursor preview is, so moving
   // the pointer redraws the playfield canvas without rendering the editor again.
   const slideBuildCursorRef = useRef<{ x: number; y: number } | null>(null);
+  // The current skin's slide among body for a Hidden node `span` lanes wide (null until measured): what its mark draws
+  // and is hit over. Filled once the skin's sprites are known, below.
+  const hiddenMarkBoxRef = useRef<(span: number) => SpriteOpaqueBox | null>(() => null);
   const setSlideBuildCursor = useCallback((next: { x: number; y: number } | null) => {
     slideBuildCursorRef.current = next;
   }, []);
@@ -2721,6 +2725,7 @@ function ChartEditorController() {
     finishSelectionDrag,
     calcSelectionMoveDelta,
   } = useEditorGeometry({
+    hiddenMarkBoxRef,
     playbackLinePositionPercent: viewportPlaybackPositionPercent,
     laneMin,
     bpmTimeline,
@@ -4785,6 +4790,13 @@ function ChartEditorController() {
     isColorAssistEnabled: appOptionSettings.colorAssistEnabled,
     DEFAULT_SPRITE_ASPECT_RATIO,
   });
+  const spriteBoxVersion = useSpriteOpaqueBoxVersion();
+  const hiddenMarkBoxAt = useCallback((span: number): SpriteOpaqueBox | null =>
+    spriteOpaqueBox(getSpriteLayers("single", { baseImageType: "slide_among", width: span,
+      includeDirectionalOverlay: false, includeFlickOverlay: false }).base) ?? null,
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [getSpriteLayers, spriteBoxVersion]);
+  hiddenMarkBoxRef.current = hiddenMarkBoxAt;
   const getNoteDisplayY = useCallback((note: ChartNote, beat: number): number => {
     const hitSec = beatToSeconds(beat, bpmTimeline);
     const timingGroup = noteTimingGroupById.get(note.id) ?? normalizeTimingGroupId(note.timingGroup);
@@ -5867,6 +5879,7 @@ function ChartEditorController() {
         getPaletteSpriteAspectRatio,
         renderPaletteSpriteStack,
         getSpriteLayers,
+        hiddenMarkBoxAt,
         getSpriteAspectRatio,
         renderSpriteStack,
         setTool,
