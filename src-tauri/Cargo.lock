@@ -1336,7 +1336,7 @@ dependencies = [
 
 [[package]]
 name = "garupa-editor"
-version = "0.4.0-alpha.9"
+version = "0.4.0-alpha.10"
 dependencies = [
  "aes",
  "base64 0.22.1",
