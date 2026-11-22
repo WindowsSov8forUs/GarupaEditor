@@ -1,8 +1,7 @@
-import { HIDDEN_MARK_FITTED_BOX } from "../../app/editorNoteMetrics";
-import { spriteOpaqueBox, useSpriteOpaqueBoxVersion } from "../../app/spriteOpaqueBox";
+import { spriteMarkColors, spriteOpaqueBox, useSpriteOpaqueBoxVersion } from "../../app/spriteOpaqueBox";
 import { EditorSlideFitDialog } from "./EditorSlideFitDialog";
 import type { SlideFitSettings } from "../../app/slideFitShapes";
-import { SlideFitPreview } from "./SlideFitPreview";
+import { SlideFitPreview, SlideNodeIcon } from "./SlideFitPreview";
 import { Fragment, memo, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { NOTE_SPECS, type ChartTimingGroupId, type EditorTool, type NoteType } from "../../chartCore";
 import type { SkinNoteType } from "../../skinLoader";
@@ -131,8 +130,30 @@ function EditorLongIcon({ note, body }: { note?: string; body?: string }) {
   </span>;
 }
 
-/** The Curve tool icon's image area in the note button (design px), as the other tool icons'. */
-const CURVE_ICON_BOX = { width: 101, height: 48 };
+/** The Slide tool's icon: two notes joined by a Slide body rising from bottom left to top right, in the icon's image
+ * area (design px, as the Curve icon's). */
+const SEGMENT_ICON = { width: 101, height: 48 };
+function EditorSlideSegmentIcon({ note, noteRatio, body }: { note: string; noteRatio: number; body?: string }) {
+  const { width: w, height: h } = SEGMENT_ICON;
+  const noteWidth = 68, noteHeight = noteWidth / noteRatio, half = noteWidth * 0.7 / 2;
+  const from = { x: 30, y: h - 7 }, to = { x: w - 30, y: 7 };
+  // The body as the board draws it: horizontal ends, the texture across its width, slanted along the line.
+  const height = from.y - to.y, slant = -Math.atan2(to.x - from.x, height) * 180 / Math.PI;
+  return <span className="editor-note-button-image editor-slide-icon">
+    <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="xMidYMid meet" overflow="visible" aria-hidden="true">
+      <g transform={`translate(${(from.x + to.x) / 2} ${(from.y + to.y) / 2}) skewX(${slant})`}>
+        {body ? <image href={body} x={-half} y={-height / 2} width={half * 2} height={height} preserveAspectRatio="none" />
+          : <rect x={-half} y={-height / 2} width={half * 2} height={height} fill="rgba(120, 220, 100, 0.6)" />}
+      </g>
+      <image href={note} x={from.x - noteWidth / 2} y={from.y - noteHeight / 2} width={noteWidth} height={noteHeight} />
+      <image href={note} x={to.x - noteWidth / 2} y={to.y - noteHeight / 2} width={noteWidth} height={noteHeight} />
+    </svg>
+  </span>;
+}
+
+/** The Curve, Hidden and Middle icons' drawing (design px), centred in the image area: as wide and as tall as a
+ * Single's note shows in its icon (its opaque part, about 88 × 37 of the 101 × 48 area). */
+const SLIDE_TOOL_ICON_BOX = { width: 88, height: 37 };
 
 export const SidebarPanel = memo(function SidebarPanel({ isSkinReady, isToolArmed, tool, applyToolFromPalette, bpm, onApplyBpm, onArmBpmTool, onArmLongTool, onArmMiddleTool, onDisarmTool, onPlay, onPreview,
   getSpriteLayers, getSpriteAspectRatio, renderSpriteStack, historyTools, mirrorTools, directionalEnabled, longBodyTexture, curveSlideLineTexture, curve, sv }: SidebarPanelProps) {
@@ -140,10 +161,10 @@ export const SidebarPanel = memo(function SidebarPanel({ isSkinReady, isToolArme
   // Note tools, Long, Middle, Curve, BPM and (in ExGarupa) SV.
   const noteRows = Math.ceil((visibleTools.length + 5 + (sv ? 1 : 0)) / 2);
   const middleLayers = getSpriteLayers("single", { baseImageType: "slide_among", includeDirectionalOverlay: false, includeFlickOverlay: false });
-  const middleRatio = getSpriteAspectRatio(middleLayers);
-  // The Hidden tool's icon is a Hidden node's mark: the current skin's slide among body, drawn where its sprite is.
+  // The Hidden and Middle icons draw the current skin's slide among body (measured; null until then).
   useSpriteOpaqueBoxVersion();
-  const hiddenIconBox = spriteOpaqueBox(middleLayers.base) ?? HIDDEN_MARK_FITTED_BOX;
+  const middleBox = spriteOpaqueBox(middleLayers.base) ?? null;
+  const middleColors = spriteMarkColors(middleLayers.base) ?? null;
   const [preview, setPreview] = useState(false);
   const [bpmOpen, setBpmOpen] = useState(false);
   const [svOpen, setSvOpen] = useState(false);
@@ -228,45 +249,43 @@ export const SidebarPanel = memo(function SidebarPanel({ isSkinReady, isToolArme
             <div className="original-prefab-origin" style={{ left: -ORIGINAL_SQUARE_RADIO_BOUNDS.x, top: -ORIGINAL_SQUARE_RADIO_BOUNDS.y }}>
               <OriginalSquareRadioButton label={label} selected={isToolArmed && tool === type} disabled={!isSkinReady}
                 onClick={() => { if (!isSkinReady) return; if (isToolArmed && tool === type) onDisarmTool(); else applyToolFromPalette(type); }}
-                content={<span className="editor-note-button-image" style={{ "--sprite-aspect-ratio": String(ratio) } as CSSProperties}>
-                  {isSkinReady && layers.base ? renderSpriteStack(layers, label, "note-sprite-stack", ratio) : null}
-                </span>} />
+                content={isSkinReady && layers.base
+                  ? <EditorSlideSegmentIcon note={layers.base} noteRatio={ratio} body={longBodyTexture} />
+                  : <span className="editor-note-button-image" />} />
             </div>
           </div>;
       })()}
-          {/* Hidden tool: the Slide tool placing Hidden nodes. No original sprite; its icon is a Hidden node's mark. */}
+          {/* Hidden tool: the Slide tool placing Hidden nodes. No original sprite; its icon is a Hidden node on a Slide. */}
           <div className="editor-note-button-slot">
             <div className="original-prefab-origin" style={{ left: -ORIGINAL_SQUARE_RADIO_BOUNDS.x, top: -ORIGINAL_SQUARE_RADIO_BOUNDS.y }}>
               <OriginalSquareRadioButton label="Hidden" selected={isToolArmed && tool === "hidden"} disabled={!isSkinReady}
                 onClick={() => { if (!isSkinReady) return; if (isToolArmed && tool === "hidden") onDisarmTool(); else applyToolFromPalette("hidden"); }}
-                content={<span className="editor-note-button-image">
-                  <span className="editor-hidden-icon" style={{ aspectRatio: String(middleRatio) }}>
-                    <span className="hidden-node-handle" style={{ left: `${hiddenIconBox.left * 100}%`,
-                      width: `${(hiddenIconBox.right - hiddenIconBox.left) * 100}%`, top: `${hiddenIconBox.top * 100}%`,
-                      height: `${(hiddenIconBox.bottom - hiddenIconBox.top) * 100}%` }} />
-                  </span>
+                content={<span className="editor-note-button-image editor-curve-icon">
+                  {isSkinReady && <SlideNodeIcon box={SLIDE_TOOL_ICON_BOX} node={{ kind: "hidden", box: middleBox, colors: middleColors }}
+                    longLine={longBodyTexture} curveSlideLine={curveSlideLineTexture} />}
                 </span>} />
             </div>
           </div>
-          {/* Middle tool, after Long: the icon is the skin's slide middle-node sprite. */}
+          {/* Middle tool: the icon is the skin's slide middle node on a Slide. */}
           <div className="editor-note-button-slot">
             <div className="original-prefab-origin" style={{ left: -ORIGINAL_SQUARE_RADIO_BOUNDS.x, top: -ORIGINAL_SQUARE_RADIO_BOUNDS.y }}>
               <OriginalSquareRadioButton label="Middle" selected={isToolArmed && tool === "middle"} disabled={!isSkinReady}
                 onClick={() => { if (!isSkinReady) return; if (isToolArmed && tool === "middle") onDisarmTool(); else onArmMiddleTool(); }}
-                content={<span className="editor-note-button-image" style={{ "--sprite-aspect-ratio": String(middleRatio) } as CSSProperties}>
-                  {isSkinReady && middleLayers.base ? renderSpriteStack(middleLayers, "Middle", "note-sprite-stack", middleRatio) : null}
+                content={<span className="editor-note-button-image editor-curve-icon">
+                  {isSkinReady && <SlideNodeIcon box={SLIDE_TOOL_ICON_BOX}
+                    node={{ kind: "middle", sprite: middleLayers.base, box: middleBox }}
+                    longLine={longBodyTexture} curveSlideLine={curveSlideLineTexture} />}
                 </span>} />
             </div>
           </div>
-          {/* Curve tool, after Middle: its icon previews the saved shape with the current skin. Every press, armed or not,
+          {/* Curve tool, after Middle: its icon previews the saved shape's line with the current skin. Every press, armed or not,
               opens the preset dialog; while armed, pressing a Slide segment applies the preset there. */}
           <div className="editor-note-button-slot">
             <div className="original-prefab-origin" style={{ left: -ORIGINAL_SQUARE_RADIO_BOUNDS.x, top: -ORIGINAL_SQUARE_RADIO_BOUNDS.y }}>
               <OriginalSquareRadioButton label="Curve" selected={isToolArmed && tool === "curve"} disabled={!isSkinReady}
                 onClick={() => { if (isSkinReady) setCurveOpen(true); }}
                 content={<span className="editor-note-button-image editor-curve-icon">
-                  {isSkinReady && <SlideFitPreview settings={curve.settings} box={CURVE_ICON_BOX}
-                    slideNote={getSpriteLayers("slide", { includeDirectionalOverlay: false, includeFlickOverlay: false }).base}
+                  {isSkinReady && <SlideFitPreview settings={curve.settings} box={SLIDE_TOOL_ICON_BOX}
                     longLine={longBodyTexture} curveSlideLine={curveSlideLineTexture} />}
                 </span>} />
             </div>
