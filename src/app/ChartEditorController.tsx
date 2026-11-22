@@ -1,7 +1,7 @@
 // @refresh reset
 // This controller owns the editor hook tree; hot updates must not reuse an older hook layout.
 import { isSubdivisionLineHidden } from "./editorGridWindow";
-import { spriteOpaqueBox, useSpriteOpaqueBoxVersion, type SpriteOpaqueBox } from "./spriteOpaqueBox";
+import { spriteMarkColors, spriteOpaqueBox, useSpriteOpaqueBoxVersion, type SpriteOpaqueBox } from "./spriteOpaqueBox";
 import { isGarupaLongSlideShape } from "../chart";
 import { connectSlideNodes } from "./slideConnect";
 import { minimapLaneVisible } from "./editorMinimapGeometry";
@@ -4801,6 +4801,11 @@ function ChartEditorController() {
       includeDirectionalOverlay: false, includeFlickOverlay: false }).base) ?? null,
   // eslint-disable-next-line react-hooks/exhaustive-deps
   [getSpriteLayers, spriteBoxVersion]);
+  // A Hidden node's mark is painted in the slide among sprite's own fill and outline colours (null until measured).
+  const hiddenMarkColors = useMemo(() => spriteMarkColors(getSpriteLayers("single", { baseImageType: "slide_among",
+    includeDirectionalOverlay: false, includeFlickOverlay: false }).base) ?? null,
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [getSpriteLayers, spriteBoxVersion]);
 
   const getNoteDisplayY = useCallback((note: ChartNote, beat: number): number => {
     const hitSec = beatToSeconds(beat, bpmTimeline);
@@ -5905,6 +5910,7 @@ function ChartEditorController() {
         renderPaletteSpriteStack,
         getSpriteLayers,
         hiddenMarkBoxAt,
+        hiddenMarkColors,
         isHiddenNodeShown,
         getSpriteAspectRatio,
         renderSpriteStack,
