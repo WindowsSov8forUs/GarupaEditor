@@ -194,6 +194,9 @@ export type CanvasNoteVisual = {
   overlayMode: CanvasOverlayMode;
   selected: boolean;
   muted?: boolean;
+  /** How far down to draw the base sprite, as a fraction of the note's height: a Slide middle node's sprite is moved so
+   * its opaque part, not the whole sprite, is centred on its time. */
+  baseShiftY?: number;
 };
 
 type CanvasBpmVisual = {
@@ -405,7 +408,7 @@ export function drawNoteVisual(
     }
   } else {
     if (baseImage) {
-      context.drawImage(baseImage, tokenLeft, tokenTop, tokenWidth, NOTE_HEIGHT);
+      context.drawImage(baseImage, tokenLeft, tokenTop + (note.baseShiftY ?? 0) * NOTE_HEIGHT, tokenWidth, NOTE_HEIGHT);
     }
 
     if (overlayImage) {

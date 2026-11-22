@@ -4994,6 +4994,10 @@ function ChartEditorController() {
       const isSelected = selectedNoteIdSet.has(note.id)
         || (isSlideBuilding && slideBuildSelectedIdSet.has(note.id));
       const muted = isNoteOutsideActiveTimingGroup(note);
+      // A middle node (the skin's slide among) is centred on its time by the sprite's opaque part.
+      const amongBase = getSpriteLayers("single", { baseImageType: "slide_among", width: spanLanes,
+        includeDirectionalOverlay: false, includeFlickOverlay: false }).base;
+      const amongBox = layers.base && layers.base === amongBase ? hiddenMarkBoxAt(spanLanes) : null;
       return [{
         id: note.id,
         type: note.type,
@@ -5005,9 +5009,12 @@ function ChartEditorController() {
         overlayMode: layers.overlayMode,
         selected: isSelected,
         muted,
+        ...(amongBox ? { baseShiftY: 0.5 - (amongBox.top + amongBox.bottom) / 2 } : {}),
       }];
     });
   }, [
+    getSpriteLayers,
+    hiddenMarkBoxAt,
     LANE_WIDTH,
     getNoteDisplayY,
     getNoteSpanLanes,
@@ -5385,6 +5392,7 @@ function ChartEditorController() {
         baseResourceKey: keyForUrl(note.base),
         overlayResourceKey: keyForUrl(note.overlay),
         overlayMode: note.overlayMode,
+        ...(note.baseShiftY === undefined ? {} : { baseShiftY: note.baseShiftY }),
       })),
       runtimeSkin: {
         longLineResourceKey: "line.long",

@@ -11,6 +11,8 @@ export type StaticNoteVisual = {
   baseResourceKey: string | null;
   overlayResourceKey: string | null;
   overlayMode: StaticOverlayMode;
+  /** As CanvasNoteVisual's: how far down the base sprite is drawn, as a fraction of the note's height. */
+  baseShiftY?: number;
 };
 
 export type StaticBpmVisualLine = {

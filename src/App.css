@@ -770,6 +770,8 @@ button.tool-icon-button.active:not(.note-token):not(.bpm-label-button):not(.bpm-
 .note-token.preview-token:not(.directional) .note-sprite-layer.layer-overlay:not(.overlay-flick) {
   object-fit: fill;
 }
+/* The Middle tool's node is moved as the board moves one (see ChartEditorLayout). */
+.note-token.preview-token .note-sprite-layer.layer-base { translate: 0 var(--preview-base-shift, 0px); }
 
 .note-directional-stack {
   position: relative;

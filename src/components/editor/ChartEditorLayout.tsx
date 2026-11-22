@@ -829,10 +829,15 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   }, [boardWidth, isSkinReady, playfieldBoardRef, playfieldRef]);
   const scaledBoardWidth = boardWidth;
   const scaledScrollContentHeight = effectiveScrollContentHeight;
+  // The Middle tool's node, as the board draws one: moved so its sprite's opaque part is centred on its time.
+  const middlePreviewBox = isMiddlePreview ? vm.hiddenMarkBoxAt(canvasPreviewRhythmWidth) : null;
+  const canvasPreviewBaseShift = middlePreviewBox
+    ? (0.5 - (middlePreviewBox.top + middlePreviewBox.bottom) / 2) * noteSpriteHeightPx : 0;
   const canvasPreviewTokenStyle: CSSProperties = useMemo(
     () => ({
       left: -9999,
       top: -9999,
+      "--preview-base-shift": `${canvasPreviewBaseShift}px`,
       ...(canvasPreviewTokenWidth
         ? ({
             width: canvasPreviewTokenWidth,
@@ -849,7 +854,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
             "--sprite-aspect-ratio": `${canvasPreviewAspectRatio}`,
           } as CSSProperties)),
     }),
-    [LANE_WIDTH, canvasPreviewAspectRatio, canvasPreviewTokenWidth, directionalBaseWidthPx, noteSpriteHeightPx, noteVisualScale],
+    [LANE_WIDTH, canvasPreviewAspectRatio, canvasPreviewBaseShift, canvasPreviewTokenWidth, directionalBaseWidthPx,
+      noteSpriteHeightPx, noteVisualScale],
   );
   const canvasDirectionalWidenTokenStyle: CSSProperties = useMemo(
     () => ({
