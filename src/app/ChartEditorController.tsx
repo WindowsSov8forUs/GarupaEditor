@@ -5366,9 +5366,8 @@ function ChartEditorController() {
     });
   }, [effectiveSlideChains, noteById, getRenderedNotePlacement, getNoteSpanLanes, laneToColumn, laneValues.length,
     minimapRenderModel.connectionSegments]);
-  const minimapDuration = useMemo(() => notes.reduce((end, note) =>
-    Math.max(end, minimapBeatToTime(getRenderedNotePlacement(note).beat)), Math.max(1, audioDurationSec || 0)),
-    [notes, minimapBeatToTime, getRenderedNotePlacement, audioDurationSec]);
+  // The overview covers the board's whole length (see totalDurationSec), so its edges are the board's.
+  const minimapDuration = Math.max(1, totalDurationSec);
   const canvasBpmVisualLines = useMemo(() => {
     return (bpmTimeline ?? [])
       .filter((node: any) => node.beat >= 0 && node.beat <= totalBeats + 1e-6)

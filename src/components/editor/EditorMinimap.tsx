@@ -72,7 +72,8 @@ export function EditorMinimap({ notes, segments, duration, laneCount, axis, view
     const element = viewport.current, rect = host.current?.getBoundingClientRect();
     if (!element || !rect) return;
     const local = clientY - rect.top - (drag.current?.offset ?? 0);
-    const time = (1 - local / plotHeight) * duration;
+    // The frame's top stays on the overview: dragged past its top edge it holds at the chart's end.
+    const time = Math.max(0, Math.min(duration, (1 - local / plotHeight) * duration));
     element.scrollTop = axis.timeToY(time);
   };
   return <aside className="editor-minimap-column" style={{ width }}>
