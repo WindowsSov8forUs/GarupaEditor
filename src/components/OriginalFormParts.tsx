@@ -330,6 +330,52 @@ export function OriginalFormSubtitle({ text }: { text: string }) {
  * Original settings description UILabel: 20px, grey, no heading background/effect. Its authored box is 100px tall
  * for multi-line notes; `lines` sizes the (top-anchored) box to that many text lines instead.
  */
+/*
+ * The JP データ引き継ぎ window's field (prefabs/dialog/takeoverinputdialog): a dark round caption bar
+ * (label_round_black, white text centred) over a text box (bg_form_text) centred under it, 16 apart.
+ */
+const captionModel = new OriginalPrefabModel(formPrefabs.takeoverinputdialog!);
+const captionBar = captionModel.componentAt(captionModel.nodeAt("TakeoverInputDialog/Window/Contents/TakeoverIdBox").id, "UISprite")!;
+const captionLabel = captionModel.componentAt(
+  captionModel.nodeAt("TakeoverInputDialog/Window/Contents/TakeoverIdBox/label").id, "UILabel")!;
+const captionInputBox = captionModel.nodeAt("TakeoverInputDialog/Window/Contents/TakeoverIdBox/TakeoverIdInputBox");
+const captionBarRect = captionModel.rect(captionBar);
+const captionFieldSource: OriginalInputSource = {
+  model: captionModel,
+  background: captionModel.componentAt(
+    captionModel.nodeAt("TakeoverInputDialog/Window/Contents/TakeoverIdBox/TakeoverIdInputBox/CommentInput/BG").id, "UISprite")!.id,
+  label: captionModel.componentAt(
+    captionModel.nodeAt("TakeoverInputDialog/Window/Contents/TakeoverIdBox/TakeoverIdInputBox/TakeoverIdValue").id, "UILabel")!.id,
+  marker: captionModel.componentAt(
+    captionModel.nodeAt("TakeoverInputDialog/Window/Contents/TakeoverIdBox/TakeoverIdInputBox/CommentInput/icon").id, "UISprite")!.id,
+  input: captionModel.componentAt(
+    captionModel.nodeAt("TakeoverInputDialog/Window/Contents/TakeoverIdBox/TakeoverIdInputBox/CommentInput").id, "UIInput")!.id,
+};
+const captionBoxRect = captionModel.rect(captionModel.components.get(captionFieldSource.background)!);
+/** Between the caption bar's bottom and the box's top, as in the window. */
+const CAPTION_FIELD_GAP = captionBoxRect.y - (captionBarRect.y + captionBarRect.height);
+/** The caption field's width: its caption bar's (the box is narrower, centred under it). */
+export const ORIGINAL_CAPTION_FIELD_WIDTH = captionBarRect.width;
+
+/** A short input field as the JP データ引き継ぎ window lays one out: caption bar, then the box centred under it. */
+export function OriginalCaptionField({ caption, ...props }: { caption: string } & Omit<FieldProps, "multiline" | "source">) {
+  const model = useMemo(() => new OriginalPrefabModel(formPrefabs.takeoverinputdialog!, {
+    nodes: { [captionInputBox.id]: { active: false } },
+    components: { [captionLabel.id]: { mText: caption } },
+  }), [caption]);
+  return <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: CAPTION_FIELD_GAP,
+    width: captionBarRect.width, alignSelf: "center", flexShrink: 0 }}>
+    <div role="heading" aria-level={3} style={{ position: "relative", width: captionBarRect.width, height: captionBarRect.height }}>
+      <div className="original-prefab-origin" style={{ left: -captionBarRect.x, top: -captionBarRect.y }}>
+        <OriginalPrefabView model={model} root={captionBar.node} />
+      </div>
+    </div>
+    <div style={{ width: captionBoxRect.width }}>
+      <OriginalFormInput {...props} source={captionFieldSource} />
+    </div>
+  </div>;
+}
+
 export function OriginalFormNote({ text, lines }: { text: string; lines?: number }) {
   const { ref, width } = useFormWidth();
   const source = new OriginalPrefabModel(ORIGINAL_PREFABS.systemtabpage!);
