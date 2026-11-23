@@ -99,6 +99,7 @@ export function useBoardInteractionActions(params: any) {
     isSvPreviewEnabled,
     exGarupaEnabled,
     pressCurveToolOnNoteRef,
+    multiSelectModeRef,
     selectedSegmentKeys,
   } = params;
   const scheduleAfterFrame = useCallback((task: () => void) => {
@@ -477,12 +478,14 @@ export function useBoardInteractionActions(params: any) {
       if (target?.closest("input, textarea, [contenteditable='true']")) return;
       if (slideBuildRef.current) cancelSlideBuild();
       else if (isToolArmed) setIsToolArmed(false);
+      // Without a tool it drops the selection (the way out of a multi-select).
+      else if (selectedNoteIds.length > 0 || (selectedSegmentKeys?.length ?? 0) > 0) clearSelection();
       else return;
       event.preventDefault();
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [cancelSlideBuild, isToolArmed, setIsToolArmed, slideBuildRef]);
+  }, [cancelSlideBuild, clearSelection, isToolArmed, selectedNoteIds, selectedSegmentKeys, setIsToolArmed, slideBuildRef]);
 
   const placeBpmEvent = (beat: number) => {
     const quantizedBeat = quantizeBeat(beat, beatDivision);
@@ -911,10 +914,11 @@ export function useBoardInteractionActions(params: any) {
       return;
     }
 
-    // Without a tool, a click on blank board drops every selection. Notes and line segments stop their own
-    // clicks, and the click that ends a marquee or a drag is suppressed above.
+    // Without a tool, a click on blank board drops every selection, except in multi-select mode (or with Ctrl/Cmd
+    // held), where a press only toggles what it reaches. Notes and line segments stop their own clicks, and the click
+    // that ends a marquee or a drag is suppressed above.
     if (!isToolArmed) {
-      clearSelection();
+      if (!(event.ctrlKey || event.metaKey || multiSelectModeRef?.current === true)) clearSelection();
       return;
     }
 

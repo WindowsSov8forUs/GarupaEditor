@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import type { ReactNode } from "react";
-import { OriginalFormButton, OriginalVerticalStepper } from "../OriginalFormParts";
+import { OriginalVerticalStepper } from "../OriginalFormParts";
 import { OriginalSquareButton, ORIGINAL_SQUARE_BUTTON_BOUNDS } from "../OriginalSquareButton";
 import { ORIGINAL_HEADER_MENU_BOUNDS } from "../OriginalPageHeader";
 import { OriginalPrefabModel, ORIGINAL_PREFABS } from "../originalPrefabModel";
@@ -8,7 +8,7 @@ import { OriginalPrefabView } from "../OriginalPrefabView";
 import { useUiViewport } from "../useUiViewport";
 import { useApplicationResourceUrl } from "../../resources/applicationResourceContext";
 import { RehearsalTimeHud } from "./rehearsalTimeHud";
-import { EDITOR_LEFT_COLUMN_GAP, EDITOR_SIDEBAR_WIDTH } from "./SidebarPanel";
+import { EDITOR_LEFT_GRID } from "./SidebarPanel";
 import "./EditorControlColumn.css";
 
 const pad = (value: number, width: number) => String(value).padStart(width, "0");
@@ -92,60 +92,44 @@ function EditorSpeedStepper({ scale, label, canSlower, canFaster, step }: {
   </div>;
 }
 
-type HistoryToolsProps = {
-  canUndo: boolean; canRedo: boolean; onUndo(): void; onRedo(): void;
-  onCopy(): void; onPaste(): void;
-  undoIcon: string; clipboardIcon: string;
-  /** Fills the rest of the row; it is EDITOR_HISTORY_TRAILING_WIDTH design px wide. */
-  trailing?: ReactNode;
-};
-
-const HISTORY_TOOL_COUNT = 3;
-/** Width left in the left column's history row after its three original-size buttons, in design px. */
-export const EDITOR_HISTORY_TRAILING_WIDTH = EDITOR_SIDEBAR_WIDTH
-  - HISTORY_TOOL_COUNT * (ORIGINAL_SQUARE_BUTTON_BOUNDS.width + EDITOR_LEFT_COLUMN_GAP);
-
 /**
- * Undo, redo and the clipboard, left to right, in the left column above the play action. That column is drawn
- * in design px (it carries the UI scale itself), so the cells use scale 1; they keep the original button size,
- * like the Play/Preview switch below them.
+ * The left column's middle row, above the play action: undo, redo, delete (the selected notes and Slide segments, as
+ * the Delete key and a right-click do), copy and paste, one per column. The column is drawn in design px (it carries
+ * the UI scale itself), so the cells use scale 1 and keep the original button size.
  */
-export function EditorHistoryTools({ canUndo, canRedo, onUndo, onRedo, onCopy, onPaste, undoIcon, clipboardIcon, trailing }: HistoryToolsProps) {
-  const [clipboardOpen, setClipboardOpen] = useState(false);
-  return <div className="editor-history-tools" style={{ gap: EDITOR_LEFT_COLUMN_GAP }}>
-    <EditorToolCell scale={1} size={1}>
-      <OriginalSquareButton label="撤销" glyph={undoIcon} disabled={!canUndo} onClick={onUndo} />
-    </EditorToolCell>
-    <EditorToolCell scale={1} size={1}>
-      <OriginalSquareButton label="重做" glyph={undoIcon} flip disabled={!canRedo} onClick={onRedo} />
-    </EditorToolCell>
-    <EditorToolCell className="editor-clipboard" scale={1} size={1} popup={clipboardOpen &&
-      <div className="editor-clipboard-menu" role="menu">
-        <OriginalFormButton size="small" onClick={() => { setClipboardOpen(false); onCopy(); }}>复制</OriginalFormButton>
-        <OriginalFormButton size="small" onClick={() => { setClipboardOpen(false); onPaste(); }}>粘贴</OriginalFormButton>
-      </div>}>
-      <OriginalSquareButton label="剪贴板" glyph={clipboardIcon} selected={clipboardOpen} onClick={() => setClipboardOpen(open => !open)} />
-    </EditorToolCell>
-    {trailing}
+export function EditorHistoryTools({ canUndo, canRedo, onUndo, onRedo, canDelete, onDelete, onCopy, onPaste, undoIcon,
+  deleteIcon, copyIcon, pasteIcon }: {
+  canUndo: boolean; canRedo: boolean; onUndo(): void; onRedo(): void;
+  canDelete: boolean; onDelete(): void; onCopy(): void; onPaste(): void;
+  undoIcon: string; deleteIcon: string; copyIcon: string; pasteIcon: string;
+}) {
+  return <div className="editor-history-tools" style={{ gap: EDITOR_LEFT_GRID.gap }}>
+    <EditorSquareTool label="撤销" glyph={undoIcon} disabled={!canUndo} onClick={onUndo} />
+    <EditorSquareTool label="重做" glyph={undoIcon} flip disabled={!canRedo} onClick={onRedo} />
+    <EditorSquareTool label="删除" glyph={deleteIcon} disabled={!canDelete} onClick={onDelete} />
+    <EditorSquareTool label="复制" glyph={copyIcon} onClick={onCopy} />
+    <EditorSquareTool label="粘贴" glyph={pasteIcon} onClick={onPaste} />
   </div>;
 }
 
-/** Selection tools in a row of the left column above the history row: left-right and up-down mirror, and delete
- * (deletes the selected notes at once, as the Delete key and a right-click do). */
-export function EditorMirrorTools({ enabled, onMirror, mirrorIcon, canDelete, onDelete, deleteIcon }: {
-  enabled: boolean; onMirror(axis: "horizontal" | "vertical"): void; mirrorIcon: string;
-  canDelete: boolean; onDelete(): void; deleteIcon: string;
+/** One original square button of the left column's rows, at its original size (the column carries the UI scale). */
+export function EditorSquareTool({ label, glyph, disabled, selected, flip, rotate, onClick }: {
+  label: string; glyph: string; disabled?: boolean; selected?: boolean; flip?: boolean; rotate?: boolean; onClick(): void;
 }) {
-  return <div className="editor-history-tools" style={{ gap: EDITOR_LEFT_COLUMN_GAP }}>
-    <EditorToolCell scale={1} size={1}>
-      <OriginalSquareButton label="左右翻转" glyph={mirrorIcon} disabled={!enabled} onClick={() => onMirror("horizontal")} />
-    </EditorToolCell>
-    <EditorToolCell scale={1} size={1}>
-      <OriginalSquareButton label="上下翻转" glyph={mirrorIcon} rotate disabled={!enabled} onClick={() => onMirror("vertical")} />
-    </EditorToolCell>
-    <EditorToolCell scale={1} size={1}>
-      <OriginalSquareButton label="删除" glyph={deleteIcon} disabled={!canDelete} onClick={onDelete} />
-    </EditorToolCell>
+  return <EditorToolCell scale={1} size={1}>
+    <OriginalSquareButton label={label} glyph={glyph} disabled={disabled} selected={selected} flip={flip} rotate={rotate}
+      onClick={onClick} />
+  </EditorToolCell>;
+}
+
+/** The left column's top row of selection tools: up-down and left-right mirror, then `trailing`, one per column. */
+export function EditorMirrorTools({ enabled, onMirror, mirrorIcon, trailing }: {
+  enabled: boolean; onMirror(axis: "horizontal" | "vertical"): void; mirrorIcon: string; trailing?: ReactNode;
+}) {
+  return <div className="editor-history-tools" style={{ gap: EDITOR_LEFT_GRID.gap }}>
+    <EditorSquareTool label="上下翻转" glyph={mirrorIcon} rotate disabled={!enabled} onClick={() => onMirror("vertical")} />
+    <EditorSquareTool label="左右翻转" glyph={mirrorIcon} disabled={!enabled} onClick={() => onMirror("horizontal")} />
+    {trailing}
   </div>;
 }
 
@@ -193,8 +177,8 @@ function EditorPlayButton({ playing, glyph, onClick, scale }: {
   </div>;
 }
 
-/** Right column of the editor: the play button and the playback speed. */
-export function EditorControlColumn({ width, isPlaying, onTogglePlayback, speed, speedGap, playRaise = 0 }: {
+/** Right column of the editor: the play button and the playback speed, and `bottom` at its foot. */
+export function EditorControlColumn({ width, isPlaying, onTogglePlayback, speed, speedGap, playRaise = 0, bottom }: {
   width: number;
   isPlaying: boolean; onTogglePlayback(): void;
   speed: { label: string; canSlower: boolean; canFaster: boolean; step(delta: number): void };
@@ -205,6 +189,9 @@ export function EditorControlColumn({ width, isPlaying, onTogglePlayback, speed,
    * gap above it is balanced by the same margin below it).
    */
   playRaise?: number;
+  /** Controls at the column's foot (design px: the column scales them), stacked from the bottom up, `bottom.inset`
+   * design px above its bottom edge. */
+  bottom?: { node: ReactNode; inset: number };
 }) {
   const { scale } = useUiViewport();
   const playIcon = useApplicationResourceUrl("ui.icon.editor-play");
@@ -214,5 +201,7 @@ export function EditorControlColumn({ width, isPlaying, onTogglePlayback, speed,
       <EditorPlayButton playing={isPlaying} glyph={isPlaying ? pauseIcon : playIcon} onClick={onTogglePlayback} scale={scale} />
       <div style={{ marginBottom: playRaise * scale }}><EditorSpeedStepper scale={scale} {...speed} /></div>
     </div>
+    {bottom && <div className="editor-control-bottom" style={{ bottom: bottom.inset * scale,
+      width: width / scale, transform: `scale(${scale})` }}>{bottom.node}</div>}
   </aside>;
 }

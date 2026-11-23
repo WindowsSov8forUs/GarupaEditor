@@ -2,7 +2,8 @@ import { OriginalMusicFilterDialog, MusicFilterHeading, MusicFilterRadioOptions,
   originalMusicFilterHeadingGap, originalMusicFilterHeadingToControl, originalMusicFilterSectionCenter, originalMusicFilterTwoRowGroupHeight,
   type MusicFilterFields } from "../OriginalMusicFilterDialog";
 import { OriginalFormButton, OriginalStepStepper, ORIGINAL_FORM_BUTTON_SPRITE_HEIGHT, ORIGINAL_FORM_BUTTON_SPRITE_WIDTH } from "../OriginalFormParts";
-import { LANE_COUNT_OPTIONS } from "../../chartCore";
+import { GLOBAL_TIMING_GROUP_ID, LANE_COUNT_OPTIONS, sortTimingGroupIds, timingGroupDisplayName } from "../../chartCore";
+import { OriginalScrollPopupList } from "../OriginalScrollPopupList";
 import { OriginalCheckBox, ORIGINAL_CHECKBOX_HEIGHT } from "../OriginalCheckBox";
 
 export type EditorMode = "basic" | "special" | "exgarupa";
@@ -28,6 +29,8 @@ const CHECKBOX_BOX_HALF = 24;
 // The drawer's search fields are unused here; it only hosts custom content.
 const NO_FIELDS: MusicFilterFields = { id: "", keyword: "", artist: "", difficulty: null, minimum: 0, maximum: 0, order: "TIME_ASC" };
 const NO_BOUNDS = [0, 0] as const;
+/** The 时间组视图 list's key for 全部 (no timing group picked). */
+const ALL_TIMING_GROUPS = "\u0000all";
 
 /**
  * 编辑器选项: the original song filter drawer, holding the editor mode settings, the way to the song information and
@@ -35,7 +38,7 @@ const NO_BOUNDS = [0, 0] as const;
  */
 export function EditorOptionsDrawer({ open, onClose, mode, onModeChange, habahiro, onHabahiroChange, laneCount, onLaneCountChange,
   onSongInformation, onEditSongInformation, onExportProject, exportBusy, onExportBestdoriV2, onPublishTestServer, onPublishBestdori,
-  onPublishNotGarupa, onEditCode }: {
+  onPublishNotGarupa, onEditCode, timingGroupView }: {
   open: boolean; onClose(): void;
   /** 查看: opens the song information page. */
   onSongInformation(): void;
@@ -58,6 +61,11 @@ export function EditorOptionsDrawer({ open, onClose, mode, onModeChange, habahir
   mode: EditorMode; onModeChange(mode: EditorMode): void;
   habahiro: boolean; onHabahiroChange(value: boolean): void;
   laneCount: number; onLaneCountChange(value: number): void;
+  /**
+   * 时间组视图 (ExGarupa only; absent hides it): 全部 (null), or the one timing group whose notes alone are editable and
+   * get new notes.
+   */
+  timingGroupView?: { value: string | null; groups: readonly string[]; onChange(group: string | null): void };
 }) {
   const modeTop = originalMusicFilterHeadingGap;
   const optionsTop = modeTop + HEADING_TO_OPTIONS;
@@ -71,7 +79,10 @@ export function EditorOptionsDrawer({ open, onClose, mode, onModeChange, habahir
   const laneLocked = mode !== "exgarupa";
   // 歌曲信息 follows as a section of its own, as far below the lane stepper as 轨道数 is above it; its two buttons
   // (查看, 编辑) sit side by side under it as the level gauge under its heading, centred under its heading bar.
-  const songTop = laneRowTop + originalMusicFilterHeadingToControl;
+  // 时间组视图 (ExGarupa) follows the lane stepper as 轨道数 follows 模式, its list placed as the lane stepper.
+  const timingGroupTop = laneRowTop + originalMusicFilterHeadingToControl;
+  const timingGroupRowTop = timingGroupTop + originalMusicFilterHeadingToControl;
+  const songTop = (timingGroupView ? timingGroupRowTop : laneRowTop) + originalMusicFilterHeadingToControl;
   const songButtonTop = songTop + originalMusicFilterHeadingToControl;
   // 谱面导出 follows 歌曲信息 as 歌曲信息 follows the lane stepper; its two groups (本地保存, 发布) are spaced as 模式
   // under 编辑器设置, and their two buttons side by side under them as the song buttons under their heading.
@@ -108,6 +119,16 @@ export function EditorOptionsDrawer({ open, onClose, mode, onModeChange, habahir
           onDecrease={() => onLaneCountChange(LANE_COUNT_OPTIONS[laneIndex - 1]!)}
           onIncrease={() => onLaneCountChange(LANE_COUNT_OPTIONS[laneIndex + 1]!)} />
       </div>
+      {timingGroupView && <>
+        <MusicFilterHeading text="时间组视图" top={top + timingGroupTop} kind="difficulty" />
+        <div style={centred(top + timingGroupRowTop)}>
+          <OriginalScrollPopupList label="时间组视图" value={timingGroupView.value ?? ALL_TIMING_GROUPS}
+            onChange={key => timingGroupView.onChange(key === ALL_TIMING_GROUPS ? null : key)}
+            options={[{ key: ALL_TIMING_GROUPS, label: "全部" },
+              ...sortTimingGroupIds([GLOBAL_TIMING_GROUP_ID, ...timingGroupView.groups])
+                .map(id => ({ key: id, label: timingGroupDisplayName(id) }))]} />
+        </div>
+      </>}
       <MusicFilterHeading text="歌曲信息" top={top + songTop} />
       <div style={centred(top + songButtonTop, -SONG_BUTTON_PITCH / 2)}>
         <OriginalFormButton onClick={onSongInformation}>查看</OriginalFormButton>

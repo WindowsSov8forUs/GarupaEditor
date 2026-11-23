@@ -122,8 +122,10 @@ export function useSelectionAndEditorSync(params: any) {
     );
   }, [setSelectedNoteIds, setSelectedSegmentKeys]);
 
-  const setMultiSelectedNotes = useCallback((noteIds: string[], primaryId?: string | null) => {
-    setSelectedSegmentKeys((previous: string[]) => (previous.length === 0 ? previous : []));
+  /** Selects `noteIds`; the selected Slide segments go unless `keepSegments` (a multi-select's marquee). */
+  const setMultiSelectedNotes = useCallback((noteIds: string[], primaryId?: string | null,
+    options?: { keepSegments?: boolean }) => {
+    if (!options?.keepSegments) setSelectedSegmentKeys((previous: string[]) => (previous.length === 0 ? previous : []));
     const uniqueIds = Array.from(new Set(noteIds));
     if (uniqueIds.length === 0) {
       setSelectedNoteIds([]);
@@ -209,7 +211,11 @@ export function useSelectionAndEditorSync(params: any) {
     (
       laneDeltaRaw: number,
       beatDeltaRaw: number,
-      options?: { quantizeBeatDelta?: boolean },
+      options?: {
+        quantizeBeatDelta?: boolean;
+        /** Applied to each selected note before the move (its other properties: width, type), in the same edit. */
+        transform?: (note: ChartNote) => ChartNote;
+      },
     ) => {
       if (selectedNoteIds.length === 0) {
         return;
@@ -221,7 +227,7 @@ export function useSelectionAndEditorSync(params: any) {
       const beatDelta = Number(
         (shouldQuantizeBeatDelta ? quantizeBeat(rawBeatDelta, beatDivision) : rawBeatDelta).toFixed(6),
       );
-      if (laneDelta === 0 && approxEq(beatDelta, 0)) {
+      if (laneDelta === 0 && approxEq(beatDelta, 0) && !options?.transform) {
         return;
       }
 
@@ -255,7 +261,7 @@ export function useSelectionAndEditorSync(params: any) {
             : undefined;
           const transformed = normalizeNote(
             {
-              ...note,
+              ...(isSelected && options?.transform ? options.transform(note) : note),
               lane: toFixed6(note.lane + offset.lane),
               beat: nextBeat,
               ...(typeof nextEndBeat === "number" ? { endBeat: nextEndBeat } : { endBeat: undefined }),

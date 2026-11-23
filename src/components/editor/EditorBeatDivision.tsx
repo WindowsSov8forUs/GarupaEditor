@@ -24,10 +24,12 @@ function parseDivision(text: string): number | null {
 }
 
 /** Beat division (the editor's 1/N grid) as a gray action button of the left column; it opens the setting dialog. */
-export function EditorBeatDivisionButton({ value, onSave, width }: {
+export function EditorBeatDivisionButton({ value, onSave, width, label }: {
   value: number; onSave(value: number): void;
   /** Button width in design px. */
   width: number;
+  /** The button's text (default "1/N 分度"). */
+  label?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [choice, setChoice] = useState<number | "custom">(value);
@@ -43,7 +45,7 @@ export function EditorBeatDivisionButton({ value, onSave, width }: {
   const customValue = parseDivision(customText);
   const next = choice === "custom" ? customValue : choice;
   return <>
-    <SidebarActionButton label={`1/${value} 分度`} ariaLabel={`整拍分度值 1/${value}`} width={width} onClick={show} />
+    <SidebarActionButton label={label ?? `1/${value} 分度`} ariaLabel={`整拍分度值 1/${value}`} width={width} onClick={show} />
     {createPortal(<OriginalTransferDialog open={open} title="设置整拍分度值" fitContent onClose={() => setOpen(false)}>
       <div className="transfer-body">
         <div className="transfer-page">

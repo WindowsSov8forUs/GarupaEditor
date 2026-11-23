@@ -13,6 +13,7 @@ import { OriginalPrefabView } from "../OriginalPrefabView";
 import { OriginalPrefabModel, originalAtlasFor, type OriginalPrefab } from "../originalPrefabModel";
 import { OriginalSprite } from "../OriginalUi";
 import { OriginalSquareRadioButton, ORIGINAL_SQUARE_RADIO_BOUNDS } from "../OriginalSquareRadioButton";
+import { ORIGINAL_SQUARE_BUTTON_BOUNDS } from "../OriginalSquareButton";
 import { OriginalPageViewport } from "../OriginalPageViewport";
 import { EditorBpmDialog } from "./EditorBpmDialog";
 import { EditorSvDialog } from "./EditorSvDialog";
@@ -77,10 +78,13 @@ const gridGap = 8;
 const gridWidth = ORIGINAL_SQUARE_RADIO_BOUNDS.width * 2 + gridGap;
 const sidebarWidth = frameBounds.width - objectPanel.mClipRange.z + gridWidth;
 const widthReduction = frameBounds.width - sidebarWidth;
-const actionGap = 12;
 const cardImageSwitchModel = new OriginalPrefabModel(cardImageSwitch as unknown as OriginalPrefab);
 const cardImageSwitchBounds = cardImageSwitchModel.rect(cardImageSwitchModel.components.get(534)!);
-const actionWidth = sidebarWidth - cardImageSwitchBounds.width - actionGap;
+/** The left column's three bottom rows share five columns, each the square button's width, spread over the column. */
+const leftGridColumn = ORIGINAL_SQUARE_BUTTON_BOUNDS.width;
+const leftGridGap = (sidebarWidth - 5 * leftGridColumn) / 4;
+/** 游玩 / 预览 spans the last four columns, the card image switch the first. */
+const actionWidth = 4 * leftGridColumn + 3 * leftGridGap;
 const actionPrefab = musicSelectionProfile.prefabs.info as unknown as OriginalPrefab;
 /** The music selection's action button (the template 「游玩」 uses), pink or gray, at any width in design px. */
 function createActionModel(label: string, width: number, gray: boolean) {
@@ -104,18 +108,21 @@ const previewModel = createActionModel("预览", actionWidth, true);
 const playBounds = playModel.rect(playModel.components.get(328)!);
 /** Width of the editor's left column, in design px. */
 export const EDITOR_SIDEBAR_WIDTH = sidebarWidth;
-/** The left column's gap between its rows and between the controls of a row, in design px. */
-export const EDITOR_LEFT_COLUMN_GAP = actionGap;
+/** The bottom rows' five columns: a column's width and the gap between two, in design px. */
+export const EDITOR_LEFT_GRID = { column: leftGridColumn, gap: leftGridGap } as const;
+/** The width of `columns` adjacent columns of the bottom rows, in design px. */
+export const editorLeftGridSpan = (columns: number) => columns * leftGridColumn + (columns - 1) * leftGridGap;
 
-/** A gray action button of the left column (same template as 「预览」), `width` design px wide. */
-export function SidebarActionButton({ label, ariaLabel, width, onClick }: {
-  label: string; ariaLabel: string; width: number; onClick(): void;
+/** A gray action button of the left column (same template as 「预览」), `width` design px wide; `on` draws it pink
+ * (the 「游玩」 template), for a switch that is on. */
+export function SidebarActionButton({ label, ariaLabel, width, onClick, on = false }: {
+  label: string; ariaLabel: string; width: number; onClick(): void; on?: boolean;
 }) {
-  const model = useMemo(() => createActionModel(label, width, true), [label, width]);
+  const model = useMemo(() => createActionModel(label, width, !on), [label, width, on]);
   const bounds = model.rect(model.components.get(328)!);
   return <div style={{ position: "relative", flex: "0 0 auto", width: bounds.width, height: bounds.height }}>
     <div className="original-prefab-origin" style={{ left: -bounds.x, top: -bounds.y }}>
-      <OriginalPrefabView model={model} root={73} bindings={{ buttons: { 331: { action: onClick, label: ariaLabel } } }} />
+      <OriginalPrefabView model={model} root={73} bindings={{ buttons: { 331: { action: onClick, label: ariaLabel, selected: on } } }} />
     </div>
   </div>;
 }
@@ -327,10 +334,12 @@ export const SidebarPanel = memo(function SidebarPanel({ isSkinReady, isToolArme
     </aside>
     {mirrorTools}
     {historyTools}
-    <div className="editor-left-actions" style={{ gap: actionGap }}>
+    <div className="editor-left-actions" style={{ gap: leftGridGap }}>
+      {/* The switch sits centred in the first column. */}
       <div className="editor-card-image-switch"
-        style={{ position: "relative", width: cardImageSwitchBounds.width, height: cardImageSwitchBounds.height }}>
-        <div className="original-prefab-origin" style={{ left: -cardImageSwitchBounds.x, top: -cardImageSwitchBounds.y }}>
+        style={{ position: "relative", width: leftGridColumn, height: cardImageSwitchBounds.height }}>
+        <div className="original-prefab-origin" style={{ left: (leftGridColumn - cardImageSwitchBounds.width) / 2
+          - cardImageSwitchBounds.x, top: -cardImageSwitchBounds.y }}>
           <OriginalPrefabView model={cardImageSwitchModel} bindings={{ buttons: {
             532: { action: () => setPreview(value => !value), label: preview ? "切换为游玩模式" : "切换为预览模式" },
           } }} />

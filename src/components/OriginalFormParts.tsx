@@ -169,9 +169,12 @@ export function OriginalVerticalStepper({ title, text, width, gap, fontSize, can
  * The HiSpeed row with only its ±1 buttons and the value field, in their authored horizontal places
  * (− [value] +). The caller decides what a step means and its bounds.
  */
-export function OriginalStepStepper({ label, text, canIncrease, canDecrease, onIncrease, onDecrease, disabled = false }: {
+export function OriginalStepStepper({ label, text, canIncrease, canDecrease, onIncrease, onDecrease, disabled = false,
+  editable }: {
   label: string; text: string; canIncrease: boolean; canDecrease: boolean; onIncrease(): void; onDecrease(): void;
   disabled?: boolean;
+  /** Typing in the value field: its text (shown in place of `text`) and its change. */
+  editable?: { value: string; onChange(value: string): void };
 }) {
   const model = useMemo(() => new OriginalPrefabModel(stepperPrefab, {
     nodes: Object.fromEntries(["SuperMinusButton", "MinusButton", "PlusButton", "SuperPlusButton", "DefaultButton"]
@@ -186,10 +189,25 @@ export function OriginalStepStepper({ label, text, canIncrease, canDecrease, onI
       <OriginalPrefabView model={model} root={stepperBody.id} bindings={{ buttons: {
         [stepperPlusButton.id]: { label: `${label}增加`, disabled: disabled || !canIncrease, action: onIncrease },
         [stepperMinusButton.id]: { label: `${label}减少`, disabled: disabled || !canDecrease, action: onDecrease },
-      } }} />
+      }, omit: editable ? new Set([stepperValueText.id]) : undefined }} />
+      {editable && (() => {
+        const labelRect = model.rect(stepperValueText);
+        const data = stepperValueText.data;
+        return <input type="text" inputMode="decimal" aria-label={label} className="original-stepper-editor"
+          value={editable.value} disabled={disabled} onChange={event => editable.onChange(event.target.value)}
+          style={{ left: labelRect.x, top: labelRect.y, width: labelRect.width, height: labelRect.height,
+            fontSize: data.mFontSize, fontWeight: data.mFontStyle === 1 ? 700 : 400, letterSpacing: data.mSpacingX,
+            color: `rgba(${data.mColor.r * 255},${data.mColor.g * 255},${data.mColor.b * 255},${data.mColor.a})`,
+            zIndex: data.mDepth + 1 }} />;
+      })()}
     </div>
   </div>;
 }
+/** OriginalStepStepper's width (its − button, value field and + button), in design px. */
+export const ORIGINAL_STEP_STEPPER_WIDTH = (() => {
+  const boxes = [stepperMinusSurface, stepperValueSurface, stepperPlusSurface].map(component => stepperLayout.rect(component));
+  return Math.max(...boxes.map(box => box.x + box.width)) - Math.min(...boxes.map(box => box.x));
+})();
 
 export interface OriginalInputSource {
   model: OriginalPrefabModel;
