@@ -770,6 +770,8 @@ button.tool-icon-button.active:not(.note-token):not(.bpm-label-button):not(.bpm-
 .note-token.preview-token:not(.directional) .note-sprite-layer.layer-overlay:not(.overlay-flick) {
   object-fit: fill;
 }
+/* The Middle tool's node is moved as the board moves one (see ChartEditorLayout). */
+.note-token.preview-token .note-sprite-layer.layer-base { translate: 0 var(--preview-base-shift, 0px); }
 
 .note-directional-stack {
   position: relative;
@@ -2752,17 +2754,20 @@ button.app-settings-apply-button:not(.original-button):not(.note-token):not(.bpm
 .editor-note-button-slot { position: relative; width: var(--note-button-width); height: var(--note-button-height); }
 .editor-note-button-image { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
 .editor-note-button-image .note-sprite-stack { width: 100%; max-height: 100%; }
-/* A Hidden node's mark (the slide among sprite's body): semi-transparent green border, semi-transparent black fill; the
-   current connection's start is filled green. The Hidden tool's icon is one. */
+/* A Hidden node's mark (the slide among sprite's body), in that sprite's own outline and (faint) fill colours, which the
+   note layer sets (else a green border on a black fill); the current connection's start is filled green. */
 .hidden-node-handle { position: absolute; z-index: 5; box-sizing: border-box; border-radius: 9999px; pointer-events: none;
-  border: 1.5px solid rgba(83, 232, 140, 0.75); background: rgba(0, 0, 0, 0.5); }
+  border: 1.5px solid var(--hidden-mark-stroke, rgba(83, 232, 140, 0.75)); background: var(--hidden-mark-fill, rgba(0, 0, 0, 0.5)); }
 .hidden-node-handle.is-selected { background: rgba(83, 232, 140, 0.35); border-color: rgba(83, 232, 140, 1); }
 .hidden-node-handle.is-start { background: rgba(83, 232, 140, 0.6); border-color: rgba(83, 232, 140, 0.95); }
 /* A Hidden node's button: a note one lane wide holding its mark. */
 .note-token.hidden-node-token { overflow: visible; z-index: 0; }
 /* A note's button is above every Hidden node's, which never covers a note it overlaps. */
 .note-token.note-hitbox:not(.hidden-node-token) { z-index: 1; }
-.editor-hidden-icon { position: relative; display: block; width: 100%; }
+/* Slide icon: a Slide body drawn in the image area (see EditorSlideSegmentIcon). */
+.editor-slide-icon svg { display: block; width: 100%; height: 100%; }
+/* Off the Slide and Hidden tools a Hidden node's mark is fainter, unless it is selected. */
+.hidden-node-token.is-idle .hidden-node-handle:not(.is-selected) { opacity: 0.4; }
 /* Long icon: two notes joined by the long-note body, which is narrower than the notes as in play. */
 /* The image area is one note wide and short, so the notes are small and sit a little past its top and bottom;
    the body runs between their centres behind them, narrower than the notes as in play. */
@@ -2777,7 +2782,7 @@ button.app-settings-apply-button:not(.original-button):not(.note-token):not(.bpm
 /* Slide fit preview: its line on a canvas filling the box (drawn as the canvas board draws a Slide line), under the
    middle node's button; positions are px in its box. */
 .slide-fit-preview { position: relative; display: block; overflow: visible; }
-/* The curve icon's canvas covers its image area. */
+/* The Curve, Hidden and Middle icons' canvas covers its image area. */
 .slide-fit-preview-canvas { position: absolute; display: block; pointer-events: none; }
 .editor-curve-icon { position: relative; display: flex; overflow: visible; }
 

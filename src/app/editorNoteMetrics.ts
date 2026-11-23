@@ -52,7 +52,8 @@ export function editorNoteTokenWidth(spanLanes: number, directional: boolean, la
  */
 export const HIDDEN_MARK_FITTED_BOX = { left: 13 / 308, right: 295 / 308, top: 49 / 120, bottom: 66 / 120 } as const;
 
-/** A Hidden node's mark: its size, and where its centre is from the node's centre. `box` is the sprite's opaque box as
+/** A Hidden node's mark: its size, and where its centre is from the node's centre (across only: it is centred on its
+ * time, wherever the sprite's opaque part sits up or down). `box` is the sprite's opaque box as
  * fractions of the sprite (null: the fitted one). */
 export function editorHiddenMarkGeometry(spanLanes: number, laneWidth: number, noteScale: number,
   box: { left: number; right: number; top: number; bottom: number } | null = null) {
@@ -64,7 +65,7 @@ export function editorHiddenMarkGeometry(spanLanes: number, laneWidth: number, n
       width: (box.right - box.left) * tokenWidth,
       height: (box.bottom - box.top) * tokenHeight,
       offsetX: ((box.left + box.right) / 2 - 0.5) * tokenWidth,
-      offsetY: ((box.top + box.bottom) / 2 - 0.5) * tokenHeight,
+      offsetY: 0,
     };
   }
   const unit = laneWidth * noteScale / SPRITE_PX_PER_LANE;
@@ -73,7 +74,7 @@ export function editorHiddenMarkGeometry(spanLanes: number, laneWidth: number, n
     width: (NOTE_BODY_WIDTH_PX[span - 1]! - 2 * fitted.left * 308) * unit,
     height: (fitted.bottom - fitted.top) * tokenHeight,
     offsetX: 0,
-    offsetY: ((fitted.top + fitted.bottom) / 2 - 0.5) * tokenHeight,
+    offsetY: 0,
   };
 }
 

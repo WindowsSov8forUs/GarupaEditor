@@ -194,7 +194,7 @@ function drawStaticNoteVisual(
   drawNoteVisual(context, {
     id: note.id, type: note.type, x: note.x, y: note.y, spanLanes: note.spanLanes,
     base: url(note.baseResourceKey), overlay: url(note.overlayResourceKey), overlayMode: note.overlayMode,
-    selected: false,
+    selected: false, ...(note.baseShiftY === undefined ? {} : { baseShiftY: note.baseShiftY }),
   }, 0, laneWidth, noteVisualScale, getImage, 1, {
     left: url(runtimeSkin.directionalBackLineLeftResourceKey),
     right: url(runtimeSkin.directionalBackLineRightResourceKey),

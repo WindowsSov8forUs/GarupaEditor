@@ -1,3 +1,4 @@
+import { hiddenMarkPaint } from "../../app/spriteOpaqueBox";
 import { editorHiddenMarkGeometry } from "../../app/editorNoteMetrics";
 import type { SlideFitSettings } from "../../app/slideFitShapes";
 import profile from "../../data/originalSongDetailProfile.json";
@@ -779,6 +780,12 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         ? editorNoteTokenWidth(canvasPreviewSpanLanes, false, LANE_WIDTH, noteVisualScale)
         : undefined
     );
+  // The Hidden tool previews a Hidden node's mark, not a sprite.
+  const canvasPreviewHiddenMark = canvasPreviewType === "hidden" ? (() => {
+    const mark = editorHiddenMarkGeometry(canvasPreviewSpanLanes, LANE_WIDTH, noteVisualScale, vm.hiddenMarkBoxAt(canvasPreviewSpanLanes));
+    return <span className="hidden-node-handle" style={{ left: `calc(50% + ${mark.offsetX - mark.width / 2}px)`,
+      top: `calc(50% + ${mark.offsetY - mark.height / 2}px)`, width: mark.width, height: mark.height }} />;
+  })() : null;
   const canvasPreviewTokenClassName = `note-token has-sprite preview-token ${canvasPreviewLayers?.overlay ? "composite" : ""} ${canvasPreviewIsDirectional ? "directional" : ""}`;
   useEffect(() => {
     const playfield = playfieldRef.current;
@@ -829,10 +836,15 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   }, [boardWidth, isSkinReady, playfieldBoardRef, playfieldRef]);
   const scaledBoardWidth = boardWidth;
   const scaledScrollContentHeight = effectiveScrollContentHeight;
+  // The Middle tool's node, as the board draws one: moved so its sprite's opaque part is centred on its time.
+  const middlePreviewBox = isMiddlePreview ? vm.hiddenMarkBoxAt(canvasPreviewRhythmWidth) : null;
+  const canvasPreviewBaseShift = middlePreviewBox
+    ? (0.5 - (middlePreviewBox.top + middlePreviewBox.bottom) / 2) * noteSpriteHeightPx : 0;
   const canvasPreviewTokenStyle: CSSProperties = useMemo(
     () => ({
       left: -9999,
       top: -9999,
+      "--preview-base-shift": `${canvasPreviewBaseShift}px`,
       ...(canvasPreviewTokenWidth
         ? ({
             width: canvasPreviewTokenWidth,
@@ -849,7 +861,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
             "--sprite-aspect-ratio": `${canvasPreviewAspectRatio}`,
           } as CSSProperties)),
     }),
-    [LANE_WIDTH, canvasPreviewAspectRatio, canvasPreviewTokenWidth, directionalBaseWidthPx, noteSpriteHeightPx, noteVisualScale],
+    [LANE_WIDTH, canvasPreviewAspectRatio, canvasPreviewBaseShift, canvasPreviewTokenWidth, directionalBaseWidthPx,
+      noteSpriteHeightPx, noteVisualScale],
   );
   const canvasDirectionalWidenTokenStyle: CSSProperties = useMemo(
     () => ({
@@ -1377,6 +1390,13 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     runtime.deleteRightClickedNotes([note.id]);
   }, []);
 
+  // Hidden nodes' marks (and the Hidden tool's preview) are painted in the slide among sprite's own colours.
+  const hiddenMarkPaintStyle = useMemo(() => {
+    const paint = hiddenMarkPaint(vm.hiddenMarkColors);
+    return { "--hidden-mark-fill": paint.fill, "--hidden-mark-stroke": paint.stroke } as CSSProperties;
+  }, [vm.hiddenMarkColors]);
+  // Hidden nodes are drawn faint unless a Slide tool, which connects them, is armed.
+  const isHiddenMarkIdle = !(isToolArmed && (tool === "slide" || tool === "hidden"));
   const renderedNoteButtons = useMemo(
     () =>
       renderNotes.map((note: any) => {
@@ -1393,7 +1413,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
           return (
             <NoteWindowCull key={note.id} y={y}>
             <button key={note.id} type="button" data-note-id={note.id}
-              className={`note-token note-hitbox hidden-node-token ${selectedNoteIdSet.has(note.id) ? "selected" : ""} ${muted ? "timing-group-muted" : ""}`}
+              className={`note-token note-hitbox hidden-node-token ${isHiddenMarkIdle ? "is-idle" : ""} ${selectedNoteIdSet.has(note.id) ? "selected" : ""} ${muted ? "timing-group-muted" : ""}`}
               style={{ left: (laneToColumn(lane) + 0.5) * LANE_WIDTH, top: y,
                 width: editorNoteTokenWidth(span, false, LANE_WIDTH, noteVisualScale),
                 height: editorHiddenButtonHeight(LANE_WIDTH, noteVisualScale) }}
@@ -1489,6 +1509,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       selectedNoteIdSet,
       slideBuildSelectedIdSet,
       vm.hiddenMarkBoxAt,
+      isHiddenMarkIdle,
       vm.isHiddenNodeShown,
     ],
   );
@@ -1801,7 +1822,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                   </div>
 
 
-                  <div className="note-layer">
+                  <div className="note-layer" style={hiddenMarkPaintStyle}>
                     {renderedNoteButtons}
 
                     {canvasPreviewType && canvasPreviewSpec && canvasPreviewLayers && canvasPreviewHasSprite && (
@@ -1812,7 +1833,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                           style={canvasPreviewTokenStyle}
                           aria-hidden="true"
                         >
-                          {canvasPreviewIsDirectional
+                          {canvasPreviewHiddenMark ?? (canvasPreviewIsDirectional
                             ? renderDirectionalSprite(
                                 canvasPreviewType as "directional_flick_left" | "directional_flick_right",
                                 canvasPreviewLayers,
@@ -1824,7 +1845,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                                 canvasPreviewSpec.label,
                                 "note-sprite-stack",
                                 canvasPreviewAspectRatio,
-                              )}
+                              ))}
                         </div>
                         <div
                           ref={canvasNoteSnapPreviewRef}
@@ -1833,7 +1854,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                           data-color-assist="off"
                           aria-hidden="true"
                         >
-                          {canvasPreviewIsDirectional
+                          {canvasPreviewHiddenMark ?? (canvasPreviewIsDirectional
                             ? renderDirectionalSprite(
                                 canvasPreviewType as "directional_flick_left" | "directional_flick_right",
                                 canvasPreviewLayers,
@@ -1868,7 +1889,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                                     "note-sprite-stack",
                                     canvasPreviewAspectRatio,
                                   )
-                            )}
+                            ))}
                         </div>
                         <div
                           ref={canvasNoteReplacePreviewRef}
@@ -1876,7 +1897,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                           style={canvasNoteReplaceTokenStyle}
                           aria-hidden="true"
                         >
-                          {canvasPreviewIsDirectional
+                          {canvasPreviewHiddenMark ?? (canvasPreviewIsDirectional
                             ? renderDirectionalSprite(
                                 canvasPreviewType as "directional_flick_left" | "directional_flick_right",
                                 canvasPreviewLayers,
@@ -1888,7 +1909,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                                 canvasPreviewSpec.label,
                                 "note-sprite-stack",
                                 canvasPreviewAspectRatio,
-                              )}
+                              ))}
                         </div>
                         {canvasPreviewIsDirectional && (
                           <div
