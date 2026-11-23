@@ -396,6 +396,11 @@ function ChartEditorController() {
   const [isTimingGroupPanelOpen, setIsTimingGroupPanelOpen] = useState(false);
   const [isTimingGroupModeEnabled, setIsTimingGroupModeEnabled] = useState(false);
   const [isSvPreviewEnabled, setIsSvPreviewEnabled] = useState(false);
+  /** Multi-select mode: a press or a marquee toggles what it reaches instead of replacing the selection. Ctrl/Cmd
+   * held is the same for that press. */
+  const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
+  const multiSelectModeRef = useRef(false);
+  multiSelectModeRef.current = isMultiSelectMode;
   const [svPreviewTimeSec, setSvPreviewTimeSec] = useState(0);
   const isSvPreviewEnabledRef = useRef(false);
   const svPreviewTimeSecRef = useRef(0);
@@ -3083,6 +3088,7 @@ function ChartEditorController() {
     beginSelectedNotesMove,
     handleBoardMouseDown: handleBoardMouseDownRaw,
   } = useBoardInteractionActions({
+    multiSelectModeRef,
     pressCurveToolOnNoteRef,
     selectedSegmentKeys,
     setTool,
@@ -4214,8 +4220,9 @@ function ChartEditorController() {
    * drops it when it is selected) and the preset replaces its Hidden nodes; it stays selected, so a preset saved later
    * applies to it too.
    */
-  const pressCurveToolOnSegment = useCallback((key: string, additive: boolean) => {
+  const pressCurveToolOnSegment = useCallback((key: string, pressAdditive: boolean) => {
     if (!isToolArmed || tool !== "curve") return;
+    const additive = pressAdditive || multiSelectModeRef.current;
     if (additive && selectedSegmentKeys.includes(key)) {
       setSelectedSegmentKeys(previous => previous.filter(other => other !== key));
       return;
@@ -4241,7 +4248,7 @@ function ChartEditorController() {
   const pressCurveToolOnNote = useCallback((note: ChartNote | null, additive: boolean) => {
     if (!isToolArmed || tool !== "curve") return;
     if (!note) {
-      if (!additive) {
+      if (!additive && !multiSelectModeRef.current) {
         setSelectedNoteIds(previous => previous.length === 0 ? previous : []);
         setSelectedSegmentKeys(previous => previous.length === 0 ? previous : []);
       }
@@ -4506,6 +4513,10 @@ function ChartEditorController() {
   /** Editor mode: 基础 (no SP, no ExGarupa), SP 音符 (SP) or ExGarupa (SP and ExGarupa). */
   const editorMode: "basic" | "special" | "exgarupa" = isExGarupaEnabled
     ? "exgarupa" : canUseSpRhythmMode ? "special" : "basic";
+  // The SV view is for ExGarupa, where SV exists: leaving it closes the view.
+  useEffect(() => {
+    if (!isExGarupaEnabled && isSvPreviewEnabled) setIsSvPreviewEnabled(false);
+  }, [isExGarupaEnabled, isSvPreviewEnabled]);
   // The Hidden tool is for SP notes and above: 基础 mode puts it back to Single.
   useEffect(() => {
     if (tool === "hidden" && appOptionSettings.spRhythmNoteEnabled !== true) setTool("single");
@@ -4865,6 +4876,7 @@ function ChartEditorController() {
   }, [clamp, handleBoardMouseDownRaw, isPlayToolSelected, playbackCeilingSec, scrollContentHeight, startPlaybackAt, stopPlayback, yToTime]);
 
   useEditorPointerLifecycle({
+    multiSelectModeRef,
     slideBuildRef,
     setSlideBuildState,
     showDialog,
@@ -5163,7 +5175,8 @@ function ChartEditorController() {
    * Pressing a Slide segment selects it in place of everything selected (Ctrl/Cmd adds it to the selection, or drops
    * it when it is selected). A Long's line selects the Long's two notes.
    */
-  const selectSlideSegment = useCallback((segmentId: string, additive: boolean) => {
+  const selectSlideSegment = useCallback((segmentId: string, pressAdditive: boolean) => {
+    const additive = pressAdditive || multiSelectModeRef.current;
     const key = slideSegmentKeyOf(segmentId);
     if (!key) {
       const ids = slideSegmentEndNoteIds(segmentId);
@@ -6090,6 +6103,9 @@ function ChartEditorController() {
         showSvSetting,
         isSvPreviewEnabled,
         setIsSvPreviewEnabled,
+        isMultiSelectMode,
+        setIsMultiSelectMode,
+        multiSelectModeRef,
         showLaneSetting,
         isLaneSettingLocked,
         stepActiveLane,

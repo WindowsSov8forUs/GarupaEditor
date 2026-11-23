@@ -122,8 +122,10 @@ export function useSelectionAndEditorSync(params: any) {
     );
   }, [setSelectedNoteIds, setSelectedSegmentKeys]);
 
-  const setMultiSelectedNotes = useCallback((noteIds: string[], primaryId?: string | null) => {
-    setSelectedSegmentKeys((previous: string[]) => (previous.length === 0 ? previous : []));
+  /** Selects `noteIds`; the selected Slide segments go unless `keepSegments` (a multi-select's marquee). */
+  const setMultiSelectedNotes = useCallback((noteIds: string[], primaryId?: string | null,
+    options?: { keepSegments?: boolean }) => {
+    if (!options?.keepSegments) setSelectedSegmentKeys((previous: string[]) => (previous.length === 0 ? previous : []));
     const uniqueIds = Array.from(new Set(noteIds));
     if (uniqueIds.length === 0) {
       setSelectedNoteIds([]);

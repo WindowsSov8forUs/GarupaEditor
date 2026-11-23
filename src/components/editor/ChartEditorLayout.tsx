@@ -14,7 +14,8 @@ import { DEFAULT_METADATA, GLOBAL_TIMING_GROUP_ID, noteLaneSpanStart, toolPrevie
 import { EditorBeatDivisionButton } from "./EditorBeatDivision";
 import { EditorOptionsButton } from "./EditorOptionsButton";
 import { EditorOptionsDrawer } from "./EditorOptionsDrawer";
-import { EDITOR_HISTORY_TRAILING_WIDTH, EditorControlColumn, EditorHistoryTools, EditorMirrorTools, EditorPlaybackClock } from "./EditorControlColumn";
+import { EditorControlColumn, EditorHistoryTools, EditorMirrorTools, EditorPlaybackClock } from "./EditorControlColumn";
+import { editorLeftGridSpan, SidebarActionButton } from "./SidebarPanel";
 import { useApplicationResourceUrl } from "../../resources/applicationResourceContext";
 import { ORIGINAL_HEADER_MENU_BOUNDS, ORIGINAL_HEADER_TITLE_BOTTOM } from "../OriginalPageHeader";
 import { editorDirectionalBackLineWidth, editorDirectionalHeadGeometry, editorFlickArrowGeometry, editorNoteHeight, editorDirectionalSegmentWidth, editorHiddenButtonHeight, editorNoteTokenWidth, SELECTION_FRAME_MARGIN, SELECTION_RESIZE_GRIP_MAX_HEIGHT, SELECTION_RESIZE_GRIP_SCALE, SELECTION_RESIZE_GRIP_WIDTH, SELECTION_RESIZE_HIT_WIDTH } from "../../app/editorNoteMetrics";
@@ -176,6 +177,10 @@ function boardPointOf(runtime: any, event: { clientX: number; clientY: number })
   const rect = board.getBoundingClientRect();
   return { x: event.clientX - rect.left, y: event.clientY - rect.top };
 }
+
+/** How far the right column's foot controls sit above its bottom edge, in design px: none, which lines the beat
+ * division up with the left column's 游玩. */
+const RIGHT_COLUMN_FOOT_INSET = 0;
 
 export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   const returnToTitle = useReturnToTitle();
@@ -365,23 +370,29 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     copiedChartPayload,
   } = vm;
   const mobileRuntime = isMobileRuntime();
-  const clipboardIcon = useApplicationResourceUrl("ui.icon.clipboard");
-  // Memoized: SidebarPanel is memoized and must not re-render for an identical row.
-  const historyTools = useMemo(() => <EditorHistoryTools canUndo={vm.canUndoLastOperation} canRedo={vm.canRedoLastOperation}
-    onUndo={sidebarUndo} onRedo={sidebarRedo} onCopy={sidebarCopy} onPaste={sidebarPaste}
-    undoIcon={vm.undoActionIcon} clipboardIcon={clipboardIcon}
-    trailing={<EditorBeatDivisionButton value={vm.settings.timeSignatureDenominator} onSave={vm.setBeatDivision}
-      width={EDITOR_HISTORY_TRAILING_WIDTH} />} />,
-  [vm.canUndoLastOperation, vm.canRedoLastOperation, vm.undoActionIcon, clipboardIcon, sidebarUndo, sidebarRedo, sidebarCopy, sidebarPaste,
-    vm.settings.timeSignatureDenominator, vm.setBeatDivision]);
+  const copyIcon = useApplicationResourceUrl("ui.icon.copy-action");
+  const pasteIcon = useApplicationResourceUrl("ui.icon.paste-action");
   // deleteSelectedNotes changes with the selection; a stable handler keeps the memoized row unchanged.
   const deleteSelectionRef = useRef(vm.deleteSelectedNotes);
   deleteSelectionRef.current = vm.deleteSelectedNotes;
   const deleteSelection = useCallback(() => deleteSelectionRef.current(), []);
+  // The left column's rows on its five columns (see SidebarPanel's EDITOR_LEFT_GRID). Memoized: SidebarPanel is
+  // memoized and must not re-render for an identical row.
+  const historyTools = useMemo(() => <EditorHistoryTools canUndo={vm.canUndoLastOperation} canRedo={vm.canRedoLastOperation}
+    onUndo={sidebarUndo} onRedo={sidebarRedo} canDelete={vm.canDeleteSelection} onDelete={deleteSelection}
+    onCopy={sidebarCopy} onPaste={sidebarPaste} undoIcon={vm.undoActionIcon} deleteIcon={vm.clearActionIcon}
+    copyIcon={copyIcon} pasteIcon={pasteIcon} />,
+  [vm.canUndoLastOperation, vm.canRedoLastOperation, vm.undoActionIcon, sidebarUndo, sidebarRedo, sidebarCopy, sidebarPaste,
+    vm.canDeleteSelection, deleteSelection, vm.clearActionIcon, copyIcon, pasteIcon]);
   const mirrorTools = useMemo(() => <EditorMirrorTools enabled={vm.canMirror} onMirror={vm.mirrorSelectionAlong}
-    mirrorIcon={vm.mirrorActionIcon} canDelete={vm.canDeleteSelection} onDelete={deleteSelection}
-    deleteIcon={vm.clearActionIcon} />,
-  [vm.canMirror, vm.mirrorSelectionAlong, vm.mirrorActionIcon, vm.canDeleteSelection, deleteSelection, vm.clearActionIcon]);
+    mirrorIcon={vm.mirrorActionIcon}
+    trailing={<>
+      {/* Multi-select mode, two columns wide: pink while on. */}
+      <SidebarActionButton label={vm.isMultiSelectMode ? "多选 开" : "多选 关"} ariaLabel={vm.isMultiSelectMode ? "多选 开" : "多选 关"}
+        width={editorLeftGridSpan(2)} on={vm.isMultiSelectMode} onClick={() => vm.setIsMultiSelectMode(!vm.isMultiSelectMode)} />
+    </>} />,
+  [vm.canMirror, vm.mirrorSelectionAlong, vm.mirrorActionIcon, vm.isMultiSelectMode,
+    vm.setIsMultiSelectMode]);
   const [isEditorOptionsOpen, setEditorOptionsOpen] = useState(false);
   // Each opening of 编辑信息 / 创建工程 starts a new draft.
   const [songEditSession, setSongEditSession] = useState(0);
@@ -1238,6 +1249,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     deleteRightClickedNotes,
     isSvPreviewEnabled,
     isNoteOutsideActiveTimingGroup,
+    multiSelectModeRef: vm.multiSelectModeRef,
   };
 
   // The hover frame is the selection frame around the hovered note's button. A button that goes away (the note was
@@ -1361,7 +1373,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       runtime.suppressNextNoteClickRef.current = false;
       return;
     }
-    if (!runtime.isToolArmed && (event.metaKey || event.ctrlKey)) {
+    // Ctrl/Cmd held, or multi-select mode, toggles the note in the selection.
+    if (!runtime.isToolArmed && (event.metaKey || event.ctrlKey || runtime.multiSelectModeRef?.current === true)) {
       runtime.toggleSelectedNote(note.id);
       return;
     }
@@ -2035,6 +2048,15 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
           // Half the gap between the header menu button's bottom and the workspace top; the play button sits that
           // whole gap higher, opening the space above the speed stepper.
           speedGap={headerToWorkspaceGap / 2} playRaise={headerToWorkspaceGap}
+          // The SV view switch (ExGarupa, where SV exists) above the beat division, at the column's foot.
+          bottom={{ inset: RIGHT_COLUMN_FOOT_INSET, node: <>
+            {vm.isExGarupaEnabled && <SidebarActionButton label={vm.isSvPreviewEnabled ? "SV 开" : "SV 关"}
+              ariaLabel={vm.isSvPreviewEnabled ? "SV 开" : "SV 关"}
+              width={ORIGINAL_HEADER_MENU_BOUNDS.width} on={vm.isSvPreviewEnabled}
+              onClick={() => vm.setIsSvPreviewEnabled(!vm.isSvPreviewEnabled)} />}
+            <EditorBeatDivisionButton value={vm.settings.timeSignatureDenominator} onSave={vm.setBeatDivision}
+              width={ORIGINAL_HEADER_MENU_BOUNDS.width} label={`1/${vm.settings.timeSignatureDenominator}`} />
+          </> }}
  />
       </section>
 

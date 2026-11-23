@@ -481,8 +481,9 @@ export function useEditorGeometry(params: any) {
     yToBeat,
   ]);
 
+  /** Ends a marquee: it selects the notes it reaches, or with `additive` toggles them in the selection. */
   const finishSelectionDrag = useCallback(
-    (clientX?: number, clientY?: number) => {
+    (clientX?: number, clientY?: number, additive = false) => {
       const currentDrag = selectionDragRef.current;
       if (!currentDrag) {
         return;
@@ -572,12 +573,18 @@ export function useEditorGeometry(params: any) {
             .map((event: any) => event.id)
         : [];
 
-      if (hitNotes.length === 0 && hitBpmIds.length === 0 && hitSvIds.length === 0) {
+      if (additive) {
+        // Toggles what it reaches; the rest of the selection, Slide segments included, stays.
+        if (hitNotes.length > 0 && picked) {
+          const hitIds = new Set(hitNotes.map((note) => note.id));
+          const kept = [...selectedNoteIdSet].filter((id) => !hitIds.has(id));
+          const added = hitNotes.filter((note) => !selectedNoteIdSet.has(note.id)).map((note) => note.id);
+          setMultiSelectedNotes([...kept, ...added], added.includes(picked.id) ? picked.id : null, { keepSegments: true });
+        }
+      } else if (hitNotes.length === 0 && hitBpmIds.length === 0 && hitSvIds.length === 0) {
         clearSelection();
         return;
-      }
-
-      if (hitNotes.length > 0 && picked) {
+      } else if (hitNotes.length > 0 && picked) {
         setMultiSelectedNotes(
           hitNotes.map((note) => note.id),
           picked.id,
@@ -598,6 +605,7 @@ export function useEditorGeometry(params: any) {
       }
     },
     [
+      selectedNoteIdSet,
       LANE_WIDTH,
       NOTE_SPECS,
       beatToY,

@@ -13,6 +13,7 @@ export function useEditorPointerLifecycle(params: any) {
     suppressNextNoteClickRef,
     applySelectedOffset,
     finishSelectionDrag,
+    multiSelectModeRef,
   } = params;
 
   useEffect(() => {
@@ -70,7 +71,8 @@ export function useEditorPointerLifecycle(params: any) {
         }
       }
 
-      finishSelectionDrag(event.clientX, event.clientY);
+      // Ctrl/Cmd held, or multi-select mode, makes the marquee toggle what it reaches.
+      finishSelectionDrag(event.clientX, event.clientY, event.ctrlKey || event.metaKey || multiSelectModeRef?.current === true);
     };
 
     // A suppressed click belongs to the press that set it. Some releases are never followed by a
