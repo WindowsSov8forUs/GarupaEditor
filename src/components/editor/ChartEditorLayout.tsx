@@ -14,7 +14,8 @@ import { DEFAULT_METADATA, GLOBAL_TIMING_GROUP_ID, noteLaneSpanStart, toolPrevie
 import { EditorBeatDivisionButton } from "./EditorBeatDivision";
 import { EditorOptionsButton } from "./EditorOptionsButton";
 import { EditorOptionsDrawer } from "./EditorOptionsDrawer";
-import { EditorControlColumn, EditorHistoryTools, EditorMirrorTools, EditorPlaybackClock } from "./EditorControlColumn";
+import { EditorControlColumn, EditorHistoryTools, EditorMirrorTools, EditorPlaybackClock, EditorSquareTool } from "./EditorControlColumn";
+import { EditorNotePropertiesDialog } from "./EditorNotePropertiesDialog";
 import { editorLeftGridSpan, SidebarActionButton } from "./SidebarPanel";
 import { useApplicationResourceUrl } from "../../resources/applicationResourceContext";
 import { ORIGINAL_HEADER_MENU_BOUNDS, ORIGINAL_HEADER_TITLE_BOTTOM } from "../OriginalPageHeader";
@@ -370,6 +371,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     copiedChartPayload,
   } = vm;
   const mobileRuntime = isMobileRuntime();
+  const editIcon = useApplicationResourceUrl("ui.icon.edit");
   const copyIcon = useApplicationResourceUrl("ui.icon.copy-action");
   const pasteIcon = useApplicationResourceUrl("ui.icon.paste-action");
   // deleteSelectedNotes changes with the selection; a stable handler keeps the memoized row unchanged.
@@ -384,14 +386,19 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     copyIcon={copyIcon} pasteIcon={pasteIcon} />,
   [vm.canUndoLastOperation, vm.canRedoLastOperation, vm.undoActionIcon, sidebarUndo, sidebarRedo, sidebarCopy, sidebarPaste,
     vm.canDeleteSelection, deleteSelection, vm.clearActionIcon, copyIcon, pasteIcon]);
+  // The note property editor (编辑), on the selected notes.
+  const [notePropertiesOpen, setNotePropertiesOpen] = useState(false);
+  const hasNoteSelection = vm.selectedNoteProperties !== null;
+  useEffect(() => { if (!hasNoteSelection) setNotePropertiesOpen(false); }, [hasNoteSelection]);
   const mirrorTools = useMemo(() => <EditorMirrorTools enabled={vm.canMirror} onMirror={vm.mirrorSelectionAlong}
     mirrorIcon={vm.mirrorActionIcon}
     trailing={<>
+      <EditorSquareTool label="编辑" glyph={editIcon} disabled={!hasNoteSelection} onClick={() => setNotePropertiesOpen(true)} />
       {/* Multi-select mode, two columns wide: pink while on. */}
       <SidebarActionButton label={vm.isMultiSelectMode ? "多选 开" : "多选 关"} ariaLabel={vm.isMultiSelectMode ? "多选 开" : "多选 关"}
         width={editorLeftGridSpan(2)} on={vm.isMultiSelectMode} onClick={() => vm.setIsMultiSelectMode(!vm.isMultiSelectMode)} />
     </>} />,
-  [vm.canMirror, vm.mirrorSelectionAlong, vm.mirrorActionIcon, vm.isMultiSelectMode,
+  [vm.canMirror, vm.mirrorSelectionAlong, vm.mirrorActionIcon, editIcon, hasNoteSelection, vm.isMultiSelectMode,
     vm.setIsMultiSelectMode]);
   const [isEditorOptionsOpen, setEditorOptionsOpen] = useState(false);
   // Each opening of 编辑信息 / 创建工程 starts a new draft.
@@ -2058,6 +2065,10 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
               width={ORIGINAL_HEADER_MENU_BOUNDS.width} label={`1/${vm.settings.timeSignatureDenominator}`} />
           </> }}
  />
+        <EditorNotePropertiesDialog open={notePropertiesOpen} properties={vm.selectedNoteProperties}
+          laneRange={vm.laneRange}
+          timingGroups={vm.isExGarupaEnabled ? vm.timingGroupIds : undefined} onAddTimingGroup={vm.addTimingGroup}
+          onClose={() => setNotePropertiesOpen(false)} onSave={vm.applyNoteProperties} />
       </section>
 
       </OriginalPageSwitch>
@@ -2113,6 +2124,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         mode={vm.editorMode} onModeChange={mode => { void vm.setEditorMode(mode); }}
         habahiro={isHabahiroEnabled} onHabahiroChange={value => { void vm.setHabahiroMode(value); }}
         laneCount={vm.settings.laneCount} onLaneCountChange={vm.setLaneCount}
+        timingGroupView={vm.isExGarupaEnabled ? { value: vm.timingGroupView, groups: vm.timingGroupIds,
+          onChange: vm.setTimingGroupView } : undefined}
         onSongInformation={() => { setEditorOptionsOpen(false); setPageStack(stack => openDetailPage(stack, "song")); }}
         onEditSongInformation={() => { setEditorOptionsOpen(false); openSongEdit(false, stack => openDetailPage(stack, "songEdit")); }}
         onExportProject={() => { setEditorOptionsOpen(false); void vm.projectFiles.save(); }} exportBusy={vm.projectFiles.busy}

@@ -718,8 +718,9 @@ function ChartEditorController() {
 
   const timingGroupIds = useMemo(() => sortTimingGroupIds(Object.keys(timingGroups)), [timingGroups]);
 
-  const isTimingGroupModeActive =
-    isTimingGroupModeEnabled && selectedTimingGroupId !== GLOBAL_TIMING_GROUP_ID;
+  // The timing group view (编辑器选项 → 时间组视图, ExGarupa only): with a group picked, the global one included, only
+  // that group's notes are editable and new notes go to it.
+  const isTimingGroupModeActive = isExGarupaEnabled && isTimingGroupModeEnabled;
   const activeTimingGroupId = isTimingGroupModeActive
     ? selectedTimingGroupId
     : GLOBAL_TIMING_GROUP_ID;
@@ -1372,10 +1373,11 @@ function ChartEditorController() {
     return groups.every((group) => group === first) ? first : GLOBAL_TIMING_GROUP_ID;
   }, [normalizeObjectTimingGroup, noteTimingGroupIdByNoteId, selectedNotes]);
   const visibleSvEvents = useMemo(() => {
+    // 全部 shows every group's SV events; a picked group shows its own and the global ones.
     return svEvents.filter((event) => {
       const groupId = normalizeObjectTimingGroup(event.timingGroup);
       if (!isTimingGroupModeActive) {
-        return groupId === GLOBAL_TIMING_GROUP_ID;
+        return true;
       }
       return groupId === GLOBAL_TIMING_GROUP_ID || groupId === selectedTimingGroupId;
     });
@@ -2147,6 +2149,23 @@ function ChartEditorController() {
         )
         : 1;
 
+  /** The selected notes' timing group, null when they are in different ones. */
+  const selectedNotesTimingGroup = useMemo(() => {
+    const groups = new Set(selectedNotes.map((note) =>
+      noteTimingGroupIdByNoteId.get(note.id) ?? normalizeObjectTimingGroup(note.timingGroup)));
+    return groups.size === 1 ? [...groups][0]! : null;
+  }, [normalizeObjectTimingGroup, noteTimingGroupIdByNoteId, selectedNotes]);
+  /** The selected notes' properties as the note property dialog edits them (null without a note selected). */
+  const selectedNoteProperties = hasNoteSelection ? {
+    timingGroup: selectedNotesTimingGroup,
+    count: selectedNoteCount,
+    beat: minSelectedBeat,
+    lane: minSelectedLane,
+    widthMode: widthSettingMode,
+    width: activeWidthValue,
+    direction: activeDirectionalValue,
+  } : null;
+
   const currentEditorConfigType: EditorConfigCacheKey | null =
     hideSettingsPanel || activeSettingsType === null ? null : activeSettingsType;
 
@@ -2323,6 +2342,38 @@ function ChartEditorController() {
     exGarupaEnabled: isExGarupaEnabled,
     modeOptions: appOptionSettings,
   });
+  /**
+   * The note property dialog's 保存, as one edit: the selection moves so its earliest note is on `beat` and its
+   * leftmost on `lane` (Slides keep their shape, as a drag moves them); `width` goes to every note that has one of
+   * that kind, `direction` to every Directional.
+   */
+  const applyNoteProperties = useCallback((next: { beat: number; lane: number; width?: number;
+    direction?: "left" | "right"; timingGroup?: ChartTimingGroupId }) => {
+    if (!hasNoteSelection) return;
+    const mode = widthSettingMode;
+    applySelectedOffset(Number((next.lane - minSelectedLane).toFixed(6)), Number((next.beat - minSelectedBeat).toFixed(6)), {
+      quantizeBeatDelta: false,
+      transform: (note: ChartNote) => {
+        let result = note;
+        if (next.direction && isDirectionalNoteType(result.type)) {
+          result = { ...result, type: next.direction === "left" ? "directional_flick_left" : "directional_flick_right" };
+        }
+        if (next.width !== undefined) {
+          if (mode === "directional" && isDirectionalNoteType(result.type)) {
+            result = { ...result, width: normalizeDirectionalWidth(next.width) };
+          } else if (mode === "rhythm" && isRhythmWidthEditableType(result.type)) {
+            result = { ...result, width: normalizeRhythmWidth(next.width) };
+          }
+        }
+        return result;
+      },
+    });
+    // The timing group (ExGarupa): every selected note and the Slides they are in, in the same edit.
+    if (next.timingGroup !== undefined && next.timingGroup !== selectedNotesTimingGroup) {
+      setSelectedObjectTimingGroupId(next.timingGroup);
+    }
+  }, [applySelectedOffset, hasNoteSelection, minSelectedBeat, minSelectedLane, selectedNotesTimingGroup,
+    setSelectedObjectTimingGroupId, widthSettingMode]);
 
   // Deleting a segment (cutting its Slide) is part of note deletion: see `planNoteDeletion`.
   const { applySlideSegmentSettingsByKeys } = useSlideSegmentActions({
@@ -4513,10 +4564,22 @@ function ChartEditorController() {
   /** Editor mode: 基础 (no SP, no ExGarupa), SP 音符 (SP) or ExGarupa (SP and ExGarupa). */
   const editorMode: "basic" | "special" | "exgarupa" = isExGarupaEnabled
     ? "exgarupa" : canUseSpRhythmMode ? "special" : "basic";
-  // The SV view is for ExGarupa, where SV exists: leaving it closes the view.
+  // The SV view and the timing group view are for ExGarupa: leaving it closes them (the latter back to 全部).
   useEffect(() => {
-    if (!isExGarupaEnabled && isSvPreviewEnabled) setIsSvPreviewEnabled(false);
-  }, [isExGarupaEnabled, isSvPreviewEnabled]);
+    if (isExGarupaEnabled) return;
+    if (isSvPreviewEnabled) setIsSvPreviewEnabled(false);
+    if (isTimingGroupModeEnabled) setIsTimingGroupModeEnabled(false);
+  }, [isExGarupaEnabled, isSvPreviewEnabled, isTimingGroupModeEnabled]);
+  /** 时间组视图: null for 全部, else the group whose notes alone are editable. */
+  const timingGroupView = isTimingGroupModeActive ? selectedTimingGroupId : null;
+  const setTimingGroupView = useCallback((group: ChartTimingGroupId | null) => {
+    if (group === null) {
+      setIsTimingGroupModeEnabled(false);
+      return;
+    }
+    setSelectedTimingGroupId(group);
+    setIsTimingGroupModeEnabled(true);
+  }, []);
   // The Hidden tool is for SP notes and above: 基础 mode puts it back to Single.
   useEffect(() => {
     if (tool === "hidden" && appOptionSettings.spRhythmNoteEnabled !== true) setTool("single");
@@ -6105,7 +6168,12 @@ function ChartEditorController() {
         setIsSvPreviewEnabled,
         isMultiSelectMode,
         setIsMultiSelectMode,
+        timingGroupView,
+        setTimingGroupView,
         multiSelectModeRef,
+        selectedNoteProperties,
+        applyNoteProperties,
+        laneRange: { min: laneMin, max: laneValues[laneValues.length - 1]! },
         showLaneSetting,
         isLaneSettingLocked,
         stepActiveLane,
