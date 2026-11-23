@@ -4838,8 +4838,15 @@ function ChartEditorController() {
         return;
       }
       const playfield = playfieldRef.current;
-      if (!playfield || document.activeElement !== playfield) {
+      if (!playfield || !playfield.isConnected || playfield.offsetParent === null) {
         return;
+      }
+      // A button pressed last keeps the focus, and Space would press it again. On the editor page (no window open
+      // over it) Space is playback wherever the focus is, and focus goes back to the board.
+      if (document.activeElement !== playfield) {
+        if (document.querySelector(".modal-transition-mask")) return;
+        if (target instanceof HTMLElement && target !== document.body) target.blur();
+        playfield.focus({ preventScroll: true });
       }
       event.preventDefault();
       togglePlaybackFromCurrentPosition();
