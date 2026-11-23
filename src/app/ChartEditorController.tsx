@@ -66,6 +66,7 @@ import { isMobileRuntime, setMobileSimulatorImmersive, writeMobileRoutePayload }
 import { canMirrorSelection, mirrorSelection, type MirrorAxis, type SelectionMirrorContext } from "./selectionMirror";
 import { cleanupSlideChainsHidden, dropNoteIdsFromChains } from "./slideChainCleanup";
 import { parseSlideSegmentId, slideSegmentId, slideSegmentKey, slideSegmentRanges } from "./slideSegments";
+import { saveUndoHistory, takeUndoHistory } from "./undoHistoryPersistence";
 import {
   useNotePaletteSpriteRendering,
   usePlayfieldSpriteRendering,
@@ -2424,8 +2425,25 @@ function ChartEditorController() {
     setBpmEventsState(next.chart.bpmEvents); setTimingGroupsState(ensureTimingGroups(next.chart.timingGroups));
     setChartMediaResources(next.mediaRefs); setAudioFileName(next.audioFileName); setAudioDurationSec(next.audioDurationSec);
     clearSelection();
-    undoStackRef.current = []; redoStackRef.current = []; pendingUndoSourcesRef.current = null; setUndoVersion(v => v + 1);
+    // The first project restored after the page loaded takes back the history the last page kept for it, when it is
+    // that project with the same content (a reload); any other restore starts without history.
+    const kept = isFirstRestoreRef.current ? takeUndoHistory<EditorUndoSnapshot>(next.projectId, (present) =>
+      sameUndoContent(present, { notes: next.chart.notes, slideChains: next.chart.slideChains,
+        bpmEvents: next.chart.bpmEvents, timingGroups: ensureTimingGroups(next.chart.timingGroups) })) : null;
+    isFirstRestoreRef.current = false;
+    undoStackRef.current = kept?.undo ?? []; redoStackRef.current = kept?.redo ?? [];
+    pendingUndoSourcesRef.current = null; setUndoVersion(v => v + 1);
   }, [resourceManager, clearSelection]);
+  const isFirstRestoreRef = useRef(true);
+  // The history is kept for the next load of the page as this one goes away (see undoHistoryPersistence.ts).
+  const projectIdRef = useRef(projectId);
+  projectIdRef.current = projectId;
+  useEffect(() => {
+    const keep = () => saveUndoHistory(projectIdRef.current, buildCurrentUndoSnapshot(), undoStackRef.current,
+      redoStackRef.current);
+    window.addEventListener("pagehide", keep);
+    return () => window.removeEventListener("pagehide", keep);
+  }, [buildCurrentUndoSnapshot]);
 
   const {
     garupaChartJsonText,
@@ -2564,9 +2582,14 @@ function ChartEditorController() {
   // editor's own chart aside (and out of the session cache) until the play flow ends.
   const playSessionBackupRef = useRef<ChartProject | null>(null);
   const [playSessionActive, setPlaySessionActive] = useState(false);
+  // The editor's undo and redo history is kept aside with its chart: loading a chart for play, and restoring the
+  // editor's chart afterwards, would otherwise drop it.
+  const playSessionHistoryRef = useRef<{ undo: EditorUndoSnapshot[]; redo: EditorUndoSnapshot[] } | null>(null);
   const beginPlaySession = useCallback(async () => {
     if (playSessionBackupRef.current !== null) return;
+    const history = { undo: [...undoStackRef.current], redo: [...redoStackRef.current] };
     playSessionBackupRef.current = await captureChartProject(resourceManager, project);
+    playSessionHistoryRef.current = history;
     setPlaySessionActive(true);
   }, [resourceManager, project]);
   const endPlaySession = useCallback(() => {
@@ -2574,6 +2597,12 @@ function ChartEditorController() {
     if (backup === null) return;
     playSessionBackupRef.current = null;
     restoreProject(backup);
+    const history = playSessionHistoryRef.current;
+    playSessionHistoryRef.current = null;
+    if (history) {
+      undoStackRef.current = history.undo; redoStackRef.current = history.redo;
+      pendingUndoSourcesRef.current = null; setUndoVersion(v => v + 1);
+    }
     setPlaySessionActive(false);
   }, [restoreProject]);
   const settingsResourcesReady = useEditorSessionCache({
