@@ -47,7 +47,7 @@ import {
   type SlideChain,
 } from "./editorHelpers";
 import { useBoardInteractionActions } from "./hooks/useBoardInteractionActions";
-import { useCanvasPlayfieldBackend, type EventBubbleHit } from "./hooks/useCanvasPlayfieldBackend";
+import { type CanvasSvLiveScroll, useCanvasPlayfieldBackend, type EventBubbleHit } from "./hooks/useCanvasPlayfieldBackend";
 import { useCanvasRenderResources } from "./hooks/useCanvasRenderResources";
 import { useIsStartingApplication, useStartupReadiness } from "./startupReadiness";
 import { useEditorGeometry } from "./hooks/useEditorGeometry";
@@ -4838,8 +4838,15 @@ function ChartEditorController() {
         return;
       }
       const playfield = playfieldRef.current;
-      if (!playfield || document.activeElement !== playfield) {
+      if (!playfield || !playfield.isConnected || playfield.offsetParent === null) {
         return;
+      }
+      // A button pressed last keeps the focus, and Space would press it again. On the editor page (no window open
+      // over it) Space is playback wherever the focus is, and focus goes back to the board.
+      if (document.activeElement !== playfield) {
+        if (document.querySelector(".modal-transition-mask")) return;
+        if (target instanceof HTMLElement && target !== document.body) target.blur();
+        playfield.focus({ preventScroll: true });
       }
       event.preventDefault();
       togglePlaybackFromCurrentPosition();
@@ -5025,6 +5032,30 @@ function ChartEditorController() {
     }
     return normalizeObjectTimingGroup(chain.timingGroup) !== selectedTimingGroupId;
   }, [isTimingGroupModeActive, normalizeObjectTimingGroup, selectedTimingGroupId]);
+  /** The timing group a note is placed by (its Slide's, else its own). */
+  const noteTimingGroupOf = useCallback((note: ChartNote): string =>
+    noteTimingGroupById.get(note.id) ?? normalizeTimingGroupId(note.timingGroup), [noteTimingGroupById]);
+  /**
+   * Under the SV view (not playing) the board is drawn from data placed for the committed preview time; while the view
+   * moves the canvas offsets each timing group to the live preview time instead of placing the chart again (see
+   * CanvasSvLiveScroll). A group's place at preview time p is timeToY(p) - (d(t) - d(p)), so moving p from the reference
+   * moves all its elements by the same amount.
+   */
+  const svLiveScroll = useMemo<CanvasSvLiveScroll | null>(() => {
+    if (!isSvPreviewEnabled || isPlaybackPlaying) return null;
+    const referenceTimeSec = svPreviewTimeSec;
+    const groupOf = (group: string | undefined) => svPreviewTimingGroups.get(group ?? GLOBAL_TIMING_GROUP_ID)
+      ?? svPreviewTimingGroups.get(GLOBAL_TIMING_GROUP_ID) ?? null;
+    return {
+      referenceTimeSec,
+      liveTimeAt: (viewportBottomY) => Math.min(totalDurationSec, Math.max(0, displayAxis.viewportTimeAtY(viewportBottomY))),
+      groupOffset: (group, liveTime) => {
+        const timingGroup = groupOf(group);
+        return displayAxis.timeToY(liveTime) + displayAxis.distanceAtTime(liveTime, timingGroup)
+          - displayAxis.timeToY(referenceTimeSec) - displayAxis.distanceAtTime(referenceTimeSec, timingGroup);
+      },
+    };
+  }, [displayAxis, isPlaybackPlaying, isSvPreviewEnabled, svPreviewTimeSec, svPreviewTimingGroups, totalDurationSec]);
   const renderModel = useEditorRenderModel({
     bpmTimeline,
     totalBeats,
@@ -5042,6 +5073,7 @@ function ChartEditorController() {
     longLineOpacityScale,
     isSimultaneousLineEnabled: appOptionSettings.simultaneousLineEnabled,
     isSlideChainMuted: isSlideChainOutsideActiveTimingGroup,
+    timingGroupOfNote: noteTimingGroupOf,
   });
   // A second projection of the same chart model, in seconds and lanes, with no SV transform.
   const minimapBeatToTime = useCallback((beat: number) => beatToSeconds(beat, bpmTimeline), [bpmTimeline]);
@@ -5199,6 +5231,7 @@ function ChartEditorController() {
         selected: isSelected,
         muted,
         ...(amongBox ? { baseShiftY: 0.5 - (amongBox.top + amongBox.bottom) / 2 } : {}),
+        timingGroup: noteTimingGroupOf(note),
       }];
     });
   }, [
@@ -5540,6 +5573,7 @@ function ChartEditorController() {
     bubbleScale: uiScale,
     resourcesVersion: canvasResourceVersion,
     eventBubbleHitsRef,
+    svLiveScroll,
   });
 
   const staticRenderResourceMap = useMemo(
