@@ -2,7 +2,8 @@ import { useEffect, useState, type KeyboardEvent } from "react";
 import { OriginalTransferDialog } from "./OriginalTransferDialog";
 import { OriginalAuthoredDialog } from "./OriginalAuthoredDialog";
 import { OriginalPrefabModel, ORIGINAL_PREFABS } from "./originalPrefabModel";
-import { OriginalFormButton, OriginalFormInput, OriginalFormSubtitle, OriginalFormNote } from "./OriginalFormParts";
+import { OriginalCaptionField, OriginalFormButton, OriginalFormNote, ORIGINAL_CAPTION_FIELD_WIDTH,
+  TRANSFER_PAGE_PADDING_X } from "./OriginalFormParts";
 
 type BestdoriLoginModalProps = {
   open: boolean; username: string; password: string; submitting: boolean; errorMessage: string;
@@ -31,22 +32,21 @@ export function BestdoriLoginModal(props: BestdoriLoginModalProps) {
       <div className="transfer-body">
         {/* The window fits its button row, as the original dialogs do; the form fills that width. */}
         <div className="transfer-page transfer-page-follows-actions">
-          <OriginalFormSubtitle text="用户名" />
-          <OriginalFormInput aria-label="Bestdori 用户名" value={form ? props.username : props.accountUsername}
+          {/* Laid out as the JP データ引き継ぎ window: an ID and a password, captions centred over their boxes. */}
+          <OriginalCaptionField caption="用户名" aria-label="Bestdori 用户名" value={form ? props.username : props.accountUsername}
             readOnly={!form} disabled={props.submitting} autoComplete="username"
             onChange={event => props.onUsernameChange(event.currentTarget.value)} onKeyDown={keyDown} />
           {form ? <>
-            <OriginalFormSubtitle text="密码" />
-            <OriginalFormInput aria-label="Bestdori 密码" type="password" value={props.password}
+            <OriginalCaptionField caption="密码" aria-label="Bestdori 密码" type="password" value={props.password}
               disabled={props.submitting} autoComplete="current-password"
               onChange={event => props.onPasswordChange(event.currentTarget.value)} onKeyDown={keyDown} />
           </> : <>
-            <OriginalFormSubtitle text="昵称" />
-            <OriginalFormInput aria-label="Bestdori 昵称" value={props.accountNickname} readOnly />
+            <OriginalCaptionField caption="昵称" aria-label="Bestdori 昵称" value={props.accountNickname} readOnly />
           </>}
           {props.errorMessage && <div role="alert"><OriginalFormNote text={props.errorMessage} /></div>}
         </div>
-        <div className="transfer-actions">
+        {/* At least as wide as the fields' caption bars, whichever buttons the row has. */}
+        <div className="transfer-actions" style={{ minWidth: ORIGINAL_CAPTION_FIELD_WIDTH + 2 * TRANSFER_PAGE_PADDING_X }}>
           {form ? <OriginalFormButton tone="pink" disabled={props.submitting || !props.username.trim() || !props.password}
             onClick={submit}>{props.submitting ? "登录中…" : "登录"}</OriginalFormButton> : <>
             <OriginalFormButton tone="pink" disabled={props.submitting} onClick={() => {
