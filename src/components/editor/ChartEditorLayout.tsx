@@ -1446,10 +1446,16 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         const spriteAspectRatio = getSpriteAspectRatio(resolved.layers);
         const noteHeight = editorNoteHeight(LANE_WIDTH, noteVisualScale);
         const tokenWidth = editorNoteTokenWidth(spanLanes, isDirectional, LANE_WIDTH, noteVisualScale);
+        // A Slide's middle node drawn as the skin's slide among (a thin bar) is pressed by a button as short as a
+        // Hidden node's, so the line between close nodes stays pressable.
+        const isAmongNode = !spriteLayers.overlay && spriteLayers.base === getSpriteLayers("single", {
+          baseImageType: "slide_among", width: spanLanes, includeDirectionalOverlay: false, includeFlickOverlay: false,
+        }).base;
         const style: CSSProperties = {
           left: (laneToColumn(directionalStartLane) + spanLanes / 2) * LANE_WIDTH,
           top: renderY,
           width: tokenWidth,
+          ...(isAmongNode ? { height: editorHiddenButtonHeight(LANE_WIDTH, noteVisualScale) } : {}),
           "--lane-width": `${LANE_WIDTH}px`,
           "--directional-base-width": `${directionalBaseWidthPx}px`,
           "--note-visual-scale": `${noteVisualScale}`,
@@ -1512,6 +1518,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       vm.hiddenMarkBoxAt,
       isHiddenMarkIdle,
       vm.isHiddenNodeShown,
+      getSpriteLayers,
       // vm's functions are stable wrappers: what isHiddenNodeShown reads (the Curve tool hides Hidden nodes) is listed.
       isToolArmed,
       tool,
