@@ -1,6 +1,6 @@
 import homeBackgroundTextUrl from "../../assets/game/menu-background/bg-text-home.png?url&no-inline";
 import homeDisplayButtonUrl from "../../assets/game/button-viewmode-edit.png?url&no-inline";
-import defaultDisplayImageUrl from "../../assets/game/default-display-card-1703.png?url&no-inline";
+import defaultDisplayImageUrl from "../../assets/game/default-display-kasumi-9th.png?url&no-inline";
 import chartEditorIconUrl from "../../assets/icon-chart-editor.png?url&no-inline";
 import playChartIconUrl from "../../assets/game/icon-play-chart.png?url&no-inline";
 import importChartIconUrl from "../../assets/game/icon-import-chart.png?url&no-inline";
@@ -236,13 +236,13 @@ const DEFINITIONS: readonly BuiltinDefinition[] = Object.freeze([
     mediaType: "image/png",
     url: homeDisplayButtonUrl,
   }),
-  // Bestdori card 1703 / res001072 / trim_after_training.png.
-  // Source receipt: home-default-card-1703, 9667f162a6c63b9821b7a2dfa533a6ae7d2db2c7.
+  // The 9th anniversary title scene's Kasumi (08_kasumi_01_base, texture 33 of src/assets/game/title), its top
+  // 1003 × 1250: the home frame covers it centred, which would cut the whole figure's head off.
   Object.freeze({
     slot: "ui.home.default-display-image",
     id: "builtin/ui/home/default-display-image",
-    path: "game/default-display-card-1703.png",
-    title: "户山香澄「开始打工了！」特训后透明立绘",
+    path: "game/default-display-kasumi-9th.png",
+    title: "户山香澄 第九周年标题立绘",
     kind: "image", mediaType: "image/png", url: defaultDisplayImageUrl,
   }),
   Object.freeze({
