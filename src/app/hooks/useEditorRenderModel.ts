@@ -40,12 +40,16 @@ export type RenderConnectionSegment = {
   textureKind: "long" | "curveSlide";
   opacity: number;
   muted?: boolean;
+  /** The timing group its ends are placed by (the Slide's). */
+  timingGroup?: string;
 };
 
 export type RenderSimultaneousSegment = {
   key: string;
   beat: number;
   y: number;
+  /** The timing group its y is placed by (its left note's). */
+  timingGroup?: string;
   fromX: number;
   toX: number;
   width: number;
@@ -87,6 +91,7 @@ export function useEditorRenderModel(params: any) {
     longLineOpacityScale,
     isSimultaneousLineEnabled,
     isSlideChainMuted,
+    timingGroupOfNote,
   } = params;
 
   const timings = useMemo<RenderTimingSegment[]>(() => {
@@ -178,6 +183,7 @@ export function useEditorRenderModel(params: any) {
           id: note.id,
           beat: placement.beat,
           y: normalizeCoord(getNoteDisplayY?.(note, placement.beat) ?? beatToY(placement.beat)),
+          timingGroup: timingGroupOfNote?.(note) as string | undefined,
           sortLane: startLane,
           leftX,
           rightX,
@@ -233,6 +239,7 @@ export function useEditorRenderModel(params: any) {
             key: `${beat.toFixed(6)}:${left.id}->${right.id}`,
             beat,
             y: normalizeCoord(left.y),
+            timingGroup: left.timingGroup,
             fromX,
             toX,
             width,
@@ -350,6 +357,7 @@ export function useEditorRenderModel(params: any) {
           textureKind,
           opacity,
           muted,
+          timingGroup: timingGroupOfNote?.(chainNotes[index]) as string | undefined,
         });
       }
     }

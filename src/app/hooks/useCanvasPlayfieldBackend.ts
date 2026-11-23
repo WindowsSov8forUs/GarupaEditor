@@ -199,6 +199,21 @@ export type CanvasNoteVisual = {
   /** How far down to draw the base sprite, as a fraction of the note's height: a Slide middle node's sprite is moved so
    * its opaque part, not the whole sprite, is centred on its time. */
   baseShiftY?: number;
+  /** The note's timing group: under the SV view it moves with that group's offset (see CanvasSvLiveScroll). */
+  timingGroup?: string;
+};
+
+/**
+ * The SV view while the view moves: the board is drawn from data placed for `referenceTimeSec` (the committed SV
+ * preview time); each frame every timing group's elements move by that group's offset to the live preview time
+ * (the viewport's), so a scroll redraws the board in the same frame without placing the chart again.
+ */
+export type CanvasSvLiveScroll = {
+  referenceTimeSec: number;
+  /** The live preview time for the viewport's bottom edge (board y). */
+  liveTimeAt(viewportBottomY: number): number;
+  /** How far group `group`'s elements move down from their reference place for the live preview time `liveTime`. */
+  groupOffset(group: string | undefined, liveTime: number): number;
 };
 
 type CanvasBpmVisual = {
@@ -472,6 +487,8 @@ export function useCanvasPlayfieldBackend(params: {
   resourcesVersion: number;
   /** Receives the bubble sections' hit boxes after each track frame. */
   eventBubbleHitsRef: MutableRefObject<EventBubbleHit[]>;
+  /** Under the SV view (not playing): see CanvasSvLiveScroll. */
+  svLiveScroll?: CanvasSvLiveScroll | null;
 }) {
   const {
     enabled,
@@ -510,6 +527,7 @@ export function useCanvasPlayfieldBackend(params: {
     bubbleScale,
     resourcesVersion,
     eventBubbleHitsRef,
+    svLiveScroll = null,
 } = params;
   const runtimeSkin = useMemo<CanvasRenderResourceRuntimeAssets | null>(
     () => (skinAssets ? projectCanvasRenderResourceRuntimeAssets(skinAssets) : null),
@@ -517,6 +535,7 @@ export function useCanvasPlayfieldBackend(params: {
   );
 
   const snapshotRef = useRef<{
+    svLiveScroll: CanvasSvLiveScroll | null;
     boardWidth: number;
     boardHeight: number;
     laneValues: number[];
@@ -575,6 +594,8 @@ export function useCanvasPlayfieldBackend(params: {
     bpmVisualLinesRef: CanvasBpmVisual[];
     svVisualLinesRef: CanvasSvVisual[];
     laneChangeVisualLinesRef: CanvasLaneChangeVisual[];
+    svLiveTime: number | null;
+    svLiveRef: CanvasSvLiveScroll | null;
   } | null>(null);
   const noteRenderMemoRef = useRef<{
     viewportTop: number;
@@ -601,6 +622,8 @@ export function useCanvasPlayfieldBackend(params: {
     slideBuildCursorX: number | null;
     slideBuildCursorY: number | null;
     selectionDragRef: { isDragging: boolean; startX: number; startY: number; currentX: number; currentY: number } | null;
+    svLiveTime: number | null;
+    svLiveRef: CanvasSvLiveScroll | null;
   } | null>(null);
     const sortedConnectionSegmentsRef = useRef<{
     source: RenderConnectionSegment[] | null;
@@ -642,6 +665,7 @@ export function useCanvasPlayfieldBackend(params: {
     bubbleEdgeInset,
     bubbleScale,
     resourcesVersion,
+    svLiveScroll,
   };
 
   const drawFrame = useMemo(() => {
@@ -664,6 +688,27 @@ export function useCanvasPlayfieldBackend(params: {
       const viewportTop = playfield ? playfield.scrollTop : 0;
       const viewportHeight = playfield ? playfield.clientHeight : height;
       const viewportBottom = viewportTop + viewportHeight;
+      // Under the SV view each timing group moves by its own offset to the live preview time (CanvasSvLiveScroll).
+      const svLive = snapshot.svLiveScroll;
+      const svLiveTime = svLive && playfield ? svLive.liveTimeAt(viewportBottom) : null;
+      const svOffsets = new Map<string, number>();
+      const svOffset = (group?: string): number => {
+        if (svLive === null || svLiveTime === null) return 0;
+        const key = group ?? "";
+        let offset = svOffsets.get(key);
+        if (offset === undefined) {
+          offset = svLive.groupOffset(group, svLiveTime);
+          svOffsets.set(key, offset);
+        }
+        return offset;
+      };
+      // The note layer's buttons (hit boxes, Hidden marks) are placed by the committed preview time: until it catches
+      // up they move with the global group, as its notes on the canvas do.
+      const noteLayer = playfield?.querySelector<HTMLElement>(".note-layer");
+      if (noteLayer) {
+        const translate = svLiveTime === null ? "" : `0 ${svOffset()}px`;
+        if (noteLayer.style.translate !== translate) noteLayer.style.translate = translate;
+      }
       const viewportWidth = playfield ? playfield.clientWidth : logicalBoardWidth;
       const verticalOverscan = BOARD_OVERSCAN_PX;
       const horizontalOverscan = BOARD_HORIZONTAL_OVERSCAN_PX;
@@ -724,6 +769,8 @@ export function useCanvasPlayfieldBackend(params: {
         bpmVisualLinesRef: snapshot.bpmVisualLines,
         svVisualLinesRef: snapshot.svVisualLines,
         laneChangeVisualLinesRef: snapshot.laneChangeVisualLines,
+        svLiveTime,
+        svLiveRef: svLive,
       };
       const previousTrackMemo = trackRenderMemoRef.current;
       const shouldDrawTrack =
@@ -750,7 +797,9 @@ export function useCanvasPlayfieldBackend(params: {
         || previousTrackMemo.yToBeatRef !== trackMemo.yToBeatRef
         || previousTrackMemo.bpmVisualLinesRef !== trackMemo.bpmVisualLinesRef
         || previousTrackMemo.svVisualLinesRef !== trackMemo.svVisualLinesRef
-        || previousTrackMemo.laneChangeVisualLinesRef !== trackMemo.laneChangeVisualLinesRef;
+        || previousTrackMemo.laneChangeVisualLinesRef !== trackMemo.laneChangeVisualLinesRef
+        || previousTrackMemo.svLiveTime !== trackMemo.svLiveTime
+        || previousTrackMemo.svLiveRef !== trackMemo.svLiveRef;
 
       const slideBuildCursor = snapshot.slideBuildFollowStart ? snapshot.slideBuildCursorRef.current : null;
       const noteMemo = {
@@ -778,6 +827,8 @@ export function useCanvasPlayfieldBackend(params: {
         slideBuildCursorX: slideBuildCursor?.x ?? null,
         slideBuildCursorY: slideBuildCursor?.y ?? null,
         selectionDragRef: snapshot.selectionDrag,
+        svLiveTime,
+        svLiveRef: svLive,
       };
       const previousNoteMemo = noteRenderMemoRef.current;
       const shouldDrawNote =
@@ -803,7 +854,9 @@ export function useCanvasPlayfieldBackend(params: {
         || previousNoteMemo.slideBuildFollowStartRef !== noteMemo.slideBuildFollowStartRef
         || previousNoteMemo.slideBuildCursorX !== noteMemo.slideBuildCursorX
         || previousNoteMemo.slideBuildCursorY !== noteMemo.slideBuildCursorY
-        || previousNoteMemo.selectionDragRef !== noteMemo.selectionDragRef;
+        || previousNoteMemo.selectionDragRef !== noteMemo.selectionDragRef
+        || previousNoteMemo.svLiveTime !== noteMemo.svLiveTime
+        || previousNoteMemo.svLiveRef !== noteMemo.svLiveRef;
 
       const prepareCanvas = (canvas: HTMLCanvasElement): CanvasRenderingContext2D | null => {
         if (canvas.width !== pixelWidth) {
@@ -863,11 +916,14 @@ export function useCanvasPlayfieldBackend(params: {
         context.rect(0, 0, width, height - windowTop + 1);
         context.clip();
 
-        for (const { y: yWorld, kind } of editorGridWindow({ top: windowTop, bottom: windowBottom,
+        // The track (grid, event lines) belongs to the global group: its window moves against that group's offset.
+        const trackShift = svOffset();
+        const trackTop = windowTop - trackShift, trackBottom = windowBottom - trackShift;
+        for (const { y: yWorld, kind } of editorGridWindow({ top: trackTop, bottom: trackBottom,
           totalSteps: snapshot.totalSteps, beatDivision: snapshot.beatDivision, beatsPerMeasure: snapshot.beatsPerMeasure,
           verticalZoom: snapshot.verticalZoom,
           beatToY: snapshot.beatToY, yToBeat: snapshot.yToBeat, fullScan: snapshot.useFullGridScan })) {
-          const y = yWorld - windowTop;
+          const y = yWorld - trackTop;
           context.strokeStyle = GRID_KIND_COLOR[kind];
           context.lineWidth = 2;
           context.beginPath();
@@ -886,7 +942,7 @@ export function useCanvasPlayfieldBackend(params: {
         const events: EditorEvent[] = [];
         const visibleY = (line: { y?: number; beat: number }) => {
           const yWorld = Number.isFinite(line.y) ? Number(line.y) : snapshot.beatToY(line.beat);
-          return yWorld < windowTop - 24 || yWorld > windowBottom + 24 ? null : yWorld - windowTop;
+          return yWorld < trackTop - 24 || yWorld > trackBottom + 24 ? null : yWorld - trackTop;
         };
         for (const line of snapshot.bpmVisualLines) {
           const y = visibleY(line);
@@ -964,7 +1020,8 @@ export function useCanvasPlayfieldBackend(params: {
         const lineHeight = Math.max(1, editorSimultaneousLineWidth(snapshot.laneWidth, snapshot.noteVisualScale));
         const halfHeight = lineHeight * 0.5;
         for (const segment of snapshot.simultaneousSegments) {
-          if (segment.y < windowTop - lineHeight || segment.y > windowBottom + lineHeight) {
+          const segmentY = segment.y + svOffset(segment.timingGroup);
+          if (segmentY < windowTop - lineHeight || segmentY > windowBottom + lineHeight) {
             continue;
           }
           if (!Number.isFinite(segment.width) || segment.width <= 1e-6) {
@@ -973,7 +1030,7 @@ export function useCanvasPlayfieldBackend(params: {
           context.drawImage(
             simultaneousTexture,
             segment.fromX + boardXOffset,
-            segment.y - windowTop - halfHeight,
+            segmentY - windowTop - halfHeight,
             segment.width,
             lineHeight,
           );
@@ -1010,14 +1067,15 @@ export function useCanvasPlayfieldBackend(params: {
       let selectedGlowWidth = 0;
       for (const segment of orderedSegments) {
         const previousTail = chainTailById.get(segment.chainId);
+        const segmentShift = svOffset(segment.timingGroup);
         const rawEndpoints = resolveSegmentEndpoints(segment, renderDpr, boardXOffset);
         const localRawEndpoints: SegmentEndpoints = {
           fromX: rawEndpoints.fromX,
           // A joint's Y on a device pixel boundary: both segments then cover its rows whole, as a GPU rasterizes
           // two meshes sharing the joint's vertices (no anti-aliased partial rows drawn twice, which shows as a seam).
-          fromY: snapToDevicePixel(rawEndpoints.fromY - windowTop, renderDpr),
+          fromY: snapToDevicePixel(rawEndpoints.fromY + segmentShift - windowTop, renderDpr),
           toX: rawEndpoints.toX,
-          toY: snapToDevicePixel(rawEndpoints.toY - windowTop, renderDpr),
+          toY: snapToDevicePixel(rawEndpoints.toY + segmentShift - windowTop, renderDpr),
         };
         const isContinuousChain = previousTail && previousTail.index + 1 === segment.index;
         const shouldKeepContinuousX = Boolean(
@@ -1043,7 +1101,7 @@ export function useCanvasPlayfieldBackend(params: {
           x: alignedEndpoints.toX,
         });
 
-        if (segment.maxY < windowTop - 3 || segment.minY > windowBottom + 3) {
+        if (segment.maxY + segmentShift < windowTop - 3 || segment.minY + segmentShift > windowBottom + 3) {
           continue;
         }
         const texture = segment.textureKind === "curveSlide" ? curveSlideLineTexture : longLineTexture;
@@ -1120,12 +1178,13 @@ export function useCanvasPlayfieldBackend(params: {
       }
 
       for (const note of snapshot.noteVisuals) {
-        if (note.y < windowTop - 48 || note.y > windowBottom + 48) {
+        const noteY = note.y + svOffset(note.timingGroup);
+        if (noteY < windowTop - 48 || noteY > windowBottom + 48) {
           continue;
         }
         const localNote: CanvasNoteVisual = {
           ...note,
-          y: note.y - windowTop,
+          y: noteY - windowTop,
         };
         drawNoteVisual(
           context,
@@ -1139,8 +1198,8 @@ export function useCanvasPlayfieldBackend(params: {
         );
       }
 
-      const minTime = snapshot.yToTime(windowBottom);
-      const maxTime = snapshot.yToTime(windowTop);
+      const minTime = snapshot.yToTime(windowBottom - svOffset());
+      const maxTime = snapshot.yToTime(windowTop - svOffset());
       const firstSecond = Math.max(0, Math.floor(minTime));
       const lastSecond = Math.min(Math.ceil(snapshot.totalDurationSec), Math.ceil(maxTime));
       context.fillStyle = "rgba(222, 229, 242, 0.84)";
@@ -1148,7 +1207,7 @@ export function useCanvasPlayfieldBackend(params: {
       context.textAlign = "left";
       context.textBaseline = "middle";
       for (let second = firstSecond; second <= lastSecond; second += 1) {
-        const yWorld = snapshot.timeToY(second);
+        const yWorld = snapshot.timeToY(second) + svOffset();
         if (yWorld < windowTop - 6 || yWorld > windowBottom + 6) {
           continue;
         }

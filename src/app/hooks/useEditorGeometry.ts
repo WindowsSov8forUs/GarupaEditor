@@ -1,5 +1,6 @@
 import { editorNoteHeight, editorDirectionalSegmentWidth, editorHiddenButtonHeight, editorNoteTokenWidth } from "../editorNoteMetrics";
 import { useCallback, useEffect, useMemo, useRef, type UIEvent } from "react";
+import { editorBeforeFrame } from "./useEditorMainLoop";
 import { noteLaneSpanStart, toolPreviewNoteType, type ChartNote, type NoteType } from "../../chartCore";
 import { buildSelectionMoveOffsetMap } from "../slideHiddenMoveOffsets";
 
@@ -15,6 +16,11 @@ function playbackAnchorFromBottom(playfield: HTMLElement, positionPercent: numbe
   const ratio = Math.min(1, Math.max(0, positionPercent / 100));
   return playfield.getBoundingClientRect().bottom - judgeBottom + ratio * (judgeBottom - workspaceTop);
 }
+
+/** How long the view must stay still before the SV preview time is committed, in ms. */
+const SV_PREVIEW_SETTLE_MS = 150;
+/** The SV view's wheel easing: the time constant of its approach to the wheel's target, in ms. */
+const SV_WHEEL_EASE_MS = 45;
 
 export function useEditorGeometry(params: any) {
   const {
@@ -73,6 +79,7 @@ export function useEditorGeometry(params: any) {
     onSelectionDragCompleted,
   } = params;
   const svPreviewScrollFrameRef = useRef<number | null>(null);
+  const svPreviewSettleTimerRef = useRef<number | null>(null);
   const previousPlaybackPositionRef = useRef(playbackLinePositionPercent);
 
   const laneToColumn = useCallback((lane: number): number => lane - laneMin, [laneMin]);
@@ -133,7 +140,12 @@ export function useEditorGeometry(params: any) {
     [timeToInteractionBeat, yToTime],
   );
 
-  const syncSvPreviewTimeFromViewport = useCallback((timeSec: number) => {
+  /**
+   * Moves the SV preview time to the viewport's. From a scroll (`settle`) it is committed once the view has stopped
+   * for SV_PREVIEW_SETTLE_MS: while it moves the canvas draws each frame at the live preview time itself
+   * (CanvasSvLiveScroll), and committing on every scroll would place the whole chart again each frame.
+   */
+  const syncSvPreviewTimeFromViewport = useCallback((timeSec: number, settle = false) => {
     if (!isSvPreviewEnabled || isPlaybackPlaying || typeof setSvPreviewTimeSec !== "function") {
       return;
     }
@@ -144,6 +156,16 @@ export function useEditorGeometry(params: any) {
     }
     if (svPreviewScrollFrameRef.current !== null) {
       cancelAnimationFrame(svPreviewScrollFrameRef.current);
+      svPreviewScrollFrameRef.current = null;
+    }
+    if (settle) {
+      if (svPreviewSettleTimerRef.current !== null) window.clearTimeout(svPreviewSettleTimerRef.current);
+      svPreviewSettleTimerRef.current = window.setTimeout(() => {
+        svPreviewSettleTimerRef.current = null;
+        if (svPreviewTimeSecRef) svPreviewTimeSecRef.current = safeTimeSec;
+        setSvPreviewTimeSec(safeTimeSec);
+      }, SV_PREVIEW_SETTLE_MS);
+      return;
     }
     svPreviewScrollFrameRef.current = requestAnimationFrame(() => {
       svPreviewScrollFrameRef.current = null;
@@ -162,6 +184,7 @@ export function useEditorGeometry(params: any) {
   ]);
 
   useEffect(() => () => {
+    if (svPreviewSettleTimerRef.current !== null) window.clearTimeout(svPreviewSettleTimerRef.current);
     if (svPreviewScrollFrameRef.current !== null) {
       cancelAnimationFrame(svPreviewScrollFrameRef.current);
       svPreviewScrollFrameRef.current = null;
@@ -170,7 +193,15 @@ export function useEditorGeometry(params: any) {
 
   // Playback anchor relative to the viewport bottom: the judge limit element, moved up by the playback position.
   const anchorTimeSecRef = useRef(0);
+  // The scroll position maps to time linearly whatever the SV preview time is; the display axis is rebuilt on every
+  // preview time change (each scroll under the SV view). The anchor is kept only when the layout itself changes:
+  // re-anchoring on a preview change would set the scroll back to the anchor of the scroll before it while the
+  // wheel or the minimap is still moving it, so the view would jerk back and forth.
+  const axisLayoutKey = displayAxis ? `${displayAxis.contentHeight}:${displayAxis.timeToY(0)}` : "";
+  const latestAxisRef = useRef({ timeToY, yToTime, displayAxis, syncSvPreviewTimeFromViewport });
+  latestAxisRef.current = { timeToY, yToTime, displayAxis, syncSvPreviewTimeFromViewport };
   useEffect(() => {
+    const { timeToY, yToTime, displayAxis, syncSvPreviewTimeFromViewport } = latestAxisRef.current;
     if (!isSkinReady) {
       return;
     }
@@ -210,7 +241,46 @@ export function useEditorGeometry(params: any) {
     const bottomTimeSec = (displayAxis?.viewportTimeAtY ?? yToTime)(playfield.scrollTop + playfield.clientHeight);
     viewBottomTimeSecRef.current = bottomTimeSec;
     syncSvPreviewTimeFromViewport(bottomTimeSec);
-  }, [timelinePixelsPerSecond, playbackLinePositionPercent, beatToSec, boardHeight, clamp, didInitTimelineScrollRef, displayAxis, isSkinReady, playfieldRef, syncSvPreviewTimeFromViewport, timeToY, totalDurationSec, viewBottomTimeSecRef, yToTime]);
+  }, [timelinePixelsPerSecond, playbackLinePositionPercent, beatToSec, boardHeight, clamp, didInitTimelineScrollRef,
+    axisLayoutKey, isSkinReady, isSvPreviewEnabled, playfieldRef, totalDurationSec, viewBottomTimeSecRef]);
+
+  // Under the SV view the wheel scrolls the board here, on the main thread. The note canvas lies in the scrolled content
+  // and is redrawn by the main thread; a wheel scroll the browser runs on its compositor would slide the drawn notes
+  // as plain time for a frame before they are redrawn at their SV places (under a negative SV, the other way), and
+  // they would jerk back and forth. A wheel step moves a target; each editor frame, before the board is drawn, the
+  // view eases toward it (about the browser's own smooth wheel scroll); the canvas follows in the same frame.
+  // Modifier wheels stay with the zoom; a scroll from elsewhere (the minimap) ends the easing.
+  useEffect(() => {
+    const playfield = playfieldRef.current;
+    if (!isSvPreviewEnabled || !playfield) return;
+    let target: number | null = null;
+    let written: number | null = null;
+    const stop = () => { target = null; written = null; editorBeforeFrame.delete(step); };
+    const step = (deltaMs: number) => {
+      const goal = target;
+      if (goal === null) return stop();
+      if (written !== null && Math.abs(playfield.scrollTop - written) > 1) return stop();
+      const current = playfield.scrollTop;
+      const remaining = goal - current;
+      const arrived = Math.abs(remaining) < 0.5;
+      playfield.scrollTop = arrived ? goal : current + remaining * (1 - Math.exp(-deltaMs / SV_WHEEL_EASE_MS));
+      const now = playfield.scrollTop;
+      written = now;
+      // A goal the scroll cannot reach (past the end by a fraction) ends the easing once it stops moving.
+      if (arrived || now === current) stop();
+    };
+    const wheel = (event: WheelEvent) => {
+      if (event.ctrlKey || event.shiftKey || event.altKey || event.defaultPrevented) return;
+      event.preventDefault();
+      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? playfield.clientHeight : 1;
+      const max = Math.max(0, playfield.scrollHeight - playfield.clientHeight);
+      target = Math.max(0, Math.min(max, (target ?? playfield.scrollTop) + event.deltaY * unit));
+      written = null;
+      editorBeforeFrame.add(step);
+    };
+    playfield.addEventListener("wheel", wheel, { passive: false });
+    return () => { playfield.removeEventListener("wheel", wheel); stop(); };
+  }, [isSvPreviewEnabled, playfieldRef]);
 
   const handlePlayfieldScroll = useCallback((event: UIEvent<HTMLDivElement>) => {
     const playfield = event.currentTarget;
@@ -218,7 +288,7 @@ export function useEditorGeometry(params: any) {
     anchorTimeSecRef.current = (displayAxis?.viewportTimeAtY ?? yToTime)(playfield.scrollTop + playfield.clientHeight - anchorFromBottom);
     const bottomTimeSec = (displayAxis?.viewportTimeAtY ?? yToTime)(playfield.scrollTop + playfield.clientHeight);
     viewBottomTimeSecRef.current = bottomTimeSec;
-    syncSvPreviewTimeFromViewport(bottomTimeSec);
+    syncSvPreviewTimeFromViewport(bottomTimeSec, true);
   }, [boardHeight, displayAxis, playbackLinePositionPercent, syncSvPreviewTimeFromViewport, viewBottomTimeSecRef, yToTime]);
 
   const getNoteSpanLanes = useCallback((note: Pick<ChartNote, "type" | "lane" | "width">): number => {
