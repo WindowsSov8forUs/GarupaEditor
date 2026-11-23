@@ -2760,14 +2760,17 @@ button.app-settings-apply-button:not(.original-button):not(.note-token):not(.bpm
   border: 1.5px solid var(--hidden-mark-stroke, rgba(83, 232, 140, 0.75)); background: var(--hidden-mark-fill, rgba(0, 0, 0, 0.5)); }
 .hidden-node-handle.is-selected { background: rgba(83, 232, 140, 0.35); border-color: rgba(83, 232, 140, 1); }
 .hidden-node-handle.is-start { background: rgba(83, 232, 140, 0.6); border-color: rgba(83, 232, 140, 0.95); }
+/* Under the curve tool presses go through notes to the Slide line under them, else to the board (the segment after
+   the note pressed): a segment is taken before a node. */
+.note-layer.curve-armed .note-token { pointer-events: none; }
 /* A Hidden node's button: a note one lane wide holding its mark. */
 .note-token.hidden-node-token { overflow: visible; z-index: 0; }
 /* A note's button is above every Hidden node's, which never covers a note it overlaps. */
 .note-token.note-hitbox:not(.hidden-node-token) { z-index: 1; }
 /* Slide icon: a Slide body drawn in the image area (see EditorSlideSegmentIcon). */
 .editor-slide-icon svg { display: block; width: 100%; height: 100%; }
-/* Off the Slide and Hidden tools a Hidden node's mark is fainter, unless it is selected. */
-.hidden-node-token.is-idle .hidden-node-handle:not(.is-selected) { opacity: 0.4; }
+/* Off the Hidden tool a Hidden node's mark is drawn at a quarter of its opacity, unless it is selected. */
+.hidden-node-token.is-idle .hidden-node-handle:not(.is-selected) { opacity: 0.25; }
 /* Long icon: two notes joined by the long-note body, which is narrower than the notes as in play. */
 /* The image area is one note wide and short, so the notes are small and sit a little past its top and bottom;
    the body runs between their centres behind them, narrower than the notes as in play. */

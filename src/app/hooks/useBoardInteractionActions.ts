@@ -98,6 +98,8 @@ export function useBoardInteractionActions(params: any) {
     applyPasteAtPlacement,
     isSvPreviewEnabled,
     exGarupaEnabled,
+    pressCurveToolOnNoteRef,
+    selectedSegmentKeys,
   } = params;
   const scheduleAfterFrame = useCallback((task: () => void) => {
     if (typeof requestAnimationFrame === "function") {
@@ -186,7 +188,7 @@ export function useBoardInteractionActions(params: any) {
     noteTool: NoteType,
     lane: number,
     beat: number,
-    options?: { preserveToolLaneOverride?: boolean; selectPlaced?: boolean },
+    options?: { preserveToolLaneOverride?: boolean; selectPlaced?: boolean; oneLaneWide?: boolean },
   ): ChartNote | null => {
     const useLaneOverride = noteTool !== "slide" && useToolLaneOverride;
     const quantizedBeat = quantizeBeat(beat, beatDivision);
@@ -212,7 +214,7 @@ export function useBoardInteractionActions(params: any) {
         : (
           canUseHabahiro(settings) && isRhythmWidthEditableType(noteTool)
             ? {
-              width: normalizeRhythmWidth(toolRhythmWidth),
+              width: options?.oneLaneWide ? 1 : normalizeRhythmWidth(toolRhythmWidth),
             }
             : {}
         )
@@ -286,13 +288,14 @@ export function useBoardInteractionActions(params: any) {
    * Middle tool on blank board (ExGarupa): a lone middle node, chained as [hidden, single, hidden] on one beat and lane,
    * so it is a Slide's middle node with no connection line drawn.
    */
+  /** The Middle tool on blank board (ExGarupa): [Hidden, Single, Hidden] on one beat and lane, one lane wide. */
   const placeLoneMiddleNode = (lane: number, beat: number) => {
-    const node = placeNoteWithType("single", lane, beat);
+    const node = placeNoteWithType("single", lane, beat, { oneLaneWide: true });
     if (!node) {
       return;
     }
     const hidden = (): ChartNote | null => normalizeNote({
-      id: createId(), type: "hidden", lane: node.lane, beat: node.beat, width: node.width ?? 1, timingGroup: node.timingGroup,
+      id: createId(), type: "hidden", lane: node.lane, beat: node.beat, width: 1, timingGroup: node.timingGroup,
     }, settings);
     const head = hidden(), tail = hidden();
     if (!head || !tail) {
@@ -369,23 +372,53 @@ export function useBoardInteractionActions(params: any) {
   }, [committedSlideChainById, createId, exGarupaEnabled, noteById, setNotes, setSlideChains, setSlideStart, slideBuildRef,
     sortNotes, toolTimingGroup]);
 
-  /** One press of the Slide or Hidden tool on `hit` (a note) or else on blank board at (boardX, boardY). The Hidden
-   * tool places Hidden nodes (on a free lane), reaches Hidden nodes by their handles, and turns a Slide's visible middle
-   * node it presses without a start into a Hidden node. */
+  /**
+   * One press of the Hidden tool, which connects nothing: on a visible node of a Slide (not a Long's) it turns the node
+   * Hidden in place, a Slide's head or tail only under ExGarupa; on a Hidden node it does nothing; on blank board, under
+   * ExGarupa only, it places a Slide of two Hidden nodes on the lane pressed, half a beat long. (A press on a Slide's
+   * line inserts a Hidden node there: see insertHiddenNodeOnConnection.)
+   */
+  const pressHiddenTool = (hit: ChartNote | null, boardX: number, boardY: number) => {
+    if (hit) {
+      if (hit.type === "hidden") return;
+      const role = committedSlideRoleByNoteId.get(hit.id);
+      if (!role || committedSlideChainById.get(role.chainId)?.long) return;
+      const isEnd = role.index === 0 || role.index === role.length - 1;
+      if (isEnd && !exGarupaEnabled) return;
+      clearSelection();
+      setNotes((previous: ChartNote[]) => previous.map((note) => note.id !== hit.id ? note
+        : { id: note.id, type: "hidden" as const, lane: note.lane, beat: note.beat,
+          width: typeof note.width === "number" && Number.isFinite(note.width) ? note.width : 1,
+          ...(note.timingGroup === undefined ? {} : { timingGroup: note.timingGroup }) }));
+      return;
+    }
+    if (!exGarupaEnabled) return;
+    const placement = resolveBoardPlacement(boardX, boardY, { type: "single" });
+    if (!placement) return;
+    const beat = quantizeBeat(placement.beat, beatDivision);
+    const node = (at: number): ChartNote | null => normalizeNote({ id: createId(), type: "hidden",
+      lane: Number(toFinite(placement.lane, 0).toFixed(6)), beat: Number(at.toFixed(6)), width: 1,
+      timingGroup: normalizeNoteTimingGroup(toolTimingGroup) }, settings);
+    const head = node(beat), tail = node(beat + 0.5);
+    if (!head || !tail) return;
+    clearSelection();
+    setNotes((previous: ChartNote[]) => sortNotes([...previous, head, tail]));
+    setSlideChains((previous: any[]) => [...previous,
+      { id: createId(), noteIds: [head.id, tail.id], timingGroup: head.timingGroup }]);
+  };
+
+  /** One press of the Slide tool (or the Hidden tool, see pressHiddenTool) on `hit` (a note) or else on blank board at
+   * (boardX, boardY). */
   const pressSlideTool = useCallback((hit: ChartNote | null, boardX: number, boardY: number) => {
+    if (tool === "hidden") {
+      setCursorPreview(null);
+      pressHiddenTool(hit, boardX, boardY);
+      return;
+    }
     clearSelection();
     setCursorPreview(null);
-    const hidden = tool === "hidden";
     const start = slideBuildRef.current;
     if (hit) {
-      const role = committedSlideRoleByNoteId.get(hit.id);
-      if (hidden && !start && hit.type !== "hidden" && role && role.index > 0 && role.index < role.length - 1
-        && !committedSlideChainById.get(role.chainId)?.long) {
-        setNotes((previous: ChartNote[]) => previous.map((note) => note.id !== hit!.id ? note
-          : { id: note.id, type: "hidden" as const, lane: note.lane, beat: note.beat,
-            ...(note.timingGroup === undefined ? {} : { timingGroup: note.timingGroup }) }));
-        return;
-      }
       if (!start) setSlideStart(hit.id);
       else connectSlideStartTo(hit);
       return;
@@ -398,7 +431,7 @@ export function useBoardInteractionActions(params: any) {
     if (from && !(placement.beat > from.beat + 1e-6)) {
       return;
     }
-    const created = placeNoteWithType(hidden ? "hidden" : "single", placement.lane,
+    const created = placeNoteWithType("single", placement.lane,
       placement.beat, {
       selectPlaced: false,
       preserveToolLaneOverride: true,
@@ -408,9 +441,11 @@ export function useBoardInteractionActions(params: any) {
     }
     if (!start) setSlideStart(created.id, created.id);
     else if (!connectSlideStartTo(created)) setNotes((previous: ChartNote[]) => previous.filter((note) => note.id !== created.id));
-  }, [clearSelection, committedSlideChainById, committedSlideRoleByNoteId, connectSlideStartTo,
-    noteById, placeNoteWithType, resolveBoardPlacement, setCursorPreview, setNotes,
-    setSlideStart, slideBuildRef, tool]);
+    // pressHiddenTool is a plain function of this render: the callback is renewed with what it reads.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clearSelection, committedSlideChainById, committedSlideRoleByNoteId, connectSlideStartTo, exGarupaEnabled,
+    noteById, placeNoteWithType, resolveBoardPlacement, setCursorPreview, setNotes, setSlideChains,
+    setSlideStart, settings, slideBuildRef, tool, toolTimingGroup]);
 
   /** Where the last Slide or Hidden tool press was, to tell a release elsewhere (a drag) from a click. */
   const slidePressRef = useRef<{ clientX: number; clientY: number } | null>(null);
@@ -431,7 +466,7 @@ export function useBoardInteractionActions(params: any) {
 
   // Another tool, or no tool, drops the start.
   useEffect(() => {
-    if (slideBuildRef.current && !(isToolArmed && (tool === "slide" || tool === "hidden"))) cancelSlideBuild();
+    if (slideBuildRef.current && !(isToolArmed && tool === "slide")) cancelSlideBuild();
   }, [cancelSlideBuild, isToolArmed, slideBuildRef, tool]);
 
   // Esc drops the start; without one it puts the tool down.
@@ -561,8 +596,21 @@ export function useBoardInteractionActions(params: any) {
       return;
     }
 
-    // The Middle tool works on Slide lines and blank board, the curve tool on Slide lines; neither on placed notes.
-    if (tool === "middle" || tool === "curve") {
+    // The Middle tool turns a pressed Hidden node into a Single in place (without ExGarupa on a whole lane) and leaves
+    // other notes alone; the curve tool works on Slide segments (see the board's press).
+    if (tool === "middle") {
+      if (target.type !== "hidden") return;
+      const habahiro = canUseHabahiro(settings);
+      const half = (habahiro ? normalizeRhythmWidth(target.width) - 1 : 0) / 2;
+      const replacement = normalizeNote({ ...target, type: "single",
+        ...(habahiro ? {} : { width: undefined }),
+        lane: exGarupaEnabled ? target.lane : Number((Math.round(target.lane - half) + half).toFixed(6)) }, settings);
+      if (!replacement) return;
+      setNotes((previous: ChartNote[]) => sortNotes(previous.map((note) => note.id === target.id ? replacement : note)));
+      clearSelection();
+      return;
+    }
+    if (tool === "curve") {
       return;
     }
 
@@ -711,7 +759,7 @@ export function useBoardInteractionActions(params: any) {
       return;
     }
     event.preventDefault();
-    const hadSelection = selectedNoteIds.length > 0;
+    const hadSelection = selectedNoteIds.length > 0 || (selectedSegmentKeys?.length ?? 0) > 0;
     const hadToolArmed = isToolArmed;
     if (!hadSelection && !hadToolArmed) {
       return;
@@ -875,6 +923,12 @@ export function useBoardInteractionActions(params: any) {
     const clickY = event.clientY - rect.top;
 
     if (tool === "copy") {
+      return;
+    }
+
+    // The curve tool takes the Slide segment after the node pressed (its line itself is pressed as the segment).
+    if (tool === "curve") {
+      pressCurveToolOnNoteRef?.current?.(findNoteAtGridPoint(clickX, clickY), event.ctrlKey || event.metaKey);
       return;
     }
 

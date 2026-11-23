@@ -59,6 +59,7 @@ export function useEditorSelectionActions(params: any) {
     deleteNotes,
     clearSelection,
     selectedNoteIds,
+    selectedSegmentKeys,
     showDialog,
   } = params;
 
@@ -351,27 +352,31 @@ export function useEditorSelectionActions(params: any) {
     widthInputText,
   ]);
 
-  /** The delete button and the Delete key: deletes the selected notes. */
+  /** The delete button and the Delete key: deletes the selected Slide segments and notes. */
   const deleteSelectedNotes = useCallback(() => {
-    if (selectedNoteIds.length === 0) {
+    if (selectedNoteIds.length === 0 && selectedSegmentKeys.length === 0) {
       return;
     }
-    deleteNotes(selectedNoteIds);
+    deleteNotes(selectedNoteIds, selectedSegmentKeys);
     clearSelection();
-  }, [clearSelection, deleteNotes, selectedNoteIds]);
+  }, [clearSelection, deleteNotes, selectedNoteIds, selectedSegmentKeys]);
 
   /**
-   * A right-click on a note or on a Slide segment; `noteIds` are the note, or the segment's end notes. When they are
-   * all selected it deletes the selection, otherwise just them. The selection is cleared either way.
+   * A right-click on a note (`noteIds`, the note; a Long's line gives its two notes) or on a Slide segment
+   * (`segmentKey`). When what was pressed is selected it deletes the whole selection, otherwise just it. The selection
+   * is cleared either way.
    */
-  const deleteRightClickedNotes = useCallback((noteIds: string[]) => {
-    if (noteIds.length === 0) {
+  const deleteRightClickedNotes = useCallback((noteIds: string[], segmentKey?: string) => {
+    if (noteIds.length === 0 && !segmentKey) {
       return;
     }
     const selected = new Set(selectedNoteIds);
-    deleteNotes(noteIds.every((id) => selected.has(id)) ? selectedNoteIds : noteIds);
+    const pressedSelected = segmentKey ? selectedSegmentKeys.includes(segmentKey)
+      : noteIds.every((id) => selected.has(id));
+    if (pressedSelected) deleteNotes(selectedNoteIds, selectedSegmentKeys);
+    else deleteNotes(noteIds, segmentKey ? [segmentKey] : []);
     clearSelection();
-  }, [clearSelection, deleteNotes, selectedNoteIds]);
+  }, [clearSelection, deleteNotes, selectedNoteIds, selectedSegmentKeys]);
 
   return {
     applySettingsPatch,

@@ -9,6 +9,7 @@ import {
   editorSimultaneousLineWidth,
   editorSlideLineWidth,
   SELECTED_HIGHLIGHT_FILTER,
+  SELECTED_SEGMENT_FILTER,
 } from "../editorNoteMetrics";
 import { useMemo, useRef, type MutableRefObject, type RefObject } from "react";
 import {
@@ -17,6 +18,7 @@ import {
   type SkinAssets,
 } from "../../skinLoader";
 import { svEventBubbleLines } from "../../chartCore";
+import { spriteMeanColor } from "../spriteOpaqueBox";
 import { useEditorMainLoop, type EditorMainLoopFrame } from "./useEditorMainLoop";
 import type { RenderConnectionSegment, RenderSimultaneousSegment } from "./useEditorRenderModel";
 
@@ -1000,6 +1002,12 @@ export function useCanvasPlayfieldBackend(params: {
         return sorted;
       })();
       const chainTailById = new Map<string, { index: number; x: number }>();
+      // The selected Slide segments' glow, kept inside their lines: their outline (to clip to) and their side edges,
+      // drawn at once once the lines are (no brighter spots where two segments meet).
+      const selectedArea = new Path2D();
+      const selectedEdges = new Path2D();
+      let selectedGlowColor: [number, number, number] | null = null;
+      let selectedGlowWidth = 0;
       for (const segment of orderedSegments) {
         const previousTail = chainTailById.get(segment.chainId);
         const rawEndpoints = resolveSegmentEndpoints(segment, renderDpr, boardXOffset);
@@ -1043,20 +1051,54 @@ export function useCanvasPlayfieldBackend(params: {
           continue;
         }
         const lineWidthAt = (lanes: number) => editorSlideLineWidth(lanes, snapshot.laneWidth, snapshot.noteVisualScale);
-        // The selected line segment group is drawn brighter; the selection frame encloses it.
+        // A selected Slide segment is drawn brighter (its end notes are not: they are not selected with it).
         // So is every segment of a chain the Slide tool's current connection involves; a segment that connection
         // would remove is drawn faded.
         const connect = snapshot.slideConnectHighlight;
         const broken = connect !== null && connect.broken.has(`${segment.chainId}:${segment.index}`);
-        const highlighted = !segment.isPreviewChain && !broken && (snapshot.selectedSlideSegmentIds.has(segment.slideSegmentId)
-          || (connect !== null && connect.chainIds.has(segment.chainId)));
+        const selected = !segment.isPreviewChain && !broken && snapshot.selectedSlideSegmentIds.has(segment.slideSegmentId);
+        const highlighted = selected
+          || (!segment.isPreviewChain && !broken && connect !== null && connect.chainIds.has(segment.chainId));
         if (highlighted) {
           context.save();
-          context.filter = SELECTED_HIGHLIGHT_FILTER;
+          context.filter = selected ? SELECTED_SEGMENT_FILTER : SELECTED_HIGHLIGHT_FILTER;
         }
-        drawConnectionSegment(context, broken ? { ...segment, opacity: segment.opacity * SLIDE_CONNECT_BROKEN_ALPHA } : segment,
+        drawConnectionSegment(context, broken ? { ...segment, opacity: segment.opacity * SLIDE_CONNECT_BROKEN_ALPHA }
+          : selected ? { ...segment, opacity: 1 } : segment,
           geometry, lineWidthAt(segment.fromSpanLanes), lineWidthAt(segment.toSpanLanes), texture);
         if (highlighted) context.restore();
+        if (selected) {
+          const fromHalf = lineWidthAt(segment.fromSpanLanes) / 2, toHalf = lineWidthAt(segment.toSpanLanes) / 2;
+          const topHalf = geometry.topIsFrom ? fromHalf : toHalf;
+          const bottomHalf = geometry.topIsFrom ? toHalf : fromHalf;
+          const bottomX = geometry.topX + geometry.shearX * geometry.height;
+          const bottomY = geometry.topY + geometry.height;
+          selectedArea.moveTo(geometry.topX - topHalf, geometry.topY);
+          selectedArea.lineTo(geometry.topX + topHalf, geometry.topY);
+          selectedArea.lineTo(bottomX + bottomHalf, bottomY);
+          selectedArea.lineTo(bottomX - bottomHalf, bottomY);
+          selectedArea.closePath();
+          selectedEdges.moveTo(geometry.topX - topHalf, geometry.topY);
+          selectedEdges.lineTo(bottomX - bottomHalf, bottomY);
+          selectedEdges.moveTo(geometry.topX + topHalf, geometry.topY);
+          selectedEdges.lineTo(bottomX + bottomHalf, bottomY);
+          selectedGlowColor ??= spriteMeanColor(texture.currentSrc || texture.src) ?? [110, 230, 100];
+          selectedGlowWidth = Math.max(selectedGlowWidth, Math.max(fromHalf, toHalf) * 0.7);
+        }
+      }
+      if (selectedGlowColor) {
+        // An inner glow along the lines' sides, in their own colour made as bright as it goes without changing hue
+        // (its largest channel at 255), clipped to the lines.
+        const [r, g, b] = selectedGlowColor;
+        const scale = 255 / Math.max(1, r, g, b);
+        context.save();
+        context.clip(selectedArea);
+        context.filter = `blur(${selectedGlowWidth * 0.35}px)`;
+        context.lineWidth = selectedGlowWidth;
+        context.lineCap = "butt";
+        context.strokeStyle = `rgba(${Math.round(r * scale)}, ${Math.round(g * scale)}, ${Math.round(b * scale)}, 0.85)`;
+        context.stroke(selectedEdges);
+        context.restore();
       }
 
       // A Slide build's connection line from its last node to the pointer, as its other connection lines are drawn.

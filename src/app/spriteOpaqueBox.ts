@@ -19,15 +19,19 @@ export function hiddenMarkPaint(colors: SpriteMarkColors | null | undefined): { 
 
 const boxes = new Map<string, SpriteOpaqueBox | null>();
 const colors = new Map<string, SpriteMarkColors | null>();
+/** A sprite's mean colour over its opaque part, as [r, g, b]. */
+const means = new Map<string, [number, number, number] | null>();
 const pending = new Set<string>();
 const listeners = new Set<() => void>();
 
 function measure(url: string) {
   const image = new Image();
   image.crossOrigin = "anonymous";
-  const done = (box: SpriteOpaqueBox | null, markColors: SpriteMarkColors | null = null) => {
+  const done = (box: SpriteOpaqueBox | null, markColors: SpriteMarkColors | null = null,
+    mean: [number, number, number] | null = null) => {
     boxes.set(url, box);
     colors.set(url, markColors);
+    means.set(url, mean);
     pending.delete(url);
     for (const listener of listeners) listener();
   };
@@ -41,9 +45,12 @@ function measure(url: string) {
       context.drawImage(image, 0, 0);
       const { data } = context.getImageData(0, 0, width, height);
       let minX = width, maxX = -1, minY = height, maxY = -1;
+      let sumR = 0, sumG = 0, sumB = 0, count = 0;
       for (let y = 0; y < height; y += 1) {
         for (let x = 0; x < width; x += 1) {
-          if (data[(y * width + x) * 4 + 3]! < 128) continue;
+          const index = (y * width + x) * 4;
+          if (data[index + 3]! < 128) continue;
+          sumR += data[index]!; sumG += data[index + 1]!; sumB += data[index + 2]!; count += 1;
           if (x < minX) minX = x;
           if (x > maxX) maxX = x;
           if (y < minY) minY = y;
@@ -52,7 +59,8 @@ function measure(url: string) {
       }
       if (maxX < 0) return done(null);
       done({ left: minX / width, right: (maxX + 1) / width, top: minY / height, bottom: (maxY + 1) / height },
-        measureMarkColors(data, width, minX, maxX, minY, maxY));
+        measureMarkColors(data, width, minX, maxX, minY, maxY),
+        [Math.round(sumR / count), Math.round(sumG / count), Math.round(sumB / count)]);
     } catch {
       // A sprite the canvas may not read (another origin) has no measured box.
       done(null);
@@ -88,6 +96,15 @@ function measureMarkColors(data: Uint8ClampedArray, width: number, minX: number,
 export function spriteMarkColors(url: string | null | undefined): SpriteMarkColors | null | undefined {
   if (!url) return null;
   if (colors.has(url)) return colors.get(url)!;
+  spriteOpaqueBox(url);
+  return undefined;
+}
+
+/** The mean colour of the sprite at `url` over its opaque part, measured with its opaque box (see
+ * spriteMarkColors). */
+export function spriteMeanColor(url: string | null | undefined): [number, number, number] | null | undefined {
+  if (!url) return null;
+  if (means.has(url)) return means.get(url)!;
   spriteOpaqueBox(url);
   return undefined;
 }

@@ -9,11 +9,12 @@ import { type SlideBuildState } from "../editorHelpers";
 import { buildSelectionMoveOffsetMap } from "../slideHiddenMoveOffsets";
 import { canUseSpRhythm } from "../modeChartRegression";
 import { dropRemovedNotesFromChains } from "../slideChainCleanup";
-import { planNoteDeletion } from "../noteDeletion";
+import { planNoteDeletion, planSlideSegmentDeletion } from "../noteDeletion";
 
 export function useSelectionAndEditorSync(params: any) {
   const {
     setSelectedNoteIds,
+    setSelectedSegmentKeys,
     setSlideChains,
     normalizeSlideChains,
     normalizeNotes,
@@ -65,9 +66,11 @@ export function useSelectionAndEditorSync(params: any) {
     exGarupaEnabled,
   } = params;
 
+  /** Drops every selection: notes and Slide segments. */
   const clearSelection = useCallback(() => {
     setSelectedNoteIds((previous: string[]) => (previous.length === 0 ? previous : []));
-  }, [setSelectedNoteIds]);
+    setSelectedSegmentKeys((previous: string[]) => (previous.length === 0 ? previous : []));
+  }, [setSelectedNoteIds, setSelectedSegmentKeys]);
 
 
   const removeNoteIdsFromSlideChains = useCallback((noteIds: string[]) => {
@@ -85,23 +88,31 @@ export function useSelectionAndEditorSync(params: any) {
     );
   }, [setSlideChains]);
 
-  /** Deletes notes; every delete input comes here (see noteDeletion.ts for the rules). One history step. */
-  const deleteNotes = useCallback((noteIds: string[]) => {
+  /** Deletes Slide segments (by key) and then notes; every delete input comes here (see noteDeletion.ts for the
+   * rules). One history step. */
+  const deleteNotes = useCallback((noteIds: string[], segmentKeys: readonly string[] = []) => {
+    const exGarupa = exGarupaEnabled === true;
+    const cut = segmentKeys.length > 0
+      ? planSlideSegmentDeletion({ notes: allNotes, slideChains, segmentKeys, exGarupa, createId })
+      : null;
+    const base = cut ?? { notes: allNotes, slideChains };
     const plan = planNoteDeletion({
-      notes: allNotes,
-      slideChains,
+      notes: base.notes,
+      slideChains: base.slideChains,
       noteIds,
       spRhythm: canUseSpRhythm(modeOptions),
-      exGarupa: exGarupaEnabled === true,
+      exGarupa,
       createId,
-    });
+    }) ?? cut;
     if (!plan) return;
     setNotes(sortNotes(plan.notes));
     setSlideChains(plan.slideChains);
   }, [allNotes, exGarupaEnabled, modeOptions, setNotes, setSlideChains, slideChains, sortNotes]);
 
 
+  // Selecting notes this way drops the selected Slide segments.
   const setSingleSelectedNote = useCallback((noteId: string | null) => {
+    setSelectedSegmentKeys((previous: string[]) => (previous.length === 0 ? previous : []));
     if (!noteId) {
       setSelectedNoteIds((previous: string[]) => (previous.length === 0 ? previous : []));
       return;
@@ -109,9 +120,10 @@ export function useSelectionAndEditorSync(params: any) {
     setSelectedNoteIds((previous: string[]) =>
       previous.length === 1 && previous[0] === noteId ? previous : [noteId],
     );
-  }, [setSelectedNoteIds]);
+  }, [setSelectedNoteIds, setSelectedSegmentKeys]);
 
   const setMultiSelectedNotes = useCallback((noteIds: string[], primaryId?: string | null) => {
+    setSelectedSegmentKeys((previous: string[]) => (previous.length === 0 ? previous : []));
     const uniqueIds = Array.from(new Set(noteIds));
     if (uniqueIds.length === 0) {
       setSelectedNoteIds([]);
@@ -123,7 +135,7 @@ export function useSelectionAndEditorSync(params: any) {
         ? primaryId
         : uniqueIds[0];
     setSelectedNoteIds([primary, ...uniqueIds.filter((id) => id !== primary)]);
-  }, [setSelectedNoteIds]);
+  }, [setSelectedNoteIds, setSelectedSegmentKeys]);
 
   const toggleSelectedNote = useCallback((noteId: string) => {
     setSelectedNoteIds((previous: string[]) => {

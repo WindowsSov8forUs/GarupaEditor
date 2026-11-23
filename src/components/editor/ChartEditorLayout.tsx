@@ -714,10 +714,11 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   const canvasNoteReplacePreviewRef = useRef<HTMLDivElement | null>(null);
   const canvasDirectionalWidenPreviewRef = useRef<HTMLDivElement | null>(null);
 
-  // The Middle tool places on blank board only in ExGarupa (elsewhere it only inserts into Slides), so it previews only there.
+  // The Middle and Hidden tools place on blank board only in ExGarupa (elsewhere they only work on Slides), so they
+  // preview only there.
   const isPlacementNoteTool = isToolArmed && tool !== "bpm" && tool !== "sv" && tool !== "copy" && tool !== "paste"
     && tool !== "curve"
-    && !(tool === "middle" && !vm.isExGarupaEnabled);
+    && !((tool === "middle" || tool === "hidden") && !vm.isExGarupaEnabled);
   const isPasteToolSelected = isToolArmed && tool === "paste";
   // The Long tool previews its head (the slide sprite); the Middle tool its node (the slide middle-node sprite).
   const isMiddlePreview = tool === "middle";
@@ -1395,8 +1396,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     const paint = hiddenMarkPaint(vm.hiddenMarkColors);
     return { "--hidden-mark-fill": paint.fill, "--hidden-mark-stroke": paint.stroke } as CSSProperties;
   }, [vm.hiddenMarkColors]);
-  // Hidden nodes are drawn faint unless a Slide tool, which connects them, is armed.
-  const isHiddenMarkIdle = !(isToolArmed && (tool === "slide" || tool === "hidden"));
+  // Hidden nodes are drawn faint unless the Hidden tool is armed (a selected one is not).
+  const isHiddenMarkIdle = !(isToolArmed && tool === "hidden");
   const renderedNoteButtons = useMemo(
     () =>
       renderNotes.map((note: any) => {
@@ -1511,6 +1512,9 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       vm.hiddenMarkBoxAt,
       isHiddenMarkIdle,
       vm.isHiddenNodeShown,
+      // vm's functions are stable wrappers: what isHiddenNodeShown reads (the Curve tool hides Hidden nodes) is listed.
+      isToolArmed,
+      tool,
     ],
   );
   return (
@@ -1822,7 +1826,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                   </div>
 
 
-                  <div className="note-layer" style={hiddenMarkPaintStyle}>
+                  <div className={`note-layer${isToolArmed && tool === "curve" ? " curve-armed" : ""}`} style={hiddenMarkPaintStyle}>
                     {renderedNoteButtons}
 
                     {canvasPreviewType && canvasPreviewSpec && canvasPreviewLayers && canvasPreviewHasSprite && (
