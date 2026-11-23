@@ -7,6 +7,9 @@ import { projectCanvasRenderResourceRuntimeAssets, type SkinAssets } from "../..
 import "./EditorMinimap.css";
 import { minimapLaneVisible } from "../../app/editorMinimapGeometry";
 
+/** The least height the viewport frame is pressed by, in px: a long chart's frame is drawn only a few px tall. */
+const MIN_FRAME_HIT = 24;
+
 export function EditorMinimap({ notes, segments, duration, laneCount, axis, viewport, getImage, skinAssets,
   resourcesVersion, width, top, noteScale }: {
   notes: CanvasNoteVisual[]; segments: RenderConnectionSegment[]; duration: number; laneCount: number;
@@ -83,7 +86,10 @@ export function EditorMinimap({ notes, segments, duration, laneCount, axis, view
         event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId);
         const element = viewport.current;
         const local = event.clientY - event.currentTarget.getBoundingClientRect().top;
-        const onFrame = local >= view.top && local <= view.top + view.height;
+        // The frame is pressed (dragged by the distance moved) within at least MIN_FRAME_HIT px around its middle,
+        // however short it is drawn; elsewhere a press brings the frame's middle there first.
+        const hitHalf = Math.max(view.height, MIN_FRAME_HIT) / 2, middle = view.top + view.height / 2;
+        const onFrame = local >= middle - hitHalf && local <= middle + hitHalf;
         const actualTop = element ? y(axis.viewportTimeAtY(element.scrollTop)) : view.top;
         drag.current = { pointer: event.pointerId, offset: onFrame ? local - actualTop : view.height / 2 };
         seek(event.clientY);
