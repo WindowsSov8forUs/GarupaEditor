@@ -87,7 +87,8 @@ const leftGridGap = (sidebarWidth - 5 * leftGridColumn) / 4;
 const actionWidth = 4 * leftGridColumn + 3 * leftGridGap;
 const actionPrefab = musicSelectionProfile.prefabs.info as unknown as OriginalPrefab;
 /** The music selection's action button (the template 「游玩」 uses), pink or gray, at any width in design px. */
-function createActionModel(label: string, width: number, gray: boolean) {
+const actionLabel = actionPrefab.components.find(component => component.id === 352)!;
+function createActionModel(label: string, width: number, gray: boolean, labelInset?: number) {
   return new OriginalPrefabModel({ ...actionPrefab,
     components: actionPrefab.components.map(component => component.id === 331
       ? { ...component, data: { ...component.data, initializeTemplateHeight: 3,
@@ -100,7 +101,12 @@ function createActionModel(label: string, width: number, gray: boolean) {
   nodes: { 1: { x: 0, y: 0 }, 73: { x: 0, y: 0 } },
   components: { 328: { mSpriteName: gray ? "button_gray" : "button_pink", mWidth: width },
     329: { mWidth: width, mSpriteName: gray ? "button_gray" : "button_pink" },
-    352: { mText: label, mWidth: width } },
+    352: { mText: label, mWidth: width,
+      // The label is anchored 24 in from each side of the button: on a narrow button that leaves the text little room.
+      ...(labelInset === undefined ? {} : {
+        leftAnchor: { ...actionLabel.data.leftAnchor, absolute: labelInset },
+        rightAnchor: { ...actionLabel.data.rightAnchor, absolute: -labelInset },
+      }) } },
   });
 }
 const playModel = createActionModel("游玩", actionWidth, false);
@@ -115,10 +121,12 @@ export const editorLeftGridSpan = (columns: number) => columns * leftGridColumn 
 
 /** A gray action button of the left column (same template as 「预览」), `width` design px wide; `on` draws it pink
  * (the 「游玩」 template), for a switch that is on. */
-export function SidebarActionButton({ label, ariaLabel, width, onClick, on = false }: {
+export function SidebarActionButton({ label, ariaLabel, width, onClick, on = false, labelInset }: {
   label: string; ariaLabel: string; width: number; onClick(): void; on?: boolean;
+  /** How far the text keeps in from each side, in design px (the template's 24 by default). */
+  labelInset?: number;
 }) {
-  const model = useMemo(() => createActionModel(label, width, !on), [label, width, on]);
+  const model = useMemo(() => createActionModel(label, width, !on, labelInset), [label, width, on, labelInset]);
   const bounds = model.rect(model.components.get(328)!);
   return <div style={{ position: "relative", flex: "0 0 auto", width: bounds.width, height: bounds.height }}>
     <div className="original-prefab-origin" style={{ left: -bounds.x, top: -bounds.y }}>

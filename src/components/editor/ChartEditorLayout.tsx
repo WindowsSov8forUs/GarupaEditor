@@ -182,6 +182,8 @@ function boardPointOf(runtime: any, event: { clientX: number; clientY: number })
 /** How far the right column's foot controls sit above its bottom edge, in design px: none, which lines the beat
  * division up with the left column's 游玩. */
 const RIGHT_COLUMN_FOOT_INSET = 0;
+/** The right column's buttons are the width of the header menu button (80): their text keeps only this far in. */
+const RIGHT_COLUMN_LABEL_INSET = 6;
 
 export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   const returnToTitle = useReturnToTitle();
@@ -2059,10 +2061,11 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
           bottom={{ inset: RIGHT_COLUMN_FOOT_INSET, node: <>
             {vm.isExGarupaEnabled && <SidebarActionButton label={vm.isSvPreviewEnabled ? "SV 开" : "SV 关"}
               ariaLabel={vm.isSvPreviewEnabled ? "SV 开" : "SV 关"}
-              width={ORIGINAL_HEADER_MENU_BOUNDS.width} on={vm.isSvPreviewEnabled}
+              width={ORIGINAL_HEADER_MENU_BOUNDS.width} labelInset={RIGHT_COLUMN_LABEL_INSET} on={vm.isSvPreviewEnabled}
               onClick={() => vm.setIsSvPreviewEnabled(!vm.isSvPreviewEnabled)} />}
             <EditorBeatDivisionButton value={vm.settings.timeSignatureDenominator} onSave={vm.setBeatDivision}
-              width={ORIGINAL_HEADER_MENU_BOUNDS.width} label={`1/${vm.settings.timeSignatureDenominator}`} />
+              width={ORIGINAL_HEADER_MENU_BOUNDS.width} labelInset={RIGHT_COLUMN_LABEL_INSET}
+              label={`1/${vm.settings.timeSignatureDenominator}`} />
           </> }}
  />
         <EditorNotePropertiesDialog open={notePropertiesOpen} properties={vm.selectedNoteProperties}
