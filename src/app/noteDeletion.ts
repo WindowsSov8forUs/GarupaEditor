@@ -4,15 +4,12 @@ import {
   type ChartNote,
 } from "../chartCore";
 import { cleanupSlideChainsHidden } from "./slideChainCleanup";
-import { findSlideSegmentByEndNotes, type SlideSegmentRange } from "./slideSegments";
+import { findSlideSegmentByKey, type SlideSegmentRange } from "./slideSegments";
 
 /*
- * Note deletion: every delete input (the delete button, the Delete key, a right-click on a note or on a Slide
- * segment) deletes a set of notes through `planNoteDeletion`, which picks one of two rules:
- *
- * - Splitting a Slide at a segment (`splitSlideAtSegment`), when the set is exactly the two end notes of one Slide
- *   segment (see slideSegments.ts), whichever way they were picked.
- * - Deleting notes (`deleteNotesWithHiddenFallback`), for every other set.
+ * Deletion: every delete input (the delete button, the Delete key, a right-click on a note or on a Slide segment)
+ * deletes the selected Slide segments (`planSlideSegmentDeletion`, which cuts each Slide there) and then the selected
+ * notes (`planNoteDeletion`).
  */
 
 type SlideChainLike = { id: string; noteIds: string[]; long?: true };
@@ -36,10 +33,24 @@ export function planNoteDeletion<T extends SlideChainLike>(context: NoteDeletion
   const byId = new Map(context.notes.map(note => [note.id, note] as const));
   const noteIds = new Set(context.noteIds.filter(id => byId.has(id)));
   if (noteIds.size === 0) return null;
-  const segment = findSlideSegmentByEndNotes(context.slideChains, byId, noteIds);
-  return segment
-    ? splitSlideAtSegment(context, segment.chain, segment.range)
-    : deleteNotesWithHiddenFallback(context, noteIds);
+  return deleteNotesWithHiddenFallback(context, noteIds);
+}
+
+/** The chart after deleting the Slide segments `segmentKeys` names (see slideSegmentKey), one after another, or null
+ * when none of them exists. */
+export function planSlideSegmentDeletion<T extends SlideChainLike>(
+  context: Omit<NoteDeletionContext<T>, "noteIds" | "spRhythm"> & { segmentKeys: readonly string[] },
+): NoteDeletion<T> | null {
+  let notes = [...context.notes], slideChains = [...context.slideChains];
+  let changed = false;
+  for (const key of context.segmentKeys) {
+    const byId = new Map(notes.map(note => [note.id, note] as const));
+    const segment = findSlideSegmentByKey(slideChains, byId, key);
+    if (!segment) continue;
+    ({ notes, slideChains } = splitSlideAtSegment({ ...context, notes, slideChains }, segment.chain, segment.range));
+    changed = true;
+  }
+  return changed ? { notes, slideChains } : null;
 }
 
 /** A Hidden copy of a node where a Slide line leaves it ("outgoing": a Directional's far end) or arrives at it. */
@@ -70,14 +81,15 @@ function toHidden(note: ChartNote): ChartNote {
 }
 
 /**
- * Splits a Slide at both ends of a segment, then deletes those end notes that are the Slide's head or tail; an end
- * note inside the Slide stays, as an end of the piece on its other side.
+ * Deletes a Slide segment: the Slide is cut at both its end notes, which stay (an end that was the Slide's head or
+ * tail is left a note of its own).
  *
- * Under ExGarupa a piece gets a Hidden bridge at a visible split end (so that node keeps its middle-node role) and
- * the segment stays as an all-Hidden Slide between Hidden copies of its end notes. Without ExGarupa the segment and
- * its Hidden nodes go. An all-Hidden Slide goes as a whole.
+ * Under ExGarupa a piece left on either side gets a Hidden bridge at the cut, on the cut's beat (so its end node keeps
+ * its middle-node role), and the segment stays as an all-Hidden Slide between Hidden copies of its end notes. Without
+ * ExGarupa the segment's Hidden nodes go. An all-Hidden Slide goes as a whole.
  */
-function splitSlideAtSegment<T extends SlideChainLike>(context: NoteDeletionContext<T>, chain: T,
+function splitSlideAtSegment<T extends SlideChainLike>(
+  context: Pick<NoteDeletionContext<T>, "notes" | "slideChains" | "exGarupa" | "createId">, chain: T,
   { start, end }: SlideSegmentRange): NoteDeletion<T> {
   const { exGarupa, createId } = context;
   const byId = new Map(context.notes.map(note => [note.id, note] as const));
@@ -98,16 +110,14 @@ function splitSlideAtSegment<T extends SlideChainLike>(context: NoteDeletionCont
   if (nodes.every(note => note.type === "hidden")) {
     for (const id of chain.noteIds) removed.add(id);
   } else {
-    if (start === 0) removed.add(chain.noteIds[0]!);
-    else piece([...chain.noteIds.slice(0, start + 1),
+    if (start > 0) piece([...chain.noteIds.slice(0, start + 1),
       ...(exGarupa && nodes[start]!.type !== "hidden" ? [copy(start, "outgoing")] : [])]);
 
     const inner = chain.noteIds.slice(start + 1, end);
     if (exGarupa) piece([copy(start, "outgoing"), ...inner, copy(end, "incoming")]);
     else for (const id of inner) removed.add(id);
 
-    if (end === last) removed.add(chain.noteIds[last]!);
-    else piece([...(exGarupa && nodes[end]!.type !== "hidden" ? [copy(end, "incoming")] : []),
+    if (end < last) piece([...(exGarupa && nodes[end]!.type !== "hidden" ? [copy(end, "incoming")] : []),
       ...chain.noteIds.slice(end)]);
   }
 

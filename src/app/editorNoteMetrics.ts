@@ -126,6 +126,9 @@ export const SELECTION_FRAME_MARGIN = 10;
 export const SELECTION_FRAME_BORDER_PX = 2;
 /** Brightness filter of selected notes and line segments, setting them apart from the rest. */
 export const SELECTED_HIGHLIGHT_FILTER = "brightness(1.4)";
+/** A selected Slide segment's line, drawn fully opaque: brighter only as far as its green stays below the top of the
+ * channel (a larger factor clips green and then red at 255 and turns the line yellow). */
+export const SELECTED_SEGMENT_FILTER = "brightness(1.15)";
 /**
  * Width handles on the selection frame's left and right edges, in design px. The grip is the original slider thumb
  * (button_slidegauge, the music filter's level DualSlider), drawn at SELECTION_RESIZE_GRIP_SCALE of a box that is as

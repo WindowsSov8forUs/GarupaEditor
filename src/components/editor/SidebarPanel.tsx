@@ -158,8 +158,8 @@ const SLIDE_TOOL_ICON_BOX = { width: 88, height: 37 };
 export const SidebarPanel = memo(function SidebarPanel({ isSkinReady, isToolArmed, tool, applyToolFromPalette, bpm, onApplyBpm, onArmBpmTool, onArmLongTool, onArmMiddleTool, onDisarmTool, onPlay, onPreview,
   getSpriteLayers, getSpriteAspectRatio, renderSpriteStack, historyTools, mirrorTools, directionalEnabled, longBodyTexture, curveSlideLineTexture, curve, sv }: SidebarPanelProps) {
   const visibleTools = directionalEnabled ? tools : basicTools;
-  // Note tools, Long, Middle, Curve, BPM and (in ExGarupa) SV.
-  const noteRows = Math.ceil((visibleTools.length + 5 + (sv ? 1 : 0)) / 2);
+  // Note tools, Long, Hidden (SP notes and above), Middle, Curve, BPM and (in ExGarupa) SV.
+  const noteRows = Math.ceil((visibleTools.length + 4 + (directionalEnabled ? 1 : 0) + (sv ? 1 : 0)) / 2);
   const middleLayers = getSpriteLayers("single", { baseImageType: "slide_among", includeDirectionalOverlay: false, includeFlickOverlay: false });
   // The Hidden and Middle icons draw the current skin's slide among body (measured; null until then).
   useSpriteOpaqueBoxVersion();
@@ -255,8 +255,9 @@ export const SidebarPanel = memo(function SidebarPanel({ isSkinReady, isToolArme
             </div>
           </div>;
       })()}
-          {/* Hidden tool: the Slide tool placing Hidden nodes. No original sprite; its icon is a Hidden node on a Slide. */}
-          <div className="editor-note-button-slot">
+          {/* Hidden tool (SP notes and above): places and makes Hidden nodes. No original sprite; its icon is a Hidden node
+              on a Slide. */}
+          {directionalEnabled && <div className="editor-note-button-slot">
             <div className="original-prefab-origin" style={{ left: -ORIGINAL_SQUARE_RADIO_BOUNDS.x, top: -ORIGINAL_SQUARE_RADIO_BOUNDS.y }}>
               <OriginalSquareRadioButton label="Hidden" selected={isToolArmed && tool === "hidden"} disabled={!isSkinReady}
                 onClick={() => { if (!isSkinReady) return; if (isToolArmed && tool === "hidden") onDisarmTool(); else applyToolFromPalette("hidden"); }}
@@ -265,7 +266,7 @@ export const SidebarPanel = memo(function SidebarPanel({ isSkinReady, isToolArme
                     longLine={longBodyTexture} curveSlideLine={curveSlideLineTexture} />}
                 </span>} />
             </div>
-          </div>
+          </div>}
           {/* Middle tool: the icon is the skin's slide middle node on a Slide. */}
           <div className="editor-note-button-slot">
             <div className="original-prefab-origin" style={{ left: -ORIGINAL_SQUARE_RADIO_BOUNDS.x, top: -ORIGINAL_SQUARE_RADIO_BOUNDS.y }}>

@@ -9,9 +9,8 @@
  * On the board a segment is drawn as connection segments (`RenderConnectionSegment`), one for each pair of adjacent
  * chain nodes in it; each carries its segment's id.
  *
- * A segment is "selected" exactly when both its end notes are selected: there is no selection state of its own.
- * When the selection is exactly its two end notes, deleting splits the Slide there (noteDeletion.ts) and the segment
- * settings (line shape) apply to it.
+ * A segment is selected on its own (by its key, its two end notes' ids, which edits inside it keep): it is drawn
+ * highlighted, deleting it cuts its Slide there (noteDeletion.ts), and the Curve tool applies its shape to it.
  */
 
 /** A segment as chain node indices: `start` and `end` are its end nodes. */
@@ -44,16 +43,20 @@ export function parseSlideSegmentId(segmentId: string): ({ chainId: string } & S
   return Number.isFinite(start) && Number.isFinite(end) ? { chainId: match[1], start, end } : null;
 }
 
-/** The Slide segment whose two end notes are exactly `noteIds`, if any. A Long has no segments of its own: it goes
- * and is edited as a whole. */
-export function findSlideSegmentByEndNotes<T extends { id: string; noteIds: string[]; long?: true }>(
-  chains: readonly T[], byId: ReadonlyMap<string, { type: string }>, noteIds: ReadonlySet<string>,
+/** A segment's key: its two end notes' ids, which stay the same as nodes inside it come and go. */
+export function slideSegmentKey(chain: { noteIds: readonly string[] }, range: SlideSegmentRange): string {
+  return `${chain.noteIds[range.start]}>${chain.noteIds[range.end]}`;
+}
+
+/** The Slide segment with the key `key`, if any. A Long has no segments of its own: it goes and is edited as a
+ * whole. */
+export function findSlideSegmentByKey<T extends { id: string; noteIds: string[]; long?: true }>(
+  chains: readonly T[], byId: ReadonlyMap<string, { type: string }>, key: string,
 ): { chain: T; range: SlideSegmentRange } | null {
-  if (noteIds.size !== 2) return null;
   for (const chain of chains) {
     if (chain.long === true || !chain.noteIds.every(id => byId.has(id))) continue;
     const range = slideSegmentRanges(chain.noteIds.map(id => byId.get(id)!))
-      .find(({ start, end }) => noteIds.has(chain.noteIds[start]!) && noteIds.has(chain.noteIds[end]!));
+      .find(candidate => slideSegmentKey(chain, candidate) === key);
     if (range) return { chain, range };
   }
   return null;

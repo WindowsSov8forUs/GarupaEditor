@@ -6,7 +6,7 @@ import { isGarupaLongSlideShape } from "../chart";
 import { connectSlideNodes } from "./slideConnect";
 import { minimapLaneVisible } from "./editorMinimapGeometry";
 import { allowedSelectionWidthDelta, canResizeSelectionWidth, planSelectionWidthChange, type SelectionWidthContext, type SelectionWidthEdge } from "./selectionWidthDrag";
-import { editorHiddenButtonHeight, editorNoteHeight, editorNoteTokenWidth, editorSlideLineWidth, SELECTION_FRAME_MARGIN } from "./editorNoteMetrics";
+import { editorHiddenButtonHeight, editorNoteHeight, editorNoteTokenWidth, SELECTION_FRAME_MARGIN } from "./editorNoteMetrics";
 import { useEditorScrollExtent } from "./hooks/useEditorScrollExtent";
 import { useUiViewport } from "../components/useUiViewport";
 import { TRACK_ZONE_WIDTH, trackZoneGeometry, useEditorViewportZoom } from "./hooks/useEditorViewportZoom";
@@ -65,7 +65,8 @@ import { useSelectionAndEditorSync } from "./hooks/useSelectionAndEditorSync";
 import { isMobileRuntime, setMobileSimulatorImmersive, writeMobileRoutePayload } from "./mobileRuntime";
 import { canMirrorSelection, mirrorSelection, type MirrorAxis, type SelectionMirrorContext } from "./selectionMirror";
 import { cleanupSlideChainsHidden, dropNoteIdsFromChains } from "./slideChainCleanup";
-import { parseSlideSegmentId } from "./slideSegments";
+import { parseSlideSegmentId, slideSegmentId, slideSegmentKey, slideSegmentRanges } from "./slideSegments";
+import { saveUndoHistory, takeUndoHistory } from "./undoHistoryPersistence";
 import {
   useNotePaletteSpriteRendering,
   usePlayfieldSpriteRendering,
@@ -389,6 +390,8 @@ function ChartEditorController() {
   /** The timing group new SV events go to; #0 (global) by default. */
   const [toolSvTimingGroup, setToolSvTimingGroup] = useState<ChartTimingGroupId>(GLOBAL_TIMING_GROUP_ID);
   const [selectedNoteIds, setSelectedNoteIds] = useState<string[]>([]);
+  /** The selected Slide segments, by key (see slideSegmentKey): a selection of their own, beside the notes'. */
+  const [selectedSegmentKeys, setSelectedSegmentKeys] = useState<string[]>([]);
   const [selectedTimingGroupId, setSelectedTimingGroupId] = useState<ChartTimingGroupId>(GLOBAL_TIMING_GROUP_ID);
   const [isTimingGroupPanelOpen, setIsTimingGroupPanelOpen] = useState(false);
   const [isTimingGroupModeEnabled, setIsTimingGroupModeEnabled] = useState(false);
@@ -993,9 +996,11 @@ function ChartEditorController() {
   // Hidden nodes are shown and operable as notes, except those off the measure and beat lines once the board is too
   // compressed to draw its subdivision lines.
   const hideOffBeatHiddenNodes = isSubdivisionLineHidden(verticalZoom);
+  // Under the Curve tool, which works on whole Slide segments, Hidden nodes are neither shown nor operable.
   const isHiddenNodeShown = useCallback((note: Pick<ChartNote, "type" | "beat">): boolean =>
-    note.type !== "hidden" || !hideOffBeatHiddenNodes || Math.abs(note.beat - Math.round(note.beat)) < 1e-6,
-  [hideOffBeatHiddenNodes]);
+    note.type !== "hidden" || (!(isToolArmed && tool === "curve")
+      && (!hideOffBeatHiddenNodes || Math.abs(note.beat - Math.round(note.beat)) < 1e-6)),
+  [hideOffBeatHiddenNodes, isToolArmed, tool]);
   const uiScale = useUiViewport().scale;
   const scrollPadding = useEditorScrollExtent(playfieldRef, viewportElement, viewportPlaybackPositionPercent);
   // The track always fills the track zone, which ends where the flat lane art (FIELD_WIDTH_LANES lanes, wider than
@@ -2242,7 +2247,7 @@ function ChartEditorController() {
   const hasProjectContent = notes.length > 0 || slideChains.length > 0 || bpmEvents.length > 0
     || Object.values(chartMediaResources).some(ref => ref !== null)
     || JSON.stringify(metadata) !== JSON.stringify(DEFAULT_METADATA);
-  const canDeleteSelection = selectedNoteCount > 0;
+  const canDeleteSelection = selectedNoteCount > 0 || selectedSegmentKeys.length > 0;
   const {
     clearSelection,
     removeNoteIdsFromSlideChains,
@@ -2254,6 +2259,7 @@ function ChartEditorController() {
     applySelectedOffset,
   } = useSelectionAndEditorSync({
     setSelectedNoteIds,
+    setSelectedSegmentKeys,
     setSlideChains,
     normalizeSlideChains: setSlideChainsState,
     normalizeNotes: setNotesState,
@@ -2314,7 +2320,7 @@ function ChartEditorController() {
   });
 
   // Deleting a segment (cutting its Slide) is part of note deletion: see `planNoteDeletion`.
-  const { applySlideSegmentSettings } = useSlideSegmentActions({
+  const { applySlideSegmentSettingsByKeys } = useSlideSegmentActions({
     slideChains,
     notes: interactiveNotes,
     isHabahiroEnabled,
@@ -2396,6 +2402,7 @@ function ChartEditorController() {
     deleteNotes,
     clearSelection,
     selectedNoteIds,
+    selectedSegmentKeys,
     showDialog,
     setSelectedNoteIds,
   });
@@ -2418,8 +2425,25 @@ function ChartEditorController() {
     setBpmEventsState(next.chart.bpmEvents); setTimingGroupsState(ensureTimingGroups(next.chart.timingGroups));
     setChartMediaResources(next.mediaRefs); setAudioFileName(next.audioFileName); setAudioDurationSec(next.audioDurationSec);
     clearSelection();
-    undoStackRef.current = []; redoStackRef.current = []; pendingUndoSourcesRef.current = null; setUndoVersion(v => v + 1);
+    // The first project restored after the page loaded takes back the history the last page kept for it, when it is
+    // that project with the same content (a reload); any other restore starts without history.
+    const kept = isFirstRestoreRef.current ? takeUndoHistory<EditorUndoSnapshot>(next.projectId, (present) =>
+      sameUndoContent(present, { notes: next.chart.notes, slideChains: next.chart.slideChains,
+        bpmEvents: next.chart.bpmEvents, timingGroups: ensureTimingGroups(next.chart.timingGroups) })) : null;
+    isFirstRestoreRef.current = false;
+    undoStackRef.current = kept?.undo ?? []; redoStackRef.current = kept?.redo ?? [];
+    pendingUndoSourcesRef.current = null; setUndoVersion(v => v + 1);
   }, [resourceManager, clearSelection]);
+  const isFirstRestoreRef = useRef(true);
+  // The history is kept for the next load of the page as this one goes away (see undoHistoryPersistence.ts).
+  const projectIdRef = useRef(projectId);
+  projectIdRef.current = projectId;
+  useEffect(() => {
+    const keep = () => saveUndoHistory(projectIdRef.current, buildCurrentUndoSnapshot(), undoStackRef.current,
+      redoStackRef.current);
+    window.addEventListener("pagehide", keep);
+    return () => window.removeEventListener("pagehide", keep);
+  }, [buildCurrentUndoSnapshot]);
 
   const {
     garupaChartJsonText,
@@ -2540,6 +2564,7 @@ function ChartEditorController() {
     setSkinSelection,
     approxEq,
     selectedNoteIds,
+    selectedSegmentKeys,
     deleteSelectedNotes,
     NOTE_TYPES,
     setTool,
@@ -2557,9 +2582,14 @@ function ChartEditorController() {
   // editor's own chart aside (and out of the session cache) until the play flow ends.
   const playSessionBackupRef = useRef<ChartProject | null>(null);
   const [playSessionActive, setPlaySessionActive] = useState(false);
+  // The editor's undo and redo history is kept aside with its chart: loading a chart for play, and restoring the
+  // editor's chart afterwards, would otherwise drop it.
+  const playSessionHistoryRef = useRef<{ undo: EditorUndoSnapshot[]; redo: EditorUndoSnapshot[] } | null>(null);
   const beginPlaySession = useCallback(async () => {
     if (playSessionBackupRef.current !== null) return;
+    const history = { undo: [...undoStackRef.current], redo: [...redoStackRef.current] };
     playSessionBackupRef.current = await captureChartProject(resourceManager, project);
+    playSessionHistoryRef.current = history;
     setPlaySessionActive(true);
   }, [resourceManager, project]);
   const endPlaySession = useCallback(() => {
@@ -2567,6 +2597,12 @@ function ChartEditorController() {
     if (backup === null) return;
     playSessionBackupRef.current = null;
     restoreProject(backup);
+    const history = playSessionHistoryRef.current;
+    playSessionHistoryRef.current = null;
+    if (history) {
+      undoStackRef.current = history.undo; redoStackRef.current = history.redo;
+      pendingUndoSourcesRef.current = null; setUndoVersion(v => v + 1);
+    }
     setPlaySessionActive(false);
   }, [restoreProject]);
   const settingsResourcesReady = useEditorSessionCache({
@@ -2786,7 +2822,6 @@ function ChartEditorController() {
   });
   resolveBoardPlacementRef.current = resolveBoardPlacement;
 
-  /** Middle tool on a Slide's line: a single node inserted where it was pressed, between that segment's two nodes. */
   /** Whether a Hidden node's handle is under a client point: the Hidden tool then presses the handle, not the line. */
   const isHiddenHandleAtClientPoint = useCallback((clientX: number, clientY: number): boolean => {
     const board = playfieldBoardRef.current;
@@ -2823,7 +2858,21 @@ function ChartEditorController() {
     setSlideChains((previous) => previous.map((current) => current.id === chain.id ? { ...current, long: true as const } : current));
   }, [committedSlideChainById, isToolArmed, noteById, setSlideChains, showDialog, tool]);
 
-  /** The Hidden tool on a Slide's line: a Hidden node there, between the segment's two nodes. */
+  /**
+   * Where a Slide's line between two adjacent nodes (Hidden ones included) passes on `beat`: the lane between where it
+   * leaves `from` and reaches `to`, by time, as the board draws it.
+   */
+  const laneOnConnection = useCallback((from: ChartNote, to: ChartNote, beat: number): number => {
+    const fromLane = getSlideAnchorLane({ type: from.type, lane: from.lane, width: from.width }, "outgoing");
+    const toLane = getSlideAnchorLane({ type: to.type, lane: to.lane, width: to.width }, "incoming");
+    const fromSec = beatToSeconds(from.beat, bpmTimeline), toSec = beatToSeconds(to.beat, bpmTimeline);
+    const ratio = Math.abs(toSec - fromSec) <= 1e-9 ? 0
+      : Math.max(0, Math.min(1, (beatToSeconds(beat, bpmTimeline) - fromSec) / (toSec - fromSec)));
+    return fromLane + (toLane - fromLane) * ratio;
+  }, [bpmTimeline, getSlideAnchorLane]);
+
+  /** The Hidden tool on a Slide's line: a Hidden node on the line there, between the two nodes it joins (its lane
+   * where the line passes; without ExGarupa on the original's 0.01 lanes). */
   const insertHiddenNodeOnConnection = useCallback((segment: any, event: ReactMouseEvent<HTMLElement>) => {
     if (!isToolArmed || tool !== "hidden" || slideBuildRef.current) {
       return;
@@ -2853,7 +2902,9 @@ function ChartEditorController() {
     if (!(beat > from.beat + 1e-6 && beat < to.beat - 1e-6)) {
       return;
     }
-    const node = normalizeNote({ id: createId(), type: "hidden", lane: placement.lane, beat,
+    const onLine = laneOnConnection(from, to, beat);
+    const lane = isExGarupaEnabled ? Number(onLine.toFixed(6)) : Number((Math.round(onLine * 100) / 100).toFixed(2));
+    const node = normalizeNote({ id: createId(), type: "hidden", lane, beat, width: 1,
       timingGroup: normalizeNoteTimingGroup(chain.timingGroup) }, settings);
     if (!node) {
       return;
@@ -2862,9 +2913,11 @@ function ChartEditorController() {
     setSlideChains((previous) => previous.map((current) => current.id !== chain.id ? current : {
       ...current, noteIds: [...current.noteIds.slice(0, segmentIndex + 1), node.id, ...current.noteIds.slice(segmentIndex + 1)],
     }));
-  }, [beatDivision, committedSlideChainById, isToolArmed, noteById, resolveBoardPlacement, setNotes,
-    setSlideChains, settings, showDialog, tool]);
+  }, [beatDivision, committedSlideChainById, isExGarupaEnabled, isToolArmed, laneOnConnection, noteById,
+    resolveBoardPlacement, setNotes, setSlideChains, settings, showDialog, tool]);
 
+  /** The Middle tool on a Slide's line: a Single on the line there, between the two nodes it joins (see
+   * laneOnConnection; without ExGarupa on the nearest whole lane). */
   const insertSingleNodeOnConnection = useCallback((segment: any, event: ReactMouseEvent<HTMLElement>) => {
     if (!isToolArmed || tool !== "middle" || slideBuildRef.current) {
       return;
@@ -2899,12 +2952,16 @@ function ChartEditorController() {
       return;
     }
 
+    // On the line where it passes the snapped beat: exactly under ExGarupa, else on the nearest whole lane.
+    const beat = quantizeBeat(placement.beat, beatDivision);
+    const onLine = laneOnConnection(from, to, beat);
     const normalized = normalizeNote(
       {
         id: createId(),
         type: "single",
-        lane: Number(toFinite(placement.lane, 0).toFixed(6)),
-        beat: quantizeBeat(placement.beat, beatDivision),
+        lane: isExGarupaEnabled ? Number(onLine.toFixed(6)) : Math.round(onLine),
+        beat,
+        width: 1,
         timingGroup: normalizeNoteTimingGroup(chain.timingGroup),
       },
       settings,
@@ -2992,6 +3049,7 @@ function ChartEditorController() {
     isExGarupaEnabled,
     isHabahiroEnabled,
     isToolArmed,
+    laneOnConnection,
     noteById,
     notes,
     resolveBoardPlacement,
@@ -3002,6 +3060,8 @@ function ChartEditorController() {
     tool,
   ]);
 
+  /** The curve tool's press on a note or blank board (pressCurveToolOnNote, defined further down). */
+  const pressCurveToolOnNoteRef = useRef<((note: ChartNote | null, additive: boolean) => void) | null>(null);
   const {
     applyToolFromPalette: applyToolFromPaletteRaw,
     applyLongToolFromPalette: applyLongToolFromPaletteRaw,
@@ -3023,6 +3083,8 @@ function ChartEditorController() {
     beginSelectedNotesMove,
     handleBoardMouseDown: handleBoardMouseDownRaw,
   } = useBoardInteractionActions({
+    pressCurveToolOnNoteRef,
+    selectedSegmentKeys,
     setTool,
     setIsToolArmed,
     clearSelection,
@@ -4127,10 +4189,11 @@ function ChartEditorController() {
     applyMiddleToolFromPaletteRaw();
   }, [applyMiddleToolFromPaletteRaw, hidePlaybackGuide, hidePlaybackRuntimeLine, isPlayToolSelected, isPlaybackPlaying, stopPlayback]);
 
-  /** The curve tool's dialog's 保存: keeps the fit (applied to each Slide segment pressed with the tool) and arms the
-   * tool. */
+  /** The curve tool's dialog's 保存: keeps the fit (applied to each Slide segment pressed with the tool, and at once to
+   * the selected ones) and arms the tool. */
   const saveCurveToolSettings = useCallback((next: SlideFitSettings) => {
     setCurveToolSettings(next);
+    if (selectedSegmentKeys.length > 0) applySlideSegmentSettingsByKeys(selectedSegmentKeys, next);
     if (isPlayToolSelected) {
       setIsPlayToolSelected(false);
       hidePlaybackGuide();
@@ -4140,22 +4203,64 @@ function ChartEditorController() {
       }
     }
     applyCurveToolFromPaletteRaw();
-  }, [applyCurveToolFromPaletteRaw, hidePlaybackGuide, hidePlaybackRuntimeLine, isPlayToolSelected, isPlaybackPlaying,
-    stopPlayback]);
+  }, [applyCurveToolFromPaletteRaw, applySlideSegmentSettingsByKeys, hidePlaybackGuide, hidePlaybackRuntimeLine,
+    isPlayToolSelected, isPlaybackPlaying, selectedSegmentKeys, stopPlayback]);
   /** Its dialog's 取消: the preset is not kept and the curve tool does not stay armed (another armed tool does). */
   const cancelCurveTool = useCallback(() => {
     if (isToolArmed && tool === "curve") setIsToolArmed(false);
   }, [isToolArmed, tool]);
-  /** The armed curve tool on a pressed Slide segment: its preset replaces the segment's Hidden nodes. A Long keeps its
-   * shape. */
-  const applyCurveToolOnConnection = useCallback((segment: RenderConnectionSegment) => {
+  /**
+   * The armed curve tool on a Slide segment (by key): the segment is selected (Ctrl/Cmd adds it to the selection, or
+   * drops it when it is selected) and the preset replaces its Hidden nodes; it stays selected, so a preset saved later
+   * applies to it too.
+   */
+  const pressCurveToolOnSegment = useCallback((key: string, additive: boolean) => {
     if (!isToolArmed || tool !== "curve") return;
-    if (committedSlideChainById.get(segment.chainId)?.long === true) {
+    if (additive && selectedSegmentKeys.includes(key)) {
+      setSelectedSegmentKeys(previous => previous.filter(other => other !== key));
+      return;
+    }
+    setSelectedNoteIds(previous => previous.length === 0 ? previous : []);
+    setSelectedSegmentKeys(previous => additive ? [...previous, key] : [key]);
+    applySlideSegmentSettingsByKeys([key], curveToolSettings);
+  }, [applySlideSegmentSettingsByKeys, curveToolSettings, isToolArmed, selectedSegmentKeys, tool]);
+  /** The armed curve tool on a pressed line: its Slide segment (see pressCurveToolOnSegment). A Long keeps its shape. */
+  const applyCurveToolOnConnection = useCallback((segment: RenderConnectionSegment, additive = false) => {
+    if (!isToolArmed || tool !== "curve") return;
+    const chain = committedSlideChainById.get(segment.chainId);
+    if (chain?.long === true) {
       showDialog("Long 不能应用形状预设。");
       return;
     }
-    applySlideSegmentSettings(segment.slideSegmentId, curveToolSettings);
-  }, [applySlideSegmentSettings, committedSlideChainById, curveToolSettings, isToolArmed, showDialog, tool]);
+    const parsed = parseSlideSegmentId(segment.slideSegmentId);
+    if (!chain || !parsed || !chain.noteIds[parsed.start] || !chain.noteIds[parsed.end]) return;
+    pressCurveToolOnSegment(slideSegmentKey(chain, parsed), additive);
+  }, [committedSlideChainById, isToolArmed, pressCurveToolOnSegment, showDialog, tool]);
+  /** The armed curve tool on a note (a Slide's node): the Slide segment after it (see pressCurveToolOnSegment); on
+   * blank board it drops the selection. */
+  const pressCurveToolOnNote = useCallback((note: ChartNote | null, additive: boolean) => {
+    if (!isToolArmed || tool !== "curve") return;
+    if (!note) {
+      if (!additive) {
+        setSelectedNoteIds(previous => previous.length === 0 ? previous : []);
+        setSelectedSegmentKeys(previous => previous.length === 0 ? previous : []);
+      }
+      return;
+    }
+    const role = committedSlideRoleByNoteId.get(note.id);
+    const chain = role ? committedSlideChainById.get(role.chainId) : undefined;
+    if (!role || !chain) return;
+    if (chain.long === true) {
+      showDialog("Long 不能应用形状预设。");
+      return;
+    }
+    const nodes = chain.noteIds.map(id => noteById.get(id));
+    if (nodes.some(node => !node)) return;
+    const range = slideSegmentRanges(nodes as ChartNote[]).find(candidate => candidate.start === role.index);
+    if (range) pressCurveToolOnSegment(slideSegmentKey(chain, range), additive);
+  }, [committedSlideChainById, committedSlideRoleByNoteId, isToolArmed, noteById, pressCurveToolOnSegment, showDialog,
+    tool]);
+  pressCurveToolOnNoteRef.current = pressCurveToolOnNote;
 
   const applyLongToolFromPalette = useCallback(() => {
     if (isPlayToolSelected) {
@@ -4401,6 +4506,10 @@ function ChartEditorController() {
   /** Editor mode: 基础 (no SP, no ExGarupa), SP 音符 (SP) or ExGarupa (SP and ExGarupa). */
   const editorMode: "basic" | "special" | "exgarupa" = isExGarupaEnabled
     ? "exgarupa" : canUseSpRhythmMode ? "special" : "basic";
+  // The Hidden tool is for SP notes and above: 基础 mode puts it back to Single.
+  useEffect(() => {
+    if (tool === "hidden" && appOptionSettings.spRhythmNoteEnabled !== true) setTool("single");
+  }, [appOptionSettings.spRhythmNoteEnabled, tool]);
   const setEditorMode = useCallback((mode: "basic" | "special" | "exgarupa") => {
     // Leaving a mode regresses the chart through applyAppOptionSettings, which asks before irreversible changes.
     return applyAppOptionSettings({ ...appOptionSettings,
@@ -5032,8 +5141,7 @@ function ChartEditorController() {
     selectedNoteIdSet,
     slideBuildSelectedIdSet,
   ]);
-  // Slide segments (see slideSegments.ts) have no selection state of their own: a segment is selected when both its
-  // end notes are.
+  // Slide segments (see slideSegments.ts) are selected on their own, by key; a Long's line stands for its two notes.
   const effectiveChainById = useMemo(() => new Map(effectiveSlideChains.map(chain => [chain.id, chain] as const)),
     [effectiveSlideChains]);
   /** A Slide segment's two end notes, Hidden ones included. */
@@ -5044,25 +5152,56 @@ function ChartEditorController() {
     return [chain.noteIds[parsed.start], chain.noteIds[parsed.end]]
       .filter((id): id is string => id !== undefined && noteById.has(id));
   }, [effectiveChainById, noteById]);
-  /** Pressing a Slide segment selects its end notes (Ctrl/Cmd adds them to the selection). */
+  /** A Slide segment's key (see slideSegmentKey), or null for a Long's line or a segment that is gone. */
+  const slideSegmentKeyOf = useCallback((segmentId: string): string | null => {
+    const parsed = parseSlideSegmentId(segmentId);
+    const chain = parsed ? effectiveChainById.get(parsed.chainId) : undefined;
+    if (!parsed || !chain || chain.long === true) return null;
+    return chain.noteIds[parsed.start] && chain.noteIds[parsed.end] ? slideSegmentKey(chain, parsed) : null;
+  }, [effectiveChainById]);
+  /**
+   * Pressing a Slide segment selects it in place of everything selected (Ctrl/Cmd adds it to the selection, or drops
+   * it when it is selected). A Long's line selects the Long's two notes.
+   */
   const selectSlideSegment = useCallback((segmentId: string, additive: boolean) => {
-    const ids = slideSegmentEndNoteIds(segmentId);
-    if (ids.length === 0) return;
-    setMultiSelectedNotes(additive ? [...selectedNoteIds, ...ids] : ids, ids[0]);
-  }, [slideSegmentEndNoteIds, selectedNoteIds, setMultiSelectedNotes]);
-  /** The Slide segments whose end notes are both selected. */
+    const key = slideSegmentKeyOf(segmentId);
+    if (!key) {
+      const ids = slideSegmentEndNoteIds(segmentId);
+      if (ids.length === 0) return;
+      setMultiSelectedNotes(additive ? [...selectedNoteIds, ...ids] : ids, ids[0]);
+      return;
+    }
+    if (additive) {
+      setSelectedSegmentKeys(previous => previous.includes(key) ? previous.filter(other => other !== key) : [...previous, key]);
+      return;
+    }
+    setSelectedNoteIds(previous => previous.length === 0 ? previous : []);
+    setSelectedSegmentKeys([key]);
+  }, [selectedNoteIds, setMultiSelectedNotes, slideSegmentEndNoteIds, slideSegmentKeyOf]);
+  /** The selected Slide segments' ids, from their keys; keys whose segment is gone are dropped. */
   const selectedSlideSegmentIds = useMemo(() => {
     const segmentIds = new Set<string>();
-    if (selectedNoteIdSet.size === 0) return segmentIds;
-    for (const segment of renderModel.connectionSegments) {
-      if (segment.isPreviewChain || segmentIds.has(segment.slideSegmentId)) continue;
-      const ids = slideSegmentEndNoteIds(segment.slideSegmentId);
-      if (ids.length > 0 && ids.every(id => selectedNoteIdSet.has(id))) segmentIds.add(segment.slideSegmentId);
+    if (selectedSegmentKeys.length === 0) return segmentIds;
+    const keys = new Set(selectedSegmentKeys);
+    for (const chain of effectiveSlideChains) {
+      if (chain.long === true) continue;
+      const nodes = chain.noteIds.map(id => noteById.get(id));
+      if (nodes.some(note => !note)) continue;
+      for (const range of slideSegmentRanges(nodes as ChartNote[])) {
+        if (keys.has(slideSegmentKey(chain, range))) segmentIds.add(slideSegmentId(chain.id, range));
+      }
     }
     return segmentIds;
-  }, [renderModel.connectionSegments, slideSegmentEndNoteIds, selectedNoteIdSet]);
+  }, [effectiveSlideChains, noteById, selectedSegmentKeys]);
+  useEffect(() => {
+    if (selectedSegmentKeys.length === 0) return;
+    const alive = new Set([...selectedSlideSegmentIds].map(id => slideSegmentKeyOf(id)));
+    if (selectedSegmentKeys.some(key => !alive.has(key))) {
+      setSelectedSegmentKeys(previous => previous.filter(key => alive.has(key)));
+    }
+  }, [selectedSegmentKeys, selectedSlideSegmentIds, slideSegmentKeyOf]);
   /**
-   * One frame around everything selected: the selected notes' buttons and the selected Slide segments,
+   * One frame around the selected notes' buttons (selected Slide segments are drawn highlighted instead),
    * grown by SELECTION_FRAME_MARGIN design px on each side. Board coordinates; null when nothing is selected.
    */
   const selectionFrame = useMemo(() => {
@@ -5075,14 +5214,6 @@ function ChartEditorController() {
       if (!note.selected) continue;
       const width = editorNoteTokenWidth(note.spanLanes, isDirectionalNoteType(note.type), LANE_WIDTH, noteVisualScale);
       include(note.x - width / 2, note.y - tokenHeight / 2, note.x + width / 2, note.y + tokenHeight / 2);
-    }
-    if (selectedSlideSegmentIds.size > 0) {
-      for (const segment of renderModel.connectionSegments) {
-        if (segment.isPreviewChain || !selectedSlideSegmentIds.has(segment.slideSegmentId)) continue;
-        const halfWidth = editorSlideLineWidth(segment.spanLanes, LANE_WIDTH, noteVisualScale) / 2;
-        include(Math.min(segment.fromX, segment.toX) - halfWidth, segment.minY,
-          Math.max(segment.fromX, segment.toX) + halfWidth, segment.maxY);
-      }
     }
     // A selected Hidden node, or the connection start one, is framed as a note one lane wide.
     const startId = slideBuildState?.noteIds[0];
@@ -5098,7 +5229,7 @@ function ChartEditorController() {
     const margin = SELECTION_FRAME_MARGIN * uiScale;
     return { left: left - margin, top: top - margin, width: right - left + 2 * margin, height: bottom - top + 2 * margin };
   }, [LANE_WIDTH, canvasNoteVisuals, getNoteDisplayY, getNoteSpanLanes, getRenderedNotePlacement, isHiddenNodeShown,
-    laneToColumn, noteVisualScale, notes, renderModel.connectionSegments, selectedNoteIdSet, selectedSlideSegmentIds,
+    laneToColumn, noteVisualScale, notes, selectedNoteIdSet,
     slideBuildState, uiScale]);
   /** Dragging an edge of the selection frame widens or narrows the selected notes (see selectionWidthDrag). */
   const selectionWidthContext = useMemo<SelectionWidthContext>(() => ({
@@ -5281,6 +5412,7 @@ function ChartEditorController() {
     selectedSlideSegmentIds,
     selectSlideSegment,
     slideSegmentEndNoteIds,
+    slideSegmentKeyOf,
     deleteRightClickedNotes,
     settings,
     connectionSegments: renderModel.connectionSegments,

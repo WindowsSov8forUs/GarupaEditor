@@ -34,6 +34,7 @@ export function usePlayfieldRenderers(params: any) {
     selectedSlideSegmentIds,
     selectSlideSegment,
     slideSegmentEndNoteIds,
+    slideSegmentKeyOf,
     deleteRightClickedNotes,
     connectionSegments,
     skinAssets,
@@ -225,7 +226,7 @@ export function usePlayfieldRenderers(params: any) {
               event.preventDefault();
               event.stopPropagation();
               if (!slideBuildRef.current && typeof onCurveToolConnectionClick === "function") {
-                onCurveToolConnectionClick(segment);
+                onCurveToolConnectionClick(segment, event.ctrlKey || event.metaKey);
               }
               return;
             }
@@ -271,7 +272,10 @@ export function usePlayfieldRenderers(params: any) {
               cancelSlideBuild();
               return;
             }
-            deleteRightClickedNotes(slideSegmentEndNoteIds(slideSegmentId));
+            // A Slide segment goes as itself (cutting its Slide); a Long's line stands for the Long's notes.
+            const segmentKey = slideSegmentKeyOf(slideSegmentId);
+            if (segmentKey) deleteRightClickedNotes([], segmentKey);
+            else deleteRightClickedNotes(slideSegmentEndNoteIds(slideSegmentId));
           }}
           aria-hidden={isPreviewChain}
         >

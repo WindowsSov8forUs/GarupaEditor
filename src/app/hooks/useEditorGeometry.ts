@@ -689,6 +689,38 @@ export function useEditorGeometry(params: any) {
     [LANE_WIDTH, getNoteCenterAt, getNoteHitboxWidth, isHiddenNodeShown, noteVisualScale, notes],
   );
 
+  /**
+   * How far the selection may move in beats so every Slide keeps its nodes in order: a moved node stays between the
+   * beats of the nodes before and after it (ends included), as they move or not (a Hidden node between a moved node and
+   * one that stays moves part of the way, see buildSelectionMoveOffsetMap). Null when nothing limits it.
+   */
+  const selectionBeatDeltaRange = useMemo(() => {
+    if (selectedNoteIdSet.size === 0) return null;
+    // Each node's share of the move: its beat moves by share × the move.
+    const share = buildSelectionMoveOffsetMap({
+      notes,
+      slideChains: slideChains as Array<{ noteIds: string[]; long?: true }>,
+      selectedNoteIds: selectedNoteIdSet,
+      laneDelta: 0,
+      beatDelta: 1,
+    });
+    const byId = new Map<string, ChartNote>((notes as ChartNote[]).map((note) => [note.id, note] as const));
+    let min = -Infinity, max = Infinity;
+    for (const chain of slideChains as Array<{ noteIds: string[] }>) {
+      for (let index = 0; index + 1 < chain.noteIds.length; index += 1) {
+        const before = byId.get(chain.noteIds[index]!), after = byId.get(chain.noteIds[index + 1]!);
+        if (!before || !after) continue;
+        // before.beat + a·d ≤ after.beat + b·d, that is (a − b)·d ≤ after.beat − before.beat.
+        const rate = (share.get(before.id)?.beat ?? 0) - (share.get(after.id)?.beat ?? 0);
+        if (Math.abs(rate) <= 1e-9) continue;
+        const bound = (after.beat - before.beat) / rate;
+        if (rate > 0) max = Math.min(max, bound);
+        else min = Math.max(min, bound);
+      }
+    }
+    return min > max + 1e-9 || (min === -Infinity && max === Infinity) ? null : { min, max };
+  }, [notes, selectedNoteIdSet, slideChains]);
+
   const calcSelectionMoveDelta = useCallback(
     (clientX: number, clientY: number): { laneDelta: number; beatDelta: number; moved: boolean } | null => {
       const drag = selectionMoveRef.current;
@@ -716,17 +748,21 @@ export function useEditorGeometry(params: any) {
         }
         return Number(quantizeBeat(rawBeatDelta, beatDivision).toFixed(6));
       })();
+      // Held where a Slide node would pass the node before or after it; the lane move goes on.
+      const heldBeat = selectionBeatDeltaRange
+        ? Number(Math.max(selectionBeatDeltaRange.min, Math.min(selectionBeatDeltaRange.max, deltaBeat)).toFixed(6))
+        : deltaBeat;
       const moved =
         drag.isDragging ||
         Math.abs(clientX - drag.startClientX) >= 4 ||
         Math.abs(clientY - drag.startClientY) >= 4;
       return {
         laneDelta: deltaLane,
-        beatDelta: deltaBeat,
+        beatDelta: heldBeat,
         moved,
       };
     },
-    [LANE_WIDTH, beatDivision, playfieldBoardRef, quantizeBeat, selectionMoveRef, yToBeat],
+    [LANE_WIDTH, beatDivision, playfieldBoardRef, quantizeBeat, selectionBeatDeltaRange, selectionMoveRef, yToBeat],
   );
 
   return {

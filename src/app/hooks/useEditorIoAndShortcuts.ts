@@ -222,6 +222,7 @@ export function useEditorIoAndShortcuts(params: any) {
     setSkinSelection,
     approxEq,
     selectedNoteIds,
+    selectedSegmentKeys,
     deleteSelectedNotes,
     NOTE_TYPES,
     setTool,
@@ -707,7 +708,7 @@ export function useEditorIoAndShortcuts(params: any) {
 
       if (
         event.key === "Delete" &&
-        selectedNoteIds.length > 0
+        (selectedNoteIds.length > 0 || selectedSegmentKeys.length > 0)
       ) {
         event.preventDefault();
         deleteSelectedNotes();
@@ -743,6 +744,7 @@ export function useEditorIoAndShortcuts(params: any) {
     clearSelection,
     confirmClearAllNotes,
     deleteSelectedNotes,
+    selectedSegmentKeys,
     selectedNoteIds,
     setIsToolArmed,
     showDialog,
