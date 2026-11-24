@@ -120,7 +120,7 @@ export function buildOriginalSettingsPage(page: number, draft: OriginalSettingsD
     const root = "Contents/ScrollView/Contents";
     // Expose implemented settings, not disabled controls for absent game systems.
     hideChildren(root, ["LiveVibration", "MemberIllustCutin", "3DLive"]);
-    hideChildren(`${root}/LiveMode`, ["Cutin3DMode", "GraphicsMode", "ResolutionType", "Cutin3DModeDescription", "LowLatencySoundMode"]);
+    hideChildren(`${root}/LiveMode`, ["Cutin3DMode", "ResolutionType", "Cutin3DModeDescription", "LowLatencySoundMode"]);
     hideChildren(`${root}/LiveMode/Grid`, ["LowLatencySoundModeDescription", "ResolutionTypeDescription"]);
     hideChildren(`${root}/LiveEffect`, ["LightFever", "LightMode", "DisplaySkillWindow", "DisplaySkillEffect", "DisplayStageEffect"]);
     hideChildren(`${root}/LiveEffect/DisplayAllPerfectStatus`, ["MedleyComboStatusCheckBox"]);
@@ -130,20 +130,41 @@ export function buildOriginalSettingsPage(page: number, draft: OriginalSettingsD
     // The custom background is shown as the Light mode card background; there
     // is no deck to choose the card from (leader / random).
     hideChildren(`${root}/LightMode`, ["LightModeIllust", "Description"]);
-    // Keep the authored controls and columns, closing the removed rows/sections.
-    place(`${root}/LiveMode/HighFrequencyMode`, -50);
-    place(`${root}/LiveMode/Grid`, -158);
+    // Keep the authored controls and columns, closing the removed rows/sections. 動作モード keeps its authored
+    // place; each row below it is the authored pitch between two plain rows (ResolutionType to HighFrequencyMode).
+    const row = 123;
+    // The FPS note keeps its first line only: the second (fixed 60 FPS under the MV and 3D modes) does not hold in
+    // the editor, which has no 3D mode and plays an MV at the chosen rate. The section below moves up by that line.
+    const fpsNote = source.components.get(701)!, noteLine = 25;
+    components[fpsNote.id] = { mText: source.text(fpsNote).split("\n")[0] };
+    place(`${root}/LiveMode/HighFrequencyMode`, -50 - row);
+    place(`${root}/LiveMode/Grid`, -158 - row);
     place(`${root}/LiveMode/Grid/HighFrequencyModeDescription`, 0);
-    place(`${root}/LiveEffect`, -363);
+    // Each one-row section below is followed by the next at the authored LiveEffect → MV pitch (its row, then 127).
+    const section = 127;
+    const liveEffectY = -363 - row + noteLine, mvY = liveEffectY - 50 - section, lightY = mvY - 49 - section;
+    place(`${root}/LiveEffect`, liveEffectY);
     for (const name of ["DisplayFastSlow", "DisplayAllPerfectStatus"])
       place(`${root}/LiveEffect/${name}`, -50);
-    place(`${root}/MV`, -540);
+    place(`${root}/MV`, mvY);
     place(`${root}/MV/MVBrightness`, -49, -156);
-    // Light mode keeps the original order after MV, with the MV block's spacing
-    // for its single remaining row.
-    place(`${root}/LightMode`, -786);
+    // Light mode keeps the original order after MV.
+    place(`${root}/LightMode`, lightY);
     place(`${root}/LightMode/LightModeBrightness`, -50);
-    place(`${root}/LiveSoundVolume`, -1033);
+    place(`${root}/LiveSoundVolume`, lightY - 50 - section);
+    // 動作モード shares its row with the hidden 3Dカットインモード (left): it moves to the row's start, its bar keeping its
+    // right end at the page edge and its choices lined up with the FPS row's.
+    const graphicsBar = source.componentAt(source.nodeAt(`${root}/LiveMode/GraphicsMode/SubTitle/base`).id, "UISprite")!;
+    const graphicsBarX = source.nodeAt(`${root}/LiveMode/GraphicsMode/SubTitle/base`).position.x;
+    const rowStartX = source.nodeAt(`${root}/LiveMode/HighFrequencyMode/SubTitle/base`).position.x;
+    place(`${root}/LiveMode/GraphicsMode/SubTitle/base`, 0, rowStartX);
+    components[graphicsBar.id] = { mWidth: graphicsBar.data.mWidth + graphicsBarX - rowStartX };
+    place(`${root}/LiveMode/GraphicsMode/Body`, source.nodeAt(`${root}/LiveMode/GraphicsMode/Body`).position.y,
+      source.nodeAt(`${root}/LiveMode/HighFrequencyMode/Body`).position.x);
+    // 動作モード without its Live2D choice (the editor has no Live2D mode): 通常 and 軽量 take the first two places.
+    const graphicsManager = originalRef(source.components.get(790)!.data.radioButtonManager);
+    components[graphicsManager] = { radioButtonNameList: ["dialog_liveSettings_InGameModeNormal", "dialog_liveSettings_InGameModeLight"] };
+    radio(790, draft.options.simulatorSettings.lightGraphicsMode ? 1 : 0, index => native("lightGraphicsMode", index === 1));
     radio(598, draft.fps === 120 ? 0 : 1, index => update(old => ({ ...old, fps: index === 0 ? 120 : 60 })));
     boolean(676, !draft.options.simulatorSettings.hideFastSlow, value => native("hideFastSlow", !value));
     boolean(863, draft.combo, value => update(old => ({ ...old, combo: value })));

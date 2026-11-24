@@ -5956,7 +5956,7 @@ function ChartEditorController() {
         suddenRate: appOptionSettings.simulatorSettings.suddenRate,
         suddenLane: appOptionSettings.simulatorSettings.suddenLane,
         hideFastSlow: appOptionSettings.simulatorSettings.hideFastSlow,
-        displayStageEffect: appOptionSettings.simulatorSettings.displayStageEffect,
+        lightGraphicsMode: appOptionSettings.simulatorSettings.lightGraphicsMode,
         hideCombo: appOptionSettings.simulatorSettings.hideCombo,
         displayComboPosition: appOptionSettings.simulatorSettings.displayComboPosition,
         syncLine: appOptionSettings.simultaneousLineEnabled,

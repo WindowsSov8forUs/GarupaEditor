@@ -30,7 +30,7 @@ export interface OriginalLiveCoreSettings {
 export interface OriginalLiveSettings {
   readonly core: OriginalLiveCoreSettings;
   readonly hideFastSlow: boolean;
-  readonly displayStageEffect: boolean;
+  readonly lightGraphicsMode: boolean;
   readonly hideCombo: boolean;
   readonly displayComboPosition: number;
   readonly syncLine: boolean;
@@ -49,7 +49,7 @@ export interface OriginalLiveSettingsInput {
   readonly suddenRate: number;
   readonly suddenLane: boolean;
   readonly hideFastSlow: boolean;
-  readonly displayStageEffect: boolean;
+  readonly lightGraphicsMode: boolean;
   readonly hideCombo: boolean;
   readonly displayComboPosition: number;
   readonly syncLine: boolean;
@@ -76,7 +76,7 @@ export function createOriginalLiveSettings(
     !isOriginalLightModeBrightness(input.lightModeBrightness) ||
     !isOriginalSuddenRate(input.suddenRate) || typeof input.suddenLane !== "boolean" ||
     typeof input.hideFastSlow !== "boolean" ||
-    typeof input.displayStageEffect !== "boolean" ||
+    typeof input.lightGraphicsMode !== "boolean" ||
     typeof input.hideCombo !== "boolean" ||
     !isOriginalComboPosition(input.displayComboPosition) ||
     typeof input.syncLine !== "boolean" ||
@@ -97,7 +97,7 @@ export function createOriginalLiveSettings(
       suddenRate: input.suddenRate, suddenLane: input.suddenLane,
     }),
     hideFastSlow: input.hideFastSlow,
-    displayStageEffect: input.displayStageEffect,
+    lightGraphicsMode: input.lightGraphicsMode,
     hideCombo: input.hideCombo,
     displayComboPosition: input.displayComboPosition,
     syncLine: input.syncLine,
@@ -127,7 +127,7 @@ export function validateOriginalLiveSettings(
     lightModeBrightness: core.lightModeBrightness,
     suddenRate: core.suddenRate, suddenLane: core.suddenLane,
     hideFastSlow: settings.hideFastSlow,
-    displayStageEffect: settings.displayStageEffect,
+    lightGraphicsMode: settings.lightGraphicsMode,
     hideCombo: settings.hideCombo,
     displayComboPosition: settings.displayComboPosition,
     syncLine: settings.syncLine,
@@ -145,7 +145,7 @@ export function originalLiveSettingsIdentity(value: OriginalLiveSettings): strin
     value.core.mvDarkness,
     value.core.longNoteLineBrightness, value.core.lightModeBrightness, value.core.suddenRate, value.core.suddenLane ? 1 : 0,
     value.hideFastSlow ? 1 : 0,
-    value.displayStageEffect ? 1 : 0,
+    value.lightGraphicsMode ? 1 : 0,
     value.hideCombo ? 1 : 0,
     value.displayComboPosition,
     value.syncLine ? 1 : 0,
@@ -161,7 +161,7 @@ export function snapshotOriginalLiveSettings(
   return Object.freeze({
     core: Object.freeze({ ...value.core }),
     hideFastSlow: value.hideFastSlow,
-    displayStageEffect: value.displayStageEffect,
+    lightGraphicsMode: value.lightGraphicsMode,
     hideCombo: value.hideCombo,
     displayComboPosition: value.displayComboPosition,
     syncLine: value.syncLine,
