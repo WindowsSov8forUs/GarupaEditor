@@ -1178,7 +1178,11 @@ function ChartEditorController() {
   const noteVisualScale = clamp(appOptionSettings.rhythmNoteSizePercent / 100, 0.1, 2);
   const longLineOpacityScale = clamp(appOptionSettings.longLineBrightnessPercent / 100, 0.1, 1);
   const verticalScale = clamp(appOptionSettings.verticalScalePercent / 100, 0.5, 2) * verticalZoom;
-  const noteSeVolumeScale = clamp(appOptionSettings.noteSeVolumePercent / 100, 0, 1);
+  // Playback in the editor follows the settings page as 游玩 does: the song at 演出音量 - 乐曲, the note sounds at
+  // 演出中的音效, both under the master volume.
+  const masterVolumeScale = clamp(appOptionSettings.simulatorSettings.masterVolumePercent / 100, 0, 1);
+  const noteSeVolumeScale = clamp(appOptionSettings.noteSeVolumePercent / 100, 0, 1) * masterVolumeScale;
+  const musicVolumeScale = clamp(appOptionSettings.simulatorSettings.musicVolumePercent / 100, 0, 1) * masterVolumeScale;
   const timelinePixelsPerSecond = (BEAT_HEIGHT * uiScale * verticalScale * TIMELINE_REFERENCE_BPM) / 60;
   const bpmTimeline = useMemo(
     () => buildBpmTimeline(metadata.bpm, bpmEvents),
@@ -3571,6 +3575,10 @@ function ChartEditorController() {
       if (existingGain) {
         existingGain.gain.value = clamp(playbackVolumePercent / 100, 0, 1) * noteSeVolumeScale;
       }
+      const existingBgmGain = playbackBgmGainRef.current;
+      if (existingBgmGain) {
+        existingBgmGain.gain.value = clamp(playbackVolumePercent / 100, 0, 1) * musicVolumeScale;
+      }
       return existingContext;
     }
     if (typeof window === "undefined") {
@@ -3586,7 +3594,7 @@ function ChartEditorController() {
       masterGain.gain.value = clamp(playbackVolumePercent / 100, 0, 1) * noteSeVolumeScale;
       masterGain.connect(context.destination);
       const bgmGain = context.createGain();
-      bgmGain.gain.value = clamp(playbackVolumePercent / 100, 0, 1);
+      bgmGain.gain.value = clamp(playbackVolumePercent / 100, 0, 1) * musicVolumeScale;
       bgmGain.connect(context.destination);
       playbackSeAudioContextRef.current = context;
       playbackSeMasterGainRef.current = masterGain;
@@ -3595,7 +3603,7 @@ function ChartEditorController() {
     } catch {
       return null;
     }
-  }, [clamp, noteSeVolumeScale, playbackVolumePercent]);
+  }, [clamp, musicVolumeScale, noteSeVolumeScale, playbackVolumePercent]);
 
   const decodePlaybackAudioBuffer = useCallback(async (
     src: string,
@@ -4713,7 +4721,7 @@ function ChartEditorController() {
   useEffect(() => {
     const audio = playbackAudioRef.current;
     if (audio) {
-      audio.volume = clamp(playbackVolumePercent / 100, 0, 1);
+      audio.volume = clamp(playbackVolumePercent / 100, 0, 1) * musicVolumeScale;
     }
     const seMasterGain = playbackSeMasterGainRef.current;
     if (seMasterGain) {
@@ -4721,9 +4729,9 @@ function ChartEditorController() {
     }
     const bgmGain = playbackBgmGainRef.current;
     if (bgmGain) {
-      bgmGain.gain.value = clamp(playbackVolumePercent / 100, 0, 1);
+      bgmGain.gain.value = clamp(playbackVolumePercent / 100, 0, 1) * musicVolumeScale;
     }
-  }, [clamp, noteSeVolumeScale, playbackVolumePercent]);
+  }, [clamp, musicVolumeScale, noteSeVolumeScale, playbackVolumePercent]);
 
   useEffect(() => {
     void preloadPlaybackSeBuffers(appliedSkinResources?.se ?? null);
@@ -4731,8 +4739,8 @@ function ChartEditorController() {
 
   // Read at setup only: speed and volume changes are applied to the live audio by their own effects, and
   // must not stop playback or drop the decoded (and time-stretched) BGM.
-  const playbackAudioSetupRef = useRef({ stopPlayback, speed: currentPlaybackSpeed, volumePercent: playbackVolumePercent });
-  playbackAudioSetupRef.current = { stopPlayback, speed: currentPlaybackSpeed, volumePercent: playbackVolumePercent };
+  const playbackAudioSetupRef = useRef({ stopPlayback, speed: currentPlaybackSpeed, volume: playbackVolumePercent / 100 * musicVolumeScale });
+  playbackAudioSetupRef.current = { stopPlayback, speed: currentPlaybackSpeed, volume: playbackVolumePercent / 100 * musicVolumeScale };
   useEffect(() => {
     const setup = playbackAudioSetupRef.current;
     setup.stopPlayback();
@@ -4761,7 +4769,7 @@ function ChartEditorController() {
     };
     audio.onerror = () => setAudioDurationSec(0);
     audio.playbackRate = setup.speed;
-    audio.volume = clamp(setup.volumePercent / 100, 0, 1);
+    audio.volume = clamp(setup.volume, 0, 1);
     playbackAudioRef.current = audio;
     return () => {
       audio.pause();
@@ -5969,7 +5977,8 @@ function ChartEditorController() {
         skin: appOptionSettings.simulatorSettings.skin,
         masterGainPercent: appOptionSettings.simulatorSettings.masterVolumePercent,
         bgmGainPercent: playbackVolumePercent * appOptionSettings.simulatorSettings.musicVolumePercent / 100,
-        seGainPercent: playbackVolumePercent * noteSeVolumeScale,
+        // The simulator applies the master volume itself (masterGainPercent).
+        seGainPercent: playbackVolumePercent * clamp(appOptionSettings.noteSeVolumePercent / 100, 0, 1),
         requestedWindowWidth: width,
         requestedWindowHeight: height,
       });
@@ -6002,7 +6011,6 @@ function ChartEditorController() {
     chartMediaResources,
     project,
     metadata,
-    noteSeVolumeScale,
     playbackFps,
     playbackMvMode,
     playbackAllPerfectStatusDisplayMode,
