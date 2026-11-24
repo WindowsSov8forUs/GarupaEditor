@@ -47,9 +47,16 @@ export type RenderConnectionSegment = {
 export type RenderSimultaneousSegment = {
   key: string;
   beat: number;
+  /** Its left end's y (its left note's place). */
   y: number;
-  /** The timing group its y is placed by (its left note's). */
+  /** The timing group its left end is placed by (its left note's). */
   timingGroup?: string;
+  /**
+   * Its right end's y and timing group (its right note's). As the original's sync line runs from one note's position
+   * to the other's, notes of different timing groups (apart under the SV view) are joined by a slanted line.
+   */
+  toY: number;
+  toTimingGroup?: string;
   fromX: number;
   toX: number;
   width: number;
@@ -240,6 +247,8 @@ export function useEditorRenderModel(params: any) {
             beat,
             y: normalizeCoord(left.y),
             timingGroup: left.timingGroup,
+            toY: normalizeCoord(right.y),
+            toTimingGroup: right.timingGroup,
             fromX,
             toX,
             width,

@@ -7,7 +7,11 @@ import { buildSelectionMoveOffsetMap } from "../slideHiddenMoveOffsets";
 const ZERO_BEAT_RENDER_OFFSET_PX = 4;
 
 /** Distance (window px) from the viewport bottom up to the playback anchor: judge limit, raised by the playback position. */
-function playbackAnchorFromBottom(playfield: HTMLElement, positionPercent: number): number {
+/**
+ * The playback line's distance above the playfield's bottom edge (the judge line at 0%). The SV view is placed for
+ * the time on it, as playback is: the note on the line is the one being hit.
+ */
+export function playbackAnchorFromBottom(playfield: HTMLElement, positionPercent: number): number {
   const anchor = document.querySelector<HTMLElement>(".editor-judge-anchor");
   const workspace = anchor?.closest(".editor-viewport-region")?.parentElement ?? null;
   if (!anchor || !workspace) return 0;
@@ -240,7 +244,7 @@ export function useEditorGeometry(params: any) {
     anchorTimeSecRef.current = targetAnchorTime;
     const bottomTimeSec = (displayAxis?.viewportTimeAtY ?? yToTime)(playfield.scrollTop + playfield.clientHeight);
     viewBottomTimeSecRef.current = bottomTimeSec;
-    syncSvPreviewTimeFromViewport(bottomTimeSec);
+    syncSvPreviewTimeFromViewport(targetAnchorTime);
   }, [timelinePixelsPerSecond, playbackLinePositionPercent, beatToSec, boardHeight, clamp, didInitTimelineScrollRef,
     axisLayoutKey, isSkinReady, isSvPreviewEnabled, playfieldRef, totalDurationSec, viewBottomTimeSecRef]);
 
@@ -282,13 +286,26 @@ export function useEditorGeometry(params: any) {
     return () => { playfield.removeEventListener("wheel", wheel); stop(); };
   }, [isSvPreviewEnabled, playfieldRef]);
 
+  // Playback places nothing again while it runs (the canvas offsets each timing group to the playback time); when it
+  // stops, the view is placed for the time on the playback line.
+  useEffect(() => {
+    if (isPlaybackPlaying || !isSvPreviewEnabled) return;
+    const playfield = playfieldRef.current;
+    if (!playfield) return;
+    const { displayAxis, yToTime, syncSvPreviewTimeFromViewport } = latestAxisRef.current;
+    const anchorFromBottom = playbackAnchorFromBottom(playfield, playbackLinePositionPercent);
+    anchorTimeSecRef.current = (displayAxis?.viewportTimeAtY ?? yToTime)(playfield.scrollTop + playfield.clientHeight - anchorFromBottom);
+    syncSvPreviewTimeFromViewport(anchorTimeSecRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPlaybackPlaying, isSvPreviewEnabled]);
+
   const handlePlayfieldScroll = useCallback((event: UIEvent<HTMLDivElement>) => {
     const playfield = event.currentTarget;
     const anchorFromBottom = playbackAnchorFromBottom(playfield, playbackLinePositionPercent);
     anchorTimeSecRef.current = (displayAxis?.viewportTimeAtY ?? yToTime)(playfield.scrollTop + playfield.clientHeight - anchorFromBottom);
     const bottomTimeSec = (displayAxis?.viewportTimeAtY ?? yToTime)(playfield.scrollTop + playfield.clientHeight);
     viewBottomTimeSecRef.current = bottomTimeSec;
-    syncSvPreviewTimeFromViewport(bottomTimeSec, true);
+    syncSvPreviewTimeFromViewport(anchorTimeSecRef.current, true);
   }, [boardHeight, displayAxis, playbackLinePositionPercent, syncSvPreviewTimeFromViewport, viewBottomTimeSecRef, yToTime]);
 
   const getNoteSpanLanes = useCallback((note: Pick<ChartNote, "type" | "lane" | "width">): number => {

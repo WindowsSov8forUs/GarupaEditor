@@ -50,7 +50,7 @@ import { useBoardInteractionActions } from "./hooks/useBoardInteractionActions";
 import { type CanvasSvLiveScroll, useCanvasPlayfieldBackend, type EventBubbleHit } from "./hooks/useCanvasPlayfieldBackend";
 import { useCanvasRenderResources } from "./hooks/useCanvasRenderResources";
 import { useIsStartingApplication, useStartupReadiness } from "./startupReadiness";
-import { useEditorGeometry } from "./hooks/useEditorGeometry";
+import { playbackAnchorFromBottom, useEditorGeometry } from "./hooks/useEditorGeometry";
 import { useEditorIoAndShortcuts } from "./hooks/useEditorIoAndShortcuts";
 import { useEditorSessionCache } from "./hooks/useEditorSessionCache";
 import { useEditorRenderModel, type RenderConnectionSegment } from "./hooks/useEditorRenderModel";
@@ -4094,11 +4094,9 @@ function ChartEditorController() {
         playbackTickLastNowMsRef.current = nowMs;
       }
     }
+    // Under the SV view the canvas follows playback by offsetting each timing group (svLiveScroll); placing the chart
+    // again on every frame would hold each frame up for the whole render.
     playbackNowSecRef.current = nextTimeSec;
-    if (isSvPreviewEnabledRef.current) {
-      svPreviewTimeSecRef.current = nextTimeSec;
-      setSvPreviewTimeSec(nextTimeSec);
-    }
     processPlaybackSoundFrame(prevTimeSec, nextTimeSec);
         syncPlaybackViewport(nextTimeSec);
       updatePlaybackRuntimeLine(nextTimeSec);
@@ -5052,26 +5050,30 @@ function ChartEditorController() {
   const noteTimingGroupOf = useCallback((note: ChartNote): string =>
     noteTimingGroupById.get(note.id) ?? normalizeTimingGroupId(note.timingGroup), [noteTimingGroupById]);
   /**
-   * Under the SV view (not playing) the board is drawn from data placed for the committed preview time; while the view
-   * moves the canvas offsets each timing group to the live preview time instead of placing the chart again (see
-   * CanvasSvLiveScroll). A group's place at preview time p is timeToY(p) - (d(t) - d(p)), so moving p from the reference
-   * moves all its elements by the same amount.
+   * Under the SV view the board is drawn from data placed for the committed preview time, the time on the playback
+   * line; while the view moves (scrolling or playing) the canvas offsets each timing group to the live time on that line
+   * instead of placing the chart again (see CanvasSvLiveScroll). A group's place at preview time p is
+   * timeToY(p) - (d(t) - d(p)), so moving p from the reference moves all its elements by the same amount.
    */
   const svLiveScroll = useMemo<CanvasSvLiveScroll | null>(() => {
-    if (!isSvPreviewEnabled || isPlaybackPlaying) return null;
+    if (!isSvPreviewEnabled) return null;
     const referenceTimeSec = svPreviewTimeSec;
     const groupOf = (group: string | undefined) => svPreviewTimingGroups.get(group ?? GLOBAL_TIMING_GROUP_ID)
       ?? svPreviewTimingGroups.get(GLOBAL_TIMING_GROUP_ID) ?? null;
     return {
       referenceTimeSec,
-      liveTimeAt: (viewportBottomY) => Math.min(totalDurationSec, Math.max(0, displayAxis.viewportTimeAtY(viewportBottomY))),
+      liveTimeAt: (viewportBottomY) => {
+        const playfield = playfieldRef.current;
+        const anchorFromBottom = playfield ? playbackAnchorFromBottom(playfield, viewportPlaybackPositionPercent) : 0;
+        return Math.min(totalDurationSec, Math.max(0, displayAxis.viewportTimeAtY(viewportBottomY - anchorFromBottom)));
+      },
       groupOffset: (group, liveTime) => {
         const timingGroup = groupOf(group);
         return displayAxis.timeToY(liveTime) + displayAxis.distanceAtTime(liveTime, timingGroup)
           - displayAxis.timeToY(referenceTimeSec) - displayAxis.distanceAtTime(referenceTimeSec, timingGroup);
       },
     };
-  }, [displayAxis, isPlaybackPlaying, isSvPreviewEnabled, svPreviewTimeSec, svPreviewTimingGroups, totalDurationSec]);
+  }, [displayAxis, isSvPreviewEnabled, svPreviewTimeSec, svPreviewTimingGroups, totalDurationSec, viewportPlaybackPositionPercent]);
   const renderModel = useEditorRenderModel({
     bpmTimeline,
     totalBeats,
