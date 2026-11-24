@@ -1351,7 +1351,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     }
     if (runtime.isSvPreviewEnabled) {
       event.stopPropagation();
-      runtime.showDialog("SV 预览为只读模式，请关闭后再编辑。");
       if (event.metaKey || event.ctrlKey) {
         runtime.toggleSelectedNote(note.id);
         return;

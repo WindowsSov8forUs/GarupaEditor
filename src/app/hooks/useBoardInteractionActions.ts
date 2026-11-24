@@ -906,7 +906,6 @@ export function useBoardInteractionActions(params: any) {
   const handleBoardClick = (event: MouseEvent<HTMLDivElement>) => {
     if (isSvPreviewEnabled) {
       event.preventDefault();
-      showDialog("SV 预览为只读模式，请关闭后再编辑。");
       return;
     }
     if (suppressNextBoardClickRef.current) {
@@ -1028,7 +1027,6 @@ export function useBoardInteractionActions(params: any) {
       const targetElement = event.target as HTMLElement | null;
       if (!targetElement?.closest(".note-token")) {
         event.preventDefault();
-        showDialog("SV 预览为只读模式，请关闭后再编辑。");
         return;
       }
     }
