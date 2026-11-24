@@ -3484,8 +3484,11 @@ function ChartEditorController() {
       return;
     }
     setToolSvValue(nextValue);
-    setToolSvTimingGroup(normalizeTimingGroup(timingGroup, GLOBAL_TIMING_GROUP_ID));
-  }, [showDialog, toFinite, toolSvValue]);
+    const group = normalizeTimingGroup(timingGroup, GLOBAL_TIMING_GROUP_ID);
+    setToolSvTimingGroup(group);
+    // Under a timing group view (not 全部) the view follows the SV tool's group, as the tool follows the view.
+    if (isTimingGroupModeActive) setSelectedTimingGroupId(group);
+  }, [isTimingGroupModeActive, showDialog, toFinite, toolSvValue]);
 
   /** Writes one SV event's value and timing group; an SV event already on that beat in the target group is replaced. */
   const updateSvEvent = useCallback((eventId: string, value: number, timingGroup: ChartTimingGroupId) => {
@@ -4580,6 +4583,11 @@ function ChartEditorController() {
   }, [isExGarupaEnabled, isSvPreviewEnabled, isTimingGroupModeEnabled]);
   /** 时间组视图: null for 全部, else the group whose notes alone are editable. */
   const timingGroupView = isTimingGroupModeActive ? selectedTimingGroupId : null;
+  // A timing group view puts new SV events into its group: switching to a group (not 全部) switches the SV tool's
+  // group with it, and they stay together while it is shown. Under 全部 the tool keeps the group it last had.
+  useEffect(() => {
+    if (timingGroupView !== null) setToolSvTimingGroup(timingGroupView);
+  }, [timingGroupView]);
   const setTimingGroupView = useCallback((group: ChartTimingGroupId | null) => {
     if (group === null) {
       setIsTimingGroupModeEnabled(false);
