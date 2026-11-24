@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useUiViewport } from "../components/useUiViewport";
 import { sampleOrdinaryVisibleClip } from "../simulator/backends/ordinaryVisibleAnimation";
 import type { OrdinaryVisibleClip } from "../simulator/backends/resources/currentOrdinaryVisibleProfile";
@@ -8,8 +8,9 @@ import logoLayout from "../data/title/logoLayout.json";
 import { TitlePlayback, type TitlePhase as Phase } from "./TitlePlayback";
 import { TitleLogoMotion } from "./TitleLogoMotion";
 import { TitleAudio } from "./TitleAudio";
+import { TitleBottomRightCorner, TitleTopLeftCorner } from "./TitleCorners";
+import { TitleMenuDialogs } from "./TitleMenuDialogs";
 import logo from "../../assets/garupaeditor-logo.png?url";
-import { version } from "../../package.json";
 
 const textures = import.meta.glob<string>("../assets/game/title/*.png", { eager: true, query: "?url", import: "default" });
 const texture = (name: string) => textures[`../assets/game/title/${name}.png`]!;
@@ -39,6 +40,9 @@ const showStart = Math.max(...profile.clips.show_9th.bindings.flatMap((binding, 
 }));
 
 
+// The corner anchors whose widgets (version, menu button, credit) the title draws outside the scene's widget list.
+const anchorNode = (name: string) => profile.nodes.find(node => node.path === `ComponentRoot/${name}`)!.id;
+const topLeftAnchor = anchorNode("TopLeftAnchor"), bottomRightAnchor = anchorNode("BottomRightAnchor");
 /** CN level0 ninth-anniversary scene. Coordinates and animation channels come
  * from the delivered title-startup contract; only the brand image is replaced. */
 export function TitleScreen({ onEnter }: { onEnter: () => void }) {
@@ -55,6 +59,11 @@ export function TitleScreen({ onEnter }: { onEnter: () => void }) {
   const brandTouch = useRef<HTMLImageElement>(null);
   const brandWhite = useRef<HTMLImageElement>(null);
   const click = useRef<() => void>(() => {});
+  const topLeft = useRef<HTMLDivElement>(null);
+  const bottomRight = useRef<HTMLDivElement>(null);
+  // The menu's windows; the scene keeps playing behind them, but a tap goes to them, not to the title.
+  const [menuWindow, setMenuWindow] = useState<"menu" | "about" | "update" | null>(null);
+  const openMenu = useCallback(() => setMenuWindow("menu"), []);
   const [available, setAvailable] = useState(false);
   const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(0);
@@ -99,6 +108,8 @@ export function TitleScreen({ onEnter }: { onEnter: () => void }) {
           panel: profile.panels.find(panel => panel.node === node.id)?.depth ?? parent.panel,
         };
         worlds.set(node.id, world);
+        if (node.id === topLeftAnchor && topLeft.current) topLeft.current.style.visibility = world.active ? "visible" : "hidden";
+        if (node.id === bottomRightAnchor && bottomRight.current) bottomRight.current.style.visibility = world.active ? "visible" : "hidden";
         const element = elements.current.get(node.id) ?? (node.id === profile.logoNode ? brand.current : null);
         if (!element) continue;
         element.style.transform = `matrix(${world.a},${-world.b},${-world.c},${world.d},${world.x},${-world.y})`;
@@ -159,7 +170,7 @@ export function TitleScreen({ onEnter }: { onEnter: () => void }) {
     }).catch(cause => { if (!cancelled) setError(String(cause)); });
     return () => { cancelled = true; click.current = () => {}; cancelAnimationFrame(frame); audio.dispose(); };
   }, [onEnter, attempt]);
-  return <main aria-label="GarupaEditor 标题页" style={{ position: "fixed", inset: 0, overflow: "hidden", background: `#fff url("${texture("40")}") center / cover` }}>
+  return <main data-title-screen="" aria-label="GarupaEditor 标题页" style={{ position: "fixed", inset: 0, overflow: "hidden", background: `#fff url("${texture("40")}") center / cover` }}>
     <div aria-hidden="true" style={{ position: "absolute", left: "50%", top: "50%", transform: `scale(${viewport.scale})`, width: 0, height: 0 }}>
       {profile.widgets.map(widget => {
         const pivot = widget.pivot;
@@ -176,9 +187,11 @@ export function TitleScreen({ onEnter }: { onEnter: () => void }) {
       <img ref={brandTouch} src={logo} alt="" style={logoStyle} />
       <img ref={brandWhite} src={logo} alt="" style={{ ...logoStyle, filter: "brightness(0) invert(1)", mixBlendMode: "plus-lighter" }} />
     </div>
-    <span style={{ position: "absolute", left: 16 * viewport.scale, top: 17 * viewport.scale, fontSize: 16 * viewport.scale, color: "#555" }}>Ver. {version}</span>
+    <TitleTopLeftCorner ref={topLeft} scale={viewport.scale} />
     {/* Input-only surface must not receive global button artwork or its pseudo-elements. */}
     <button data-input-only="" aria-label="点击开始" disabled={!available} onClick={() => click.current()} style={{ position: "absolute", inset: 0, padding: 0, border: 0, borderRadius: 0, boxShadow: "none", background: "transparent", cursor: available ? "pointer" : "default" }} />
+    <TitleBottomRightCorner ref={bottomRight} scale={viewport.scale} onMenu={openMenu} />
+    <TitleMenuDialogs window={menuWindow} onWindow={setMenuWindow} />
     {error && <div role="alert" style={{ position: "absolute", bottom: 20, left: 20, right: 20, background: "white", color: "#505050" }}>标题素材无法读取：{error}<button onClick={() => setAttempt(value => value + 1)}><span className="btn-content">重试</span></button></div>}
   </main>;
 }

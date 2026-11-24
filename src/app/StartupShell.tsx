@@ -36,13 +36,20 @@ export default function StartupShell() {
   const readyParts = useRef(new Set<StartupPart>());
   useEffect(() => {
     if (phase === "ready") return;
-    // The retained editor must not consume global shortcuts behind the title.
-    const blockEditorKeys = (event: KeyboardEvent) => event.stopImmediatePropagation();
+    // The retained editor must not consume global shortcuts behind the title. Keys for the title's own windows (its
+    // menu, the account window) reach them and the page's handlers, and stop at the document before the editor's.
+    const fromTitle = (event: KeyboardEvent) => event.target instanceof Element && event.target.closest("[data-title-screen]") !== null;
+    const blockEditorKeys = (event: KeyboardEvent) => { if (!fromTitle(event)) event.stopImmediatePropagation(); };
+    const stopTitleKeys = (event: KeyboardEvent) => { if (fromTitle(event)) event.stopPropagation(); };
     window.addEventListener("keydown", blockEditorKeys, true);
     window.addEventListener("keyup", blockEditorKeys, true);
+    document.addEventListener("keydown", stopTitleKeys);
+    document.addEventListener("keyup", stopTitleKeys);
     return () => {
       window.removeEventListener("keydown", blockEditorKeys, true);
       window.removeEventListener("keyup", blockEditorKeys, true);
+      document.removeEventListener("keydown", stopTitleKeys);
+      document.removeEventListener("keyup", stopTitleKeys);
     };
   }, [phase]);
   useEffect(() => {
