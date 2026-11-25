@@ -14,6 +14,17 @@ import { version } from "../../package.json";
 
 /** The title's own credit line (in place of the original's copyright). */
 export const TITLE_CREDIT_TEXT = "@WindowsSov8forUs 开发非官方程序，由 Claude 协助";
+/**
+ * 关于: the name and version (filled in where it is shown), what the program is, who made it, and the unofficial
+ * notice. Versions are shown bare, as the title's corner shows them.
+ */
+const ABOUT_LINES = [
+  "",
+  "扩展的、多平台的 Garupa 自制谱制作与预览工具",
+  "开发者：@WindowsSov8forUs（由 Claude 协助开发）",
+  "开源许可：Apache-2.0（仅限本项目源代码）",
+  "本程序为非官方工具，与官方及 Bestdori 无隶属关系；\n所涉原作素材权利归原权利人所有，仅供非商业创作交流",
+];
 
 /** The title runs before the resource store: its windows and corner widgets draw from the packaged images. */
 export const TITLE_BUILTIN_URLS = new Map(listApplicationBuiltinImages().map(entry => [entry.slot, entry.url]));
@@ -98,8 +109,8 @@ export function TitleMenuDialogs({ window, onWindow }: { window: Window; onWindo
     <OriginalTransferDialog open={window === "about"} title="关于" fitContent onClose={close}>
       <div className="transfer-body">
         <div className="transfer-page" style={{ overflow: "visible" }}>
-          <OriginalFormMessage text={`GarupaEditor  Ver.${version}`} />
-          <OriginalFormMessage text={TITLE_CREDIT_TEXT} />
+          {ABOUT_LINES.map((line, index) => <OriginalFormMessage key={index}
+            text={index === 0 ? `GarupaEditor  ${version}` : line} lines={line.split("\n").length} />)}
         </div>
         <div className="transfer-actions" style={buttonRow}>
           <OriginalFormButton tone="pink" onClick={() => void openExternalUrl(PROJECT_REPOSITORY_URL)}>项目主页</OriginalFormButton>
@@ -133,8 +144,8 @@ function TitleUpdateDialog({ open, onClose }: { open: boolean; onClose(): void }
   const newer = state.status === "done" && state.result.newer;
   const text = state.status === "checking" ? "正在检查更新…"
     : state.status === "failed" ? `检查更新失败：${state.message}`
-      : newer ? `发现新版本 Ver.${latest!.version}（当前 Ver.${version}）`
-        : `当前已是最新版本（Ver.${version}）`;
+      : newer ? `发现新版本 ${latest!.version}（当前 ${version}）`
+        : `当前已是最新版本（${version}）`;
   return <OriginalTransferDialog open={open} title="检查更新" fitContent onClose={onClose}>
     <div className="transfer-body">
       <div className="transfer-page" style={{ overflow: "visible" }}>
