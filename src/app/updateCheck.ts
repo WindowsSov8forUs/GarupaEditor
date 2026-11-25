@@ -41,10 +41,30 @@ export function compareVersions(a: string, b: string): number {
   return left.pre.length - right.pre.length;
 }
 
-export async function checkForUpdate(current: string, signal?: AbortSignal): Promise<UpdateCheckResult> {
-  const response = await fetch(RELEASES_API, { signal, cache: "no-store",
-    headers: { Accept: "application/vnd.github+json" } });
-  if (!response.ok) throw new Error(`GitHub 返回 ${response.status}`);
+/** How long a successful check is reused before GitHub is asked again (in this run of the app). */
+const CHECK_CACHE_MS = 5 * 60 * 1000;
+let cachedCheck: { at: number; current: string; result: UpdateCheckResult } | null = null;
+
+/** A failed check, its reason in words for the window (GitHub's status, or no connection). */
+export class UpdateCheckError extends Error {}
+
+/**
+ * The newest release against `current`. A result from the last few minutes is reused (GitHub limits unauthenticated
+ * requests); `force` (重试) always asks again.
+ */
+export async function checkForUpdate(current: string, signal?: AbortSignal, force = false): Promise<UpdateCheckResult> {
+  if (!force && cachedCheck && cachedCheck.current === current && Date.now() - cachedCheck.at < CHECK_CACHE_MS) {
+    return cachedCheck.result;
+  }
+  let response: Response;
+  try {
+    response = await fetch(RELEASES_API, { signal, cache: "no-store", headers: { Accept: "application/vnd.github+json" } });
+  } catch (cause) {
+    if (signal?.aborted) throw cause;
+    throw new UpdateCheckError("无法连接 GitHub");
+  }
+  if (response.status === 403 || response.status === 429) throw new UpdateCheckError("GitHub 请求受限，请稍后再试");
+  if (!response.ok) throw new UpdateCheckError(`GitHub 返回 ${response.status}`);
   const releases = await response.json() as { tag_name?: string; html_url?: string; published_at?: string;
     draft?: boolean }[];
   let latest: ReleaseInfo | null = null;
@@ -55,7 +75,17 @@ export async function checkForUpdate(current: string, signal?: AbortSignal): Pro
       latest = { version, url: release.html_url ?? `${PROJECT_REPOSITORY_URL}/releases`, publishedAt: release.published_at ?? "" };
     }
   }
-  return { current, latest, newer: latest !== null && compareVersions(latest.version, current) > 0 };
+  const result = { current, latest, newer: latest !== null && compareVersions(latest.version, current) > 0 };
+  cachedCheck = { at: Date.now(), current, result };
+  return result;
+}
+
+/** A release's publication date as YYYY-MM-DD (local time); empty when unknown. */
+export function releaseDate(publishedAt: string): string {
+  const date = new Date(publishedAt);
+  if (!publishedAt || Number.isNaN(date.getTime())) return "";
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
 /** Opens `url` in the system browser (the WebView's own window outside the app). */

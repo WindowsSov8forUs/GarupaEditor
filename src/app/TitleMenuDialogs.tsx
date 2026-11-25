@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BestdoriLoginModal } from "../components/BestdoriLoginModal";
 import { OriginalFormButton, OriginalFormMessage, ORIGINAL_FORM_BUTTON_WIDTH, TRANSFER_PAGE_PADDING_X } from "../components/OriginalFormParts";
 import { OriginalTransferDialog } from "../components/OriginalTransferDialog";
@@ -9,7 +9,7 @@ import bestdoriIcon from "../assets/icons/bestdori.png?url&no-inline";
 import { BuiltinResourcePresentationProvider } from "../resources/applicationResourceContext";
 import { listApplicationBuiltinImages } from "../resources/builtin/builtinResourceCatalog";
 import { useBestdoriAccount } from "./useBestdoriAccount";
-import { checkForUpdate, openExternalUrl, PROJECT_REPOSITORY_URL, type UpdateCheckResult } from "./updateCheck";
+import { checkForUpdate, openExternalUrl, PROJECT_REPOSITORY_URL, releaseDate, UpdateCheckError, type UpdateCheckResult } from "./updateCheck";
 import { version } from "../../package.json";
 
 /** The title's own credit line (in place of the original's copyright). */
@@ -21,9 +21,9 @@ export const TITLE_CREDIT_TEXT = "@WindowsSov8forUs 开发非官方程序，由 
 const ABOUT_LINES = [
   "",
   "扩展的、多平台的 Garupa 自制谱制作与预览工具",
-  "开发者：@WindowsSov8forUs（由 Claude 协助开发）",
+  "开发者：@WindowsSov8forUs（Claude 协助）",
   "开源许可：Apache-2.0（仅限本项目源代码）",
-  "本程序为非官方工具，与官方及 Bestdori 无隶属关系；\n所涉原作素材权利归原权利人所有，仅供非商业创作交流",
+  "本程序为非官方工具，与原作官方及 Bestdori 无关；\n程序内使用的原作素材归原权利人所有，仅供非商业交流",
 ];
 
 /** The title runs before the resource store: its windows and corner widgets draw from the packaged images. */
@@ -127,33 +127,43 @@ export function TitleMenuDialogs({ window, onWindow }: { window: Window; onWindo
 
 type UpdateState = { status: "checking" } | { status: "done"; result: UpdateCheckResult } | { status: "failed"; message: string };
 
+/** Space above and below the update window's one line, so the window is not flat (design px). */
+const UPDATE_MESSAGE_PADDING = 14;
+
 function TitleUpdateDialog({ open, onClose }: { open: boolean; onClose(): void }) {
   const [state, setState] = useState<UpdateState>({ status: "checking" });
+  // 重试 asks GitHub again; opening the window may reuse a recent result.
   const [attempt, setAttempt] = useState(0);
+  // Set by 重试 for the next check only; reopening the window may reuse a recent result again.
+  const forceNext = useRef(false);
   useEffect(() => {
     if (!open) return;
     const controller = new AbortController();
     setState({ status: "checking" });
-    checkForUpdate(version, controller.signal)
+    const force = forceNext.current;
+    forceNext.current = false;
+    checkForUpdate(version, controller.signal, force)
       .then(result => setState({ status: "done", result }))
       .catch(cause => { if (!controller.signal.aborted) setState({ status: "failed",
-        message: cause instanceof Error ? cause.message : String(cause) }); });
+        message: cause instanceof UpdateCheckError ? cause.message : "无法连接 GitHub" }); });
     return () => controller.abort();
   }, [open, attempt]);
   const latest = state.status === "done" ? state.result.latest : null;
   const newer = state.status === "done" && state.result.newer;
+  const published = latest ? releaseDate(latest.publishedAt) : "";
+  // One sentence per state (the running version is in the title's corner); the message keeps one height throughout.
   const text = state.status === "checking" ? "正在检查更新…"
     : state.status === "failed" ? `检查更新失败：${state.message}`
-      : newer ? `发现新版本 ${latest!.version}（当前 ${version}）`
-        : `当前已是最新版本（${version}）`;
+      : newer ? `发现新版本：${latest!.version}${published ? `（${published}）` : ""}`
+        : "当前已是最新版本";
   return <OriginalTransferDialog open={open} title="检查更新" fitContent onClose={onClose}>
     <div className="transfer-body">
       <div className="transfer-page" style={{ overflow: "visible" }}>
-        <OriginalFormMessage text={text} />
+        <div style={{ padding: `${UPDATE_MESSAGE_PADDING}px 0` }}><OriginalFormMessage text={text} /></div>
       </div>
       <div className="transfer-actions" style={{ minWidth: 2 * ORIGINAL_FORM_BUTTON_WIDTH + 2 * TRANSFER_PAGE_PADDING_X }}>
         {newer && <OriginalFormButton tone="pink" onClick={() => void openExternalUrl(latest!.url)}>前往下载</OriginalFormButton>}
-        {state.status === "failed" && <OriginalFormButton tone="pink" onClick={() => setAttempt(value => value + 1)}>重试</OriginalFormButton>}
+        {state.status === "failed" && <OriginalFormButton tone="pink" onClick={() => { forceNext.current = true; setAttempt(value => value + 1); }}>重试</OriginalFormButton>}
         <OriginalFormButton onClick={onClose}>关闭</OriginalFormButton>
       </div>
     </div>
