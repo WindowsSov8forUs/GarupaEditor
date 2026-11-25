@@ -207,3 +207,9 @@ sudo dnf install ./*_linux_x86_64.rpm
 - 缺省、空字符串、`#Global` 都表示全局 timing group。
 - 非全局组使用类似 `#1`、`#Group A` 的字符串。
 - 导出时，全局组在音符和 Slide 上通常省略；SV 会写出归一化后的 `timingGroup`。
+
+## 许可证
+
+GarupaEditor 的源代码以 [Apache License 2.0](LICENSE) 授权。
+
+本程序为非官方同人工具，与《BanG Dream! 少女乐团派对！》的权利方及 Bestdori 均无隶属关系。仓库中的原作素材（图像、音效、字体）及从原作客户端提取的布局、文本等数据**不在**上述许可范围内，权利归原权利人所有，仅供非商业创作交流使用；具体文件见 [NOTICE](NOTICE)。
