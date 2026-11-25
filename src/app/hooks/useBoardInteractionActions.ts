@@ -151,7 +151,6 @@ export function useBoardInteractionActions(params: any) {
 
   const applyToolFromPalette = useCallback((nextType: NoteType) => {
     if (isDirectionalNoteType(nextType) && !canUseSpRhythm(modeOptions)) {
-      showDialog("SP 音符模式关闭时不可使用 Directional Flick。");
       return;
     }
     switchToolState(nextType);
@@ -175,7 +174,6 @@ export function useBoardInteractionActions(params: any) {
 
   const applySvToolFromPalette = useCallback(() => {
     if (!canUseSv(modeOptions)) {
-      showDialog("ExGarupa 模式关闭时不可使用 SV。");
       return;
     }
     switchToolState("sv");
@@ -183,7 +181,6 @@ export function useBoardInteractionActions(params: any) {
 
   const applyLaneChangeToolFromPalette = useCallback(() => {
     if (!canUseHabahiro(settings)) {
-      showDialog("HABAHIRO 关闭时不可使用 LANE CHANGE。");
       return;
     }
     switchToolState("laneChange");
@@ -508,7 +505,6 @@ export function useBoardInteractionActions(params: any) {
         return;
       }
       if (isLastBeatOrderedBpmNegative(bpm, bpmEvents)) {
-        showDialog("谱面不合法：\n末尾 BPM 不可为负数", "error");
         return;
       }
       setMetadata((current: any) => ({ ...current, bpm }));
@@ -526,7 +522,6 @@ export function useBoardInteractionActions(params: any) {
       { beat: quantizedBeat, bpm },
     ];
     if (isLastBeatOrderedBpmNegative(metadata.bpm, nextEvents)) {
-      showDialog("谱面不合法：\n末尾 BPM 不可为负数", "error");
       return;
     }
 
@@ -547,10 +542,6 @@ export function useBoardInteractionActions(params: any) {
     // The SV tool places into its own timing group (#0 unless chosen in its setting).
     const timingGroup = normalizeTimingGroup(toolSvTimingGroup, GLOBAL_TIMING_GROUP_ID);
     const value = Number(toFinite(toolSvValue, 1).toFixed(6));
-    if (!Number.isFinite(value)) {
-      showDialog("SV 值必须为有限数字。");
-      return;
-    }
     const created = normalizeSvEvent({ beat: quantizedBeat, value, timingGroup }, beatDivision, 1);
     if (!created) {
       return;
@@ -567,7 +558,6 @@ export function useBoardInteractionActions(params: any) {
   /** Places a HABAHIRO lane change (a LANE CHANGE event) on the beat; one already there stays as it is. */
   const placeLaneChange = (beat: number) => {
     if (!canUseHabahiro(settings)) {
-      showDialog("HABAHIRO 关闭时不可使用 LANE CHANGE。");
       return;
     }
     const quantizedBeat = quantizeBeat(beat, beatDivision);
@@ -612,8 +602,7 @@ export function useBoardInteractionActions(params: any) {
 
     if (tool === "sv") {
       if (!canUseSv(modeOptions)) {
-        showDialog("ExGarupa 模式关闭时不可使用 SV。");
-        return;
+          return;
       }
       placeSvEvent(target.beat);
       return;
@@ -995,8 +984,7 @@ export function useBoardInteractionActions(params: any) {
 
     if (tool === "sv") {
       if (!canUseSv(modeOptions)) {
-        showDialog("ExGarupa 模式关闭时不可使用 SV。");
-        return;
+          return;
       }
       placeSvEvent(placement.beat);
       return;

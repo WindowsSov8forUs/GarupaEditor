@@ -1463,7 +1463,6 @@ function ChartEditorController() {
   }, [interactiveNotes, isTimingGroupModeActive]);
   const setSelectedObjectTimingGroupId = useCallback((nextGroup: ChartTimingGroupId) => {
     if (!isExGarupaEnabled) {
-      showDialog("ExGarupa 模式关闭时不可使用 Timing Group。");
       return;
     }
     const normalizedGroup = normalizeObjectTimingGroup(nextGroup);
@@ -1850,8 +1849,8 @@ function ChartEditorController() {
 
       if (pastedBpmEvents.length > 0) {
         const nextBpmEvents = [...bpmEventsRef.current, ...pastedBpmEvents];
+        // A paste that would make the last BPM negative does nothing (editing limits are not announced).
         if (isLastBeatOrderedBpmNegative(metadata.bpm, nextBpmEvents)) {
-          showDialog("谱面不合法：\n末尾 BPM 不可为负数", "error");
           return;
         }
       }
@@ -2950,7 +2949,6 @@ function ChartEditorController() {
           : note.type === "hidden" ? "Hidden" : "Single",
         ...(isDirectionalNoteType(note.type) ? { direction: note.type === "directional_flick_left" ? "Left" : "Right" } : {}) }));
     if (!isGarupaLongSlideShape({ connections: connections as never })) {
-      showDialog("只有两个节点、头为 Single 或 Skill、尾与头在同一轨段的直 Slide 才能转为 Long。");
       return;
     }
     setSlideChains((previous) => previous.map((current) => current.id === chain.id ? { ...current, long: true as const } : current));
@@ -2982,7 +2980,6 @@ function ChartEditorController() {
       return;
     }
     if (chain.long === true) {
-      showDialog("Long 不能添加中间节点。");
       return;
     }
     const from = noteById.get(chain.noteIds[segmentIndex]);
@@ -3041,7 +3038,6 @@ function ChartEditorController() {
     }
     const chain = committedSlideChainById.get(chainId);
     if (chain?.long === true) {
-      showDialog("Long 不能添加中间节点。");
       return;
     }
     const from = chain ? noteById.get(chain.noteIds[segmentIndex]) : undefined;
@@ -3509,20 +3505,12 @@ function ChartEditorController() {
 
   const setActiveSvValue = useCallback((value: number) => {
     const nextValue = Number(toFinite(value, toolSvValue).toFixed(6));
-    if (!Number.isFinite(nextValue)) {
-      showDialog("SV 值必须为有限数字。");
-      return;
-    }
     setToolSvValue(nextValue);
   }, [showDialog, toFinite, toolSvValue]);
 
   /** The SV tool's setting: the value and timing group that new SV events get. */
   const applySvToolSetting = useCallback((value: number, timingGroup: ChartTimingGroupId) => {
     const nextValue = Number(toFinite(value, toolSvValue).toFixed(6));
-    if (!Number.isFinite(nextValue)) {
-      showDialog("SV 值必须为有限数字。");
-      return;
-    }
     setToolSvValue(nextValue);
     const group = normalizeTimingGroup(timingGroup, GLOBAL_TIMING_GROUP_ID);
     setToolSvTimingGroup(group);
@@ -3533,10 +3521,6 @@ function ChartEditorController() {
   /** Writes one SV event's value and timing group; an SV event already on that beat in the target group is replaced. */
   const updateSvEvent = useCallback((eventId: string, value: number, timingGroup: ChartTimingGroupId) => {
     const nextValue = Number(toFinite(value, 1).toFixed(6));
-    if (!Number.isFinite(nextValue)) {
-      showDialog("SV 值必须为有限数字。");
-      return;
-    }
     const targetGroup = normalizeTimingGroup(timingGroup, GLOBAL_TIMING_GROUP_ID);
     setSvEvents((previous) => {
       const current = previous.find((event) => event.id === eventId);
@@ -4336,7 +4320,6 @@ function ChartEditorController() {
     if (!isToolArmed || tool !== "curve") return;
     const chain = committedSlideChainById.get(segment.chainId);
     if (chain?.long === true) {
-      showDialog("Long 不能应用形状预设。");
       return;
     }
     const parsed = parseSlideSegmentId(segment.slideSegmentId);
@@ -4358,7 +4341,6 @@ function ChartEditorController() {
     const chain = role ? committedSlideChainById.get(role.chainId) : undefined;
     if (!role || !chain) return;
     if (chain.long === true) {
-      showDialog("Long 不能应用形状预设。");
       return;
     }
     const nodes = chain.noteIds.map(id => noteById.get(id));
@@ -4395,7 +4377,6 @@ function ChartEditorController() {
 
   const applySvToolFromPalette = useCallback(() => {
     if (!isExGarupaEnabled) {
-      showDialog("ExGarupa 模式关闭时不可使用 SV。");
       return;
     }
     if (isPlayToolSelected) {
@@ -5449,10 +5430,8 @@ function ChartEditorController() {
   const mirrorSelectionAlong = useCallback((axis: MirrorAxis) => {
     const result = mirrorSelection(selectionMirrorContext, axis);
     if (!result) return;
+    // A flip that would overlap, leave the board or break a Slide does nothing (editing limits are not announced).
     if (!result.ok) {
-      showDialog(result.reason === "overlap" ? "翻转后会与其他音符重叠，未翻转。"
-        : result.reason === "out-of-board" ? "翻转后会超出轨道范围，未翻转。"
-        : "翻转后 Slide 的结构不再合法，未翻转。");
       return;
     }
     setNotes(result.notes);
