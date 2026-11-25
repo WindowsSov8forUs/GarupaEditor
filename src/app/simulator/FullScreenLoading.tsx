@@ -1,4 +1,4 @@
-import { decodeLoadingImage } from "../startupLoadingAssets";
+import { decodeLoadingImage, pickLoadingTip } from "../startupLoadingAssets";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { useUiViewport } from "../../components/useUiViewport";
 import { UiAuthoredSurface } from "../../components/UiViewport";
@@ -6,7 +6,7 @@ import { originalLabelBaseline, roundLabelCoordinate } from "../../components/te
 
 export interface FullScreenLoadingSources {
   background: string; frame: string; caption: string; pattern: string; label: string;
-  comic: string; guitar: string; onpu1: string; onpu2: string; shadow: string;
+  guitar: string; onpu1: string; onpu2: string; shadow: string;
 }
 
 /** The same full-screen view can be shown before the resource store is open. */
@@ -14,7 +14,10 @@ export function FullScreenLoading({ progress, onReady, ariaLabel = "加载程序
   progress: number | null; onReady?: (error?: unknown) => void; ariaLabel?: string;
   sources: FullScreenLoadingSources;
 }) {
-  const { background, frame, caption, pattern, label, comic, guitar, onpu1, onpu2, shadow } = sources;
+  const { background, frame, caption, pattern, label, guitar, onpu1, onpu2, shadow } = sources;
+  // Each showing of the view takes one tip at random (src/data/loadingTips.json) for its picture frame.
+  const [tip] = useState(pickLoadingTip);
+  const comic = tip.image;
   const viewport = useUiViewport();
   const [framesReady, setFramesReady] = useState<number | Error>(0);
   const markReady = useCallback((bit: number, error?: Error) => setFramesReady(current =>
@@ -64,7 +67,7 @@ export function FullScreenLoading({ progress, onReady, ariaLabel = "加载程序
       <img src={comic} alt="" style={at(0, comicY - 30, 485, 352)} />
       <LoadingLabel x={-276 + 581 / 2} y={comicY + 190} width={581} height={56} fontSize={28}
         color="white" outline="#ff3b72" distance={2} outline8 onReady={onCaptionReady}
-        text="香澄＆有咲①「香澄語３級」" />
+        text={tip.title} />
       <>
         <img src={label} alt="Now Loading" style={at(-151.7, -236, 274, 33)} />
         <LoadingLabel x={85} y={-237.3} width={200} height={50} fontSize={39} color="#ff3b72"
