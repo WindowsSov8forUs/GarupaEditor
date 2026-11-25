@@ -1,6 +1,6 @@
 /*
- * 检查更新: the newest release of the project on GitHub (pre-releases included, as every build so far is one),
- * compared with the running version.
+ * 检查更新: the newest release of the project on GitHub, compared with the running version. A pre-release build is
+ * offered pre-releases and releases; a release build only releases.
  */
 
 export const PROJECT_REPOSITORY_URL = "https://github.com/WindowsSov8forUs/GarupaEditor";
@@ -18,6 +18,11 @@ function parseVersion(text: string): Version | null {
     core: [Number(match[1]), Number(match[2]), Number(match[3])],
     pre: match[4] ? match[4].split(".").map(part => (/^\d+$/.test(part) ? Number(part) : part)) : [],
   };
+}
+
+/** Whether `version` is a pre-release (it has a `-…` part, e.g. 0.4.0-alpha.10). */
+export function isPrereleaseVersion(version: string): boolean {
+  return (parseVersion(version)?.pre.length ?? 0) > 0;
 }
 
 /** Semantic version order: negative when `a` is older than `b`. */
@@ -66,10 +71,13 @@ export async function checkForUpdate(current: string, signal?: AbortSignal, forc
   if (response.status === 403 || response.status === 429) throw new UpdateCheckError("GitHub 请求受限，请稍后再试");
   if (!response.ok) throw new UpdateCheckError(`GitHub 返回 ${response.status}`);
   const releases = await response.json() as { tag_name?: string; html_url?: string; published_at?: string;
-    draft?: boolean }[];
+    draft?: boolean; prerelease?: boolean }[];
+  // Testers (a pre-release build) follow pre-releases too; everyone else only releases.
+  const includePrereleases = isPrereleaseVersion(current);
   let latest: ReleaseInfo | null = null;
   for (const release of releases) {
     if (release.draft || !release.tag_name || !parseVersion(release.tag_name)) continue;
+    if (!includePrereleases && (release.prerelease === true || isPrereleaseVersion(release.tag_name))) continue;
     const version = release.tag_name.replace(/^v/, "");
     if (!latest || compareVersions(version, latest.version) > 0) {
       latest = { version, url: release.html_url ?? `${PROJECT_REPOSITORY_URL}/releases`, publishedAt: release.published_at ?? "" };
