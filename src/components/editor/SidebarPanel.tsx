@@ -30,6 +30,8 @@ type SidebarPanelProps = {
   /** Puts the selected tool down: pressing a selected placement tool again. */
   onDisarmTool(): void;
   /** The SV tool, offered in ExGarupa mode: the first press arms it, the next opens its setting. */
+  /** Arms the LANE CHANGE tool (HABAHIRO only; absent hides it): a press on the board places a lane change. */
+  onArmLaneChangeTool?: () => void;
   sv?: {
     value: number;
     timingGroup: ChartTimingGroupId;
@@ -169,12 +171,15 @@ function EditorSlideSegmentIcon({ note, noteRatio, body }: { note: string; noteR
 /** The Curve, Hidden and Middle icons' drawing (design px), centred in the image area: as wide and as tall as a
  * Single's note shows in its icon (its opaque part, about 88 × 37 of the 101 × 48 area). */
 const SLIDE_TOOL_ICON_BOX = { width: 88, height: 37 };
+/** The LANE CHANGE tool's label, on two lines: one does not fit the square button. */
+const LANE_CHANGE_LABEL = "LANE\nCHANGE";
 
 export const SidebarPanel = memo(function SidebarPanel({ isSkinReady, isToolArmed, tool, applyToolFromPalette, bpm, onApplyBpm, onArmBpmTool, onArmLongTool, onArmMiddleTool, onDisarmTool, onPlay, onPreview,
-  getSpriteLayers, getSpriteAspectRatio, renderSpriteStack, historyTools, mirrorTools, directionalEnabled, longBodyTexture, curveSlideLineTexture, curve, sv }: SidebarPanelProps) {
+  getSpriteLayers, getSpriteAspectRatio, renderSpriteStack, historyTools, mirrorTools, directionalEnabled, longBodyTexture, curveSlideLineTexture, curve, sv, onArmLaneChangeTool }: SidebarPanelProps) {
   const visibleTools = directionalEnabled ? tools : basicTools;
-  // Note tools, Long, Hidden (SP notes and above), Middle, Curve, BPM and (in ExGarupa) SV.
-  const noteRows = Math.ceil((visibleTools.length + 4 + (directionalEnabled ? 1 : 0) + (sv ? 1 : 0)) / 2);
+  // Note tools, Long, Hidden (SP notes and above), Middle, Curve, BPM, (in ExGarupa) SV and (in HABAHIRO) LANE CHANGE.
+  const noteRows = Math.ceil((visibleTools.length + 4 + (directionalEnabled ? 1 : 0) + (sv ? 1 : 0)
+    + (onArmLaneChangeTool ? 1 : 0)) / 2);
   const middleLayers = getSpriteLayers("single", { baseImageType: "slide_among", includeDirectionalOverlay: false, includeFlickOverlay: false });
   // The Hidden and Middle icons draw the current skin's slide among body (measured; null until then).
   useSpriteOpaqueBoxVersion();
@@ -335,6 +340,13 @@ export const SidebarPanel = memo(function SidebarPanel({ isSkinReady, isToolArme
         <EditorSvDialog open={svOpen} title="SV 设置" value={sv.value} timingGroup={sv.timingGroup}
           timingGroups={sv.timingGroups} onClose={() => setSvOpen(false)} onConfirm={sv.onApply}
           onAddTimingGroup={sv.onAddTimingGroup} />
+      </div>}
+      {onArmLaneChangeTool && <div className="editor-note-button-slot">
+        <div className="original-prefab-origin" style={{ left: -ORIGINAL_SQUARE_RADIO_BOUNDS.x, top: -ORIGINAL_SQUARE_RADIO_BOUNDS.y }}>
+          {/* A lane change has no value: pressing the armed tool again leaves it armed. */}
+          <OriginalSquareRadioButton label={LANE_CHANGE_LABEL} selected={isToolArmed && tool === "laneChange"}
+            onClick={onArmLaneChangeTool} />
+        </div>
       </div>}
     </div>
       </OriginalPageViewport>

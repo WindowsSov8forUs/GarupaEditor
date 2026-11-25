@@ -73,6 +73,7 @@ export function useBoardInteractionActions(params: any) {
     setMetadata,
     setBpmEvents,
     setSvEvents,
+    setLaneChangeBeats,
     bpmEvents,
     toolSvValue,
     toolTimingGroup,
@@ -177,6 +178,14 @@ export function useBoardInteractionActions(params: any) {
     switchToolState("sv");
   }, [modeOptions, showDialog, switchToolState]);
 
+  const applyLaneChangeToolFromPalette = useCallback(() => {
+    if (!canUseHabahiro(settings)) {
+      showDialog("HABAHIRO 关闭时不可使用 LANE CHANGE。");
+      return;
+    }
+    switchToolState("laneChange");
+  }, [settings, showDialog, switchToolState]);
+
   const applyCopyToolFromPalette = useCallback(() => {
     switchToolState("copy");
   }, [switchToolState]);
@@ -254,8 +263,8 @@ export function useBoardInteractionActions(params: any) {
   };
 
   const placeNote = (lane: number, beat: number) => {
-    if (tool === "long" || tool === "middle" || tool === "curve" || tool === "bpm" || tool === "sv" || tool === "copy"
-      || tool === "paste") {
+    if (tool === "long" || tool === "middle" || tool === "curve" || tool === "bpm" || tool === "sv" || tool === "laneChange"
+      || tool === "copy" || tool === "paste") {
       return null;
     }
     return placeNoteWithType(tool, lane, beat);
@@ -552,6 +561,19 @@ export function useBoardInteractionActions(params: any) {
     clearSelection();
   };
 
+  /** Places a HABAHIRO lane change (a LANE CHANGE event) on the beat; one already there stays as it is. */
+  const placeLaneChange = (beat: number) => {
+    if (!canUseHabahiro(settings)) {
+      showDialog("HABAHIRO 关闭时不可使用 LANE CHANGE。");
+      return;
+    }
+    const quantizedBeat = quantizeBeat(beat, beatDivision);
+    if (!Number.isFinite(quantizedBeat) || quantizedBeat < 0) return;
+    setLaneChangeBeats((previous: number[]) => previous.some((item) => approxEq(item, quantizedBeat))
+      ? previous : [...previous, quantizedBeat]);
+    clearSelection();
+  };
+
   /**
    * Where a Long's tail goes when a tool turns it into `nextType` (`width` wide): a Directional tail's root on the head's
    * centre lane (garupaLongCenterLane), any other tail on the head's lanes, so the Long keeps its shape. Null for a
@@ -591,6 +613,11 @@ export function useBoardInteractionActions(params: any) {
         return;
       }
       placeSvEvent(target.beat);
+      return;
+    }
+
+    if (tool === "laneChange") {
+      placeLaneChange(target.beat);
       return;
     }
 
@@ -950,7 +977,7 @@ export function useBoardInteractionActions(params: any) {
       return;
     }
 
-    const placement = resolveBoardPlacement(clickX, clickY, { ignoreLane: tool === "bpm" || tool === "sv" });
+    const placement = resolveBoardPlacement(clickX, clickY, { ignoreLane: tool === "bpm" || tool === "sv" || tool === "laneChange" });
     if (!placement) {
       return;
     }
@@ -966,6 +993,11 @@ export function useBoardInteractionActions(params: any) {
         return;
       }
       placeSvEvent(placement.beat);
+      return;
+    }
+
+    if (tool === "laneChange") {
+      placeLaneChange(placement.beat);
       return;
     }
 
@@ -1079,6 +1111,7 @@ export function useBoardInteractionActions(params: any) {
     applyCurveToolFromPalette,
     applyBpmToolFromPalette,
     applySvToolFromPalette,
+    applyLaneChangeToolFromPalette,
     applyCopyToolFromPalette,
     applyPasteToolFromPalette,
     placeNoteWithType,

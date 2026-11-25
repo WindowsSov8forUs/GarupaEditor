@@ -469,7 +469,7 @@ export function useEditorGeometry(params: any) {
       rhythmWidth?: number;
     },
   ): ChartNote[] => {
-    if (!options?.type && (tool === "bpm" || tool === "copy" || tool === "paste")) {
+    if (!options?.type && (tool === "bpm" || tool === "sv" || tool === "laneChange" || tool === "copy" || tool === "paste")) {
       return [];
     }
 
@@ -513,7 +513,7 @@ export function useEditorGeometry(params: any) {
     }
 
     const snapType = options?.type ?? (
-      tool === "bpm" || tool === "copy" || tool === "paste"
+      tool === "bpm" || tool === "sv" || tool === "laneChange" || tool === "copy" || tool === "paste"
         ? null
         : toolPreviewNoteType(tool) ?? tool
     );

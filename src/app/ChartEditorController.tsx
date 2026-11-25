@@ -278,7 +278,13 @@ type EditorUndoSnapshot = {
   slideChains: SlideChain[];
   bpmEvents: ChartBpmEvent[];
   timingGroups: ChartTimingGroupMap;
+  /** The HABAHIRO lane changes (settings.laneChangeBeats); absent in history kept before they were recorded. */
+  laneChangeBeats?: number[];
 };
+
+const NO_LANE_CHANGES: number[] = [];
+/** The lane changes a snapshot holds (none when absent). */
+const undoLaneChanges = (snapshot: EditorUndoSnapshot): number[] => snapshot.laneChangeBeats ?? [];
 
 type CopiedSlideChain = {
   noteIds: string[];
@@ -329,7 +335,8 @@ function sameRows(a: readonly object[], b: readonly object[]): boolean {
 /** Whether two edit states hold the same chart content, whatever their array identities. */
 function sameUndoContent(a: EditorUndoSnapshot, b: EditorUndoSnapshot): boolean {
   return sameRows(a.notes, b.notes) && sameRows(a.slideChains, b.slideChains) && sameRows(a.bpmEvents, b.bpmEvents)
-    && (a.timingGroups === b.timingGroups || JSON.stringify(a.timingGroups) === JSON.stringify(b.timingGroups));
+    && (a.timingGroups === b.timingGroups || JSON.stringify(a.timingGroups) === JSON.stringify(b.timingGroups))
+    && JSON.stringify(undoLaneChanges(a)) === JSON.stringify(undoLaneChanges(b));
 }
 
 function resolvePlaybackSeSources(runtimeSe: SeSkinAssets): ResolvedPlaybackSeSources {
@@ -560,6 +567,8 @@ function ChartEditorController() {
   const bpmEventsRef = useRef(bpmEvents);
   const timingGroupsRef = useRef(timingGroups);
   const svEventsRef = useRef(svEvents);
+  const laneChangeBeats = useMemo(() => settings.laneChangeBeats ?? NO_LANE_CHANGES, [settings.laneChangeBeats]);
+  const laneChangeBeatsRef = useRef<number[]>(laneChangeBeats);
   const undoStackRef = useRef<EditorUndoSnapshot[]>([]);
   const redoStackRef = useRef<EditorUndoSnapshot[]>([]);
   const isUndoRestoringRef = useRef(false);
@@ -572,6 +581,7 @@ function ChartEditorController() {
     slideChains: snapshot.slideChains.map((chain) => ({ ...chain, noteIds: [...chain.noteIds] })),
     bpmEvents: snapshot.bpmEvents.map((event) => ({ ...event })),
     timingGroups: ensureTimingGroups(snapshot.timingGroups),
+    laneChangeBeats: [...undoLaneChanges(snapshot)],
   }), []);
 
   const buildCurrentUndoSnapshot = useCallback((): EditorUndoSnapshot => (
@@ -580,6 +590,7 @@ function ChartEditorController() {
       slideChains: slideChainsRef.current,
       bpmEvents: bpmEventsRef.current,
       timingGroups: timingGroupsRef.current,
+      laneChangeBeats: laneChangeBeatsRef.current,
     })
   ), [cloneUndoSnapshot]);
 
@@ -596,6 +607,7 @@ function ChartEditorController() {
       slideChains: slideChainsRef.current,
       bpmEvents: bpmEventsRef.current,
       timingGroups: timingGroupsRef.current,
+      laneChangeBeats: laneChangeBeatsRef.current,
     };
   }, []);
 
@@ -605,6 +617,7 @@ function ChartEditorController() {
     bpmEventsRef.current = bpmEvents;
     timingGroupsRef.current = timingGroups;
     svEventsRef.current = svEvents;
+    laneChangeBeatsRef.current = laneChangeBeats;
     // Every edit requested since the last commit is one step; edits that changed nothing record none.
     const sources = pendingUndoSourcesRef.current;
     if (!sources) {
@@ -612,7 +625,7 @@ function ChartEditorController() {
     }
     // Derived updates (normalisations after an edit) may replace arrays without changing their content; such a
     // commit is not an edit, so the pending start state stays for the next real change.
-    if (sameUndoContent(sources, { notes, slideChains, bpmEvents, timingGroups })) {
+    if (sameUndoContent(sources, { notes, slideChains, bpmEvents, timingGroups, laneChangeBeats })) {
       return;
     }
     pendingUndoSourcesRef.current = null;
@@ -629,7 +642,7 @@ function ChartEditorController() {
     }
     redoStackRef.current = [];
     setUndoVersion((previous) => previous + 1);
-  }, [bpmEvents, cloneUndoSnapshot, notes, slideChains, svEvents, timingGroups]);
+  }, [bpmEvents, cloneUndoSnapshot, laneChangeBeats, notes, slideChains, svEvents, timingGroups]);
 
   const resolveStateAction = useCallback(<T,>(
     action: SetStateAction<T>,
@@ -715,6 +728,26 @@ function ChartEditorController() {
         (id) => notesRef.current.some(belongs(id)) || slideChainsRef.current.some(belongs(id)));
     });
   }, [requestUndoCapture, resolveStateAction]);
+
+  /** HABAHIRO lane changes (LANE CHANGE events): an edit, recorded for undo; kept sorted, without duplicates. */
+  const setLaneChangeBeats = useCallback((nextAction: SetStateAction<number[]>) => {
+    requestUndoCapture();
+    setSettingsState((previous) => {
+      const current = previous.laneChangeBeats ?? [];
+      const next = resolveStateAction(nextAction, current);
+      if (next === current) return previous;
+      const beats = [...new Set(next.filter((beat) => Number.isFinite(beat) && beat >= 0))].sort((a, b) => a - b);
+      const { laneChangeBeats: _beats, ...rest } = previous;
+      return beats.length > 0 ? { ...rest, laneChangeBeats: beats } : rest;
+    });
+  }, [requestUndoCapture, resolveStateAction]);
+  /** Undo and redo put the lane changes back without recording a step of their own. */
+  const restoreLaneChanges = useCallback((beats: number[]) => {
+    setSettingsState((previous) => {
+      const { laneChangeBeats: _beats, ...rest } = previous;
+      return beats.length > 0 && previous.habahiro ? { ...rest, laneChangeBeats: [...beats] } : rest;
+    });
+  }, []);
 
   const timingGroupIds = useMemo(() => sortTimingGroupIds(Object.keys(timingGroups)), [timingGroups]);
 
@@ -874,6 +907,7 @@ function ChartEditorController() {
     setSlideChainsState(snapshot.slideChains.map((chain) => ({ ...chain, noteIds: [...chain.noteIds] })));
     setBpmEventsState(snapshot.bpmEvents.map((event) => ({ ...event })));
     setTimingGroupsState(ensureTimingGroups(snapshot.timingGroups));
+    restoreLaneChanges(undoLaneChanges(snapshot));
     setSelectedNoteIds([]);
     setUndoVersion((previous) => previous + 1);
 
@@ -881,7 +915,7 @@ function ChartEditorController() {
       isUndoRestoringRef.current = false;
     });
     return true;
-  }, [buildCurrentUndoSnapshot, showDialog]);
+  }, [buildCurrentUndoSnapshot, restoreLaneChanges, showDialog]);
 
   const redoLastOperation = useCallback((): boolean => {
     const stack = redoStackRef.current;
@@ -910,6 +944,7 @@ function ChartEditorController() {
     setSlideChainsState(snapshot.slideChains.map((chain) => ({ ...chain, noteIds: [...chain.noteIds] })));
     setBpmEventsState(snapshot.bpmEvents.map((event) => ({ ...event })));
     setTimingGroupsState(ensureTimingGroups(snapshot.timingGroups));
+    restoreLaneChanges(undoLaneChanges(snapshot));
     setSelectedNoteIds([]);
     setUndoVersion((previous) => previous + 1);
 
@@ -917,7 +952,7 @@ function ChartEditorController() {
       isUndoRestoringRef.current = false;
     });
     return true;
-  }, [buildCurrentUndoSnapshot, showDialog]);
+  }, [buildCurrentUndoSnapshot, restoreLaneChanges, showDialog]);
 
   const [audioFileName, setAudioFileName] = useState("");
   const [audioDurationSec, setAudioDurationSec] = useState(0);
@@ -2489,7 +2524,8 @@ function ChartEditorController() {
     // that project with the same content (a reload); any other restore starts without history.
     const kept = isFirstRestoreRef.current ? takeUndoHistory<EditorUndoSnapshot>(next.projectId, (present) =>
       sameUndoContent(present, { notes: next.chart.notes, slideChains: next.chart.slideChains,
-        bpmEvents: next.chart.bpmEvents, timingGroups: ensureTimingGroups(next.chart.timingGroups) })) : null;
+        bpmEvents: next.chart.bpmEvents, timingGroups: ensureTimingGroups(next.chart.timingGroups),
+        laneChangeBeats: next.chart.settings.laneChangeBeats ?? [] })) : null;
     isFirstRestoreRef.current = false;
     undoStackRef.current = kept?.undo ?? []; redoStackRef.current = kept?.redo ?? [];
     pendingUndoSourcesRef.current = null; setUndoVersion(v => v + 1);
@@ -3129,6 +3165,7 @@ function ChartEditorController() {
     applyCurveToolFromPalette: applyCurveToolFromPaletteRaw,
     applyBpmToolFromPalette: applyBpmToolFromPaletteRaw,
     applySvToolFromPalette: applySvToolFromPaletteRaw,
+    applyLaneChangeToolFromPalette: applyLaneChangeToolFromPaletteRaw,
     applyCopyToolFromPalette: applyCopyToolFromPaletteRaw,
     applyPasteToolFromPalette: applyPasteToolFromPaletteRaw,
     pressSlideTool,
@@ -3200,6 +3237,7 @@ function ChartEditorController() {
     setMetadata,
     setBpmEvents,
     setSvEvents,
+    setLaneChangeBeats,
     bpmEvents,
     svEvents,
     toolSvValue,
@@ -4369,6 +4407,18 @@ function ChartEditorController() {
     applySvToolFromPaletteRaw();
   }, [applySvToolFromPaletteRaw, hidePlaybackGuide, hidePlaybackRuntimeLine, isExGarupaEnabled, isPlayToolSelected, isPlaybackPlaying, showDialog, stopPlayback]);
 
+  const applyLaneChangeToolFromPalette = useCallback(() => {
+    if (isPlayToolSelected) {
+      setIsPlayToolSelected(false);
+      hidePlaybackGuide();
+      hidePlaybackRuntimeLine();
+      if (isPlaybackPlaying) {
+        stopPlayback();
+      }
+    }
+    applyLaneChangeToolFromPaletteRaw();
+  }, [applyLaneChangeToolFromPaletteRaw, hidePlaybackGuide, hidePlaybackRuntimeLine, isPlayToolSelected, isPlaybackPlaying, stopPlayback]);
+
   const applyCopyToolFromPalette = useCallback(() => {
     if (isPlayToolSelected) {
       setIsPlayToolSelected(false);
@@ -4819,6 +4869,10 @@ function ChartEditorController() {
       }
     }
   }, [isExGarupaEnabled, tool]);
+  // The LANE CHANGE tool is for HABAHIRO charts: turning HABAHIRO off disarms it.
+  useEffect(() => {
+    if (!isHabahiroEnabled && tool === "laneChange") setIsToolArmed(false);
+  }, [isHabahiroEnabled, tool]);
 
   // Shared by the Space shortcut and the toolbar play button: start from the playfield's current position, or stop.
   const togglePlaybackFromCurrentPosition = useCallback(() => {
@@ -5521,6 +5575,8 @@ function ChartEditorController() {
     sortBpmEvents,
     setBpmEvents,
     setSvEvents,
+    laneChangeBeats,
+    setLaneChangeBeats,
     setMetadata,
     metadata,
     normalizeEditorBpm,
@@ -6123,6 +6179,7 @@ function ChartEditorController() {
         cancelCurveTool,
         applyBpmToolFromPalette,
         applySvToolFromPalette,
+        applyLaneChangeToolFromPalette,
         toolSvValue,
         toolSvTimingGroup,
         applySvToolSetting,

@@ -599,6 +599,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     if (!isToolArmed) return null;
     if (tool === "bpm") return hit.bubble.find(target => target.kind === "bpm") ?? null;
     if (tool === "sv") return hit.target.kind === "sv" ? hit.target : hit.bubble.find(target => target.kind === "sv") ?? null;
+    // The LANE CHANGE tool reaches a bubble's lane change (a right-click deletes it; it has no value to edit).
+    if (tool === "laneChange") return hit.bubble.find(target => target.kind === "laneChange") ?? null;
     return null;
   };
   const eventBubbleHandlers: EventBubbleHandlers = {
@@ -637,7 +639,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
 
   // The Middle and Hidden tools place on blank board only in ExGarupa (elsewhere they only work on Slides), so they
   // preview only there.
-  const isPlacementNoteTool = isToolArmed && tool !== "bpm" && tool !== "sv" && tool !== "copy" && tool !== "paste"
+  const isPlacementNoteTool = isToolArmed && tool !== "bpm" && tool !== "sv" && tool !== "laneChange" && tool !== "copy" && tool !== "paste"
     && tool !== "curve"
     && !((tool === "middle" || tool === "hidden") && !vm.isExGarupaEnabled);
   const isPasteToolSelected = isToolArmed && tool === "paste";
@@ -1001,15 +1003,17 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         return;
       }
 
-      if (tool === "bpm" || tool === "sv") {
+      if (tool === "bpm" || tool === "sv" || tool === "laneChange") {
         hide(canvasNoteCursorPreviewRef.current);
         hide(canvasNoteSnapPreviewRef.current);
         hide(canvasNoteReplacePreviewRef.current);
         hide(canvasDirectionalWidenPreviewRef.current);
-        const cursorRef = tool === "bpm" ? canvasBpmCursorPreviewRef : canvasSvCursorPreviewRef;
-        const snapRef = tool === "bpm" ? canvasBpmSnapPreviewRef : canvasSvSnapPreviewRef;
-        const inactiveCursorRef = tool === "bpm" ? canvasSvCursorPreviewRef : canvasBpmCursorPreviewRef;
-        const inactiveSnapRef = tool === "bpm" ? canvasSvSnapPreviewRef : canvasBpmSnapPreviewRef;
+        // The LANE CHANGE tool shows the BPM tool's line (all event placement lines share the event line colour).
+        const bpmLine = tool !== "sv";
+        const cursorRef = bpmLine ? canvasBpmCursorPreviewRef : canvasSvCursorPreviewRef;
+        const snapRef = bpmLine ? canvasBpmSnapPreviewRef : canvasSvSnapPreviewRef;
+        const inactiveCursorRef = bpmLine ? canvasSvCursorPreviewRef : canvasBpmCursorPreviewRef;
+        const inactiveSnapRef = bpmLine ? canvasSvSnapPreviewRef : canvasBpmSnapPreviewRef;
         hide(inactiveCursorRef.current);
         hide(inactiveSnapRef.current);
         show(cursorRef.current);
@@ -1570,7 +1574,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
           historyTools={historyTools} mirrorTools={mirrorTools} directionalEnabled={vm.editorMode !== "basic"} longBodyTexture={longBodyTexture} curveSlideLineTexture={curveSlideLineTexture}
           curve={sidebarCurve}
           sv={vm.isExGarupaEnabled ? { value: vm.toolSvValue, timingGroup: vm.toolSvTimingGroup, timingGroups: vm.timingGroupIds,
-            onArm: vm.applySvToolFromPalette, onApply: vm.applySvToolSetting, onAddTimingGroup: vm.addTimingGroup } : undefined} />
+            onArm: vm.applySvToolFromPalette, onApply: vm.applySvToolSetting, onAddTimingGroup: vm.addTimingGroup } : undefined}
+          onArmLaneChangeTool={vm.isHabahiroEnabled ? vm.applyLaneChangeToolFromPalette : undefined} />
         <section ref={editorRegionRef} className="editor-viewport-region"
           style={{ "--editor-edge-softness": `${EDITOR_EDGE_SOFTNESS * uiViewport.scale}px`,
             marginTop: -editorRegionBleed.top, marginBottom: -editorRegionBleed.bottom } as CSSProperties}>
@@ -1609,7 +1614,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                   handleBoardMouseLeave(event);
                 }}
                 onContextMenu={handleBoardContextMenu}
-                // Event bubbles drawn on the canvas are the events' hit areas; only the BPM and SV tools act on them.
+                // Event bubbles drawn on the canvas are the events' hit areas; only the BPM, SV and LANE CHANGE tools act on them.
                 onMouseDownCapture={(event) => {
                   const hit = eventBubbleHitAt(event);
                   if (!hit) return;
