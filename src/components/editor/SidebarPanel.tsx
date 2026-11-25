@@ -145,13 +145,13 @@ function EditorLongIcon({ note, body }: { note?: string; body?: string }) {
   </span>;
 }
 
-/** The Slide tool's icon: two notes joined by a Slide body rising from bottom left to top right, in the icon's image
- * area (design px, as the Curve icon's). */
+/** The Slide tool's icon: two notes joined by a Slide body rising from bottom right to top left (as the Curve icon's
+ * Slide runs), in the icon's image area (design px, as the Curve icon's). */
 const SEGMENT_ICON = { width: 101, height: 48 };
 function EditorSlideSegmentIcon({ note, noteRatio, body }: { note: string; noteRatio: number; body?: string }) {
   const { width: w, height: h } = SEGMENT_ICON;
   const noteWidth = 68, noteHeight = noteWidth / noteRatio, half = noteWidth * 0.7 / 2;
-  const from = { x: 30, y: h - 7 }, to = { x: w - 30, y: 7 };
+  const from = { x: w - 30, y: h - 7 }, to = { x: 30, y: 7 };
   // The body as the board draws it: horizontal ends, the texture across its width, slanted along the line.
   const height = from.y - to.y, slant = -Math.atan2(to.x - from.x, height) * 180 / Math.PI;
   return <span className="editor-note-button-image editor-slide-icon">
