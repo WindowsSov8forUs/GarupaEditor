@@ -2,6 +2,7 @@ import {
   approxEq,
   isDirectionalNoteType,
   isRhythmWidthEditableType,
+  limitDirectionalWidening,
   normalizeDirectionalWidth,
   normalizeRhythmWidth,
   noteLaneSpanStart,
@@ -18,11 +19,13 @@ export type SelectionWidthContext = {
   selectedNoteIds: readonly string[];
   slideChains: readonly SlideChainLike[];
   habahiro: boolean;
+  /** Directionals widen without limit (HABAHIRO or ExGarupa); otherwise up to DIRECTIONAL_WIDTH_LIMIT. */
+  directionalUnlimited: boolean;
   laneMin: number;
   laneMax: number;
 };
 
-/** HABAHIRO caps a rhythm note's width; a Directional has no upper bound. */
+/** HABAHIRO caps a rhythm note's width; a Directional is capped only outside HABAHIRO and ExGarupa (directionalUnlimited). */
 const RHYTHM_WIDTH_MAX = 7;
 
 function spanLanes(note: ChartNote, habahiro: boolean): number {
@@ -92,6 +95,8 @@ export function planSelectionWidthChange(context: SelectionWidthContext, edge: S
     if (end < start) return null;
     const directional = isDirectionalNoteType(note.type);
     if (!directional && end - start + 1 > RHYTHM_WIDTH_MAX) return null;
+    if (directional && limitDirectionalWidening(bounds.end - bounds.start + 1, end - start + 1,
+      context.directionalUnlimited) !== end - start + 1) return null;
     const next = withBounds(note, start, end);
     const chain = longChainByNoteId.get(id);
     if (chain) {

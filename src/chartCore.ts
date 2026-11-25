@@ -700,6 +700,18 @@ export function normalizeDirectionalWidth(raw: unknown): number {
   return normalizePositiveInt(raw, 1);
 }
 
+/** The widest a Directional is widened to outside HABAHIRO and ExGarupa (the original's widest Multiple Directional). */
+export const DIRECTIONAL_WIDTH_LIMIT = 3;
+
+/**
+ * A Directional's width after an edit from `previous` to `next`: outside HABAHIRO and ExGarupa (`unlimited` false)
+ * widening stops at DIRECTIONAL_WIDTH_LIMIT, silently; a note already wider keeps its width and may still narrow.
+ */
+export function limitDirectionalWidening(previous: number, next: number, unlimited: boolean): number {
+  if (unlimited || next <= previous) return next;
+  return Math.min(next, Math.max(previous, DIRECTIONAL_WIDTH_LIMIT));
+}
+
 export function normalizeRhythmWidth(raw: unknown): number {
   return clamp(normalizePositiveInt(raw, 1), 1, 7);
 }

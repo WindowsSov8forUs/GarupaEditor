@@ -1,5 +1,5 @@
 ﻿import { useCallback } from "react";
-import { withRhythmWidthKeepingStart } from "../../chartCore";
+import { limitDirectionalWidening, withRhythmWidthKeepingStart } from "../../chartCore";
 
 export function useEditorSelectionActions(params: any) {
   const {
@@ -61,6 +61,8 @@ export function useEditorSelectionActions(params: any) {
     selectedNoteIds,
     selectedSegmentKeys,
     showDialog,
+    /** Directionals widen without limit (HABAHIRO or ExGarupa); otherwise up to DIRECTIONAL_WIDTH_LIMIT. */
+    directionalUnlimited,
   } = params;
 
   const applySettingsPatch = (patch: any) => {
@@ -189,6 +191,7 @@ export function useEditorSelectionActions(params: any) {
   const updateActiveWidth = (raw: unknown) => {
     if (widthSettingMode === "directional") {
       const nextWidth = normalizeDirectionalWidth(raw);
+      // Outside HABAHIRO and ExGarupa widening stops at DIRECTIONAL_WIDTH_LIMIT, silently.
       if (hasDirectionalNoteSelection) {
         commitSelectedNoteTransform(
           (note: any) => {
@@ -197,15 +200,16 @@ export function useEditorSelectionActions(params: any) {
             }
             return {
               ...note,
-              width: nextWidth,
+              width: limitDirectionalWidening(normalizeDirectionalWidth(note.width), nextWidth, directionalUnlimited === true),
             };
           },
         );
-        return;
+        return limitDirectionalWidening(activeWidthValue, nextWidth, directionalUnlimited === true);
       }
 
-      setToolDirectionalWidth(nextWidth);
-      return;
+      const toolWidth = limitDirectionalWidening(activeWidthValue, nextWidth, directionalUnlimited === true);
+      setToolDirectionalWidth(toolWidth);
+      return toolWidth;
     }
 
     if (widthSettingMode === "rhythm") {
@@ -340,8 +344,8 @@ export function useEditorSelectionActions(params: any) {
     const nextWidth = widthSettingMode === "directional"
       ? normalizeDirectionalWidth(parsed)
       : normalizeRhythmWidth(parsed);
-    updateActiveWidth(nextWidth);
-    setWidthInputText(String(nextWidth));
+    const applied = updateActiveWidth(nextWidth);
+    setWidthInputText(String(typeof applied === "number" ? applied : nextWidth));
   }, [
     activeWidthValue,
     normalizeDirectionalWidth,

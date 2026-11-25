@@ -2,6 +2,7 @@ import { startTransition, useCallback, useEffect, useRef, type MouseEvent } from
 import {
   GLOBAL_TIMING_GROUP_ID,
   laneForReplacement,
+  limitDirectionalWidening,
   normalizeNoteTimingGroup,
   noteLaneSpanStart,
   normalizeTimingGroup,
@@ -103,6 +104,8 @@ export function useBoardInteractionActions(params: any) {
     multiSelectModeRef,
     selectedSegmentKeys,
   } = params;
+  /** Directionals widen without limit in HABAHIRO and ExGarupa; elsewhere up to DIRECTIONAL_WIDTH_LIMIT. */
+  const directionalUnlimited = canUseHabahiro(settings) || exGarupaEnabled === true;
   const scheduleAfterFrame = useCallback((task: () => void) => {
     if (typeof requestAnimationFrame === "function") {
       requestAnimationFrame(() => task());
@@ -653,8 +656,10 @@ export function useBoardInteractionActions(params: any) {
 
     if (isBatchTarget) {
       if (isDirectionalNoteType(nextType) && selectedNotes.every((note: ChartNote) => note.type === nextType)) {
-        const nextWidth = normalizeDirectionalWidth((target.width ?? 1) + 1);
-        commitSelectedNoteTransform((note: ChartNote) => ({ ...note, width: nextWidth }));
+        // Outside HABAHIRO and ExGarupa widening stops at DIRECTIONAL_WIDTH_LIMIT (silently: the press changes nothing).
+        const targetWidth = normalizeDirectionalWidth(target.width);
+        const nextWidth = limitDirectionalWidening(targetWidth, targetWidth + 1, directionalUnlimited);
+        if (nextWidth !== targetWidth) commitSelectedNoteTransform((note: ChartNote) => ({ ...note, width: nextWidth }));
         return;
       }
 
@@ -696,8 +701,9 @@ export function useBoardInteractionActions(params: any) {
     }
 
     if (isDirectionalNoteType(nextType) && target.type === nextType) {
-      const nextWidth = normalizeDirectionalWidth((target.width ?? 1) + 1);
-      setNotes((previous: ChartNote[]) =>
+      const targetWidth = normalizeDirectionalWidth(target.width);
+      const nextWidth = limitDirectionalWidening(targetWidth, targetWidth + 1, directionalUnlimited);
+      if (nextWidth !== targetWidth) setNotes((previous: ChartNote[]) =>
         sortNotes(
           previous.map((note) => {
             if (note.id !== target.id) {

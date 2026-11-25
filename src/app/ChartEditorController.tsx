@@ -128,6 +128,7 @@ import {
   normalizeBpmEvent,
   normalizeSvEvent,
   normalizeDirectionalWidth,
+  limitDirectionalWidening,
   normalizeTimingGroup,
   normalizeRhythmWidth,
   ensureTimingGroups,
@@ -2499,6 +2500,7 @@ function ChartEditorController() {
     selectedNoteIds,
     selectedSegmentKeys,
     showDialog,
+    directionalUnlimited: isHabahiroEnabled || isExGarupaEnabled,
     setSelectedNoteIds,
   });
 
@@ -5170,7 +5172,12 @@ function ChartEditorController() {
         return null;
       }
 
-      const nextWidth = normalizeDirectionalWidth((hitNote.width ?? 1) + 1);
+      const currentWidth = normalizeDirectionalWidth(hitNote.width);
+      // Outside HABAHIRO and ExGarupa a Directional stops widening at DIRECTIONAL_WIDTH_LIMIT: no widen preview there.
+      const nextWidth = limitDirectionalWidening(currentWidth, currentWidth + 1, isHabahiroEnabled || isExGarupaEnabled);
+      if (nextWidth === currentWidth) {
+        return null;
+      }
       const widened = normalizeNote({ ...hitNote, width: nextWidth }, settings);
       if (!widened || !isDirectionalNoteType(widened.type)) {
         return null;
@@ -5206,6 +5213,8 @@ function ChartEditorController() {
       getNoteSpanLanes,
       getRenderedNotePlacement,
       isDirectionalNoteType,
+      isExGarupaEnabled,
+      isHabahiroEnabled,
       isToolArmed,
       laneToColumn,
       normalizeDirectionalWidth,
@@ -5415,8 +5424,9 @@ function ChartEditorController() {
   /** Dragging an edge of the selection frame widens or narrows the selected notes (see selectionWidthDrag). */
   const selectionWidthContext = useMemo<SelectionWidthContext>(() => ({
     notes, selectedNoteIds, slideChains, habahiro: isHabahiroEnabled,
+    directionalUnlimited: isHabahiroEnabled || isExGarupaEnabled,
     laneMin, laneMax: laneValues[laneValues.length - 1]!,
-  }), [isHabahiroEnabled, laneMin, laneValues, notes, selectedNoteIds, slideChains]);
+  }), [isExGarupaEnabled, isHabahiroEnabled, laneMin, laneValues, notes, selectedNoteIds, slideChains]);
   const canResizeSelection = !isToolArmed && canResizeSelectionWidth(selectionWidthContext);
   /** Moves the dragged edge by `raw` lanes as far as the selection allows and draws the result. */
   const previewSelectionWidth = useCallback((edge: SelectionWidthEdge, raw: number) => {

@@ -1974,7 +1974,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
           </> }}
  />
         <EditorNotePropertiesDialog open={notePropertiesOpen} properties={vm.selectedNoteProperties}
-          laneRange={vm.laneRange}
+          laneRange={vm.laneRange} directionalUnlimited={vm.isHabahiroEnabled || vm.isExGarupaEnabled}
           timingGroups={vm.isExGarupaEnabled ? vm.timingGroupIds : undefined} onAddTimingGroup={vm.addTimingGroup}
           onClose={() => setNotePropertiesOpen(false)} onSave={vm.applyNoteProperties} />
       </section>
