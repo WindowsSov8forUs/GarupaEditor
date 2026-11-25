@@ -24,6 +24,8 @@ export function usePlayfieldRenderers(params: any) {
     isToolArmed,
     setBpmEvents,
     setSvEvents,
+    laneChangeBeats,
+    setLaneChangeBeats,
     tool,
     slideBuildRef,
     cancelSlideBuild,
@@ -48,7 +50,7 @@ export function usePlayfieldRenderers(params: any) {
     onCurveToolConnectionClick,
     noteVisualScale,
   } = params;
-  const isPlacementNoteTool = isToolArmed && tool !== "bpm" && tool !== "sv" && tool !== "copy" && tool !== "paste"
+  const isPlacementNoteTool = isToolArmed && tool !== "bpm" && tool !== "sv" && tool !== "laneChange" && tool !== "copy" && tool !== "paste"
     && tool !== "curve";
   const isPasteToolSelected = isToolArmed && tool === "paste";
   const shouldBypassConnectionLeftClick = isPlacementNoteTool || isPasteToolSelected;
@@ -89,7 +91,13 @@ export function usePlayfieldRenderers(params: any) {
       ? { id: event.id, value: event.value, timingGroup: typeof event.timingGroup === "string" ? event.timingGroup : "#Global" }
       : null;
   };
-  /** Deletes a bubble's event; false when it cannot be deleted (the Beat 0 base BPM, a muted SV, a missing event). */
+  /** A lane change bubble's beat, from its key (`lane-change-<index>-<beat>`); null for another key. */
+  const laneChangeBeatOfKey = (key: string): number | null => {
+    if (!key.startsWith("lane-change-")) return null;
+    const beat = Number(key.slice(key.lastIndexOf("-") + 1));
+    return Number.isFinite(beat) ? beat : null;
+  };
+  /** Deletes a bubble's event (BPM, SV or lane change); false when it cannot be deleted (the Beat 0 base BPM, a muted SV, a missing event). */
   const deleteTimelineEvent = (target: TimelineEventTarget): boolean => {
     if (target.kind === "bpm") {
       if (!bpmEvents.some((event: any) => event.id === target.key)) {
@@ -104,6 +112,14 @@ export function usePlayfieldRenderers(params: any) {
         return false;
       }
       setSvEvents((previous: any[]) => previous.filter((item) => item.id !== target.key));
+      return true;
+    }
+    if (target.kind === "laneChange") {
+      const beat = laneChangeBeatOfKey(target.key);
+      if (beat === null || !(laneChangeBeats ?? []).some((item: number) => approxEq(item, beat))) {
+        return false;
+      }
+      setLaneChangeBeats((previous: number[]) => previous.filter((item) => !approxEq(item, beat)));
       return true;
     }
     return false;

@@ -2961,7 +2961,7 @@ export class SlideAfterRuntime {
     readonly terminalJudgeNoteType: 5 | 6 | 7 | 8 | null,
   ) {}
 
-  /** Extension (src/chart/README.md, Slide gesture nodes): a non-last node with an original flick-tail family. */
+  /** Extension (docs/GARUPA_JSON.md, Slide 手势节点): a non-last node with an original flick-tail family. */
   get gestureAfterType(): AfterNoteTypeValue {
     return this.isTerminal ? AfterNoteType.None : slideGestureAfterType(this.source);
   }

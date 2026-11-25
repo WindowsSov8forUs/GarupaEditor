@@ -1,0 +1,31 @@
+GarupaEditor
+Copyright 2026 WindowsSov8forUs
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+The license covers the original source code of this project only.
+
+GarupaEditor is an unofficial fan-made tool. It is not affiliated with,
+endorsed by, or sponsored by the rights holders of BanG Dream! Girls Band
+Party! or by Bestdori.
+
+The following files are NOT covered by the Apache License, Version 2.0.
+All rights to them belong to their respective owners, and they are included
+only for non-commercial, fan-creation purposes:
+
+  - src/assets/game/
+      Game artwork, UI atlases, title scene images, sound effects and fonts
+      taken from the original game client.
+  - src/assets/fonts/
+      Third-party fonts (TTShinGoM.ttf, GB18030.ttf), under their own
+      licenses.
+  - src/assets/icons/bestdori.png
+      Bestdori's site icon.
+  - src/data/title/, src/data/simulator/, src/data/official/,
+    src/data/original*.json, src/data/*-rip-map.json,
+    src/data/menuUiAtlas.json, src/data/uiCommonAtlas.json,
+    src/data/officialClientVersions.json
+      Layouts, prefab structures, wording and other data extracted from the
+      original game client.
+
+Third-party libraries used by this project are distributed under their own
+licenses, as listed in package.json and src-tauri/Cargo.toml.

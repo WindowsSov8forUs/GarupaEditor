@@ -89,7 +89,7 @@ export interface SimulatorOriginalLiveSettings {
   readonly judgementAdjustValue: number;
   readonly judgementAdjustValueB: number;
   readonly hideFastSlow: boolean;
-  readonly displayStageEffect: boolean;
+  readonly lightGraphicsMode: boolean;
   readonly hideCombo: boolean;
   readonly displayComboPosition: number;
   readonly syncLine: boolean;

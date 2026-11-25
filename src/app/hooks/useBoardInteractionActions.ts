@@ -2,6 +2,7 @@ import { startTransition, useCallback, useEffect, useRef, type MouseEvent } from
 import {
   GLOBAL_TIMING_GROUP_ID,
   laneForReplacement,
+  limitDirectionalWidening,
   normalizeNoteTimingGroup,
   noteLaneSpanStart,
   normalizeTimingGroup,
@@ -73,6 +74,7 @@ export function useBoardInteractionActions(params: any) {
     setMetadata,
     setBpmEvents,
     setSvEvents,
+    setLaneChangeBeats,
     bpmEvents,
     toolSvValue,
     toolTimingGroup,
@@ -102,6 +104,8 @@ export function useBoardInteractionActions(params: any) {
     multiSelectModeRef,
     selectedSegmentKeys,
   } = params;
+  /** Directionals widen without limit in HABAHIRO and ExGarupa; elsewhere up to DIRECTIONAL_WIDTH_LIMIT. */
+  const directionalUnlimited = canUseHabahiro(settings) || exGarupaEnabled === true;
   const scheduleAfterFrame = useCallback((task: () => void) => {
     if (typeof requestAnimationFrame === "function") {
       requestAnimationFrame(() => task());
@@ -147,7 +151,6 @@ export function useBoardInteractionActions(params: any) {
 
   const applyToolFromPalette = useCallback((nextType: NoteType) => {
     if (isDirectionalNoteType(nextType) && !canUseSpRhythm(modeOptions)) {
-      showDialog("SP 音符模式关闭时不可使用 Directional Flick。");
       return;
     }
     switchToolState(nextType);
@@ -171,11 +174,17 @@ export function useBoardInteractionActions(params: any) {
 
   const applySvToolFromPalette = useCallback(() => {
     if (!canUseSv(modeOptions)) {
-      showDialog("ExGarupa 模式关闭时不可使用 SV。");
       return;
     }
     switchToolState("sv");
   }, [modeOptions, showDialog, switchToolState]);
+
+  const applyLaneChangeToolFromPalette = useCallback(() => {
+    if (!canUseHabahiro(settings)) {
+      return;
+    }
+    switchToolState("laneChange");
+  }, [settings, showDialog, switchToolState]);
 
   const applyCopyToolFromPalette = useCallback(() => {
     switchToolState("copy");
@@ -254,8 +263,8 @@ export function useBoardInteractionActions(params: any) {
   };
 
   const placeNote = (lane: number, beat: number) => {
-    if (tool === "long" || tool === "middle" || tool === "curve" || tool === "bpm" || tool === "sv" || tool === "copy"
-      || tool === "paste") {
+    if (tool === "long" || tool === "middle" || tool === "curve" || tool === "bpm" || tool === "sv" || tool === "laneChange"
+      || tool === "copy" || tool === "paste") {
       return null;
     }
     return placeNoteWithType(tool, lane, beat);
@@ -496,7 +505,6 @@ export function useBoardInteractionActions(params: any) {
         return;
       }
       if (isLastBeatOrderedBpmNegative(bpm, bpmEvents)) {
-        showDialog("谱面不合法：\n末尾 BPM 不可为负数", "error");
         return;
       }
       setMetadata((current: any) => ({ ...current, bpm }));
@@ -514,7 +522,6 @@ export function useBoardInteractionActions(params: any) {
       { beat: quantizedBeat, bpm },
     ];
     if (isLastBeatOrderedBpmNegative(metadata.bpm, nextEvents)) {
-      showDialog("谱面不合法：\n末尾 BPM 不可为负数", "error");
       return;
     }
 
@@ -535,10 +542,6 @@ export function useBoardInteractionActions(params: any) {
     // The SV tool places into its own timing group (#0 unless chosen in its setting).
     const timingGroup = normalizeTimingGroup(toolSvTimingGroup, GLOBAL_TIMING_GROUP_ID);
     const value = Number(toFinite(toolSvValue, 1).toFixed(6));
-    if (!Number.isFinite(value)) {
-      showDialog("SV 值必须为有限数字。");
-      return;
-    }
     const created = normalizeSvEvent({ beat: quantizedBeat, value, timingGroup }, beatDivision, 1);
     if (!created) {
       return;
@@ -549,6 +552,18 @@ export function useBoardInteractionActions(params: any) {
       );
       return params.sortSvEvents([...filtered, created]);
     });
+    clearSelection();
+  };
+
+  /** Places a HABAHIRO lane change (a LANE CHANGE event) on the beat; one already there stays as it is. */
+  const placeLaneChange = (beat: number) => {
+    if (!canUseHabahiro(settings)) {
+      return;
+    }
+    const quantizedBeat = quantizeBeat(beat, beatDivision);
+    if (!Number.isFinite(quantizedBeat) || quantizedBeat < 0) return;
+    setLaneChangeBeats((previous: number[]) => previous.some((item) => approxEq(item, quantizedBeat))
+      ? previous : [...previous, quantizedBeat]);
     clearSelection();
   };
 
@@ -587,10 +602,14 @@ export function useBoardInteractionActions(params: any) {
 
     if (tool === "sv") {
       if (!canUseSv(modeOptions)) {
-        showDialog("ExGarupa 模式关闭时不可使用 SV。");
-        return;
+          return;
       }
       placeSvEvent(target.beat);
+      return;
+    }
+
+    if (tool === "laneChange") {
+      placeLaneChange(target.beat);
       return;
     }
 
@@ -626,8 +645,10 @@ export function useBoardInteractionActions(params: any) {
 
     if (isBatchTarget) {
       if (isDirectionalNoteType(nextType) && selectedNotes.every((note: ChartNote) => note.type === nextType)) {
-        const nextWidth = normalizeDirectionalWidth((target.width ?? 1) + 1);
-        commitSelectedNoteTransform((note: ChartNote) => ({ ...note, width: nextWidth }));
+        // Outside HABAHIRO and ExGarupa widening stops at DIRECTIONAL_WIDTH_LIMIT (silently: the press changes nothing).
+        const targetWidth = normalizeDirectionalWidth(target.width);
+        const nextWidth = limitDirectionalWidening(targetWidth, targetWidth + 1, directionalUnlimited);
+        if (nextWidth !== targetWidth) commitSelectedNoteTransform((note: ChartNote) => ({ ...note, width: nextWidth }));
         return;
       }
 
@@ -669,8 +690,9 @@ export function useBoardInteractionActions(params: any) {
     }
 
     if (isDirectionalNoteType(nextType) && target.type === nextType) {
-      const nextWidth = normalizeDirectionalWidth((target.width ?? 1) + 1);
-      setNotes((previous: ChartNote[]) =>
+      const targetWidth = normalizeDirectionalWidth(target.width);
+      const nextWidth = limitDirectionalWidening(targetWidth, targetWidth + 1, directionalUnlimited);
+      if (nextWidth !== targetWidth) setNotes((previous: ChartNote[]) =>
         sortNotes(
           previous.map((note) => {
             if (note.id !== target.id) {
@@ -906,7 +928,6 @@ export function useBoardInteractionActions(params: any) {
   const handleBoardClick = (event: MouseEvent<HTMLDivElement>) => {
     if (isSvPreviewEnabled) {
       event.preventDefault();
-      showDialog("SV 预览为只读模式，请关闭后再编辑。");
       return;
     }
     if (suppressNextBoardClickRef.current) {
@@ -951,7 +972,7 @@ export function useBoardInteractionActions(params: any) {
       return;
     }
 
-    const placement = resolveBoardPlacement(clickX, clickY, { ignoreLane: tool === "bpm" || tool === "sv" });
+    const placement = resolveBoardPlacement(clickX, clickY, { ignoreLane: tool === "bpm" || tool === "sv" || tool === "laneChange" });
     if (!placement) {
       return;
     }
@@ -963,10 +984,14 @@ export function useBoardInteractionActions(params: any) {
 
     if (tool === "sv") {
       if (!canUseSv(modeOptions)) {
-        showDialog("ExGarupa 模式关闭时不可使用 SV。");
-        return;
+          return;
       }
       placeSvEvent(placement.beat);
+      return;
+    }
+
+    if (tool === "laneChange") {
+      placeLaneChange(placement.beat);
       return;
     }
 
@@ -1028,7 +1053,6 @@ export function useBoardInteractionActions(params: any) {
       const targetElement = event.target as HTMLElement | null;
       if (!targetElement?.closest(".note-token")) {
         event.preventDefault();
-        showDialog("SV 预览为只读模式，请关闭后再编辑。");
         return;
       }
     }
@@ -1081,6 +1105,7 @@ export function useBoardInteractionActions(params: any) {
     applyCurveToolFromPalette,
     applyBpmToolFromPalette,
     applySvToolFromPalette,
+    applyLaneChangeToolFromPalette,
     applyCopyToolFromPalette,
     applyPasteToolFromPalette,
     placeNoteWithType,

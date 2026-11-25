@@ -5,7 +5,7 @@ import { OriginalFormButton, OriginalFormNote, OriginalFormSubtitle, OriginalSte
   ORIGINAL_STEP_STEPPER_WIDTH } from "../OriginalFormParts";
 import { OriginalRadioOptions } from "../OriginalRadioOptions";
 import { OriginalScrollPopupList, originalScrollPopupBox, ORIGINAL_SCROLL_POPUP_WIDTH } from "../OriginalScrollPopupList";
-import { GLOBAL_TIMING_GROUP_ID, nextTimingGroupId, sortTimingGroupIds, timingGroupDisplayName } from "../../chartCore";
+import { DIRECTIONAL_WIDTH_LIMIT, GLOBAL_TIMING_GROUP_ID, nextTimingGroupId, sortTimingGroupIds, timingGroupDisplayName } from "../../chartCore";
 import { OriginalTransferDialog } from "../OriginalTransferDialog";
 
 /** The selected notes' properties as the dialog shows them (see ChartEditorController's selectedNoteProperties). */
@@ -49,11 +49,13 @@ const numericText = /^-?\d*\.?\d*$/;
  * notes selected, beat and lane are the earliest and leftmost note's, and the whole selection moves with them; width
  * and direction go to every note that has one.
  */
-export function EditorNotePropertiesDialog({ open, properties, laneRange, timingGroups, onAddTimingGroup, onClose,
-  onSave }: {
+export function EditorNotePropertiesDialog({ open, properties, laneRange, directionalUnlimited = true, timingGroups,
+  onAddTimingGroup, onClose, onSave }: {
   open: boolean;
   properties: SelectedNoteProperties | null;
   laneRange: { min: number; max: number };
+  /** Directionals widen without limit (HABAHIRO or ExGarupa); otherwise up to DIRECTIONAL_WIDTH_LIMIT. */
+  directionalUnlimited?: boolean;
   /** The chart's timing groups, for moving the notes to another (ExGarupa only; absent hides it). */
   timingGroups?: readonly string[];
   /** Makes the next timing group (新建 #n), returning its id. */
@@ -80,7 +82,10 @@ export function EditorNotePropertiesDialog({ open, properties, laneRange, timing
   const beatValue = Math.max(0, numberOf(beat, properties.beat));
   const laneValue = numberOf(lane, properties.lane);
   const widthValue = Math.round(numberOf(width, properties.width));
-  const widthMax = properties.widthMode === "directional" ? laneRange.max - laneRange.min + 1 : 7;
+  // Outside HABAHIRO and ExGarupa a Directional widens up to DIRECTIONAL_WIDTH_LIMIT (one already wider keeps its width).
+  const widthMax = properties.widthMode === "directional"
+    ? directionalUnlimited ? laneRange.max - laneRange.min + 1 : Math.max(DIRECTIONAL_WIDTH_LIMIT, properties.width)
+    : 7;
   const groupIds = sortTimingGroupIds([GLOBAL_TIMING_GROUP_ID, ...(timingGroups ?? [])]);
   const save = () => {
     const targetGroup = group === NEW_TIMING_GROUP ? onAddTimingGroup?.() ?? "" : group;

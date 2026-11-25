@@ -1779,12 +1779,13 @@ button.apply-icon-button:not(.original-button):not(.note-token):not(.bpm-label-b
   z-index: 7;
 }
 
+/* The placement previews (following the pointer, and snapped) take the event lines' colour (SV_LINE_COLOR). */
 .bpm-marker.bpm-preview .bpm-line {
-  background: rgb(217, 13, 35);
+  background: rgb(255, 59, 114);
 }
 
 .bpm-marker.bpm-preview-snap .bpm-line {
-  background: rgb(217, 13, 35);
+  background: rgb(255, 59, 114);
 }
 
 .bpm-marker.bpm-preview-copy .bpm-line {
@@ -1796,11 +1797,11 @@ button.apply-icon-button:not(.original-button):not(.note-token):not(.bpm-label-b
 }
 
 .bpm-marker.sv-preview .sv-line {
-  background: rgb(42, 188, 116);
+  background: rgb(255, 59, 114);
 }
 
 .bpm-marker.sv-preview-snap .sv-line {
-  background: rgb(45, 225, 145);
+  background: rgb(255, 59, 114);
 }
 
 .bpm-marker.sv-preview-copy .sv-line {

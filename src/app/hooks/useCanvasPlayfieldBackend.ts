@@ -1020,20 +1020,31 @@ export function useCanvasPlayfieldBackend(params: {
         const lineHeight = Math.max(1, editorSimultaneousLineWidth(snapshot.laneWidth, snapshot.noteVisualScale));
         const halfHeight = lineHeight * 0.5;
         for (const segment of snapshot.simultaneousSegments) {
-          const segmentY = segment.y + svOffset(segment.timingGroup);
-          if (segmentY < windowTop - lineHeight || segmentY > windowBottom + lineHeight) {
+          const fromY = segment.y + svOffset(segment.timingGroup);
+          const toY = segment.toY + svOffset(segment.toTimingGroup);
+          if (Math.max(fromY, toY) < windowTop - lineHeight || Math.min(fromY, toY) > windowBottom + lineHeight) {
             continue;
           }
           if (!Number.isFinite(segment.width) || segment.width <= 1e-6) {
             continue;
           }
-          context.drawImage(
-            simultaneousTexture,
-            segment.fromX + boardXOffset,
-            segmentY - windowTop - halfHeight,
-            segment.width,
-            lineHeight,
-          );
+          if (Math.abs(toY - fromY) < 0.5) {
+            context.drawImage(
+              simultaneousTexture,
+              segment.fromX + boardXOffset,
+              fromY - windowTop - halfHeight,
+              segment.width,
+              lineHeight,
+            );
+            continue;
+          }
+          // Its ends in different timing groups: from one note to the other, as the original draws it.
+          const dy = toY - fromY;
+          context.save();
+          context.translate(segment.fromX + boardXOffset, fromY - windowTop);
+          context.rotate(Math.atan2(dy, segment.width));
+          context.drawImage(simultaneousTexture, 0, -halfHeight, Math.hypot(segment.width, dy), lineHeight);
+          context.restore();
         }
       }
 

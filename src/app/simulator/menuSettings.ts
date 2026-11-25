@@ -8,7 +8,8 @@ export interface SimulatorMenuSettings {
   readonly suddenLane: boolean;
   readonly lightModeBrightness: number;
   readonly hideFastSlow: boolean;
-  readonly displayStageEffect: boolean;
+  /** 動作モード: 軽量 (InGameGraphicsMode.Light) rather than 通常; the editor has no Live2D mode. */
+  readonly lightGraphicsMode: boolean;
   readonly hideCombo: boolean;
   readonly displayComboPosition: number;
   readonly judgementAdjustValue: number;
@@ -22,7 +23,7 @@ export interface SimulatorMenuSettings {
   readonly rememberedLimitedSkin?: Extract<SimulatorOriginalSkinSettings["special"], { kind: "limited" }>;
 }
 export const DEFAULT_SIMULATOR_MENU_SETTINGS: SimulatorMenuSettings = Object.freeze({
-  hideFastSlow: false, displayStageEffect: true,
+  hideFastSlow: false, lightGraphicsMode: false,
   hideCombo: false, displayComboPosition: 4,
   lastTab: 0,
   suddenRate: 0, suddenLane: false, lightModeBrightness: LIGHT_MODE_BRIGHTNESS_DEFAULT, judgementAdjustValue: 0, judgementAdjustValueB: 0, musicVolumePercent: 70, masterVolumePercent: 100, systemSeVolumePercent: 70, systemBgmVolumePercent: 70,
@@ -48,8 +49,10 @@ export function normalizeSimulatorMenuSettings(value: unknown): SimulatorMenuSet
   }
   // Legacy caches predate these two local presentation settings. Present invalid values are rejected.
   const hideFastSlow = item.hideFastSlow === undefined ? false : item.hideFastSlow;
-  const displayStageEffect = item.displayStageEffect === undefined ? true : item.displayStageEffect;
-  if (typeof hideFastSlow !== "boolean" || typeof displayStageEffect !== "boolean")
+  // The former displayStageEffect switch (never shown, always on) is dropped: in the original it is the team live
+  // rule display, and the stage effects follow 動作モード instead.
+  const lightGraphicsMode = item.lightGraphicsMode === undefined ? false : item.lightGraphicsMode;
+  if (typeof hideFastSlow !== "boolean" || typeof lightGraphicsMode !== "boolean")
     throw new Error("Invalid original live-effect switches.");
   const hideCombo = item.hideCombo === undefined ? false : item.hideCombo;
   const displayComboPosition = item.displayComboPosition === undefined ? 4 : item.displayComboPosition;
@@ -81,7 +84,7 @@ export function normalizeSimulatorMenuSettings(value: unknown): SimulatorMenuSet
   };
   const rememberedCollaboSkin = remembered("collabo", item.rememberedCollaboSkin) as SimulatorMenuSettings["rememberedCollaboSkin"];
   const rememberedLimitedSkin = remembered("limited", item.rememberedLimitedSkin) as SimulatorMenuSettings["rememberedLimitedSkin"];
-  return Object.freeze({ hideFastSlow, displayStageEffect, hideCombo, displayComboPosition: displayComboPosition as number, lastTab: item.lastTab as number, judgementAdjustValue: item.judgementAdjustValue as number,
+  return Object.freeze({ hideFastSlow, lightGraphicsMode, hideCombo, displayComboPosition: displayComboPosition as number, lastTab: item.lastTab as number, judgementAdjustValue: item.judgementAdjustValue as number,
     judgementAdjustValueB: item.judgementAdjustValueB as number,
     musicVolumePercent: item.musicVolumePercent as number, masterVolumePercent: item.masterVolumePercent as number,
     systemSeVolumePercent, systemBgmVolumePercent, suddenRate: suddenRate as number, suddenLane, lightModeBrightness, skin: skin.value,

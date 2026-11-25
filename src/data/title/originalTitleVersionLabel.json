@@ -1,0 +1,161 @@
+{
+  "source": {
+    "commit": "30d3e58b152c8d26ff0d69f8dacf3fc66033e5ac",
+    "path": "artifacts/investigations/cn-title-screen-10-1-3/cn-title-prefabs.json",
+    "sha256": "DEE2766AE5F7DE2C0069AC901D124498549FF0F1E557348B5E8FD34603CADA19"
+  },
+  "resource": "level0:UI Root/Layer_Title/TitleController/ComponentRoot/TopLeftAnchor/LayerPanel/version",
+  "nodes": [
+    {
+      "id": 24,
+      "transformId": 200,
+      "name": "version",
+      "path": "version",
+      "parent": null,
+      "position": {
+        "x": 16.0,
+        "y": -17.0,
+        "z": 0.0
+      },
+      "scale": {
+        "x": 1.0,
+        "y": 1.0,
+        "z": 1.0
+      },
+      "rotation": {
+        "x": -0.0,
+        "y": -0.0,
+        "z": -0.0,
+        "w": 1.0
+      },
+      "active": true
+    }
+  ],
+  "components": [
+    {
+      "id": 465,
+      "node": 24,
+      "kind": "UILabel",
+      "data": {
+        "m_GameObject": {
+          "m_FileID": 0,
+          "m_PathID": 24
+        },
+        "m_Enabled": 1,
+        "m_Script": {
+          "m_FileID": 1,
+          "m_PathID": 6910
+        },
+        "m_Name": "",
+        "leftAnchor": {
+          "target": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "relative": 0.0,
+          "absolute": 0
+        },
+        "rightAnchor": {
+          "target": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "relative": 1.0,
+          "absolute": 0
+        },
+        "bottomAnchor": {
+          "target": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "relative": 0.0,
+          "absolute": 0
+        },
+        "topAnchor": {
+          "target": {
+            "m_FileID": 0,
+            "m_PathID": 0
+          },
+          "relative": 1.0,
+          "absolute": 0
+        },
+        "updateAnchors": 1,
+        "mColor": {
+          "r": 1.0,
+          "g": 1.0,
+          "b": 1.0,
+          "a": 1.0
+        },
+        "mPivot": 0,
+        "mWidth": 600,
+        "mHeight": 30,
+        "mDepth": 8,
+        "boundless": 0,
+        "mMat": {
+          "m_FileID": 0,
+          "m_PathID": 0
+        },
+        "autoResizeBoxCollider": 0,
+        "hideIfOffScreen": 0,
+        "keepAspectRatio": 0,
+        "aspectRatio": 20.0,
+        "keepCrispWhenShrunk": 1,
+        "mTrueTypeFont": {
+          "m_FileID": 0,
+          "m_PathID": 0
+        },
+        "mFont": {
+          "m_FileID": 2,
+          "m_PathID": 1775
+        },
+        "mText": "Ver1.0.0",
+        "mFontSize": 16,
+        "mFontStyle": 0,
+        "mAlignment": 0,
+        "mEncoding": 1,
+        "mMaxLineCount": 0,
+        "mEffectStyle": 2,
+        "mEffectColor": {
+          "r": 0.313726,
+          "g": 0.313726,
+          "b": 0.313726,
+          "a": 0.588235
+        },
+        "mSymbols": 1,
+        "mEffectDistance": {
+          "x": 1.0,
+          "y": 1.0
+        },
+        "mOverflow": 0,
+        "mApplyGradient": 0,
+        "mGradientTop": {
+          "r": 1.0,
+          "g": 1.0,
+          "b": 1.0,
+          "a": 1.0
+        },
+        "mGradientBottom": {
+          "r": 0.7,
+          "g": 0.7,
+          "b": 0.7,
+          "a": 1.0
+        },
+        "mSpacingX": 0,
+        "mSpacingY": 0,
+        "mUseFloatSpacing": 0,
+        "mFloatSpacingX": 0.0,
+        "mFloatSpacingY": 0.0,
+        "mOverflowEllipsis": 0,
+        "mOverflowWidth": 0,
+        "mOverflowHeight": 0,
+        "mModifier": 0,
+        "mSymbolDepth": 0,
+        "mShrinkToFit": 0,
+        "mMaxLineWidth": 0,
+        "mMaxLineHeight": 0,
+        "mLineWidth": 0.0,
+        "mMultiline": 1
+      }
+    }
+  ]
+}

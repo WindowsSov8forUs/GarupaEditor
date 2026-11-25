@@ -30,7 +30,7 @@ type Difficulty = (typeof DIFFICULTY_OPTIONS)[number];
  * shape preset to a pressed Slide segment. Long and Slide both draw the green long-note sprite; Middle draws the slide
  * middle-node sprite.
  */
-export type EditorTool = NoteType | "long" | "middle" | "curve" | "bpm" | "sv" | "copy" | "paste";
+export type EditorTool = NoteType | "long" | "middle" | "curve" | "bpm" | "sv" | "laneChange" | "copy" | "paste";
 export const GLOBAL_TIMING_GROUP_ID = "#Global";
 /** The global timing group's name in the editor; the chart formats also read "#0" and 0 as the global group. */
 export const GLOBAL_TIMING_GROUP_DISPLAY_NAME = "#0";
@@ -642,7 +642,7 @@ export function withRhythmWidthKeepingStart<T extends Pick<ChartNote, "lane" | "
 }
 
 export function isNoteTool(tool: EditorTool): tool is NoteType {
-  return tool !== "long" && tool !== "middle" && tool !== "curve" && tool !== "bpm" && tool !== "sv" && tool !== "copy"
+  return tool !== "long" && tool !== "middle" && tool !== "curve" && tool !== "bpm" && tool !== "sv" && tool !== "laneChange" && tool !== "copy"
     && tool !== "paste";
 }
 
@@ -698,6 +698,18 @@ function normalizeIncomingNoteType(raw: unknown): NoteType {
 
 export function normalizeDirectionalWidth(raw: unknown): number {
   return normalizePositiveInt(raw, 1);
+}
+
+/** The widest a Directional is widened to outside HABAHIRO and ExGarupa (the original's widest Multiple Directional). */
+export const DIRECTIONAL_WIDTH_LIMIT = 3;
+
+/**
+ * A Directional's width after an edit from `previous` to `next`: outside HABAHIRO and ExGarupa (`unlimited` false)
+ * widening stops at DIRECTIONAL_WIDTH_LIMIT, silently; a note already wider keeps its width and may still narrow.
+ */
+export function limitDirectionalWidening(previous: number, next: number, unlimited: boolean): number {
+  if (unlimited || next <= previous) return next;
+  return Math.min(next, Math.max(previous, DIRECTIONAL_WIDTH_LIMIT));
 }
 
 export function normalizeRhythmWidth(raw: unknown): number {

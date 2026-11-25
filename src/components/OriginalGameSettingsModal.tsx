@@ -30,6 +30,7 @@ const tabComponents = [...shell.components.values()].filter(item => item.kind ==
 const fromProps = (props: Props): OriginalSettingsDraft => ({ options: props.optionSettings, fps: props.playbackFps,
   mv: props.playbackMvMode, alpha: props.playbackMvAlphaPercent, combo: props.playbackAllPerfectStatusDisplayMode,
   window: props.windowPresetId, playbackWindow: props.playbackWindowPresetId });
+const SYSTEM_TAB = 3, SYSTEM_TAB_CAPTION = "系统设置";
 const windowDefaults = { window: DEFAULT_WINDOW_PRESET_ID, playbackWindow: DEFAULT_PLAYBACK_WINDOW_PRESET_ID };
 
 export function OriginalGameSettingsModal(props: Props) {
@@ -177,11 +178,14 @@ export function OriginalGameSettingsModal(props: Props) {
     components[originalRef(item.data.tabSprite)] = {
       mSpriteName: active ? item.data.tabActiveSpriteName : item.data.tabDeactiveSpriteName,
     };
-    components[originalRef(item.data.captionLabel)] = { mColor: active
+    // The system tab holds no notification settings here (those rows are hidden): it is captioned without 通知.
+    const caption = item.data.tabIndex === SYSTEM_TAB ? { mText: SYSTEM_TAB_CAPTION } : {};
+    components[originalRef(item.data.captionLabel)] = { ...caption, mColor: active
       ? { r: 1, g: 59 / 255, b: 114 / 255, a: 1 } : { r: 1, g: 1, b: 1, a: 1 } };
     const button = shell.componentAt(item.node, "StarUIButton")!;
     buttons[button.id] = { role: "tab", selected: active, navigationIndex: item.data.tabIndex,
-      label: shell.text(shell.components.get(originalRef(item.data.captionLabel))!),
+      label: item.data.tabIndex === SYSTEM_TAB ? SYSTEM_TAB_CAPTION
+        : shell.text(shell.components.get(originalRef(item.data.captionLabel))!),
       action: () => setDraft(old => ({ ...old, options: { ...old.options,
         simulatorSettings: { ...old.options.simulatorSettings, lastTab: item.data.tabIndex } } })),
     };

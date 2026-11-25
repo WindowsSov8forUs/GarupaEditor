@@ -277,12 +277,12 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
     // Derived once when the recipe was created; every build of this session (initial or retry) shares it.
     const originalLiveSettings = recipe.liveSettings;
     // RhythmGameStartData.BackgroundModuleType: after MV, the Light module
-    // (InGameGraphicsMode.Light; here, a chart with a custom background) is
-    // used outside practice on a #HABAHIRO chart or without a Collaboration
-    // skin (SeasonUtility.IsEnableCollaborationSkin). Practice may also select Light, which only
+    // (InGameGraphicsMode.Light, the 動作モード setting) is used outside practice
+    // on a #HABAHIRO chart or without a Collaboration skin
+    // (SeasonUtility.IsEnableCollaborationSkin). Practice may also select Light, which only
     // removes SD characters and stage effects (neither is present in practice here) and keeps the
     // practice room from BgManager.initPracticeMode instead of the card.
-    const lightMode = presentation.value.illustBackground !== null && score.value.mode.sessionMode === "live" &&
+    const lightMode = originalLiveSettings.lightGraphicsMode && score.value.mode.sessionMode === "live" &&
       mvResource.value === null && (chart.value.isMultiRangeNotes || recipe.request.config.skin.selectedSpecial.kind !== "collabo");
     const skin = await this.deriveSkin(recipe, score.value.mode, chart.value);
     if (skin.status === "rejected") {
@@ -338,19 +338,26 @@ class ProductionRecipeEngineBuilder implements SimulatorRecipeEngineBuilder {
               if (surfaceBound.status !== "ok") return fromIntegrity(surfaceBound);
               // BgManager.initLightMode puts the card in bgImage instead of the
               // background skin; the special background's widgets are not loaded.
-              const decodedBackground = lightMode ? accepted(null) : await normalizeSkinBackgroundImage(backgroundImage);
+              // The chart's custom background stands for the card; without one,
+              // the background skin set in the settings is shown in its place.
+              const illust = lightMode ? presentation.value.illustBackground : null;
+              const decodedBackground = illust !== null ? accepted(null) : await normalizeSkinBackgroundImage(backgroundImage);
               if (decodedBackground.status === "rejected") return decodedBackground;
-              const effectivePresentation = lightMode
-                ? accepted(Object.freeze({ ...presentation.value, stageBackdrop: presentation.value.illustBackground!,
-                  stageEffect: Object.freeze([]) }))
+              const backdrop = illust !== null
+                ? accepted(Object.freeze({ ...presentation.value, stageBackdrop: illust }))
                 : replacePreparedSessionStageBackdrop(presentation.value, decodedBackground.value);
+              if (backdrop.status === "rejected") return backdrop;
+              const effectivePresentation = lightMode
+                ? accepted(Object.freeze({ ...backdrop.value, stageEffect: Object.freeze([]) }))
+                : backdrop;
               if (effectivePresentation.status === "rejected") return effectivePresentation;
               const common = renderer.getStartupDirectionCommonResources();
               if (common.status !== "ok") return fromIntegrity(common);
               const created = await createPixiStartupDirectionScene(
                 effectivePresentation.value, common.value, new BrowserPixiTextureDecoder(),
                 recipe.request.chartData.isFullLength, scene.surfaceLayout, mvResource.value === null,
-                score.value.mode.sessionMode === "live" && originalLiveSettings.displayStageEffect,
+                // LightBackgroundModule.removeStageEffects is the only removal (lightMode below).
+                true,
                 lightMode ? Object.freeze({ brightness: originalLiveSettings.core.lightModeBrightness }) : null,
               );
               if (created.status !== "ok") return fromIntegrity(created);

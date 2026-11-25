@@ -34,7 +34,6 @@ __pycache__/
 /tsc-trace*.txt
 /status_messages*.csv
 /tests/
-/docs/
 /test-start*.bat
 /scripts/test-*.ps1
 /src-tauri/target_check/
@@ -58,3 +57,5 @@ __pycache__/
 
 # Local Claude working instructions (not for VCS)
 /CLAUDE.md
+# Local agent working conventions (not for VCS)
+/AGENTS.md

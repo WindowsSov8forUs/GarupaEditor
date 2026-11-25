@@ -46,7 +46,7 @@ export interface SimulatorPreAdaptationInput extends SimulatorModeSelection {
   readonly noteSize: number;
   readonly noteSpeed: number;
   readonly hideFastSlow: boolean;
-  readonly displayStageEffect: boolean;
+  readonly lightGraphicsMode: boolean;
   readonly hideCombo: boolean;
   readonly displayComboPosition: number;
   readonly syncLine: boolean;
@@ -90,7 +90,7 @@ export function buildSimulatorPreAdaptedConfig(
     judgementAdjustValue: input.judgementAdjustValue,
     judgementAdjustValueB: input.judgementAdjustValueB,
     hideFastSlow: input.hideFastSlow,
-    displayStageEffect: input.displayStageEffect,
+    lightGraphicsMode: input.lightGraphicsMode,
     hideCombo: input.hideCombo,
     displayComboPosition: input.displayComboPosition,
     syncLine: input.syncLine,

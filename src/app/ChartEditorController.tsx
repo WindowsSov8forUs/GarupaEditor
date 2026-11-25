@@ -50,7 +50,7 @@ import { useBoardInteractionActions } from "./hooks/useBoardInteractionActions";
 import { type CanvasSvLiveScroll, useCanvasPlayfieldBackend, type EventBubbleHit } from "./hooks/useCanvasPlayfieldBackend";
 import { useCanvasRenderResources } from "./hooks/useCanvasRenderResources";
 import { useIsStartingApplication, useStartupReadiness } from "./startupReadiness";
-import { useEditorGeometry } from "./hooks/useEditorGeometry";
+import { playbackAnchorFromBottom, useEditorGeometry } from "./hooks/useEditorGeometry";
 import { useEditorIoAndShortcuts } from "./hooks/useEditorIoAndShortcuts";
 import { useEditorSessionCache } from "./hooks/useEditorSessionCache";
 import { useEditorRenderModel, type RenderConnectionSegment } from "./hooks/useEditorRenderModel";
@@ -128,6 +128,7 @@ import {
   normalizeBpmEvent,
   normalizeSvEvent,
   normalizeDirectionalWidth,
+  limitDirectionalWidening,
   normalizeTimingGroup,
   normalizeRhythmWidth,
   ensureTimingGroups,
@@ -278,7 +279,13 @@ type EditorUndoSnapshot = {
   slideChains: SlideChain[];
   bpmEvents: ChartBpmEvent[];
   timingGroups: ChartTimingGroupMap;
+  /** The HABAHIRO lane changes (settings.laneChangeBeats); absent in history kept before they were recorded. */
+  laneChangeBeats?: number[];
 };
+
+const NO_LANE_CHANGES: number[] = [];
+/** The lane changes a snapshot holds (none when absent). */
+const undoLaneChanges = (snapshot: EditorUndoSnapshot): number[] => snapshot.laneChangeBeats ?? [];
 
 type CopiedSlideChain = {
   noteIds: string[];
@@ -329,7 +336,8 @@ function sameRows(a: readonly object[], b: readonly object[]): boolean {
 /** Whether two edit states hold the same chart content, whatever their array identities. */
 function sameUndoContent(a: EditorUndoSnapshot, b: EditorUndoSnapshot): boolean {
   return sameRows(a.notes, b.notes) && sameRows(a.slideChains, b.slideChains) && sameRows(a.bpmEvents, b.bpmEvents)
-    && (a.timingGroups === b.timingGroups || JSON.stringify(a.timingGroups) === JSON.stringify(b.timingGroups));
+    && (a.timingGroups === b.timingGroups || JSON.stringify(a.timingGroups) === JSON.stringify(b.timingGroups))
+    && JSON.stringify(undoLaneChanges(a)) === JSON.stringify(undoLaneChanges(b));
 }
 
 function resolvePlaybackSeSources(runtimeSe: SeSkinAssets): ResolvedPlaybackSeSources {
@@ -560,6 +568,8 @@ function ChartEditorController() {
   const bpmEventsRef = useRef(bpmEvents);
   const timingGroupsRef = useRef(timingGroups);
   const svEventsRef = useRef(svEvents);
+  const laneChangeBeats = useMemo(() => settings.laneChangeBeats ?? NO_LANE_CHANGES, [settings.laneChangeBeats]);
+  const laneChangeBeatsRef = useRef<number[]>(laneChangeBeats);
   const undoStackRef = useRef<EditorUndoSnapshot[]>([]);
   const redoStackRef = useRef<EditorUndoSnapshot[]>([]);
   const isUndoRestoringRef = useRef(false);
@@ -572,6 +582,7 @@ function ChartEditorController() {
     slideChains: snapshot.slideChains.map((chain) => ({ ...chain, noteIds: [...chain.noteIds] })),
     bpmEvents: snapshot.bpmEvents.map((event) => ({ ...event })),
     timingGroups: ensureTimingGroups(snapshot.timingGroups),
+    laneChangeBeats: [...undoLaneChanges(snapshot)],
   }), []);
 
   const buildCurrentUndoSnapshot = useCallback((): EditorUndoSnapshot => (
@@ -580,6 +591,7 @@ function ChartEditorController() {
       slideChains: slideChainsRef.current,
       bpmEvents: bpmEventsRef.current,
       timingGroups: timingGroupsRef.current,
+      laneChangeBeats: laneChangeBeatsRef.current,
     })
   ), [cloneUndoSnapshot]);
 
@@ -596,6 +608,7 @@ function ChartEditorController() {
       slideChains: slideChainsRef.current,
       bpmEvents: bpmEventsRef.current,
       timingGroups: timingGroupsRef.current,
+      laneChangeBeats: laneChangeBeatsRef.current,
     };
   }, []);
 
@@ -605,6 +618,7 @@ function ChartEditorController() {
     bpmEventsRef.current = bpmEvents;
     timingGroupsRef.current = timingGroups;
     svEventsRef.current = svEvents;
+    laneChangeBeatsRef.current = laneChangeBeats;
     // Every edit requested since the last commit is one step; edits that changed nothing record none.
     const sources = pendingUndoSourcesRef.current;
     if (!sources) {
@@ -612,7 +626,7 @@ function ChartEditorController() {
     }
     // Derived updates (normalisations after an edit) may replace arrays without changing their content; such a
     // commit is not an edit, so the pending start state stays for the next real change.
-    if (sameUndoContent(sources, { notes, slideChains, bpmEvents, timingGroups })) {
+    if (sameUndoContent(sources, { notes, slideChains, bpmEvents, timingGroups, laneChangeBeats })) {
       return;
     }
     pendingUndoSourcesRef.current = null;
@@ -629,7 +643,7 @@ function ChartEditorController() {
     }
     redoStackRef.current = [];
     setUndoVersion((previous) => previous + 1);
-  }, [bpmEvents, cloneUndoSnapshot, notes, slideChains, svEvents, timingGroups]);
+  }, [bpmEvents, cloneUndoSnapshot, laneChangeBeats, notes, slideChains, svEvents, timingGroups]);
 
   const resolveStateAction = useCallback(<T,>(
     action: SetStateAction<T>,
@@ -715,6 +729,26 @@ function ChartEditorController() {
         (id) => notesRef.current.some(belongs(id)) || slideChainsRef.current.some(belongs(id)));
     });
   }, [requestUndoCapture, resolveStateAction]);
+
+  /** HABAHIRO lane changes (LANE CHANGE events): an edit, recorded for undo; kept sorted, without duplicates. */
+  const setLaneChangeBeats = useCallback((nextAction: SetStateAction<number[]>) => {
+    requestUndoCapture();
+    setSettingsState((previous) => {
+      const current = previous.laneChangeBeats ?? [];
+      const next = resolveStateAction(nextAction, current);
+      if (next === current) return previous;
+      const beats = [...new Set(next.filter((beat) => Number.isFinite(beat) && beat >= 0))].sort((a, b) => a - b);
+      const { laneChangeBeats: _beats, ...rest } = previous;
+      return beats.length > 0 ? { ...rest, laneChangeBeats: beats } : rest;
+    });
+  }, [requestUndoCapture, resolveStateAction]);
+  /** Undo and redo put the lane changes back without recording a step of their own. */
+  const restoreLaneChanges = useCallback((beats: number[]) => {
+    setSettingsState((previous) => {
+      const { laneChangeBeats: _beats, ...rest } = previous;
+      return beats.length > 0 && previous.habahiro ? { ...rest, laneChangeBeats: [...beats] } : rest;
+    });
+  }, []);
 
   const timingGroupIds = useMemo(() => sortTimingGroupIds(Object.keys(timingGroups)), [timingGroups]);
 
@@ -874,6 +908,7 @@ function ChartEditorController() {
     setSlideChainsState(snapshot.slideChains.map((chain) => ({ ...chain, noteIds: [...chain.noteIds] })));
     setBpmEventsState(snapshot.bpmEvents.map((event) => ({ ...event })));
     setTimingGroupsState(ensureTimingGroups(snapshot.timingGroups));
+    restoreLaneChanges(undoLaneChanges(snapshot));
     setSelectedNoteIds([]);
     setUndoVersion((previous) => previous + 1);
 
@@ -881,7 +916,7 @@ function ChartEditorController() {
       isUndoRestoringRef.current = false;
     });
     return true;
-  }, [buildCurrentUndoSnapshot, showDialog]);
+  }, [buildCurrentUndoSnapshot, restoreLaneChanges, showDialog]);
 
   const redoLastOperation = useCallback((): boolean => {
     const stack = redoStackRef.current;
@@ -910,6 +945,7 @@ function ChartEditorController() {
     setSlideChainsState(snapshot.slideChains.map((chain) => ({ ...chain, noteIds: [...chain.noteIds] })));
     setBpmEventsState(snapshot.bpmEvents.map((event) => ({ ...event })));
     setTimingGroupsState(ensureTimingGroups(snapshot.timingGroups));
+    restoreLaneChanges(undoLaneChanges(snapshot));
     setSelectedNoteIds([]);
     setUndoVersion((previous) => previous + 1);
 
@@ -917,7 +953,7 @@ function ChartEditorController() {
       isUndoRestoringRef.current = false;
     });
     return true;
-  }, [buildCurrentUndoSnapshot, showDialog]);
+  }, [buildCurrentUndoSnapshot, restoreLaneChanges, showDialog]);
 
   const [audioFileName, setAudioFileName] = useState("");
   const [audioDurationSec, setAudioDurationSec] = useState(0);
@@ -1178,7 +1214,11 @@ function ChartEditorController() {
   const noteVisualScale = clamp(appOptionSettings.rhythmNoteSizePercent / 100, 0.1, 2);
   const longLineOpacityScale = clamp(appOptionSettings.longLineBrightnessPercent / 100, 0.1, 1);
   const verticalScale = clamp(appOptionSettings.verticalScalePercent / 100, 0.5, 2) * verticalZoom;
-  const noteSeVolumeScale = clamp(appOptionSettings.noteSeVolumePercent / 100, 0, 1);
+  // Playback in the editor follows the settings page as 游玩 does: the song at 演出音量 - 乐曲, the note sounds at
+  // 演出中的音效, both under the master volume.
+  const masterVolumeScale = clamp(appOptionSettings.simulatorSettings.masterVolumePercent / 100, 0, 1);
+  const noteSeVolumeScale = clamp(appOptionSettings.noteSeVolumePercent / 100, 0, 1) * masterVolumeScale;
+  const musicVolumeScale = clamp(appOptionSettings.simulatorSettings.musicVolumePercent / 100, 0, 1) * masterVolumeScale;
   const timelinePixelsPerSecond = (BEAT_HEIGHT * uiScale * verticalScale * TIMELINE_REFERENCE_BPM) / 60;
   const bpmTimeline = useMemo(
     () => buildBpmTimeline(metadata.bpm, bpmEvents),
@@ -1423,7 +1463,6 @@ function ChartEditorController() {
   }, [interactiveNotes, isTimingGroupModeActive]);
   const setSelectedObjectTimingGroupId = useCallback((nextGroup: ChartTimingGroupId) => {
     if (!isExGarupaEnabled) {
-      showDialog("ExGarupa 模式关闭时不可使用 Timing Group。");
       return;
     }
     const normalizedGroup = normalizeObjectTimingGroup(nextGroup);
@@ -1810,8 +1849,8 @@ function ChartEditorController() {
 
       if (pastedBpmEvents.length > 0) {
         const nextBpmEvents = [...bpmEventsRef.current, ...pastedBpmEvents];
+        // A paste that would make the last BPM negative does nothing (editing limits are not announced).
         if (isLastBeatOrderedBpmNegative(metadata.bpm, nextBpmEvents)) {
-          showDialog("谱面不合法：\n末尾 BPM 不可为负数", "error");
           return;
         }
       }
@@ -2460,6 +2499,7 @@ function ChartEditorController() {
     selectedNoteIds,
     selectedSegmentKeys,
     showDialog,
+    directionalUnlimited: isHabahiroEnabled || isExGarupaEnabled,
     setSelectedNoteIds,
   });
 
@@ -2485,7 +2525,8 @@ function ChartEditorController() {
     // that project with the same content (a reload); any other restore starts without history.
     const kept = isFirstRestoreRef.current ? takeUndoHistory<EditorUndoSnapshot>(next.projectId, (present) =>
       sameUndoContent(present, { notes: next.chart.notes, slideChains: next.chart.slideChains,
-        bpmEvents: next.chart.bpmEvents, timingGroups: ensureTimingGroups(next.chart.timingGroups) })) : null;
+        bpmEvents: next.chart.bpmEvents, timingGroups: ensureTimingGroups(next.chart.timingGroups),
+        laneChangeBeats: next.chart.settings.laneChangeBeats ?? [] })) : null;
     isFirstRestoreRef.current = false;
     undoStackRef.current = kept?.undo ?? []; redoStackRef.current = kept?.redo ?? [];
     pendingUndoSourcesRef.current = null; setUndoVersion(v => v + 1);
@@ -2908,7 +2949,6 @@ function ChartEditorController() {
           : note.type === "hidden" ? "Hidden" : "Single",
         ...(isDirectionalNoteType(note.type) ? { direction: note.type === "directional_flick_left" ? "Left" : "Right" } : {}) }));
     if (!isGarupaLongSlideShape({ connections: connections as never })) {
-      showDialog("只有两个节点、头为 Single 或 Skill、尾与头在同一轨段的直 Slide 才能转为 Long。");
       return;
     }
     setSlideChains((previous) => previous.map((current) => current.id === chain.id ? { ...current, long: true as const } : current));
@@ -2940,7 +2980,6 @@ function ChartEditorController() {
       return;
     }
     if (chain.long === true) {
-      showDialog("Long 不能添加中间节点。");
       return;
     }
     const from = noteById.get(chain.noteIds[segmentIndex]);
@@ -2999,7 +3038,6 @@ function ChartEditorController() {
     }
     const chain = committedSlideChainById.get(chainId);
     if (chain?.long === true) {
-      showDialog("Long 不能添加中间节点。");
       return;
     }
     const from = chain ? noteById.get(chain.noteIds[segmentIndex]) : undefined;
@@ -3125,6 +3163,7 @@ function ChartEditorController() {
     applyCurveToolFromPalette: applyCurveToolFromPaletteRaw,
     applyBpmToolFromPalette: applyBpmToolFromPaletteRaw,
     applySvToolFromPalette: applySvToolFromPaletteRaw,
+    applyLaneChangeToolFromPalette: applyLaneChangeToolFromPaletteRaw,
     applyCopyToolFromPalette: applyCopyToolFromPaletteRaw,
     applyPasteToolFromPalette: applyPasteToolFromPaletteRaw,
     pressSlideTool,
@@ -3196,6 +3235,7 @@ function ChartEditorController() {
     setMetadata,
     setBpmEvents,
     setSvEvents,
+    setLaneChangeBeats,
     bpmEvents,
     svEvents,
     toolSvValue,
@@ -3465,31 +3505,22 @@ function ChartEditorController() {
 
   const setActiveSvValue = useCallback((value: number) => {
     const nextValue = Number(toFinite(value, toolSvValue).toFixed(6));
-    if (!Number.isFinite(nextValue)) {
-      showDialog("SV 值必须为有限数字。");
-      return;
-    }
     setToolSvValue(nextValue);
   }, [showDialog, toFinite, toolSvValue]);
 
   /** The SV tool's setting: the value and timing group that new SV events get. */
   const applySvToolSetting = useCallback((value: number, timingGroup: ChartTimingGroupId) => {
     const nextValue = Number(toFinite(value, toolSvValue).toFixed(6));
-    if (!Number.isFinite(nextValue)) {
-      showDialog("SV 值必须为有限数字。");
-      return;
-    }
     setToolSvValue(nextValue);
-    setToolSvTimingGroup(normalizeTimingGroup(timingGroup, GLOBAL_TIMING_GROUP_ID));
-  }, [showDialog, toFinite, toolSvValue]);
+    const group = normalizeTimingGroup(timingGroup, GLOBAL_TIMING_GROUP_ID);
+    setToolSvTimingGroup(group);
+    // Under a timing group view (not 全部) the view follows the SV tool's group, as the tool follows the view.
+    if (isTimingGroupModeActive) setSelectedTimingGroupId(group);
+  }, [isTimingGroupModeActive, showDialog, toFinite, toolSvValue]);
 
   /** Writes one SV event's value and timing group; an SV event already on that beat in the target group is replaced. */
   const updateSvEvent = useCallback((eventId: string, value: number, timingGroup: ChartTimingGroupId) => {
     const nextValue = Number(toFinite(value, 1).toFixed(6));
-    if (!Number.isFinite(nextValue)) {
-      showDialog("SV 值必须为有限数字。");
-      return;
-    }
     const targetGroup = normalizeTimingGroup(timingGroup, GLOBAL_TIMING_GROUP_ID);
     setSvEvents((previous) => {
       const current = previous.find((event) => event.id === eventId);
@@ -3571,6 +3602,10 @@ function ChartEditorController() {
       if (existingGain) {
         existingGain.gain.value = clamp(playbackVolumePercent / 100, 0, 1) * noteSeVolumeScale;
       }
+      const existingBgmGain = playbackBgmGainRef.current;
+      if (existingBgmGain) {
+        existingBgmGain.gain.value = clamp(playbackVolumePercent / 100, 0, 1) * musicVolumeScale;
+      }
       return existingContext;
     }
     if (typeof window === "undefined") {
@@ -3586,7 +3621,7 @@ function ChartEditorController() {
       masterGain.gain.value = clamp(playbackVolumePercent / 100, 0, 1) * noteSeVolumeScale;
       masterGain.connect(context.destination);
       const bgmGain = context.createGain();
-      bgmGain.gain.value = clamp(playbackVolumePercent / 100, 0, 1);
+      bgmGain.gain.value = clamp(playbackVolumePercent / 100, 0, 1) * musicVolumeScale;
       bgmGain.connect(context.destination);
       playbackSeAudioContextRef.current = context;
       playbackSeMasterGainRef.current = masterGain;
@@ -3595,7 +3630,7 @@ function ChartEditorController() {
     } catch {
       return null;
     }
-  }, [clamp, noteSeVolumeScale, playbackVolumePercent]);
+  }, [clamp, musicVolumeScale, noteSeVolumeScale, playbackVolumePercent]);
 
   const decodePlaybackAudioBuffer = useCallback(async (
     src: string,
@@ -4083,11 +4118,9 @@ function ChartEditorController() {
         playbackTickLastNowMsRef.current = nowMs;
       }
     }
+    // Under the SV view the canvas follows playback by offsetting each timing group (svLiveScroll); placing the chart
+    // again on every frame would hold each frame up for the whole render.
     playbackNowSecRef.current = nextTimeSec;
-    if (isSvPreviewEnabledRef.current) {
-      svPreviewTimeSecRef.current = nextTimeSec;
-      setSvPreviewTimeSec(nextTimeSec);
-    }
     processPlaybackSoundFrame(prevTimeSec, nextTimeSec);
         syncPlaybackViewport(nextTimeSec);
       updatePlaybackRuntimeLine(nextTimeSec);
@@ -4287,7 +4320,6 @@ function ChartEditorController() {
     if (!isToolArmed || tool !== "curve") return;
     const chain = committedSlideChainById.get(segment.chainId);
     if (chain?.long === true) {
-      showDialog("Long 不能应用形状预设。");
       return;
     }
     const parsed = parseSlideSegmentId(segment.slideSegmentId);
@@ -4309,7 +4341,6 @@ function ChartEditorController() {
     const chain = role ? committedSlideChainById.get(role.chainId) : undefined;
     if (!role || !chain) return;
     if (chain.long === true) {
-      showDialog("Long 不能应用形状预设。");
       return;
     }
     const nodes = chain.noteIds.map(id => noteById.get(id));
@@ -4346,7 +4377,6 @@ function ChartEditorController() {
 
   const applySvToolFromPalette = useCallback(() => {
     if (!isExGarupaEnabled) {
-      showDialog("ExGarupa 模式关闭时不可使用 SV。");
       return;
     }
     if (isPlayToolSelected) {
@@ -4359,6 +4389,18 @@ function ChartEditorController() {
     }
     applySvToolFromPaletteRaw();
   }, [applySvToolFromPaletteRaw, hidePlaybackGuide, hidePlaybackRuntimeLine, isExGarupaEnabled, isPlayToolSelected, isPlaybackPlaying, showDialog, stopPlayback]);
+
+  const applyLaneChangeToolFromPalette = useCallback(() => {
+    if (isPlayToolSelected) {
+      setIsPlayToolSelected(false);
+      hidePlaybackGuide();
+      hidePlaybackRuntimeLine();
+      if (isPlaybackPlaying) {
+        stopPlayback();
+      }
+    }
+    applyLaneChangeToolFromPaletteRaw();
+  }, [applyLaneChangeToolFromPaletteRaw, hidePlaybackGuide, hidePlaybackRuntimeLine, isPlayToolSelected, isPlaybackPlaying, stopPlayback]);
 
   const applyCopyToolFromPalette = useCallback(() => {
     if (isPlayToolSelected) {
@@ -4572,6 +4614,11 @@ function ChartEditorController() {
   }, [isExGarupaEnabled, isSvPreviewEnabled, isTimingGroupModeEnabled]);
   /** 时间组视图: null for 全部, else the group whose notes alone are editable. */
   const timingGroupView = isTimingGroupModeActive ? selectedTimingGroupId : null;
+  // A timing group view puts new SV events into its group: switching to a group (not 全部) switches the SV tool's
+  // group with it, and they stay together while it is shown. Under 全部 the tool keeps the group it last had.
+  useEffect(() => {
+    if (timingGroupView !== null) setToolSvTimingGroup(timingGroupView);
+  }, [timingGroupView]);
   const setTimingGroupView = useCallback((group: ChartTimingGroupId | null) => {
     if (group === null) {
       setIsTimingGroupModeEnabled(false);
@@ -4713,7 +4760,7 @@ function ChartEditorController() {
   useEffect(() => {
     const audio = playbackAudioRef.current;
     if (audio) {
-      audio.volume = clamp(playbackVolumePercent / 100, 0, 1);
+      audio.volume = clamp(playbackVolumePercent / 100, 0, 1) * musicVolumeScale;
     }
     const seMasterGain = playbackSeMasterGainRef.current;
     if (seMasterGain) {
@@ -4721,9 +4768,9 @@ function ChartEditorController() {
     }
     const bgmGain = playbackBgmGainRef.current;
     if (bgmGain) {
-      bgmGain.gain.value = clamp(playbackVolumePercent / 100, 0, 1);
+      bgmGain.gain.value = clamp(playbackVolumePercent / 100, 0, 1) * musicVolumeScale;
     }
-  }, [clamp, noteSeVolumeScale, playbackVolumePercent]);
+  }, [clamp, musicVolumeScale, noteSeVolumeScale, playbackVolumePercent]);
 
   useEffect(() => {
     void preloadPlaybackSeBuffers(appliedSkinResources?.se ?? null);
@@ -4731,8 +4778,8 @@ function ChartEditorController() {
 
   // Read at setup only: speed and volume changes are applied to the live audio by their own effects, and
   // must not stop playback or drop the decoded (and time-stretched) BGM.
-  const playbackAudioSetupRef = useRef({ stopPlayback, speed: currentPlaybackSpeed, volumePercent: playbackVolumePercent });
-  playbackAudioSetupRef.current = { stopPlayback, speed: currentPlaybackSpeed, volumePercent: playbackVolumePercent };
+  const playbackAudioSetupRef = useRef({ stopPlayback, speed: currentPlaybackSpeed, volume: playbackVolumePercent / 100 * musicVolumeScale });
+  playbackAudioSetupRef.current = { stopPlayback, speed: currentPlaybackSpeed, volume: playbackVolumePercent / 100 * musicVolumeScale };
   useEffect(() => {
     const setup = playbackAudioSetupRef.current;
     setup.stopPlayback();
@@ -4761,7 +4808,7 @@ function ChartEditorController() {
     };
     audio.onerror = () => setAudioDurationSec(0);
     audio.playbackRate = setup.speed;
-    audio.volume = clamp(setup.volumePercent / 100, 0, 1);
+    audio.volume = clamp(setup.volume, 0, 1);
     playbackAudioRef.current = audio;
     return () => {
       audio.pause();
@@ -4805,6 +4852,10 @@ function ChartEditorController() {
       }
     }
   }, [isExGarupaEnabled, tool]);
+  // The LANE CHANGE tool is for HABAHIRO charts: turning HABAHIRO off disarms it.
+  useEffect(() => {
+    if (!isHabahiroEnabled && tool === "laneChange") setIsToolArmed(false);
+  }, [isHabahiroEnabled, tool]);
 
   // Shared by the Space shortcut and the toolbar play button: start from the playfield's current position, or stop.
   const togglePlaybackFromCurrentPosition = useCallback(() => {
@@ -5036,26 +5087,30 @@ function ChartEditorController() {
   const noteTimingGroupOf = useCallback((note: ChartNote): string =>
     noteTimingGroupById.get(note.id) ?? normalizeTimingGroupId(note.timingGroup), [noteTimingGroupById]);
   /**
-   * Under the SV view (not playing) the board is drawn from data placed for the committed preview time; while the view
-   * moves the canvas offsets each timing group to the live preview time instead of placing the chart again (see
-   * CanvasSvLiveScroll). A group's place at preview time p is timeToY(p) - (d(t) - d(p)), so moving p from the reference
-   * moves all its elements by the same amount.
+   * Under the SV view the board is drawn from data placed for the committed preview time, the time on the playback
+   * line; while the view moves (scrolling or playing) the canvas offsets each timing group to the live time on that line
+   * instead of placing the chart again (see CanvasSvLiveScroll). A group's place at preview time p is
+   * timeToY(p) - (d(t) - d(p)), so moving p from the reference moves all its elements by the same amount.
    */
   const svLiveScroll = useMemo<CanvasSvLiveScroll | null>(() => {
-    if (!isSvPreviewEnabled || isPlaybackPlaying) return null;
+    if (!isSvPreviewEnabled) return null;
     const referenceTimeSec = svPreviewTimeSec;
     const groupOf = (group: string | undefined) => svPreviewTimingGroups.get(group ?? GLOBAL_TIMING_GROUP_ID)
       ?? svPreviewTimingGroups.get(GLOBAL_TIMING_GROUP_ID) ?? null;
     return {
       referenceTimeSec,
-      liveTimeAt: (viewportBottomY) => Math.min(totalDurationSec, Math.max(0, displayAxis.viewportTimeAtY(viewportBottomY))),
+      liveTimeAt: (viewportBottomY) => {
+        const playfield = playfieldRef.current;
+        const anchorFromBottom = playfield ? playbackAnchorFromBottom(playfield, viewportPlaybackPositionPercent) : 0;
+        return Math.min(totalDurationSec, Math.max(0, displayAxis.viewportTimeAtY(viewportBottomY - anchorFromBottom)));
+      },
       groupOffset: (group, liveTime) => {
         const timingGroup = groupOf(group);
         return displayAxis.timeToY(liveTime) + displayAxis.distanceAtTime(liveTime, timingGroup)
           - displayAxis.timeToY(referenceTimeSec) - displayAxis.distanceAtTime(referenceTimeSec, timingGroup);
       },
     };
-  }, [displayAxis, isPlaybackPlaying, isSvPreviewEnabled, svPreviewTimeSec, svPreviewTimingGroups, totalDurationSec]);
+  }, [displayAxis, isSvPreviewEnabled, svPreviewTimeSec, svPreviewTimingGroups, totalDurationSec, viewportPlaybackPositionPercent]);
   const renderModel = useEditorRenderModel({
     bpmTimeline,
     totalBeats,
@@ -5098,7 +5153,12 @@ function ChartEditorController() {
         return null;
       }
 
-      const nextWidth = normalizeDirectionalWidth((hitNote.width ?? 1) + 1);
+      const currentWidth = normalizeDirectionalWidth(hitNote.width);
+      // Outside HABAHIRO and ExGarupa a Directional stops widening at DIRECTIONAL_WIDTH_LIMIT: no widen preview there.
+      const nextWidth = limitDirectionalWidening(currentWidth, currentWidth + 1, isHabahiroEnabled || isExGarupaEnabled);
+      if (nextWidth === currentWidth) {
+        return null;
+      }
       const widened = normalizeNote({ ...hitNote, width: nextWidth }, settings);
       if (!widened || !isDirectionalNoteType(widened.type)) {
         return null;
@@ -5134,6 +5194,8 @@ function ChartEditorController() {
       getNoteSpanLanes,
       getRenderedNotePlacement,
       isDirectionalNoteType,
+      isExGarupaEnabled,
+      isHabahiroEnabled,
       isToolArmed,
       laneToColumn,
       normalizeDirectionalWidth,
@@ -5343,8 +5405,9 @@ function ChartEditorController() {
   /** Dragging an edge of the selection frame widens or narrows the selected notes (see selectionWidthDrag). */
   const selectionWidthContext = useMemo<SelectionWidthContext>(() => ({
     notes, selectedNoteIds, slideChains, habahiro: isHabahiroEnabled,
+    directionalUnlimited: isHabahiroEnabled || isExGarupaEnabled,
     laneMin, laneMax: laneValues[laneValues.length - 1]!,
-  }), [isHabahiroEnabled, laneMin, laneValues, notes, selectedNoteIds, slideChains]);
+  }), [isExGarupaEnabled, isHabahiroEnabled, laneMin, laneValues, notes, selectedNoteIds, slideChains]);
   const canResizeSelection = !isToolArmed && canResizeSelectionWidth(selectionWidthContext);
   /** Moves the dragged edge by `raw` lanes as far as the selection allows and draws the result. */
   const previewSelectionWidth = useCallback((edge: SelectionWidthEdge, raw: number) => {
@@ -5367,10 +5430,8 @@ function ChartEditorController() {
   const mirrorSelectionAlong = useCallback((axis: MirrorAxis) => {
     const result = mirrorSelection(selectionMirrorContext, axis);
     if (!result) return;
+    // A flip that would overlap, leave the board or break a Slide does nothing (editing limits are not announced).
     if (!result.ok) {
-      showDialog(result.reason === "overlap" ? "翻转后会与其他音符重叠，未翻转。"
-        : result.reason === "out-of-board" ? "翻转后会超出轨道范围，未翻转。"
-        : "翻转后 Slide 的结构不再合法，未翻转。");
       return;
     }
     setNotes(result.notes);
@@ -5503,6 +5564,8 @@ function ChartEditorController() {
     sortBpmEvents,
     setBpmEvents,
     setSvEvents,
+    laneChangeBeats,
+    setLaneChangeBeats,
     setMetadata,
     metadata,
     normalizeEditorBpm,
@@ -5956,7 +6019,7 @@ function ChartEditorController() {
         suddenRate: appOptionSettings.simulatorSettings.suddenRate,
         suddenLane: appOptionSettings.simulatorSettings.suddenLane,
         hideFastSlow: appOptionSettings.simulatorSettings.hideFastSlow,
-        displayStageEffect: appOptionSettings.simulatorSettings.displayStageEffect,
+        lightGraphicsMode: appOptionSettings.simulatorSettings.lightGraphicsMode,
         hideCombo: appOptionSettings.simulatorSettings.hideCombo,
         displayComboPosition: appOptionSettings.simulatorSettings.displayComboPosition,
         syncLine: appOptionSettings.simultaneousLineEnabled,
@@ -5969,7 +6032,8 @@ function ChartEditorController() {
         skin: appOptionSettings.simulatorSettings.skin,
         masterGainPercent: appOptionSettings.simulatorSettings.masterVolumePercent,
         bgmGainPercent: playbackVolumePercent * appOptionSettings.simulatorSettings.musicVolumePercent / 100,
-        seGainPercent: playbackVolumePercent * noteSeVolumeScale,
+        // The simulator applies the master volume itself (masterGainPercent).
+        seGainPercent: playbackVolumePercent * clamp(appOptionSettings.noteSeVolumePercent / 100, 0, 1),
         requestedWindowWidth: width,
         requestedWindowHeight: height,
       });
@@ -6002,7 +6066,6 @@ function ChartEditorController() {
     chartMediaResources,
     project,
     metadata,
-    noteSeVolumeScale,
     playbackFps,
     playbackMvMode,
     playbackAllPerfectStatusDisplayMode,
@@ -6105,6 +6168,7 @@ function ChartEditorController() {
         cancelCurveTool,
         applyBpmToolFromPalette,
         applySvToolFromPalette,
+        applyLaneChangeToolFromPalette,
         toolSvValue,
         toolSvTimingGroup,
         applySvToolSetting,

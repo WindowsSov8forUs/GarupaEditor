@@ -51,9 +51,7 @@ import { musicPlaySelection, type MusicPlaySelection } from "../musicSelectionDa
 import { DownloadProgressModal } from "../DownloadProgressModal";
 import { OverlayDialogModal } from "../OverlayDialogModal";
 import { SkinSettingsModal } from "../SkinSettingsModal";
-import { bestdoriCheckSession, bestdoriLogin, bestdoriLogout,
-  onBestdoriSessionExpired } from "../../services/bestdori/api";
-import { appLog } from "../../logging/applicationLogger";
+import { useBestdoriAccount } from "../../app/useBestdoriAccount";
 import { isMobileRuntime } from "../../app/mobileRuntime";
 import { SidebarPanel } from "./SidebarPanel";
 import { projectPlayfieldLineRuntimeAssets } from "../../skinLoader";
@@ -468,9 +466,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
   const judgeSkinTypes = bestdoriSkinCatalogOptions?.judge ?? [];
   const catalogResource = (kind: keyof NonNullable<typeof bestdoriSkinCatalogOptions>["resources"], value: string) =>
     bestdoriSkinCatalogOptions?.resources[kind]?.[value] ?? null;
-  const bestdoriAuthRevision = useRef(0);
-  const bestdoriAuthBusy = useRef(false);
-  const [isBestdoriLoginOpen, setIsBestdoriLoginOpen] = useState(false);
   const [pageStack, setPageStack] = useState<PageStack>(HOME_STACK);
   const page = topPage(pageStack);
   const livePreparationOpen = page === "live";
@@ -575,109 +570,15 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
       setPreparationMode(next);
     }
   };
-  const [bestdoriLoginUsernameInput, setBestdoriLoginUsernameInput] = useState("");
-  const [bestdoriLoginPasswordInput, setBestdoriLoginPasswordInput] = useState("");
-  const [bestdoriLoginSubmitting, setBestdoriLoginSubmitting] = useState(false);
-  const [bestdoriLoginErrorMessage, setBestdoriLoginErrorMessage] = useState("");
-  const [bestdoriNicknameDisplay, setBestdoriNicknameDisplay] = useState("");
-  const [bestdoriUsernameDisplay, setBestdoriUsernameDisplay] = useState("");
+  const bestdoriAccount = useBestdoriAccount({
+    report: message => showDialog(message, "error"),
+    onExpired: () => showDialog("Bestdori 登录已失效，\n请重新登录。"),
+  });
+  const openBestdoriLoginModal = bestdoriAccount.open;
   // 谱面作者 follows the Bestdori login: its nickname (the username for an account without one) once signed in,
   // empty when signed out or expired; the field can be edited in between.
-  useEffect(() => { setUploadChartAuthor(bestdoriNicknameDisplay || bestdoriUsernameDisplay); },
-    [bestdoriNicknameDisplay, bestdoriUsernameDisplay, setUploadChartAuthor]);
-
-  // A login Bestdori no longer accepts, found at startup or before an upload, is shown signed out.
-  useEffect(() => onBestdoriSessionExpired(() => {
-    bestdoriAuthRevision.current += 1;
-    setBestdoriUsernameDisplay("");
-    setBestdoriNicknameDisplay("");
-    showDialog("Bestdori 登录已失效，\n请重新登录。");
-  }), [showDialog]);
-  useEffect(() => {
-    let disposed = false;
-    const revision = bestdoriAuthRevision.current;
-    void (async () => {
-      try {
-        const session = await bestdoriCheckSession();
-        if (disposed || revision !== bestdoriAuthRevision.current) return;
-        // Offline, the stored account stays shown; it is checked again before it is used.
-        const me = session.status === "signed-in" ? session.me : session.status === "unverified" ? session.me : null;
-        if (!me) return;
-        setBestdoriUsernameDisplay(me.username?.trim() ?? "");
-        setBestdoriNicknameDisplay(me.nickname?.trim() ?? "");
-      } catch (error) {
-        appLog("warn", "auth.session-check-failed", { error });
-      }
-    })();
-    return () => {
-      disposed = true;
-    };
-  }, []);
-
-  const openBestdoriLoginModal = useCallback(() => {
-    setBestdoriLoginErrorMessage("");
-    setBestdoriLoginPasswordInput("");
-    setBestdoriLoginUsernameInput((current) => current || bestdoriUsernameDisplay);
-    setIsBestdoriLoginOpen(true);
-  }, [bestdoriUsernameDisplay]);
-
-  const closeBestdoriLoginModal = useCallback(() => {
-    if (bestdoriAuthBusy.current) {
-      return;
-    }
-    setIsBestdoriLoginOpen(false);
-    setBestdoriLoginPasswordInput("");
-  }, [bestdoriLoginSubmitting]);
-
-  const submitBestdoriLogin = useCallback(async () => {
-    if (bestdoriAuthBusy.current) {
-      return;
-    }
-    const username = bestdoriLoginUsernameInput.trim();
-    const password = bestdoriLoginPasswordInput.trim();
-    if (!username || !password) {
-      setBestdoriLoginErrorMessage("请输入用户名和密码。");
-      return;
-    }
-    bestdoriAuthBusy.current = true;
-    bestdoriAuthRevision.current += 1;
-    setBestdoriLoginSubmitting(true);
-    setBestdoriLoginErrorMessage("");
-    try {
-      const response = await bestdoriLogin(username, password);
-      const resolvedUsername = typeof response.username === "string" ? response.username.trim() : username;
-      const resolvedNickname = typeof response.nickname === "string" ? response.nickname.trim() : "";
-      setBestdoriUsernameDisplay(resolvedUsername);
-      setBestdoriNicknameDisplay(resolvedNickname);
-      setIsBestdoriLoginOpen(false);
-      setBestdoriLoginPasswordInput("");
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      showDialog(`Bestdori 登录失败：${message}`, "error");
-    } finally {
-      bestdoriAuthBusy.current = false;
-      setBestdoriLoginSubmitting(false);
-    }
-  }, [bestdoriLoginPasswordInput, bestdoriLoginSubmitting, bestdoriLoginUsernameInput, showDialog]);
-
-  const logoutBestdori = useCallback(async () => {
-    if (bestdoriAuthBusy.current) return;
-    bestdoriAuthBusy.current = true;
-    bestdoriAuthRevision.current += 1;
-    setBestdoriLoginSubmitting(true);
-    setBestdoriLoginErrorMessage("");
-    try {
-      await bestdoriLogout();
-      setBestdoriUsernameDisplay("");
-      setBestdoriNicknameDisplay("");
-      setBestdoriLoginPasswordInput("");
-    } catch (error) {
-      showDialog(`Bestdori 退出登录失败：${error instanceof Error ? error.message : String(error)}`, "error");
-    } finally {
-      bestdoriAuthBusy.current = false;
-      setBestdoriLoginSubmitting(false);
-    }
-  }, [showDialog]);
+  useEffect(() => { setUploadChartAuthor(bestdoriAccount.nickname || bestdoriAccount.username); },
+    [bestdoriAccount.nickname, bestdoriAccount.username, setUploadChartAuthor]);
 
   const isColorAssistEnabled = appOptionSettings?.colorAssistEnabled === true;
   /** The event bubble section under the pointer, or null. */
@@ -698,6 +599,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     if (!isToolArmed) return null;
     if (tool === "bpm") return hit.bubble.find(target => target.kind === "bpm") ?? null;
     if (tool === "sv") return hit.target.kind === "sv" ? hit.target : hit.bubble.find(target => target.kind === "sv") ?? null;
+    // The LANE CHANGE tool reaches a bubble's lane change (a right-click deletes it; it has no value to edit).
+    if (tool === "laneChange") return hit.bubble.find(target => target.kind === "laneChange") ?? null;
     return null;
   };
   const eventBubbleHandlers: EventBubbleHandlers = {
@@ -736,7 +639,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
 
   // The Middle and Hidden tools place on blank board only in ExGarupa (elsewhere they only work on Slides), so they
   // preview only there.
-  const isPlacementNoteTool = isToolArmed && tool !== "bpm" && tool !== "sv" && tool !== "copy" && tool !== "paste"
+  const isPlacementNoteTool = isToolArmed && tool !== "bpm" && tool !== "sv" && tool !== "laneChange" && tool !== "copy" && tool !== "paste"
     && tool !== "curve"
     && !((tool === "middle" || tool === "hidden") && !vm.isExGarupaEnabled);
   const isPasteToolSelected = isToolArmed && tool === "paste";
@@ -1100,15 +1003,17 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
         return;
       }
 
-      if (tool === "bpm" || tool === "sv") {
+      if (tool === "bpm" || tool === "sv" || tool === "laneChange") {
         hide(canvasNoteCursorPreviewRef.current);
         hide(canvasNoteSnapPreviewRef.current);
         hide(canvasNoteReplacePreviewRef.current);
         hide(canvasDirectionalWidenPreviewRef.current);
-        const cursorRef = tool === "bpm" ? canvasBpmCursorPreviewRef : canvasSvCursorPreviewRef;
-        const snapRef = tool === "bpm" ? canvasBpmSnapPreviewRef : canvasSvSnapPreviewRef;
-        const inactiveCursorRef = tool === "bpm" ? canvasSvCursorPreviewRef : canvasBpmCursorPreviewRef;
-        const inactiveSnapRef = tool === "bpm" ? canvasSvSnapPreviewRef : canvasBpmSnapPreviewRef;
+        // The LANE CHANGE tool shows the BPM tool's line (all event placement lines share the event line colour).
+        const bpmLine = tool !== "sv";
+        const cursorRef = bpmLine ? canvasBpmCursorPreviewRef : canvasSvCursorPreviewRef;
+        const snapRef = bpmLine ? canvasBpmSnapPreviewRef : canvasSvSnapPreviewRef;
+        const inactiveCursorRef = bpmLine ? canvasSvCursorPreviewRef : canvasBpmCursorPreviewRef;
+        const inactiveSnapRef = bpmLine ? canvasSvSnapPreviewRef : canvasBpmSnapPreviewRef;
         hide(inactiveCursorRef.current);
         hide(inactiveSnapRef.current);
         show(cursorRef.current);
@@ -1351,7 +1256,6 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
     }
     if (runtime.isSvPreviewEnabled) {
       event.stopPropagation();
-      runtime.showDialog("SV 预览为只读模式，请关闭后再编辑。");
       if (event.metaKey || event.ctrlKey) {
         runtime.toggleSelectedNote(note.id);
         return;
@@ -1670,7 +1574,8 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
           historyTools={historyTools} mirrorTools={mirrorTools} directionalEnabled={vm.editorMode !== "basic"} longBodyTexture={longBodyTexture} curveSlideLineTexture={curveSlideLineTexture}
           curve={sidebarCurve}
           sv={vm.isExGarupaEnabled ? { value: vm.toolSvValue, timingGroup: vm.toolSvTimingGroup, timingGroups: vm.timingGroupIds,
-            onArm: vm.applySvToolFromPalette, onApply: vm.applySvToolSetting, onAddTimingGroup: vm.addTimingGroup } : undefined} />
+            onArm: vm.applySvToolFromPalette, onApply: vm.applySvToolSetting, onAddTimingGroup: vm.addTimingGroup } : undefined}
+          onArmLaneChangeTool={vm.isHabahiroEnabled ? vm.applyLaneChangeToolFromPalette : undefined} />
         <section ref={editorRegionRef} className="editor-viewport-region"
           style={{ "--editor-edge-softness": `${EDITOR_EDGE_SOFTNESS * uiViewport.scale}px`,
             marginTop: -editorRegionBleed.top, marginBottom: -editorRegionBleed.bottom } as CSSProperties}>
@@ -1709,7 +1614,7 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
                   handleBoardMouseLeave(event);
                 }}
                 onContextMenu={handleBoardContextMenu}
-                // Event bubbles drawn on the canvas are the events' hit areas; only the BPM and SV tools act on them.
+                // Event bubbles drawn on the canvas are the events' hit areas; only the BPM, SV and LANE CHANGE tools act on them.
                 onMouseDownCapture={(event) => {
                   const hit = eventBubbleHitAt(event);
                   if (!hit) return;
@@ -2069,27 +1974,14 @@ export function ChartEditorLayout({ vm }: ChartEditorLayoutProps) {
           </> }}
  />
         <EditorNotePropertiesDialog open={notePropertiesOpen} properties={vm.selectedNoteProperties}
-          laneRange={vm.laneRange}
+          laneRange={vm.laneRange} directionalUnlimited={vm.isHabahiroEnabled || vm.isExGarupaEnabled}
           timingGroups={vm.isExGarupaEnabled ? vm.timingGroupIds : undefined} onAddTimingGroup={vm.addTimingGroup}
           onClose={() => setNotePropertiesOpen(false)} onSave={vm.applyNoteProperties} />
       </section>
 
       </OriginalPageSwitch>
 
-      <BestdoriLoginModal
-        open={isBestdoriLoginOpen}
-        accountUsername={bestdoriUsernameDisplay}
-        accountNickname={bestdoriNicknameDisplay}
-        onLogout={() => void logoutBestdori()}
-        username={bestdoriLoginUsernameInput}
-        password={bestdoriLoginPasswordInput}
-        submitting={bestdoriLoginSubmitting}
-        errorMessage={bestdoriLoginErrorMessage}
-        onUsernameChange={setBestdoriLoginUsernameInput}
-        onPasswordChange={setBestdoriLoginPasswordInput}
-        onSubmit={() => void submitBestdoriLogin()}
-        onClose={closeBestdoriLoginModal}
-      />
+      <BestdoriLoginModal {...bestdoriAccount.modalProps} />
 
       <LiveInProgressCover song={liveSong} jacketUrl={vm.coverImageSrc} />
       <ResourceLoadErrorDialog open={launchFailed} onConfirm={() => setLaunchFailed(false)} />
