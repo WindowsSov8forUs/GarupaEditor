@@ -26,8 +26,6 @@ App Data中的`resources/blobs/`是共享内容寻址字节权威；`resources/l
 
 内置Simulator已通过Public Schema 16与transport Schema 6接入桌面独立窗口和移动端单WebView route；资源、Pixi、WebAudio、Pointer Events、surface/safe-area及生命周期均由应用platform composition提供。
 
-开发合同和验证命令见 [`src/resources/README.md`](src/resources/README.md)。
-
 ## 菜单与 Simulator 设置
 
 菜单与设置消费 Reverse 已交付的预制体、按钮模板、窗口动画及设置运行逻辑。菜单仅保留“选项”入口；按用户要求，由所在行决定按钮大小，窗口保留原作尺寸预设。完整菜单资源和逆向依据仍然保留。
@@ -111,102 +109,7 @@ sudo dnf install ./*_linux_x86_64.rpm
 
 ## Garupa JSON 谱面结构
 
-不同于 **Bestdori** ，**GarupaEditor** 与对应的 **NotGarupa** Sonolus 引擎使用独立的 `Garupa JSON` 结构，用以在传递谱面时承载更多的功能与扩展性。
-
-示例：
-
-```json
-[
-  { "type": "BPM", "beat": 0, "value": 120 },
-  { "type": "SV", "beat": 16, "value": 0.5, "timingGroup": "#1" },
-  { "type": "Single", "beat": 1, "lane": 3, "width": 1 },
-  { "type": "Flick", "beat": 2, "lane": 4, "width": 1 },
-  { "type": "Skill", "beat": 3, "lane": 2, "width": 1 },
-  {
-    "type": "Directional",
-    "beat": 4,
-    "lane": 5,
-    "width": 1,
-    "direction": "Right"
-  },
-  {
-    "type": "Slide",
-    "connections": [
-      { "type": "Single", "beat": 8, "lane": 2, "width": 1 },
-      { "type": "Hidden", "beat": 9, "lane": 3, "width": 1 },
-      { "type": "Flick", "beat": 10, "lane": 4, "width": 1 }
-    ]
-  }
-]
-```
-
-### 顶层项目类型
-
-- `BPM`
-  - `{ type: "BPM", beat: number, value: number }`
-  - 至少必须有一个 BPM。
-  - 导出时会自动把当前基础 BPM 写成 `{ beat: 0, value: metadata.bpm }`。
-  - 导入时会选最早的 BPM 作为基础 BPM，并把整张谱的 beat 平移到从 `0` 开始。
-
-- `SV`
-  - `{ type: "SV", beat: number, value: number, timingGroup?: string }`
-  - `value` 是速度倍率。
-  - `timingGroup` 缺省或 `#Global` 表示全局组。
-
-- 普通顶层音符
-  - `Single`
-  - `Flick`
-  - `Skill`
-  - `Directional`
-  - 顶层不允许 `Hidden`。
-
-- `Slide`
-  - `{ type: "Slide", connections: [...], timingGroup?: string }`
-  - `connections.length >= 2`，按全部节点计数（包括 `Hidden`），不是可见节点数量。
-  - 单节点 Slide 是非法结构。编辑器修正退化结构时，可见节点回退为对应类型的独立音符，单个 `Hidden` 删除；通用解析器与 Simulator 不将其作为合法 Slide 接受。
-  - `Hidden` 只允许出现在 `Slide.connections` 里。
-
-### 音符字段
-
-普通节奏音符：
-
-```json
-{ "type": "Single", "beat": 1, "lane": 3, "width": 1, "timingGroup": "#1" }
-```
-
-适用于：
-- `Single`
-- `Flick`
-- `Skill`
-- `Hidden`，但仅 Slide 内
-
-字段：
-- `beat`: 数字，节拍位置
-- `lane`: 数字，轨道位置
-- `width`: 正整数；导出一定带，导入普通音符缺省时按 `1`
-- `timingGroup`: 可选，非全局时才通常导出
-
-方向 Flick：
-
-```json
-{
-  "type": "Directional",
-  "beat": 4,
-  "lane": 5,
-  "width": 1,
-  "direction": "Left"
-}
-```
-
-`direction` 只能是：
-- `"Left"`
-- `"Right"`
-
-### `timingGroup` 规则
-
-- 缺省、空字符串、`#Global` 都表示全局 timing group。
-- 非全局组使用类似 `#1`、`#Group A` 的字符串。
-- 导出时，全局组在音符和 Slide 上通常省略；SV 会写出归一化后的 `timingGroup`。
+不同于 **Bestdori** ，**GarupaEditor** 与对应的 **NotGarupa** Sonolus 引擎使用独立的 `Garupa JSON` 结构，用以在传递谱面时承载更多的功能与扩展性。完整的格式规范（项目类型、字段、轨道与 Long 的语义、HABAHIRO 与换轨、各项扩展）见 [`docs/GARUPA_JSON.md`](docs/GARUPA_JSON.md)。
 
 ## 许可证
 
