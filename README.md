@@ -4,112 +4,94 @@
   <p><em>扩展的、多平台的 Garupa 自制谱制作工具，不仅是 Garupa 。</em></p>
 </div>
 
-基于 Tauri 架构，GarupaEditor 提供多平台的 BanG Dream! Girls Band Party 自制谱制作、预览、播放、导入、导出与上传功能。
+基于 Tauri 架构，GarupaEditor 提供多平台的《BanG Dream! 少女乐团派对！》自制谱制作、预览、游玩、导入、导出与发布功能。
 
-不仅提供基础的 Bestdori 可用谱面制作功能，GarupaEditor 同时还支持：
-- 7/9/11 轨道与界外谱面编辑
-- 多宽度音符
-- 无头/无尾 Slide 与无判定 Slide
-- 变速 SV 与 TimingGroup
-
-## 资源管理
-
-程序资源统一由主程序的 `ApplicationResourceManager` 管理：
-
-- 随程序发布的图标、字体和默认图片属于内置资源；
-- Bestdori Skin、音效、粒子等可复用包来自实时资源站目录，可离线使用最后一次完整目录和已安装全局缓存；
-- 用户文件及Bestdori歌曲BGM、封面、MV只作为当前可恢复写谱会话的工程媒体，不进入永久全局媒体库。
-
-模块只消费主程序建立的不可变资源租约，不自行下载、读取路径或选择fallback。网络资源的SHA-256在下载完成后用于检查本地完整性，不作为固定版本或资源允许列表；资源站新增ID或更新同ID内容不要求应用预先登记。Builtin总集合由source manifest生成，Application-only集合与Simulator子集分别由两个catalog拥有；两者互斥，且并集与生成的Builtin manifest一致。所有Builtin都以禁止内联的生产URL保持source-manifest原始字节，并在Vite构建后逐项复核dist的长度与SHA-256；仅编译成功不视为资源打包通过。
-
-App Data中的`resources/blobs/`是共享内容寻址字节权威；`resources/library/`只为Builtin和可复用Network包维护原作逻辑Bundle投影，不宣称复刻原作Android物理缓存。当前谱面媒体由`cache/session/project-media/`拥有，并在`chart-resources.v5.json`绑定落盘、旧Lease释放后回收；共享Blob不等于永久媒体库。Simulator的Skin、SE、粒子和歌曲媒体仍使用同一Snapshot/Lease链。
-
-内置Simulator已通过Public Schema 16与transport Schema 6接入桌面独立窗口和移动端单WebView route；资源、Pixi、WebAudio、Pointer Events、surface/safe-area及生命周期均由应用platform composition提供。
-
-## 菜单与 Simulator 设置
-
-菜单与设置消费 Reverse 已交付的预制体、按钮模板、窗口动画及设置运行逻辑。菜单仅保留“选项”入口；按用户要求，由所在行决定按钮大小，窗口保留原作尺寸预设。完整菜单资源和逆向依据仍然保留。
-
-四页设置只保留当前实现可用的入口，保留 MV 模式与亮度，移除舞台演出设置入口及未实现的账号业务。设置共用草稿，关闭后保存到主程序，下一次启动 Simulator 时经 Public Schema 16 与 transport Schema 6 生效；不热更新已运行场次。
-
-中文文本优先消费 Reverse `75b8ecf0b9460893aea8333a4fed2533684b41f5` 提取的大陆版 master 词库，并使用包体本地词条补齐已确认来源。生产中文映射包含 194 个 wording 键及 2 个原作字面文本映射，字体与图集优先使用大陆版资源，不自行翻译缺失词条。
-
-皮肤动态预览与点击判定调节复用 Simulator 的资源、几何和粒子实现，使用主程序资源租约并提前准备设置所需资源。DOM 与 Pixi 文字共用原作基线计算，标签描边由外层面板裁剪。构建与源码核对不等于完整视觉一致性验收。
-
-## 仓库路径与本地数据边界
-
-Tracked 文件只记录工具角色、版本、字节与摘要，不记录 checkout 机器上的绝对路径。Reverse 证据以 [`WindowsSov8forUs/GirlsBandParty-Reverse`](https://github.com/WindowsSov8forUs/GirlsBandParty-Reverse) 为 canonical identity；仅维护脚本需要本地 checkout 时，由显式参数或 `GARUPA_REVERSE_ROOT` 注入。
-
-仓库根 `.local/` 专用于私有工具、灾备和历史维护报告。它被根锚定 ignore，禁止强制加入 Git、发布附件或公开日志。提交前可执行：
-
-```powershell
-npm.cmd run repository:hygiene:check
-python scripts/verify_host_path_policy.py --staged
-```
-
-`--tree`/`--staged` 读取 Git 对象而不遍历工作树；迁移维护所需的全历史审计必须显式提供冻结 ref ledger。
+除基础的 Bestdori 兼容谱面制作外，GarupaEditor 同时支持：
+- **ExGarupa 扩展**：9 / 11 / 13 轨道与界外音符、Slide 手势节点（Slide 的头或中间节点为 Flick / 方向滑键）、无头 / 无尾 Slide、无判定 Slide、变速 SV 与多时间组（TimingGroup）
+- **HABAHIRO 模式**：源自原作日服歌曲 786「ときめきエクスペリエンス！（月島麻里奈ver.）」的 HABAHIRO SPECIAL 谱面（「HABAHIRO」即日语「幅広」，意为「宽幅」），是原作的一种特殊谱面模式而非扩展，支持多宽度音符与换轨演出（`LANE CHANGE`）
+- **内置模拟器**：直接在应用内预览谱面或实机游玩，支持自定义皮肤、音效、流速、判定偏移与 MV 背景
+- **在线曲库与多端互通**：支持在线检索、游玩和导入官服（日服 / 简中服 / 繁中服 / 国际服）、Bestdori 社区及 Ayachan 谱面，并可一键发布至 Bestdori 社区或 NotGarupa 服务器
 
 ## 安装
 
-目前 GarupaEditor 提供 Windows、macOS、Linux 与 Android 平台的安装包。桌面端优先推荐使用对应平台的安装器或软件包，Android 端目前提供未签名 APK。
+前往 [GitHub Releases](https://github.com/WindowsSov8forUs/GarupaEditor/releases) 下载对应平台的安装包：
 
-### Windows 平台
+### Windows
 
-下载:
-- `*_windows_x64-setup.exe`
-- `*_windows_x64.msi`
-- `*_windows_arm64-setup.exe`
-- `*_windows_arm64.msi`
-
-推荐普通用户用 `*-setup.exe`，双击安装。
-`x64` 用于常见 Intel/AMD Windows，`arm64` 用于 Windows on ARM。
-
-#### Windows SmartScreen 提示
-
-当前 Windows 安装包暂未进行代码签名，安装时可能会出现 Microsoft Defender SmartScreen 的“Windows 已保护你的电脑”或“发布者未知”提示。
-这表示 Windows 无法识别发布者身份，并不代表安装包已经被判定为病毒。
-
-请确认安装包来自本项目的 GitHub Release 页面；确认来源无误后，可以在提示中选择“仍要运行”继续安装。
+- 推荐下载 `*_windows_x64-setup.exe`（Intel / AMD）或 `*_windows_arm64-setup.exe`（Windows on ARM）双击安装（亦提供 `.msi` 安装包）。
+- 当前安装包暂未进行代码签名，若安装时弹出 Microsoft Defender SmartScreen 的「Windows 已保护你的电脑」提示，确认安装包来自本项目 GitHub Releases 后，点击「更多信息」→「仍要运行」即可。
 
 ### macOS
 
-下载：
-- `*_darwin_x64.dmg`
-- `*_darwin_aarch64.dmg`
-
-`darwin_x64` 是 Intel Mac，`darwin_aarch64` 是 Apple Silicon/M 系列 Mac。
-打开 `.dmg` 后将 `GarupaEditor.app` 拖到“应用程序”即可。当前没有签名/公证，首次打开可能需要右键选择“打开”。
+- 下载 `*_darwin_aarch64.dmg`（Apple Silicon / M 系列）或 `*_darwin_x64.dmg`（Intel）。
+- 打开 `.dmg` 后将 `GarupaEditor.app` 拖入「应用程序」。当前暂未签名公证，首次打开若提示无法验证开发者，请在访达中右键应用选择「打开」。
 
 ### Linux
 
-Debian / Ubuntu 下载：
-- `*_linux_amd64.deb`
-- `*_linux_arm64.deb`
-
-安装：
-```bash
-sudo apt install ./*_linux_amd64.deb
-```
-
-Fedora / RHEL / openSUSE 下载：
-- `*_linux_x86_64.rpm`
-- `*_linux_aarch64.rpm`
-
-安装：
-```bash
-sudo dnf install ./*_linux_x86_64.rpm
-```
+- **Debian / Ubuntu**（`amd64` / `arm64`）：
+  ```bash
+  sudo apt install ./*_linux_amd64.deb
+  ```
+- **Fedora / RHEL / openSUSE**（`x86_64` / `aarch64`）：
+  ```bash
+  sudo dnf install ./*_linux_x86_64.rpm
+  ```
 
 ### Android
 
-下载：
-- `*_android_aarch64.apk`
+- 下载并安装 `*_android_aarch64.apk`（未签名 APK，安装前需在系统中允许从当前来源安装应用）。
 
-当前 Android 包为 aarch64 APK，未签名。安装前可能需要在设备上允许从当前来源安装应用。
+## 基础使用
+
+### 1. 首页入口
+
+![首页](docs/images/readme_home.jpg)
+
+- **谱面编辑**：新建谱面工程，或继续编辑当前工程。
+- **谱面导入**：打开本地保存的 `.gcp` 完整谱面工程文件。
+- **谱面搜索**：浏览在线曲库，直接游玩或导入现有谱面。
+- **右上角菜单**：打开全局「选项」（演出设定、音量、皮肤、系统设置）、新建工程或登录 Bestdori 账号。
+
+### 2. 谱面搜索与试玩
+
+![谱面搜索](docs/images/readme_search.jpg)
+
+- 点击右上角 **切换源** 可在 **官方谱面**（日服 / 简中服 / 繁中服 / 国际服）、**Bestdori 社区** 与 **Ayachan** 之间切换，并通过 **搜索** 与 **筛选** 按关键词、ID、分类、难度或等级查找谱面。
+- 选中曲目与难度后，点击 **游玩** 即可进入演出准备并启动内置模拟器游玩；点击 **导入** 可将该谱面连同音频、封面直接载入编辑器。
+
+### 3. 谱面编辑
+
+![谱面编辑](docs/images/readme_editor.jpg)
+
+- **放置与修改**：在左侧「物件」栏选择音符或事件类型（Single、Skill、Flick、Long、Slide、Middle、Curve、BPM，以及 SP 音符模式及以上的方向滑键与 Hidden、ExGarupa 下的 SV、开启 HABAHIRO 时出现的 `LANE CHANGE`），在轨道上点击即可放置；点击已放置的音符可修改属性或拖拽位置（方向滑键在基础和 SP 音符模式下最宽 3 轨，开启 HABAHIRO 或 ExGarupa 后不限）。
+- **编辑工具栏**：左侧下方提供上下/左右镜像翻转、单选/多选切换、撤销、重做、删除、复制与粘贴功能；左下角可点击 **游玩**（或切换为 **预览**）从当前位置实机测试谱面。
+- **视图与播放控制**：右侧提供全谱缩略图、播放/暂停、倍速调节、SV 线显示开关（`SV 开/关`，仅 ExGarupa 下有）及拍号分度值（如 `1/4`）设置。
+- **常用快捷键**：
+  - `1`～`7`：快速切换音符与 BPM 工具
+  - `Ctrl + Z` / `Ctrl + Y`（或 `Ctrl + Shift + Z`）：撤销 / 重做
+  - `Ctrl + C` / `Ctrl + V`：复制选中物件 / 粘贴至鼠标位置
+  - `Delete`：删除选中物件（`Ctrl + Shift + Delete` 清空全部音符）
+
+### 4. 编辑器选项、歌曲信息与导出发布
+
+![编辑器选项](docs/images/readme_options.jpg)
+
+点击编辑器右上角的 **选项** 打开设置与导出抽屉：
+
+- **编辑器设置**：切换 **模式**（**基础** / **SP 音符** / **ExGarupa**）、勾选 **HABAHIRO**、调整 **轨道数**（7 轨为原作标准，ExGarupa 下可选 9 / 11 / 13 轨）以及切换 **时间组视图**（仅 ExGarupa 下有）。
+  - **关于 HABAHIRO 与换轨（`LANE CHANGE`）**：HABAHIRO 源自原作日服歌曲 786「ときめきエクスペリエンス！（月島麻里奈ver.）」的 HABAHIRO SPECIAL 谱面（原作内部名 `786_miracle_april_habahiro_special`；「HABAHIRO」即日语「幅広」，意为「宽幅」），属于原作本身的特殊谱面模式而非扩展。开启 HABAHIRO 后：
+    - 可以使用宽度大于 1 的普通音符（Single、Flick、Skill、Long、Slide），并解除方向滑键的 3 轨宽度限制；
+    - 音符会切换为 HABAHIRO 专属的音符皮肤（编辑器开启 HABAHIRO 时自动切过去，关闭时自动切回）；
+    - 可放置 **`LANE CHANGE`（换轨）** 事件，表示「从这里开始切换成 HABAHIRO 专属的轨道外观」的演出切换点：到达 `LANE CHANGE` 位置时，判定线会播放一段 HABAHIRO 专属的闪光动画，动画中途轨道（场地）皮肤从普通场地切换为 HABAHIRO 专属场地，此后整首歌都使用该场地。原作中换轨标记所在位置本身也是一个正常的 Single 音符，会参与判定和计分；编辑器里则作为单独放置的 `LANE CHANGE` 事件。
+- **歌曲信息**：点击 **查看** 或 **编辑**，设置曲名、艺术家、谱师、难度、等级，并绑定本地音频、封面与背景 MV。
+- **谱面导出与发布**：
+  - **本地保存**：导出包含谱面与媒体的 `.gcp` 工程文件，或导出为兼容的 `Bestdori V2` JSON 文件。
+  - **发布**：一键将当前谱面及音频、封面发布到 **测试服**、**Bestdori 社区** 或 **NotGarupa 服务器**（发布前需在菜单中登录 Bestdori 账号）。
+- **谱面代码**：点击 **打开编辑框** 直接查看、粘贴或编辑谱面 JSON 代码，或从本地导入 Bestdori V2 文件。
 
 ## Garupa JSON 谱面结构
 
-不同于 **Bestdori** ，**GarupaEditor** 与对应的 **NotGarupa** Sonolus 引擎使用独立的 `Garupa JSON` 结构，用以在传递谱面时承载更多的功能与扩展性。完整的格式规范（项目类型、字段、轨道与 Long 的语义、HABAHIRO 与换轨、各项扩展）见 [`docs/GARUPA_JSON.md`](docs/GARUPA_JSON.md)。
+不同于 **Bestdori**，**GarupaEditor** 与对应的 **NotGarupa** Sonolus 引擎使用独立的 `Garupa JSON` 结构，用以在传递谱面时承载更多的功能与扩展性。完整的格式规范（项目类型、字段、轨道与 Long 的语义、HABAHIRO 与换轨、各项扩展）见 [`docs/GARUPA_JSON.md`](docs/GARUPA_JSON.md)。
 
 ## 许可证
 
