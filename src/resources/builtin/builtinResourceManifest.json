@@ -723,13 +723,13 @@
     },
     {
       "path": "icons/clear-action.svg",
-      "byteLength": 828,
-      "sha256": "770E64C203FFC8D6B8EB403BAE19353B776E7A0A6726D244D4033F5A4430DF67"
+      "byteLength": 413,
+      "sha256": "77A86EA0FC1E0E591693D09B0BD9C9117F643BECC6AD1F74B95DFB70E3C81F21"
     },
     {
       "path": "icons/copy-action.svg",
-      "byteLength": 346,
-      "sha256": "F6D131D11489C165BF7708E80448EF2AFCD362F6797DC31ABDD7EAF45A47896C"
+      "byteLength": 415,
+      "sha256": "F539F268C12E4C4AC1C5C2392CE71CC641210E7976A9E4850A21CE3762E37ED4"
     },
     {
       "path": "icons/display.svg",
@@ -738,8 +738,8 @@
     },
     {
       "path": "icons/edit.svg",
-      "byteLength": 3457,
-      "sha256": "79773C76E2DD8458D28D2CE7B2F7A263261D89CA358DF60B316B4FDFA6EF3B28"
+      "byteLength": 262,
+      "sha256": "FE0B7D11145D20041C254C40C47D5453927696B7526A8DAE763A9C56C18E9E4C"
     },
     {
       "path": "icons/image-export.svg",
@@ -758,8 +758,8 @@
     },
     {
       "path": "icons/mirror-action.svg",
-      "byteLength": 597,
-      "sha256": "4B8D67DFD5A69EC9D3C960F4F7B84E33AD4378D43545D4AA6B9FD6730DC0E179"
+      "byteLength": 630,
+      "sha256": "7A6B302C0A05D98B008991FFC9F3F46B188B93F5CC676A078266266919741552"
     },
     {
       "path": "icons/options-title.svg",
@@ -768,8 +768,8 @@
     },
     {
       "path": "icons/paste-action.svg",
-      "byteLength": 533,
-      "sha256": "4958C683360F1196B23CC69109A2A00E8D7A8FB9139B5A9EC5D9F4A3647F1D35"
+      "byteLength": 482,
+      "sha256": "C09E9005564503817224826578B71ED50030443065465002B844DA9EB15B1B68"
     },
     {
       "path": "icons/settings.svg",
@@ -788,8 +788,8 @@
     },
     {
       "path": "icons/undo-action.svg",
-      "byteLength": 283,
-      "sha256": "F7C9988501FF8109DF897A0BC357839FCB503B268B19D0C5DCFC8951CDD4BC80"
+      "byteLength": 244,
+      "sha256": "E1A27B24713236F6D2FAD35DCCE7092A642BAFA1257D9C38761E459475343A5C"
     },
     {
       "path": "live.png",
@@ -853,8 +853,8 @@
     },
     {
       "path": "icons/redo-action.svg",
-      "byteLength": 324,
-      "sha256": "88B77C79F411539A6E23AA96744C8B138B8BCB3E68F038D04DF8D6F01AE199AC"
+      "byteLength": 283,
+      "sha256": "FD4A6C199A2246B6E00FCC068748905B575C0159C278BED75D2CC240FEE48654"
     },
     {
       "path": "icons/editor-play.svg",
