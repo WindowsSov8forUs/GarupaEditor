@@ -17,8 +17,7 @@ export function FullScreenLoading({ progress, onReady, ariaLabel = "加载程序
   const { background, frame, caption, pattern, label, guitar, onpu1, onpu2, shadow } = sources;
   // Each showing of the view takes one tip at random (src/data/loadingTips.json) for its picture frame.
   const [tip] = useState(pickLoadingTip);
-  const comic = tip.image;
-  const viewport = useUiViewport();
+    const viewport = useUiViewport();
   const [framesReady, setFramesReady] = useState<number | Error>(0);
   const markReady = useCallback((bit: number, error?: Error) => setFramesReady(current =>
     current instanceof Error ? current : error ?? (current | bit)), []);
@@ -33,14 +32,14 @@ export function FullScreenLoading({ progress, onReady, ariaLabel = "加载程序
   useEffect(() => {
     let cancelled = false;
     setAssetsReady(false);
-    const urls = [background, frame, caption, pattern, label, comic, guitar, onpu1, onpu2, shadow];
+    const urls = [background, frame, caption, pattern, label, tip.image, guitar, onpu1, onpu2, shadow];
     void Promise.all(urls.map(decodeLoadingImage)).then(() => document.fonts.ready).then(() => {
       if (!cancelled) setAssetsReady(true);
     }).catch((error: unknown) => {
       if (!cancelled) markReady(0, error instanceof Error ? error : new Error(String(error)));
     });
     return () => { cancelled = true; };
-  }, [markReady, background, frame, caption, pattern, label, comic, guitar, onpu1, onpu2, shadow]);
+  }, [markReady, background, frame, caption, pattern, label, tip.image, guitar, onpu1, onpu2, shadow]);
   const ready = assetsReady && framesReady === 127;
   useEffect(() => {
     if (framesReady instanceof Error) onReady?.(framesReady);
@@ -48,7 +47,7 @@ export function FullScreenLoading({ progress, onReady, ariaLabel = "加载程序
   }, [onReady, ready, framesReady]);
   if (framesReady instanceof Error && onReady === undefined) throw framesReady;
   const p = Math.min(1, Math.max(0, progress ?? 0));
-  const comicY = 60;
+  const pictureY = 60;
   return <section aria-label={ariaLabel} style={{ position: "absolute", inset: 0, zIndex: 10,
     overflow: "hidden", opacity: ready ? 1 : 0 }}>
     {/* UITexture is Tiled: fill from the widget's bottom-left in texture-sized
@@ -60,12 +59,12 @@ export function FullScreenLoading({ progress, onReady, ariaLabel = "加载程序
     <UiAuthoredSurface width={1334} height={750} centered={false}
       style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)", fontFamily: '"ChartUI", "TTShinGoM", sans-serif' }}>
       <LoadingSlicedImage source={frame} width={680} height={460} border={14}
-        style={at(0, comicY, 680, 460)} onReady={onFrameReady} />
-      <div style={{ ...at(0, comicY - 173.6, 680, 109), background: `url("${pattern}") left bottom / 37px 109px repeat` }} />
+        style={at(0, pictureY, 680, 460)} onReady={onFrameReady} />
+      <div style={{ ...at(0, pictureY - 173.6, 680, 109), background: `url("${pattern}") left bottom / 37px 109px repeat` }} />
       <LoadingSlicedImage source={caption} width={640} height={30} border={CAPTION_BORDER}
-        sourceBorder={CAPTION_BORDER} style={at(0, comicY + 186, 640, 30)} onReady={onCapsuleReady} />
-      <img src={comic} alt="" style={at(0, comicY - 30, 485, 352)} />
-      <LoadingLabel x={-276 + 581 / 2} y={comicY + 190} width={581} height={56} fontSize={28}
+        sourceBorder={CAPTION_BORDER} style={at(0, pictureY + 186, 640, 30)} onReady={onCapsuleReady} />
+      <img src={tip.image} alt="" style={at(0, pictureY - 30, 485, 352)} />
+      <LoadingLabel x={-276 + 581 / 2} y={pictureY + 190} width={581} height={56} fontSize={28}
         color="white" outline="#ff3b72" distance={2} outline8 onReady={onCaptionReady}
         text={tip.title} />
       <>

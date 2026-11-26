@@ -1,5 +1,13 @@
 {
   "tips": [
-    { "title": "香澄＆有咲①「香澄語３級」", "image": "game/loading/comic_001.png" }
+    { "title": "Curve 工具可为 Slide 一键拟合曲线与锯齿", "image": "loading-tips/tip_01_curve_fit.png" },
+    { "title": "拖动选框左右边缘可调整音符宽度", "image": "loading-tips/tip_02_resize_width.png" },
+    { "title": "打开 SV 开关可预览实际下落位置", "image": "loading-tips/tip_04_sv_view.png" },
+    { "title": "Ctrl 或 Shift 加滚轮可缩放轨道密度", "image": "loading-tips/tip_05_wheel_zoom.png" },
+    { "title": "点左侧事件气泡可编辑，右键直接删除", "image": "loading-tips/tip_06_event_bubble.png" },
+    { "title": "再点一次 BPM 或 SV 按钮可打开设置", "image": "loading-tips/tip_07_tool_settings.png" },
+    { "title": "时间组视图下仅当前组正常显示，便于区分构建", "image": "loading-tips/tip_08_timing_group_view.png" },
+    { "title": "整拍分度支持自定义任意 1/N 网格", "image": "loading-tips/tip_09_custom_division.png" },
+    { "title": "多选音符后可一键左右或上下翻转", "image": "loading-tips/tip_10_mirror_selection.png" }
   ]
 }

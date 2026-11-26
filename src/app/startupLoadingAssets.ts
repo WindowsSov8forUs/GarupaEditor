@@ -15,9 +15,9 @@ export const startupLoadingAssets = { background, frame, caption, pattern, label
 /** A tip the full-screen loading view shows in its picture frame: an image and its caption. */
 export interface LoadingTip { readonly title: string; readonly image: string }
 
-// Tip images are packaged files under src/assets (the table names them by their path there, e.g.
-// "loading-tips/foo.png"); new ones go in src/assets/loading-tips/.
-const tipImages = import.meta.glob<string>(["../assets/game/loading/*.png", "../assets/loading-tips/*.{png,jpg,webp}"],
+// Tip images are the packaged files in src/assets/loading-tips/ (the table names them by their path under
+// src/assets, e.g. "loading-tips/foo.png").
+const tipImages = import.meta.glob<string>("../assets/loading-tips/*.{png,jpg,webp}",
   { eager: true, query: "?url", import: "default" });
 
 /** The tips (src/data/loadingTips.json), each with its packaged image URL; a missing image is an error here. */

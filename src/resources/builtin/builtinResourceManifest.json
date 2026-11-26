@@ -167,11 +167,6 @@
       "sha256": "1A0DFCB41B3CFEA6BCA4A8C4F570E7B71A7FE758E811B87E048320A779387B02"
     },
     {
-      "path": "game/loading/comic_001.png",
-      "byteLength": 145298,
-      "sha256": "B3A98C09170DA1DA1E17AACFED6B737D822D16A3DB9F7A91B19FA707B45F351C"
-    },
-    {
       "path": "game/loading/frame_back.png",
       "byteLength": 1015,
       "sha256": "AAEC2AC846D6073D1AA86D7EF0123F93E81B5BB21AC25138BC45F574C5E8FB82"
