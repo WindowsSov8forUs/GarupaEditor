@@ -28,6 +28,8 @@ const EVENT_LINE_WIDTH = 1;
 const EVENT_LINE_ALPHA = 0.8;
 const MEASURE_LINE_COLOR = "rgba(220, 230, 255, 0.3)";
 const MEASURE_LINE_WIDTH = 1;
+/** Beat lines (the beats between the measure lines): fainter still. */
+const BEAT_LINE_COLOR = "rgba(220, 230, 255, 0.15)";
 /** Extended lanes' guides: the range's edges as the measure lines, the borders between its lanes fainter. */
 const LANE_INNER_GUIDE_COLOR = "rgba(220, 230, 255, 0.16)";
 /** Event labels: in the event's colour (an inactive lane change's grey), one line per event. */
@@ -50,6 +52,8 @@ type PreviewEvent = { time: number; lines: EventLabel[]; color: string };
 export type PreviewScene = {
   payload: StaticRenderPayload;
   measureTimes: number[];
+  /** The other whole beats' times. */
+  beatTimes: number[];
   events: PreviewEvent[];
   orderedSegments: RenderConnectionSegment[];
   /** Every NOTE_COUNT_STEP-th note's time and count. */
@@ -62,7 +66,8 @@ export function buildPreviewScene(payload: StaticRenderPayload): PreviewScene {
   const timeOf = (beat: number) => beatToSeconds(beat, payload.bpmTimeline);
   const measureTimes: number[] = [];
   const measure = Math.max(1, payload.beatsPerMeasure);
-  for (let beat = 0; beat <= payload.totalBeats + 1e-6; beat += measure) measureTimes.push(timeOf(beat));
+  const beatTimes: number[] = [];
+  for (let beat = 0; beat <= payload.totalBeats + 1e-6; beat += 1) (beat % measure === 0 ? measureTimes : beatTimes).push(timeOf(beat));
 
   // As the editor: events merged per beat value, one line and one bubble listing them in BPM, SV, lane-change order;
   // the line takes a normal event's colour over an inactive one's. Each event is one line of its label here.
@@ -103,7 +108,7 @@ export function buildPreviewScene(payload: StaticRenderPayload): PreviewScene {
   for (let index = NOTE_COUNT_STEP - 1; index < visible.length; index += NOTE_COUNT_STEP) {
     milestones.push({ time: visible[index]!.timeSec, count: index + 1 });
   }
-  return { payload, measureTimes, events, orderedSegments, milestones, noteTimes: visible.map(note => note.timeSec) };
+  return { payload, measureTimes, beatTimes, events, orderedSegments, milestones, noteTimes: visible.map(note => note.timeSec) };
 }
 
 /** How many visible notes are at or before `time`. */
@@ -200,18 +205,20 @@ export function drawPreviewColumn(context: CanvasRenderingContext2D, layout: Pre
     context.restore();
   }
 
-  // Measure lines across the standard seven lanes, as the editor's grid.
+  // Beat and measure lines across the standard seven lanes, as the editor's grid.
   const gridLeft = boardLeft;
-  context.strokeStyle = MEASURE_LINE_COLOR;
   context.lineWidth = MEASURE_LINE_WIDTH;
-  for (const time of scene.measureTimes) {
-    if (!inRange(time)) continue;
-    // On a device pixel row's centre, so the thin line stays sharp.
-    const y = (Math.floor(yOf(time) * pixelRatio) + 0.5) / pixelRatio;
-    context.beginPath();
-    context.moveTo(gridLeft, y);
-    context.lineTo(gridLeft + GRID_SPAN_LANES * lane, y);
-    context.stroke();
+  for (const [times, color] of [[scene.beatTimes, BEAT_LINE_COLOR], [scene.measureTimes, MEASURE_LINE_COLOR]] as const) {
+    context.strokeStyle = color;
+    for (const time of times) {
+      if (!inRange(time)) continue;
+      // On a device pixel row's centre, so the thin line stays sharp.
+      const y = (Math.floor(yOf(time) * pixelRatio) + 0.5) / pixelRatio;
+      context.beginPath();
+      context.moveTo(gridLeft, y);
+      context.lineTo(gridLeft + GRID_SPAN_LANES * lane, y);
+      context.stroke();
+    }
   }
 
   const visibleEvents = scene.events.filter(event => inRange(event.time));
