@@ -1,11 +1,12 @@
 /** Actual transport activity, independent of page preparation and cache reads. */
 /** background: progress for an indicator its caller holds; it never opens the download screen. */
 export type Transfer = { received: number; total: number | null; background?: boolean };
-type Snapshot = { active: boolean; progress: number | undefined; single: number | undefined };
+/** transferring: a foreground transfer runs (an indicator may wait for one before it shows). */
+type Snapshot = { active: boolean; progress: number | undefined; single: number | undefined; transferring: boolean };
 const transfers = new Map<object | string, Transfer>();
 const preparations = new Set<{ downloading: boolean }>();
 const listeners = new Set<() => void>();
-let snapshot: Snapshot = { active: false, progress: undefined, single: undefined };
+let snapshot: Snapshot = { active: false, progress: undefined, single: undefined, transferring: false };
 function publish() {
   const all = [...transfers.values()], values = all.filter(value => !value.background);
   if (values.length) for (const preparation of preparations) preparation.downloading = true;
@@ -17,11 +18,15 @@ function publish() {
   snapshot = { active, progress: values.length && values.every(value => value.total !== null) && total > 0
     ? Math.min(1, values.reduce((sum, value) => sum + value.received, 0) / total)
     : values.length ? undefined : active ? snapshot.progress : undefined,
-    single: latest?.total ? Math.min(1, latest.received / latest.total) : undefined };
+    single: latest?.total ? Math.min(1, latest.received / latest.total) : undefined, transferring: values.length > 0 };
   listeners.forEach(listener => listener());
 }
 export const downloadActivity = {
-  /** A transport opens the screen; the enclosing preparation closes it, including retry gaps. */
+  /**
+   * A transport opens the screen; the enclosing preparation closes it, including retry gaps. Only the application's
+   * first preparation (the original's data download page) asks for this: other occasions hold the screen themselves
+   * (holdScreen) or show the NetworkIndicator.
+   */
   prepare() {
     // Background transfers (revalidation) only report progress; they never make a preparation a download.
     const preparation = { downloading: [...transfers.values()].some(value => !value.background) };

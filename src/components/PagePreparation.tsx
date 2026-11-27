@@ -1,5 +1,6 @@
 import { Component, createContext, useContext, useLayoutEffect, useMemo, useRef, type ReactNode } from "react";
 import { originalLoading } from "./originalLoadingState";
+import { downloadActivity } from "../services/downloadActivity";
 
 type Preparation = { report(owner: object, pending: boolean, error?: unknown): void; remove(owner: object): void };
 const Context = createContext<Preparation | null>(null);
@@ -43,10 +44,16 @@ export function PagePreparation({ children, onReady, onError }: {
     };
     return { api, start() {
       alive = true;
-      // Pushing a page shows no loading layer of its own; what it waits for (API checks, a missing
-      // asset's Spot download) is the NetworkIndicator, with the download's own progress.
-      const indicator = originalLoading.hold("network", {}, { downloadProgress: true });
-      release = () => { indicator.release(); };
+      // Pushing a page shows no loading layer of its own: only an actual download it waits for (a missing asset's
+      // Spot download) shows the NetworkIndicator, with that download's progress, until the page is ready.
+      let indicator: { release(): void } | null = null;
+      const watch = () => {
+        if (indicator || completed || !alive || !downloadActivity.getSnapshot().transferring) return;
+        indicator = originalLoading.hold("network", {}, { downloadProgress: true });
+      };
+      const unsubscribe = downloadActivity.subscribe(watch);
+      release = () => { unsubscribe(); indicator?.release(); indicator = null; };
+      watch();
       schedule();
     },
       stop() { alive = false; cancelAnimationFrame(frame); release?.(); } };

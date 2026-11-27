@@ -507,7 +507,9 @@ export function MusicSelectionPage({ source, onSourceChange: setSource, onLoad, 
     if (running.current) return;
     if (destination === "play") { onPlay(entry); return; }
     running.current = true; setBusy(true); setError("");
-    const loading = originalLoading.hold("network", {});
+    // A chart and its media fetched on demand: the NetworkIndicator, with a download's progress while one runs (the
+    // original's in-page download of a missing asset); never the full-screen Loading.
+    const loading = originalLoading.hold("network", {}, { downloadProgress: true });
     releaseLoad.current = loading.release;
     try {
       const success = await onLoad(entry.source === "official" ? "official" : entry.source === "ayachan" ? "test" : "bestdori", String(entry.id), loading.progress, destination, entry.difficulty ?? undefined);
