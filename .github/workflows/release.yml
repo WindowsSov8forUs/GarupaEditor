@@ -226,16 +226,33 @@ jobs:
         if: matrix.platform == 'android'
         run: npm run android:build -- --target ${{ matrix.androidTarget }} --apk --ci
 
-      - name: Upload Android release packages
+      # Gradle leaves the release APK unsigned, which Android refuses to install. Every release is
+      # signed with the same key (alias garupaeditor): only an APK signed with it updates an
+      # installed one.
+      - name: Sign and upload Android release packages
         if: matrix.platform == 'android'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
           VERSION="$(node -p "require('./package.json').version")"
           APK_SOURCE="src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk"
           APK_ASSET="${PROJECT_NAME}_${VERSION}_android_${{ matrix.arch }}.apk"
           test -f "$APK_SOURCE"
-          cp "$APK_SOURCE" "$APK_ASSET"
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ] || [ -z "$ANDROID_KEYSTORE_PASSWORD" ]; then
+            echo "::error::ANDROID_KEYSTORE_BASE64 / ANDROID_KEYSTORE_PASSWORD are not set"
+            exit 1
+          fi
+          BUILD_TOOLS="$ANDROID_HOME/build-tools/36.0.0"
+          KEYSTORE="$RUNNER_TEMP/release.jks"
+          trap 'rm -f "$KEYSTORE"' EXIT
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$KEYSTORE"
+          "$BUILD_TOOLS/zipalign" -P 16 -f 4 "$APK_SOURCE" "$RUNNER_TEMP/aligned.apk"
+          "$BUILD_TOOLS/apksigner" sign --ks "$KEYSTORE" --ks-key-alias garupaeditor \
+            --ks-pass env:ANDROID_KEYSTORE_PASSWORD --key-pass env:ANDROID_KEYSTORE_PASSWORD \
+            --out "$APK_ASSET" "$RUNNER_TEMP/aligned.apk"
+          "$BUILD_TOOLS/apksigner" verify --print-certs "$APK_ASSET"
           gh release upload "${{ github.ref_name }}" "$APK_ASSET" --clobber
 
       - name: Build and upload release bundle
