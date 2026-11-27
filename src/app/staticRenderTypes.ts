@@ -1,12 +1,20 @@
+import type { ResolvedOriginalSkinRecipe } from "../simulator/public/settings";
 import type { RenderConnectionSegment, RenderSimultaneousSegment } from "./hooks/useEditorRenderModel";
+
+/*
+ * What the editor hands the preview window (StaticChartRenderWindow): the chart placed in time, not on the editor's
+ * board. Every y is a time in seconds (no SV transform: every timing group on one axis); every x is in lanes (1 a lane,
+ * 0 at the board's left edge). The preview lays the chart out on its own scale.
+ */
 
 export type StaticOverlayMode = "none" | "flick" | "directional";
 
 export type StaticNoteVisual = {
   id: string;
   type: string;
+  /** The note's centre, in lanes. */
   x: number;
-  y: number;
+  timeSec: number;
   spanLanes: number;
   baseResourceKey: string | null;
   overlayResourceKey: string | null;
@@ -15,24 +23,14 @@ export type StaticNoteVisual = {
   baseShiftY?: number;
 };
 
-export type StaticBpmVisualLine = {
-  key: string;
-  beat: number;
-  bpm: number;
-};
+export type StaticBpmVisualLine = { key: string; beat: number; bpm: number };
 
-export type StaticSvVisualLine = {
-  key: string;
-  beat: number;
-  value: number;
-  timingGroup: string;
-};
+export type StaticSvVisualLine = { key: string; beat: number; value: number; timingGroup: string };
 
-export type StaticBpmTimelineNode = {
-  beat: number;
-  bpm: number;
-  timeSec: number;
-};
+/** A HABAHIRO `#LANE_CHANGE`; `effective` is the latest one, the only one the original applies. */
+export type StaticLaneChangeVisualLine = { key: string; beat: number; effective: boolean };
+
+export type StaticBpmTimelineNode = { beat: number; bpm: number; timeSec: number };
 
 export type StaticRuntimeSkin = {
   longLineResourceKey: string;
@@ -43,29 +41,37 @@ export type StaticRuntimeSkin = {
 };
 
 export type StaticRenderPayload = {
-  schemaVersion: 2;
+  schemaVersion: 3;
   resourceSnapshotId: string;
   skinIdentities: {
     rhythm: string;
     directional: string;
     judge: string;
   };
+  /**
+   * The simulator skin settings, resolved by the editor (the period-limited skins are known only there): the preview's
+   * background and lane art are the ones they pick, as the editor's track and the skin settings preview show them.
+   */
+  skinRecipe: ResolvedOriginalSkinRecipe;
   chartTitle: string;
-  boardWidth: number;
-  boardHeight: number;
-  laneValues: number[];
-  laneWidth: number;
+  difficulty: "EASY" | "NORMAL" | "HARD" | "EXPERT" | "SPECIAL";
+  difficultyLevel: string;
+  laneCount: number;
   noteVisualScale: number;
-  totalSteps: number;
-  beatDivision: number;
   beatsPerMeasure: number;
+  totalBeats: number;
   totalDurationSec: number;
-  timelinePixelsPerSecond: number;
   bpmTimeline: StaticBpmTimelineNode[];
   bpmVisualLines: StaticBpmVisualLine[];
   svVisualLines: StaticSvVisualLine[];
+  laneChangeVisualLines: StaticLaneChangeVisualLine[];
+  /** y, toY in seconds; fromX, toX, width in lanes. */
   simultaneousSegments: RenderSimultaneousSegment[];
+  /** fromY, toY, deltaY, minY, maxY in seconds; fromX, toX, deltaX in lanes. */
   connectionSegments: RenderConnectionSegment[];
   noteVisuals: StaticNoteVisual[];
+  /** Every note's (Hidden ones too) time and lane: the lane it sits on (its centre, a Directional's root), lanes 0-6
+   * the standard track. */
+  noteLanes: { timeSec: number; lane: number }[];
   runtimeSkin: StaticRuntimeSkin;
 };
