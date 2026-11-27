@@ -53,6 +53,12 @@ export type StaticRenderPayload = {
    * background and lane art are the ones they pick, as the editor's track and the skin settings preview show them.
    */
   skinRecipe: ResolvedOriginalSkinRecipe;
+  /**
+   * A HABAHIRO chart's lane art, as the live forces it whatever the skin settings: the skin00 field until the lane
+   * change (the latest #LANE_CHANGE, `swapTimeSec` being when the field changes: its time plus ChangeLane's 0.41667 s;
+   * null without one), the HABAHIRO field after. Absent for an ordinary chart, whose lane art is skinRecipe's field.
+   */
+  habahiroLane?: { beforeField: string; afterField: string; swapTimeSec: number | null };
   chartTitle: string;
   difficulty: "EASY" | "NORMAL" | "HARD" | "EXPERT" | "SPECIAL";
   difficultyLevel: string;

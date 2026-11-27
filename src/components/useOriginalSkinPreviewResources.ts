@@ -126,3 +126,40 @@ export function useOriginalSkinPreviewResources(recipe: ResolvedOriginalSkinReci
     judge: field?.key === key ? field.judge : null,
   }), [samples, field, key]);
 }
+
+/**
+ * One field skin's lane image (bg_line_rhythm), by its logical resource (e.g. "ingameskin/fieldskin/skin00"): an
+ * object URL while the lease is held, null while loading or for no resource.
+ */
+export function useOriginalFieldLane(fieldResource: string | null, onError?: (message: string) => void): string | null {
+  const manager = useApplicationResourceManager(), error = useRef(onError); error.current = onError;
+  const [loaded, setLoaded] = useState<{ resource: string; url: string } | null>(null);
+  useEffect(() => {
+    setLoaded(null);
+    if (fieldResource === null) return;
+    let active = true, finished = false, lease: ResourceConsumerLease | null = null;
+    const release = () => {
+      const owner = lease; lease = null;
+      if (owner) void owner.release().catch(cause => console.error("Field lane cleanup failed", cause));
+    };
+    void (async () => {
+      const catalog = await manager.prepareCatalog("bestdori");
+      if (catalog.status === "rejected") throw new Error(catalog.failure.boundary);
+      if (!active) return;
+      const snapshot = await manager.createSnapshotFromRefs({ "preview.field": ref(fieldResource) });
+      if (snapshot.status === "rejected") throw new Error(snapshot.failure.boundary);
+      if (!active) return;
+      const acquired = await manager.acquireSnapshot(snapshot.value.snapshotId);
+      if (acquired.status === "rejected") throw new Error(acquired.failure.boundary);
+      lease = acquired.value;
+      if (!active) return;
+      const url = await image(lease, "preview.field", "bg_line_rhythm.png");
+      if (active) setLoaded({ resource: fieldResource, url });
+    })().catch(cause => {
+      if (active) error.current?.(cause instanceof Error ? cause.message : String(cause));
+      release();
+    }).finally(() => { finished = true; if (!active) release(); });
+    return () => { active = false; if (finished) release(); };
+  }, [manager, fieldResource]);
+  return loaded?.resource === fieldResource ? loaded.url : null;
+}

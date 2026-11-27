@@ -7,7 +7,7 @@ import { EditorSquareTool } from "../components/editor/EditorControlColumn";
 import { loadPreviewLaneImage, unprojectFieldRows } from "../components/editor/previewLaneStrip";
 import { OriginalBackButton } from "../components/OriginalPageHeader";
 import { OverlayDialogModal, type OverlayDialogState } from "../components/OverlayDialogModal";
-import { useOriginalSkinPreviewResources } from "../components/useOriginalSkinPreviewResources";
+import { useOriginalFieldLane, useOriginalSkinPreviewResources } from "../components/useOriginalSkinPreviewResources";
 import { useUiViewport } from "../components/useUiViewport";
 import { appLog, loggedInvoke as invoke } from "../logging/applicationLogger";
 import { useApplicationResourceManager, useApplicationResourceUrl } from "../resources/applicationResourceContext";
@@ -94,6 +94,24 @@ function drawCover(context: CanvasRenderingContext2D, image: HTMLImageElement, w
   const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight);
   const drawWidth = image.naturalWidth * scale, drawHeight = image.naturalHeight * scale;
   context.drawImage(image, (width - drawWidth) / 2, (height - drawHeight) / 2, drawWidth, drawHeight);
+}
+
+/** A field lane image unprojected flat (previewLaneStrip), or null while it loads or for no URL. */
+function useFlatLane(url: string | null, onError: (message: string) => void): HTMLCanvasElement | null {
+  const [lane, setLane] = useState<{ url: string; art: HTMLCanvasElement } | null>(null);
+  const error = useRef(onError); error.current = onError;
+  useEffect(() => {
+    if (!url) return;
+    let cancelled = false;
+    loadPreviewLaneImage(url)
+      .then(image => { if (!cancelled) setLane({ url, art: unprojectFieldRows(image) }); })
+      .catch(cause => {
+        appLog("error", "static-render.lane-art.failed", { error: cause });
+        if (!cancelled) error.current(cause instanceof Error ? cause.message : String(cause));
+      });
+    return () => { cancelled = true; };
+  }, [url]);
+  return url && lane?.url === url ? lane.art : null;
 }
 
 export default function StaticChartRenderWindow() {
@@ -245,19 +263,21 @@ function PreviewStage({ payload, isMobileRoute, onReady, onError, onDialog }: {
   // The background and the lane art, as the skin settings pick them (the editor's track uses the same lane art).
   const skinPreview = useOriginalSkinPreviewResources(payload.skinRecipe, message => errorRef.current(`轨道贴图失败：${message}`));
   const backgroundUrl = skinPreview.background ?? defaultBackground;
-  const [laneArt, setLaneArt] = useState<HTMLCanvasElement | null>(null);
-  useEffect(() => {
-    setLaneArt(null);
-    if (!skinPreview.lane) return;
-    let cancelled = false;
-    loadPreviewLaneImage(skinPreview.lane)
-      .then(image => { if (!cancelled) setLaneArt(unprojectFieldRows(image)); })
-      .catch(error => {
-        appLog("error", "static-render.lane-art.failed", { error });
-        if (!cancelled) errorRef.current(`轨道贴图失败：${error instanceof Error ? error.message : String(error)}`);
-      });
-    return () => { cancelled = true; };
-  }, [skinPreview.lane]);
+  // A HABAHIRO chart's lane art is the skin00 field, then the HABAHIRO one from the lane change; an ordinary chart's is
+  // the skin settings' field.
+  const habahiro = payload.habahiroLane;
+  const laneError = (message: string) => errorRef.current(`轨道贴图失败：${message}`);
+  const beforeLaneUrl = useOriginalFieldLane(habahiro ? habahiro.beforeField : null, laneError);
+  const afterLaneUrl = useOriginalFieldLane(habahiro && habahiro.swapTimeSec !== null ? habahiro.afterField : null, laneError);
+  const firstLaneUrl = habahiro ? beforeLaneUrl : skinPreview.lane;
+  const secondLaneUrl = habahiro && habahiro.swapTimeSec !== null ? afterLaneUrl : null;
+  const firstLane = useFlatLane(firstLaneUrl, laneError);
+  const secondLane = useFlatLane(secondLaneUrl, laneError);
+  const laneArt = useMemo<PreviewImages["laneArt"]>(() => {
+    if (firstLane === null) return null;
+    if (habahiro?.swapTimeSec == null) return { before: firstLane, after: null, swapTimeSec: null };
+    return secondLane === null ? null : { before: firstLane, after: secondLane, swapTimeSec: habahiro.swapTimeSec };
+  }, [firstLane, habahiro?.swapTimeSec, secondLane]);
 
   const images = useMemo<PreviewImages | null>(() => {
     if (loadedImages === null) return null;
