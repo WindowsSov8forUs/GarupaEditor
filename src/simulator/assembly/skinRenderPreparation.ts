@@ -309,7 +309,9 @@ function resolveBindings(
     note = noteAssets?.get("RhythmGameSprites") ?? "";
     sync = noteAssets?.get("simultaneous_line") ?? "";
     long = noteAssets?.get("longNoteLine") ?? "";
-    curve = noteAssets?.get("longNoteLine2") ?? "";
+    // A note skin without longNoteLine2 (cafe, coin, miku, witch) curves with longNoteLine, as the editor and the
+    // Sonolus skin generator do (the original has no fallback; what it draws then is unknown).
+    curve = noteAssets?.get("longNoteLine2") ?? long;
     directional = directionalAssets?.get("DirectionalFlickSprites") ?? "";
     left = directionalAssets?.get("FlickNoteLine_l") ?? "";
     right = directionalAssets?.get("FlickNoteLine_r") ?? "";
@@ -328,7 +330,9 @@ function resolveBindings(
     note = noteAssets?.get("RhythmGameSprites1") ?? "";
     sync = noteAssets?.get("simultaneous_line") ?? "";
     long = noteAssets?.get("longNoteLine") ?? "";
-    curve = noteAssets?.get("longNoteLine2") ?? "";
+    // A note skin without longNoteLine2 (cafe, coin, miku, witch) curves with longNoteLine, as the editor and the
+    // Sonolus skin generator do (the original has no fallback; what it draws then is unknown).
+    curve = noteAssets?.get("longNoteLine2") ?? long;
     directional = directionalAssets?.get("DirectionalFlickSprites") ?? "";
     left = directionalAssets?.get("FlickNoteLine_l") ?? "";
     right = directionalAssets?.get("FlickNoteLine_r") ?? "";

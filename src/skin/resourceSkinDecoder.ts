@@ -185,9 +185,13 @@ async function decodeRhythm(
     NoteLong3: requireUrl(sampleSource, "note_long_3.png"),
     NoteSlideAmong: requireUrl(sampleSource, "note_slide_among.png"),
   });
+  const longNoteLine = requireUrl(source, "longNoteLine.png");
   const lines = {
-    longNoteLine: requireUrl(source, "longNoteLine.png"),
-    longNoteLine2: requireUrl(source, "longNoteLine2.png"),
+    longNoteLine,
+    // The period-limited cafe, coin, miku and witch note skins ship no longNoteLine2 (the curve Slide line); the
+    // original loads it without a fallback, so what it draws then is unknown: like the Sonolus skin generator, the
+    // long note line stands in.
+    longNoteLine2: source.urls.get("longnoteline2.png") ?? longNoteLine,
     simultaneousLine: requireUrl(source, "simultaneous_line.png"),
   };
   if (identity === "habahiro") {
