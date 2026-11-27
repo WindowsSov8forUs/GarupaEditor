@@ -132,7 +132,9 @@ export function SongInformationEditPage({ mode, audioDurationSec, noteCount, not
   const confirm = async () => {
     if (saving) return;
     // Required fields: nothing is saved while one is empty; the notice closes back to the page.
-    const empty = REQUIRED_FIELDS.filter(([key]) => draft[key].trim() === "").map(([, name]) => name);
+    const empty: string[] = REQUIRED_FIELDS.filter(([key]) => draft[key].trim() === "").map(([, name]) => name);
+    // A new project needs its song: the live cannot start without one.
+    if (mode === "create" && !shownAudio) empty.push("音频");
     if (empty.length > 0) { onNotice(`${empty.join("、")}不能为空。`); return; }
     setSaving(true);
     setPlaying(false);
