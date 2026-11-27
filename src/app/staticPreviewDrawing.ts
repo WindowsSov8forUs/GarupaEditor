@@ -122,8 +122,8 @@ export type PreviewImages = {
   /** By URL (drawNoteVisual's lookup). */
   byUrl(url: string | null | undefined): HTMLImageElement | null;
   url(key: string | null | undefined): string | null;
-  /** The flat lane art, or null while it is not ready. */
-  laneArt: CanvasImageSource | null;
+  /** The flat lane art, or null while it is not ready: `after` from `swapTimeSec` on (a HABAHIRO lane change). */
+  laneArt: { before: CanvasImageSource; after: CanvasImageSource | null; swapTimeSec: number | null } | null;
 };
 
 function formatSecond(seconds: number): string {
@@ -159,7 +159,22 @@ export function drawPreviewColumn(context: CanvasRenderingContext2D, layout: Pre
   context.rect(originX, 0, info.width, height);
   context.clip();
 
-  if (images.laneArt) context.drawImage(images.laneArt, originX + info.artLeft, 0, layout.artWidth, height);
+  const art = images.laneArt;
+  if (art) {
+    const drawArt = (source: CanvasImageSource, top: number, bottom: number) => {
+      if (bottom <= top) return;
+      context.save();
+      context.beginPath();
+      context.rect(originX + info.artLeft, top, layout.artWidth, bottom - top);
+      context.clip();
+      context.drawImage(source, originX + info.artLeft, 0, layout.artWidth, height);
+      context.restore();
+    };
+    // Earlier times are lower: the art before the swap below its y, the art after above it.
+    const swapY = art.after && art.swapTimeSec !== null ? Math.min(height, Math.max(0, yOf(art.swapTimeSec))) : height;
+    drawArt(art.before, swapY, height);
+    if (art.after) drawArt(art.after, 0, swapY);
+  }
 
   if (info.extra > 0) {
     // The lane range's edges and the borders between the outer lanes (the editor's EditorLaneRangeGuides), thin and

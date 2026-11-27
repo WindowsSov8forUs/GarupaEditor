@@ -200,6 +200,10 @@ const PLAYBACK_SE_POOL_SIZE = 8;
 const PLAYBACK_SE_TRIGGER_LEAD_SEC = 0.02;
 const PLAYBACK_VIEWPORT_EDGE_TOLERANCE_PX = 8;
 const STATIC_RENDER_WINDOW_READY_EVENT = "static-render:ready";
+/** A HABAHIRO live's field before its lane change (the simulator's habahiro-before-field). */
+const HABAHIRO_BEFORE_FIELD = "ingameskin/fieldskin/skin00";
+/** ChangeLane's time in the lane change flash: when the HABAHIRO field replaces it. */
+const HABAHIRO_CHANGE_LANE_SECONDS = 0.4166666567325592;
 const STATIC_RENDER_WINDOW_PAYLOAD_EVENT = "static-render:payload";
 
 function formatDurationPrecise(sec: number): string {
@@ -5673,6 +5677,11 @@ function ChartEditorController() {
       resourceSnapshotId: appliedSkinResources.snapshotId,
       skinIdentities: appliedSkinResources.identities,
       skinRecipe: resolveOriginalPreviewSkin(appOptionSettings.simulatorSettings.skin),
+      ...(settings.habahiro ? { habahiroLane: {
+        beforeField: HABAHIRO_BEFORE_FIELD,
+        afterField: resolveOriginalPreviewSkin(appOptionSettings.simulatorSettings.skin, "habahiro").field.logicalResource!,
+        swapTimeSec: latestLaneChange === null ? null : timeOfBeat(latestLaneChange) + HABAHIRO_CHANGE_LANE_SECONDS,
+      } } : {}),
       chartTitle: metadata.title,
       difficulty: metadata.difficulty,
       difficultyLevel: metadata.difficultyLevel,
