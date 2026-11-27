@@ -97,5 +97,28 @@ export function unprojectFieldRows(image: HTMLImageElement): HTMLCanvasElement {
     }
   }
   outContext.putImageData(output, 0, 0);
-  return out;
+  return withoutFadedNearEnd(out, output.data);
+}
+
+/**
+ * The flat field without its near end's fade: past the transparent rows (dropped above), the field fades out toward
+ * the judge line over a few rows, which, stretched over the track's height, would still end the track short of its
+ * bottom. The field is translucent throughout and its rows vary; only that fade falls well below the typical row.
+ */
+function withoutFadedNearEnd(field: HTMLCanvasElement, pixels: Uint8ClampedArray): HTMLCanvasElement {
+  const { width, height } = field;
+  const rowAlpha = Array.from({ length: height }, (_, row) => {
+    let sum = 0;
+    for (let column = 0; column < width; column += 1) sum += pixels[(row * width + column) * 4 + 3]!;
+    return sum / width;
+  });
+  const typical = [...rowAlpha].sort((left, right) => left - right)[Math.floor(height / 2)]!;
+  let bottom = height - 1;
+  while (bottom > 0 && rowAlpha[bottom]! < typical * 0.9) bottom -= 1;
+  if (bottom === height - 1) return field;
+  const trimmed = document.createElement("canvas");
+  trimmed.width = width;
+  trimmed.height = bottom + 1;
+  trimmed.getContext("2d")?.drawImage(field, 0, 0);
+  return trimmed;
 }
