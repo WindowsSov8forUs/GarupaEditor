@@ -4,6 +4,8 @@
   "description": "Capability for static render windows",
   "windows": ["static-render-*"],
   "permissions": [
-    "core:default"
+    "core:default",
+    "core:window:allow-show",
+    "core:window:allow-close"
   ]
 }

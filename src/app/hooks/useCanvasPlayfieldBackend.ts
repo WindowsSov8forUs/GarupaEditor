@@ -25,16 +25,16 @@ import type { RenderConnectionSegment, RenderSimultaneousSegment } from "./useEd
 const GRID_COLOR = "rgb(125, 125, 125)";
 const GRID_BEAT_COLOR = "rgb(190, 190, 190)";
 const GRID_MEASURE_COLOR = "rgb(255, 255, 255)";
-const GRID_SPAN_LANES = 7;
+export const GRID_SPAN_LANES = 7;
 const GRID_KIND_COLOR: Record<GridLineKind, string> = {
   measure: GRID_MEASURE_COLOR,
   beat: GRID_BEAT_COLOR,
   subdivision: GRID_COLOR,
 };
-const SV_LINE_COLOR = "rgb(255, 59, 114)";
-const LANE_CHANGE_INEFFECTIVE_COLOR = "rgb(160, 160, 160)";
+export const SV_LINE_COLOR = "rgb(255, 59, 114)";
+export const LANE_CHANGE_INEFFECTIVE_COLOR = "rgb(160, 160, 160)";
 /** Beats closer than 1e-6 are the same beat value (float noise from the beat grid). */
-const EVENT_BEAT_KEY_SCALE = 1e6;
+export const EVENT_BEAT_KEY_SCALE = 1e6;
 /** Event bubble geometry in design px; drawn times the UI scale, like the editor region and its masks around it. */
 const EVENT_BUBBLE_FONT_SIZE = 12;
 const EVENT_BUBBLE_FONT_FAMILY = "'ChartUI', 'TTShinGoM', sans-serif";

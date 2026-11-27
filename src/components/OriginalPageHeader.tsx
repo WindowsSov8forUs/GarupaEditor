@@ -55,3 +55,16 @@ export function OriginalPageHeader({ section, title, onBack, showBack = true, me
     }}><OriginalHeaderMenuButton open={menuOpen} onClick={onOpenMenu} /></div>
   </header>;
 }
+
+/** The header's back button alone (its title hidden), at the header's place: for a window with no header of its own. */
+export function OriginalBackButton({ onBack }: { onBack(): void }) {
+  const { safeInsets } = useUiViewport();
+  const model = useMemo(() => new OriginalPrefabModel(leftPrefab, {
+    nodes: { [source.nodeAt("LeftTop/screenInfo").id]: { active: false } },
+  }), []);
+  return <div className="original-page-header-left" style={{ left: safeInsets.left, top: safeInsets.top }}>
+    <UiScaleOrigin>
+      <OriginalPrefabView model={model} bindings={{ buttons: { 180: { label: "返回", action: onBack } } }} />
+    </UiScaleOrigin>
+  </div>;
+}

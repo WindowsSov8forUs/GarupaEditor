@@ -64,7 +64,7 @@ export function LiveInProgressCover({ song, jacketUrl }: { song: LiveInProgressS
 
 const fill: CSSProperties = { display: "block", width: "100%", height: "100%" };
 
-function Placed({ x, y, width, height, children }: { x: number; y: number; width: number; height: number; children: ReactNode }) {
+export function Placed({ x, y, width, height, children }: { x: number; y: number; width: number; height: number; children: ReactNode }) {
   return <div style={{ position: "absolute", left: x - width / 2, top: -y - height / 2, width, height }}>{children}</div>;
 }
 
@@ -84,7 +84,7 @@ function Line({ x, y, size, maxWidth, color, style, children }: {
 }
 
 /** label_square_white multiplied by the difficulty color, as the start scene tints it. */
-function TintedSprite({ sprite, width, height, color }: { sprite: string; width: number; height: number; color: number }) {
+export function TintedSprite({ sprite, width, height, color }: { sprite: string; width: number; height: number; color: number }) {
   const filterId = `live-cover-tint-${useId().replace(/:/g, "")}`;
   const r = (color >> 16 & 255) / 255, g = (color >> 8 & 255) / 255, b = (color & 255) / 255;
   return <>

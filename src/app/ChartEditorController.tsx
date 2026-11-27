@@ -53,7 +53,7 @@ import { useIsStartingApplication, useStartupReadiness } from "./startupReadines
 import { playbackAnchorFromBottom, useEditorGeometry } from "./hooks/useEditorGeometry";
 import { useEditorIoAndShortcuts } from "./hooks/useEditorIoAndShortcuts";
 import { useEditorSessionCache } from "./hooks/useEditorSessionCache";
-import { useEditorRenderModel, type RenderConnectionSegment } from "./hooks/useEditorRenderModel";
+import { buildConnectionSegments, buildSimultaneousSegments, useEditorRenderModel, type RenderConnectionSegment } from "./hooks/useEditorRenderModel";
 import { useStableEvents } from "./hooks/useStableEvents";
 import { EDITOR_EDGE_SOFTNESS } from "./editorEdgeMask";
 import { DEFAULT_SLIDE_FIT_SETTINGS, type SlideFitSettings } from "./slideFitShapes";
@@ -176,6 +176,7 @@ import { buildBestdoriSkinCatalogOptionsFromDescriptors } from "../services/best
 import "../App.css";
 import { type OverlayDialogState } from "../components/OverlayDialogModal";
 import type { StaticRenderPayload } from "./staticRenderTypes";
+import { resolveOriginalPreviewSkin } from "../simulator/public/settings";
 import { buildSimulatorLaunchDescriptor, createSimulatorLaunchRequestId } from "./simulator/buildSimulatorLaunchDescriptor";
 import { chartProjectionError } from "../project/projectChartAdapter";
 import { SIMULATOR_PRE_ADAPTATION_DEFAULTS, type SimulatorModeSelection } from "./simulator/preAdaptationContract";
@@ -5657,21 +5658,29 @@ function ChartEditorController() {
       if (key === undefined) throw new Error("static render note references an unleased Skin derivative");
       return key;
     };
+    // The whole chart in seconds (every timing group, no SV transform) and lanes (x: 1 a lane).
+    const timeOfBeat = (beat: number) => beatToSeconds(beat, bpmTimeline);
+    const placed = {
+      LANE_WIDTH: 1, beatToY: timeOfBeat, effectiveSlideChains, getNoteSpanLanes, getRenderedNotePlacement,
+      getSlideAnchorLane, laneToColumn, noteById, notes, longLineOpacityScale, timingGroupOfNote: noteTimingGroupOf,
+      isSimultaneousLineEnabled: appOptionSettings.simultaneousLineEnabled,
+    };
+    const laneChangeBeats = settings.habahiro ? settings.laneChangeBeats ?? [] : [];
+    const latestLaneChange = laneChangeBeats.length > 0 ? Math.max(...laneChangeBeats) : null;
+    const inChart = (beat: number) => beat >= 0 && beat <= totalBeats + 1e-6;
     return {
-      schemaVersion: 2,
+      schemaVersion: 3,
       resourceSnapshotId: appliedSkinResources.snapshotId,
       skinIdentities: appliedSkinResources.identities,
+      skinRecipe: resolveOriginalPreviewSkin(appOptionSettings.simulatorSettings.skin),
       chartTitle: metadata.title,
-      boardWidth,
-      boardHeight,
-      laneValues: [...laneValues],
-      laneWidth: LANE_WIDTH,
+      difficulty: metadata.difficulty,
+      difficultyLevel: metadata.difficultyLevel,
+      laneCount: laneValues.length,
       noteVisualScale,
-      totalSteps,
-      beatDivision,
       beatsPerMeasure,
+      totalBeats,
       totalDurationSec,
-      timelinePixelsPerSecond,
       bpmTimeline: bpmTimeline.map((item: any) => ({
         beat: Number(item.beat),
         bpm: Number(item.bpm),
@@ -5682,27 +5691,39 @@ function ChartEditorController() {
         beat: Number(line.beat),
         bpm: Number(line.bpm),
       })),
-      svVisualLines: canvasSvVisualLines.map((line: any) => ({
-        key: String(line.key),
-        beat: Number(line.beat),
-        value: Number(line.value),
-        timingGroup: String(line.timingGroup ?? GLOBAL_TIMING_GROUP_ID),
+      // Every group's SV events, whichever timing group the editor shows.
+      svVisualLines: svEvents.filter(event => inChart(event.beat)).map(event => ({
+        key: event.id,
+        beat: event.beat,
+        value: event.value,
+        timingGroup: normalizeTimingGroup(event.timingGroup, GLOBAL_TIMING_GROUP_ID),
       })),
-      simultaneousSegments: visibleSimultaneousSegments.map((segment) => ({ ...segment })),
-      connectionSegments: renderModel.connectionSegments
-        .filter((segment) => !segment.isPreviewChain)
-        .map((segment) => ({ ...segment })),
-      noteVisuals: canvasNoteVisuals.map((note) => ({
-        id: note.id,
-        type: note.type,
-        x: note.x,
-        y: note.y,
-        spanLanes: note.spanLanes,
-        baseResourceKey: keyForUrl(note.base),
-        overlayResourceKey: keyForUrl(note.overlay),
-        overlayMode: note.overlayMode,
-        ...(note.baseShiftY === undefined ? {} : { baseShiftY: note.baseShiftY }),
+      laneChangeVisualLines: laneChangeBeats.filter(inChart).map((beat, index) => ({
+        key: `lane-change-${index}-${beat.toFixed(6)}`,
+        beat,
+        effective: beat === latestLaneChange,
       })),
+      simultaneousSegments: buildSimultaneousSegments(placed),
+      connectionSegments: buildConnectionSegments(placed),
+      noteVisuals: canvasNoteVisuals.flatMap((note) => {
+        const source = noteById.get(note.id);
+        if (!source) return [];
+        return [{
+          id: note.id,
+          type: note.type,
+          x: note.x / LANE_WIDTH,
+          timeSec: timeOfBeat(getRenderedNotePlacement(source).beat),
+          spanLanes: note.spanLanes,
+          baseResourceKey: keyForUrl(note.base),
+          overlayResourceKey: keyForUrl(note.overlay),
+          overlayMode: note.overlayMode,
+          ...(note.baseShiftY === undefined ? {} : { baseShiftY: note.baseShiftY }),
+        }];
+      }),
+      noteLanes: notes.map((note) => {
+        const placement = getRenderedNotePlacement(note);
+        return { timeSec: timeOfBeat(placement.beat), lane: placement.lane };
+      }),
       runtimeSkin: {
         longLineResourceKey: "line.long",
         curveSlideLineResourceKey: "line.long-special",
@@ -5713,25 +5734,34 @@ function ChartEditorController() {
     };
   }, [
     LANE_WIDTH,
+    appOptionSettings.simulatorSettings.skin,
+    appOptionSettings.simultaneousLineEnabled,
     appliedSkinResources,
-    beatDivision,
     beatsPerMeasure,
-    boardHeight,
-    boardWidth,
     bpmTimeline,
     canvasBpmVisualLines,
     canvasNoteVisuals,
-    canvasSvVisualLines,
-    laneValues,
+    effectiveSlideChains,
+    getNoteSpanLanes,
+    getRenderedNotePlacement,
+    getSlideAnchorLane,
+    laneToColumn,
+    laneValues.length,
+    longLineOpacityScale,
+    metadata.difficulty,
+    metadata.difficultyLevel,
     metadata.title,
+    noteById,
+    noteTimingGroupOf,
     noteVisualScale,
-    renderModel.connectionSegments,
+    notes,
+    settings.habahiro,
+    settings.laneChangeBeats,
     staticRenderResourceMap,
     staticRenderReverseResourceMap,
-    timelinePixelsPerSecond,
+    svEvents,
+    totalBeats,
     totalDurationSec,
-    totalSteps,
-    visibleSimultaneousSegments,
   ]);
 
   const openStaticRenderWindow = useCallback(async () => {

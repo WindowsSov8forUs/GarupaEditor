@@ -1,7 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
-  <path d="M12 3.5V20.5" stroke="#4B515A" stroke-width="1.8" stroke-linecap="round" />
-  <path d="M6.2 8.2L3.4 11L6.2 13.8" stroke="#4B515A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-  <path d="M17.8 8.2L20.6 11L17.8 13.8" stroke="#4B515A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
-  <path d="M4.1 11H9.6" stroke="#4B515A" stroke-width="1.8" stroke-linecap="round" />
-  <path d="M14.4 11H19.9" stroke="#4B515A" stroke-width="1.8" stroke-linecap="round" />
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="#505050"><rect x="11.1" y="1.6" width="1.8" height="3" rx=".9"/><rect x="11.1" y="6.6" width="1.8" height="3" rx=".9"/><rect x="11.1" y="11.6" width="1.8" height="3" rx=".9"/><rect x="11.1" y="16.6" width="1.8" height="3" rx=".9"/><rect x="11.1" y="21.4" width="1.8" height="1.6" rx=".8"/></g><polygon points="2.3,6.6 7.0,4.4 7.0,19.6 2.3,17.4" fill="#505050" stroke="#505050" stroke-width="2.6" stroke-linejoin="round"/><polygon points="21.7,6.6 17.0,4.4 17.0,19.6 21.7,17.4" fill="#505050" stroke="#505050" stroke-width="2.6" stroke-linejoin="round"/></svg>

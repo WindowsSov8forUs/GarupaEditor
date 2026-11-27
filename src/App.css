@@ -2561,22 +2561,119 @@ button.app-settings-apply-button:not(.original-button):not(.note-token):not(.bpm
   max-width: calc(var(--ui-safe-logical-width) - 12px);
 }
 
+/* The preview window: the skin background and the editor's mask fill it and stay put; the columns scroll over them. */
 .static-render-page {
-  isolation: isolate;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  position: relative;
   height: 100%;
-  min-height: 0;
-  padding: max(calc(14px * var(--ui-scale)), var(--ui-safe-top)) max(calc(14px * var(--ui-scale)), var(--ui-safe-right)) max(calc(14px * var(--ui-scale)), var(--ui-safe-bottom)) max(calc(14px * var(--ui-scale)), var(--ui-safe-left));
-  gap: calc(12px * var(--ui-scale));
   overflow: hidden;
-  background: transparent;
   color: var(--text);
 }
 
-.static-render-page > :not(.original-menu-background) {
+.static-render-background,
+.static-render-mask {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/*
+ * The preview area, and the mask over the background with it: between the back button (the header's buttonMoveBack:
+ * 80 design px, 16 from the top) and the export button (a 48 design px tool button, 16 from the bottom), 12 design px
+ * clear of each, the window's full width.
+ */
+.static-render-mask,
+.static-render-viewport {
+  top: calc(var(--ui-safe-top, 0px) + (16px + 80px + 12px) * var(--ui-scale));
+  bottom: calc(var(--ui-safe-bottom, 0px) + (16px + 48px + 12px) * var(--ui-scale));
+}
+
+.static-render-background {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* The export button, a tool button of the editor's (design px: the box carries the UI scale), as far from the bottom
+   right corner as the back button is from the top left. */
+.static-render-export {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2;
+}
+
+/* The result's title strip, centred at the top over the background. */
+.static-render-title-bar {
+  position: absolute;
+  inset: var(--ui-safe-top, 0px) 0 auto 0;
+  height: 0;
+  z-index: 2;
+  pointer-events: none;
+  font-family: "ChartUI", "TTShinGoM", sans-serif;
+}
+
+/* The original header's back button at the window's top left, over the columns. */
+.static-render-back {
+  position: absolute;
+  inset: 0 auto auto 0;
+  z-index: 2;
+}
+
+.static-render-viewport {
+  position: absolute;
+  right: 0;
+  left: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior: contain;
+  touch-action: pan-x;
+  /* Scrolled by the wheel and by touch: no scrollbar, so the columns reach the area's bottom edge. */
+  scrollbar-width: none;
+}
+
+.static-render-viewport::-webkit-scrollbar {
+  display: none;
+}
+
+.static-render-strip {
   position: relative;
+  height: 100%;
+}
+
+/* As wide as the viewport: it stays in view while the strip scrolls, and the columns in view are drawn on it. */
+.static-render-canvas {
+  position: sticky;
+  left: 0;
+  top: 0;
+  display: block;
+}
+
+.static-render-hover-line {
+  position: absolute;
   z-index: 1;
+  height: 0;
+  border-top: 1px solid rgba(227, 246, 255, 0.92);
+  pointer-events: none;
+  transform: translateY(-0.5px);
+}
+
+.static-render-hover-label {
+  position: absolute;
+  top: 0;
+  font-family: "ChartUI", "TTShinGoM", sans-serif;
+  font-size: calc(12px * var(--ui-scale));
+  line-height: 1;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+  white-space: nowrap;
+}
+
+.static-render-hover-label-left {
+  transform: translate(calc(-100% - 6px), -50%);
+}
+
+.static-render-hover-label-right {
+  transform: translate(6px, -50%);
 }
 
 .mobile-route-overlay {
@@ -2589,80 +2686,6 @@ button.app-settings-apply-button:not(.original-button):not(.note-token):not(.bpm
   pointer-events: auto;
 }
 
-.static-render-toolbar {
-  --command-control-size: 42px;
-  --command-control-gap: 8px;
-  --command-control-radius: 8px;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--command-control-gap);
-  padding: 0;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-}
-
-.static-render-toolbar-center {
-  grid-column: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--command-control-gap);
-  min-width: 0;
-}
-
-.static-render-toolbar-center:first-child {
-  grid-column: 1 / -1;
-}
-
-.static-render-zoom-stepper {
-  grid-template-columns: auto minmax(0, 92px) auto;
-  gap: 6px;
-  align-items: center;
-}
-
-.static-render-export-button {
-  width: var(--command-control-size);
-  height: var(--command-control-size);
-  min-width: var(--command-control-size);
-  min-height: var(--command-control-size);
-  padding: 0;
-  border: 0;
-  border-radius: var(--command-control-radius);
-  background: transparent;
-  box-shadow: none;
-}
-
-.static-render-export-button > img {
-  width: 24px;
-  height: 24px;
-  display: block;
-}
-
-.static-render-export-button:hover:not(:disabled) {
-  transform: none;
-  border-color: transparent;
-  background: transparent;
-}
-
-.static-render-export-button:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-
-.static-render-viewport {
-  position: relative;
-  min-height: 0;
-  box-sizing: border-box;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 8px;
-  border: 1px solid var(--panel-border);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.68);
-}
-
 .editor-viewport-region {
   position: relative; flex: 1; min-width: 0; min-height: 0;
   /* Left/right edge fade, same softness as the song information page mask (mClipSoftness.x). */
@@ -2673,69 +2696,6 @@ button.app-settings-apply-button:not(.original-button):not(.note-token):not(.bpm
   -webkit-mask-repeat: repeat-y; mask-repeat: repeat-y;
 }
 .playfield-scroll { overscroll-behavior: contain; }
-
-.static-render-strip {
-  box-sizing: border-box;
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  gap: 0;
-  background: rgba(4, 10, 21, 0.8);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.34);
-}
-
-.static-render-segment-canvas {
-  display: block;
-  flex: none;
-  image-rendering: auto;
-}
-
-.static-render-hover-line {
-  position: absolute;
-  z-index: 3;
-  height: 0;
-  border-top: 1px solid rgba(227, 246, 255, 0.92);
-  pointer-events: none;
-  transform: translateY(-0.5px);
-}
-
-.static-render-hover-label {
-  position: absolute;
-  top: 0;
-  padding: 0;
-  border: none;
-  border-radius: 0;
-  font-family: "ChartUI", "TTShinGoM", sans-serif;
-  font-size: 12px;
-  line-height: 1;
-  color: var(--text);
-  background: transparent;
-  text-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.9),
-    0 0 2px rgba(255, 255, 255, 0.75);
-  white-space: nowrap;
-}
-
-.static-render-hover-label-left {
-  transform: translate(calc(-100% - 6px), -6px);
-  text-align: right;
-}
-
-.static-render-hover-label-right {
-  transform: translate(6px, -6px);
-  text-align: left;
-}
-
-.static-render-placeholder {
-  min-height: 0;
-  height: 100%;
-  display: grid;
-  place-items: center;
-  font-size: 0.9rem;
-  color: var(--muted);
-  border: 1px solid var(--panel-border);
-  background: var(--panel);
-}
 
 .metadata-upload-source-empty {
   max-width: 100%;
